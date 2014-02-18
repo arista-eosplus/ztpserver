@@ -37,3 +37,10 @@ nosetests.xml
 # OSX crud
 .DS_STORE
 
+# Sphinx crud
+_build
+_static
+_templates
+
+# local environment
+.env
