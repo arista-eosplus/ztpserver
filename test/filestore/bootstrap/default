@@ -1,0 +1,701 @@
+#!/usr/bin/env python
+# encoding: utf-8
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+#
+# Copyright (c) 2013, Arista Networks
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright notice, this
+#   list of conditions and the following disclaimer in the documentation and/or
+#   other materials provided with the distribution.
+#
+#   Neither the name of the {organization} nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+import os
+import sys
+import imp
+import shutil
+import collections
+import urllib2
+import httplib
+import string
+import json
+import re
+import struct
+import socket
+import importlib
+import logging
+import subprocess
+
+from urlparse import urlsplit, urlunsplit
+from logging.handlers import SysLogHandler
+from glob import glob
+
+try:
+    import sleekxmpp
+    XMPP_AVAILABLE = True
+except ImportError:
+    XMPP_AVAILABLE = False
+
+__version__ = "0.1.0"
+
+log = logging.getLogger("ztpbootstrap")
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
+DEFAULTSERVER = "$DEFAULTSERVER"
+DEFINITION = $DEFINITION
+
+SYSLOG_ENABLED = $SYSLOG_ENABLED
+SYSLOG_SERVERS = "$SYSLOG_SERVERS"
+SYSLOG_LEVEL = "$SYSLOG_LEVEL"
+
+CT_APPLICATION_JSON = ('Content-Type', 'application/json')
+
+node = None
+server = None
+xmpp = None
+
+#-----------------------------------------------------------------------------
+# logging handlers
+#-----------------------------------------------------------------------------
+def enable_handler_syslog(ipaddr, port=514, level='INFO'):
+    """ enable_handler_syslog(ipaddr, port=514, level='INFO')
+
+    The :py:func:`enable_handler_syslog` adds a syslog destination to the
+    logging facility for the boostrap process.   The required argument
+    `ipaddr` represents the IP adddress or DNS hostname of the destination
+    server.  By default the syslog destination port is configured as 514 but
+    can be changed by providing the `port` keyword argument.
+
+    :param ipaddr: hostname or IP address of syslog server
+    :param port: destination port to send logging messages to
+    :param: level: verbosity of the logging facility
+    :returns: None
+    """
+    logging.Formatter('%(levelname)s: %(message)s')
+    sh = SysLogHandler(address=(ipaddr, port))
+    if level is None:
+        level = 'INFO'
+    level = str(level).upper()
+    level = logging.getLevelName(level)
+    sh.setLevel(level)
+    sh.setFormatter(formatter)
+    log.addHandler(sh)
+
+def enable_handler_file(filename, level='DEBUG', overwrite=True):
+    """ Enables logging to a local file on the node.   This handler can be
+    called multiple times for different destination files
+    """
+    logging.Formatter('%(levelname)s: %(message)s')
+    if overwrite and os.path.exists(filename):
+        os.remove(filename)
+    fh = logging.FileHandler(filename)
+    if level is None:
+        level = 'DEBUG'
+    level = str(level).upper()
+    level = logging.getLevelName(level)
+    fh.setLevel(level)
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
+
+def enable_handler_console(level='DEBUG'):
+    """ Enables logging to stdout """
+    logging.Formatter('%(levelname)s: %(message)s')
+    ch = logging.StreamHandler()
+    if level is None:
+        level = 'DEBUG'
+    level = str(level).upper()
+    level = logging.getLevelName(level)
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    log.addHandler(ch)
+
+
+class Request(object):
+
+    def __init__(self, url):
+        self.url = url
+        self.request = urllib2.Request(url)
+        self.handlers = set()
+
+    def _add_handler(self, handler):
+        self.handlers.add(handler)
+
+    def _opener(self):
+        return urllib2.build_opener(*self.handlers)
+
+    def add_header(self, key, value):
+        """ This method will add additional headers to the HTTP request object
+        to be sent to the HTTP server
+        """
+        self.request.add_header(key, value)
+
+    def send_request(self):
+        """ Sends the request to the HTTP server and returns the response
+        """
+        try:
+            opener = self._opener()
+            resp = opener.open(self.request)
+        except httplib.HTTPException, e:
+            log.exception(e)
+            resp = None
+        except urllib2.URLError, e:
+            log.exception(e)
+            resp = None
+        return resp
+
+    def get(self, headers=[]):
+        """ This method will send an HTTP GET request to the server.  The
+        optional headers argument can be used to supply additional headers to
+        the request object.  The headers argument is a sequence of (key, value)
+        pairs
+        """
+        for key, value in headers:
+            self.add_header(key, value)
+
+        try:
+            resp = self.send_request()
+            data = resp.read()
+            json_data = None
+            if resp.info().get("Content-Type") == "application/json":
+                json_data = json.loads(data)
+
+            obj = dict(
+                code=resp.code,
+                url=resp.geturl(),
+                content=data,
+                json=json_data,
+                headers=dict(resp.info())
+            )
+        except httplib.HTTPException, e:
+            log.exception(e)
+            obj = None
+        except urllib2.URLError, e:
+            log.exception(e)
+            obj = None
+        return obj
+
+    def post(self, data, headers=None):
+        """ This method will send a POST request to the server.  The data
+        argument will be inserted into the payload.  Additional headers can
+        be added with the headers argument.  The headers argument is a
+        sequence of (key, value) pairs
+        """
+        self.request.add_data(urllib.urlencode(data))
+        return self.get(headers)
+
+    def authentication(self, username, password):
+        """ This method provides basic authenciation to an HTTP server for the
+        request object.  The username and password arguments are required
+        """
+        manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        manager.add_password(None, self.url, username, password)
+        handler = urllib2.HTTPBasicAuthHandler(manager)
+        self._add_handler(handler)
+
+class ZtpBootstrapError(Exception):
+    """ General exception raised by the bootstrap process """
+    pass
+
+#-----------------------------------------------------------------------------
+# server object
+#-----------------------------------------------------------------------------
+class Server(object):
+    """ Represents the ZTP Server specified by the supplied URL argument.  The
+    URL argument should give the base URI used to calculate the local repo
+    objects and download files
+    """
+
+    def __init__(self, url):
+        self.url = url
+        self._repos = ['extensions', 'plugins', 'files', 'images', 'templates']
+
+    def __getattr__(self, attrib):
+        if attrib in self._repos:
+            return os.path.join('local', attrib)
+
+    def request(self, url, data=None, headers=[]):
+        if not url.startswith("http"):
+            url = os.path.join(self.url, url)
+        req = Request(url)
+        for key, value in headers:
+            req.add_header(key, value)
+        if data:
+            resp = req.put(data)
+        else:
+            resp = req.get()
+        return resp
+
+    def download(self, url, dst, overwrite=True):
+        """ This convienence method downloads a binary file from a remote http
+        server and saves it to the destination.   If the file already exists
+        it will be overwritten by default.  You can change this behavior by
+        setting overwrite to False
+        """
+        if os.path.exists(dst) and overwrite:
+            os.remove(dst)
+
+        if not url.startswith("http"):
+            url = os.path.join(self.url, url)
+        try:
+            req = Request(url)
+            resp = req.send_request()
+            CHUNK = 16 * 1024
+            with open(dst, 'wb') as fp:
+                while True:
+                    chunk = resp.read(CHUNK)
+                    if not chunk:
+                        break
+                    fp.write(chunk)
+            fp.close()
+        except urllib2.URLError, e:
+            log.info("unable to download url '%s'" % url)
+            log.exception(e)
+        return True
+
+
+#-----------------------------------------------------------------------------
+# node object
+#-----------------------------------------------------------------------------
+class Node(object):
+    """ The Node object provide access to various attributes of the node. In
+    addtion, the node object provides methods for installing images, extensions,
+    and CLI plugins.
+    """
+
+    EXTENSIONS_ROOT = '/mnt/flash/.extensions'
+    PLUGINS_ROOT = '/mnt/flash/.plugins'
+
+    def __init__(self):
+        self.name = None
+        self.description = None
+
+        self._macaddress = None
+        self._model = None
+        self._serialnum = None
+        self._software_version = None
+
+        self.config = list()
+
+        self._parse_version()
+        self._parse_swi_version()
+
+        if os.path.exists('/mnt/flash/rc.eos'):
+            shutil.copyfile('/mnt/flash/rc.eos', '/mnt/flash/rc.eos.ztp')
+
+    def _parse_version(self):
+        """ _parse_version
+        """
+        resp = self.command('show version')
+        data = [x.split(':') for x in resp.split('\r\n')]
+        self._model = data[0][0].slit()
+        self._serialnum = data[2][1].strip()
+        self._macaddress = data[3][1].strip()
+
+    def _parse_software_version(self):
+        """ _parse_software_version()
+        """
+        for line in open("/etc/swi-version").readlines():
+            if line.startswith("SWI_VERSION"):
+                release = re.search("(\d+).(\d+).(\d+)", line)
+        if not release:
+            log.error("could not retrieve EOS release")
+        self._software_version = release.groups()
+
+    @property
+    def macaddress(self):
+        """ Returns the system MAC address of this node """
+        return self._macadddress
+
+    @property
+    def serialnum(self):
+        """ Returns the serial number of this node """
+        self._serialnum
+
+    @property
+    def model(self):
+        """ Returns the model of this node """
+        self._model
+
+    @property
+    def software_version(self):
+        """ Returns the currently loaded software version """
+        return self._software_version
+
+    @property
+    def extensions(self):
+        """ Returns a list of extensions found on the node """
+        return glob('%s/*' % self.EXTENSIONS_ROOT)
+
+    @property
+    def plugins(self):
+        """ Returns a list of plugins on the node """
+        return glob('%s/*' % self.PLUGINS_ROOT)
+
+    def add_config(self, config):
+        """ Adds a block of config to the node """
+        self.config.append(config)
+
+    def write_config(self):
+        """ Combines all of the config blocks into a single startup config file
+        to be installed during the boostrap process.   If there is no config
+        blocks available, this method will simply return False.
+        """
+        if self.config:
+            fh = open("/mnt/flash/startup-config", "w")
+            for entry in self.config:
+                if entry == "\n":
+                    entry = "!\n"
+                fh.write(entry)
+            fh.close()
+            return True
+        return False
+
+    def command(self, commands):
+        """ Runs a set of commands on the EOS CLI and returns the output.  The
+        commands argument should be a list.  If there is an error, None is returned
+        otherwise the ouput from the commands is returned.
+        """
+        cmd = ['FastCli', '-p', '15', '-c']
+        if isinstance(commands, list):
+            cmd.append('\n'.join(commands))
+        else:
+            cmd.append('%s\n' % commands)
+
+        log.debug('Node[command] running commands: %s' % commands)
+        proc = subprocess.Popen(cmd,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        rc = proc.returncode
+
+        if rc != 0:
+            return None
+        return out
+
+    def _split(self, url):
+        """ this method takes a full path url and returns a tuple of path and
+        filename
+        """
+        path = os.path.dirname(url)
+        fn = os.path.basename(url)
+        return (path, fn)
+
+    def install_image(self, src):
+        """ Installs a new SWI file to the system.  This will load a new
+        version of EOS onto the flash drive and prepare the node to use the new
+        image on the next reboot.
+        """
+        path, filename = self._split(src)
+        dst = "/mnt/flash"
+        if not self.install_file(src, dst):
+            raise ZtpBootstrapError, "unable to download image file"
+
+        log.debug("writing %s to boot-config" % filename)
+        swi = "SWI=flash:/%s" % filename
+        open("/mnt/flash/boot-config").write(swi)
+        return True
+
+
+    def install_extension(self, src, autoload=True, force=False):
+        """ Installs a new EOS extension for EOS.   All EOS extensions are
+        stored in /mnt/flash/.boot-extensions.   If autoload is set to True,
+        the the extension is also configured to load at boot time.   If force
+        is set to True, the force keyword is used to laoded the extension.
+        """
+        path, filename = self._split(src)
+        if not self.install_file(src, self.EXTENSIONS_ROOT):
+            raise ZtpBootstrapError, 'unable to install extension'
+
+        if autoload:
+            url = "/mnt/flash/boot-extensions"
+            if force:
+                filename += " force"
+
+            filename += "\n"
+            if not os.path.exists(url):
+                open(url, 'w').write(filename)
+            else:
+                if filename not in open(url).read():
+                    open(url, 'a').write(filename)
+        return True
+
+    def install_plugin(self, src, autoload=True):
+        """ Installs a new CLI plugin to EOS.  All CLI plugins installed by the
+        bootstrap process are in /mnt/flash/plugins.  This method will also
+        build an rc.eos file to copy the plugins into the CliPlugins directory
+        on subsequent boots
+        """
+        path, filename = self._split(src)
+        if not self.install_file(src, self.PLUGINS_ROOT):
+            raise ZtpBootstrapError, "unable to install plugin"
+
+        if autoload:
+            src = os.path.join(self.PLUGINS_ROOT, filename)
+            dst = os.path.join("/usr/lib/python2.7/site-packages/CliPlugin", filename)
+            line = "cp %s %s\n" % (src, dst)
+
+            url = "/mnt/flash/rc.eos"
+            if not os.path.exists(url):
+                fh = open(url, "w")
+                fh.write("#!/bin/sh\n")
+            else:
+                fh = open(url, "r+")
+                if not line in fh.read():
+                    fh.seek(1, 2)
+                else:
+                    fh.seek(0)
+            fh.write(line)
+            fh.close()
+        return True
+
+
+    def install_file(self, src, dst, **kwargs):
+        """ Downloads files to the node.
+
+        If 'overwrite' is configured as True in kwargs and the destination
+        file exsits, the file will automatically be overwritten.  If
+        'overwrite' is configured as False then it is not overwritten.
+
+        If 'mode' exists in the kwargs, the file will be set to the mode
+        specified.  The mode attribute must be set using octal notation
+            * Read: 4
+            * Write: 2
+            * Execute: 1
+
+        """
+        overwrite = kwargs.get('overwrite') or True
+        mode = kwargs.get('mode')
+
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        if os.path.exists(dst) and not overwrite:
+            log.info("Destination file exists, not overwriting")
+            return False
+
+        dst = os.path.join(dst, os.path.basename(src))
+        server.download(src, dst)
+        if server.returncode == 0 and mode:
+            os.chmod(dst, int(mode, 8))
+        return True
+
+#-----------------------------------------------------------------------------
+# xmpp object
+#-----------------------------------------------------------------------------
+class Xmpp(object):
+
+    def __init__(self, cfg=None):
+        self._xmpp = None
+        self._rooms = list()
+        self.jid = None
+        self.nick = None
+        self._connected = False
+
+        if cfg and XMPP_AVAILABLE:
+            self.set_config(cfg)
+
+    def set_config(self, cfg):
+        if cfg.get('enable'):
+            jid = cfg.get('username')
+            pwd = cfg.get('password')
+            srv = cfg.get('server')
+
+            if self.connect(jid, pwd, srv):
+                Tac.waitFor(self.connected)
+                for room in cfg.get('rooms'):
+                    self.join(room)
+
+    def connected(self):
+        return self._connected
+
+    def connect(self, jid, pwd, srv, port=5222):
+        if self._connected:
+            return
+
+        self._xmpp = sleekxmpp.ClientXMPP(jid, pwd)
+        self.jid = jid
+        self.nick = jid.split('@')[0]
+        if not port:
+            port = 5222
+
+        self._xmpp.add_event_handler('session_start', self._session_start)
+        self._xmpp.add_event_handler('disconnected', self._disconnected)
+
+        self._xmpp.register_plugin('xep_0045')
+
+        log.debug("attemping to connect to xmpp server %s:%s" % (srv, port))
+        if self._xmpp.connect((srv, port)):
+            self._xmpp.process(block=False)
+            log.debug("connection successful")
+            return True
+        else:
+            log.debug("connection unsuccessful")
+            return False
+
+    def _session_start(self, event):
+        self._xmpp.get_roster()
+        self._xmpp.send_presence()
+        self._connected = True
+
+    def _disconnected(self, event):
+        self._connected = False
+
+    def join(self, room):
+        self._xmpp.plugin['xep_0045'].joinMUC(room, self.nick, wait=True)
+        self._rooms.append((room, self.nick))
+        log.debug("entered room %s as %s" % (room, self.nick))
+
+    def message(self, message):
+        if self._connected and self._rooms:
+            for room, nick in self._rooms:
+                self._xmpp.send_message(mto=room,
+                                        mbody=message,
+                                        mtype='groupchat',
+                                        mfrom=self.jid)
+
+    def leave(self):
+        if self._connected:
+            for room, nick in self._rooms:
+                log.debug("leaving room %s" % room)
+                self._xmpp.plugin['xep_0045'].leaveMUC(room, nick)
+            self._xmpp.disconnect(wait=True)
+            self._connected = False
+
+def get_definition(name):
+    """ This function retrieves an attribute defintion from the server and
+    returns it.  If the specified name cannot be found, it returns None
+    """
+    url = os.path.join(server.url, 'definitions', name)
+    obj = server.request(url, headers=[CT_APPLICATION_JSON])
+    if obj.get('code') != 200:
+        raise ZtpBootstrapError, 'error loading node definition'
+    return obj.get('json')
+
+
+def execute_action(action, services):
+    """ Executes an action during the bootstrap process """
+    args = action.get('attributes')
+    server = services.get('server')
+
+    fn = action.get('action')
+    if fn == 'include_definition':
+        include = get_definition(args.get('name'))
+        log.debug('including defintion file %s' % args.get('name'))
+        for _action in include.get('actions'):
+            execute_action(_action, services)
+        return True
+
+    else:
+        src = os.path.join('actions', fn)
+        dst = os.path.join("/tmp", fn)
+
+        if fn not in sys.modules:
+            log.debug('downloading action %s' % fn)
+            if not server.download(src, dst):
+                raise ZtpBootstrapError, 'unable to download action'
+            imp.load_source(fn, dst)
+
+        log.debug('executing %s' % fn)
+        rc = sys.modules[fn].main(args, services)
+        log.debug("action rc is %s" % str(rc))
+
+    return rc
+
+def main():
+    """ This is the main routine for the bootstrap process. """
+    enable_handler_console(level='debug')
+    enable_handler_file(filename="/mnt/flash/ztpbootstrap.log")
+
+    if SYSLOG_ENABLED:
+        for srv in SYSLOG_SERVERS.split(','):
+            if srv.find(':') > 0:
+                (host, port) = srv.split(':')
+            else:
+                (host, port) = srv, 514
+            enable_handler_syslog(host, port=port, level=SYSLOG_LEVEL)
+
+    log.info("start ztp bootstrap process")
+    log.info("default server is %s" % SERVER)
+
+    global server
+    server = Server(SERVER)
+
+    global node
+    node = Node()
+
+    ident = getattr(node, IDENTIFIER)
+    if IDENTIFIER == 'macaddress':
+        ident = str(ident).replace('.', '')
+
+    log.info("node identifier is %s (%s)" % (ident, IDENTIFIER))
+    log.info("current system release is %s" % ".".join(node.swi))
+
+    definition = get_definition(ident)
+
+    node.name = definition.get('name')
+    node.description = definition.get('description')
+
+    global xmpp
+    xmpp = Xmpp(definition.get('xmpp'))
+
+    services = dict(node=node,
+                    log=log,
+                    xmpp=xmpp,
+                    request=Request,
+                    server=server)
+
+    for action in definition.get('actions'):
+        log.debug("execute action: %s" % action.get('name'))
+        if 'on_start' in action:
+            xmpp.message(action.get('action_on_start'))
+
+        rc = execute_action(action, services)
+        if not rc:
+            log.debug('action %s failed' % action.get('name'))
+            if 'on_failure' in action:
+                xmpp.message(action.get('action_on_failure'))
+        else:
+            log.debug('action %s succeeded' % action.get('name'))
+            if 'on_success' in action:
+                xmpp.message(action.get('action_on_success'))
+
+    if not node.write_config():
+        raise ZtpBootstrapError, 'no startup config installed'
+
+    xmpp.message("I have completed the bootstrap process and am restarting")
+    xmpp.message("goodbye")
+    xmpp.leave()
+
+    log.debug("End of ztp bootstrap")
+
+if (__name__ == "__main__"):
+    try:
+        sys.exit(main())
+    except ZtpBootstrapError, e:
+        log.debug(e)
+        xmpp.leave()
+        sys.exit(2)
+
+

@@ -1,0 +1,4 @@
+include README.md INSTALL.md
+recursive-include docs *
+recursive-include examples *
+include Makefile
