@@ -43,25 +43,24 @@ COLLECTIONS = {
     "actions": {
         "collection_name": "actions",
         "resource_name": "action",
+        "member_prefix": "/{id}",
+        "path_prefix": "/repos/actions",
         "collection_actions": [],
         "member_actions": ['show']
     },
     "objects": {
         "collection_name": "objects",
         "resource_name": "object",
+        "member_prefix": "/{id}",
+        "path_prefix": "/repos/objects",
+        "collection_actions": [],
+        "member_actions": ['show']
+    },
+    "files": {
+        "collection_name": "files",
+        "resource_name": "file",
         "member_prefix": "/{id:.*}",
-        "collection_actions": [],
-        "member_actions": ['show']
-    },
-    "nodes": {
-        "collection_name": "nodes",
-        "resource_name": "node",
-        "collection_actions": [],
-        "member_actions": ['show']
-    },
-    "definitions": {
-        "collection_name": "definitions",
-        "resource_name": "definition",
+        "path_prefix": "/repos/files",
         "collection_actions": [],
         "member_actions": ['show']
     }
@@ -72,9 +71,20 @@ log.info('starting ztpserver.controller')
 
 class StoreController(ztpserver.wsgiapp.Controller):
 
-    def __init__(self, store):
-        self.store = store
+    def __init__(self, name):
+        self.store = self._create_filestore(name)
         super(StoreController, self).__init__()
+
+    def _create_filestore(self, name):
+        """ attempts to create a filestore with the given name """
+
+        try:
+            filestore = ztpserver.repository.create_file_store(name)
+        except ztpserver.repository.FileStoreError:
+            log.warn('could not create FileStore due to invalid path')
+        else:
+            filestore = None
+        return filestore
 
 class FileStoreController(StoreController):
 
@@ -96,7 +106,24 @@ class FileStoreController(StoreController):
 
         return webob.static.FileApp(obj.name)
 
+class NodeController(StoreController):
+
+    def __init__(self):
+        super(NodeController, self).__init__('nodes')
+
+    def __repr__(self):
+        return 'NodeController'
+
+    def update(self, request, id, **kwargs):
+        pass
+
+    def create(self, request, **kwargs):
+        pass
+
 class BootstrapController(StoreController):
+
+    def __init__(self):
+        super(BootstrapController, self).__init__('bootstrap')
 
     def __repr__(self):
         return "BootstrapController"
@@ -145,28 +172,20 @@ class Router(ztpserver.wsgiapp.Router):
     def __init__(self):
         mapper = routes.Mapper()
 
-        filestore = self._create_filestore('bootstrap')
-        if filestore is not None:
-            mapper.connect('bootstrap', '/bootstrap',
-                           controller=BootstrapController(filestore),
-                           action='index')
+        mapper.connect('bootstrap', '/bootstrap',
+                       controller=BootstrapController(),
+                       action='index')
+
+        mapper.collection('nodes', 'node',
+                          controller=NodeController(),
+                          collection_actions=['create'],
+                          member_actions=['update'])
 
         for filestore, kwargs in COLLECTIONS.items():
-            fs = self._create_filestore(filestore)
-            if fs is not None:
-                controller = FileStoreController(fs)
-                mapper.collection(controller=controller, **kwargs)
+            controller = FileStoreController(filestore)
+            mapper.collection(controller=controller, **kwargs)
 
         super(Router, self).__init__(mapper)
 
-    def _create_filestore(self, name):
-        """ attempts to create a filestore with the given name """
-
-        try:
-            filestore = ztpserver.repository.create_file_store(name)
-        except ztpserver.repository.FileStoreError:
-            log.warn('could not create FileStore due to invalid path')
-            filestore = None
-        return filestore
 
 
