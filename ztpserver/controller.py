@@ -71,18 +71,17 @@ log.info('starting ztpserver.controller')
 
 class StoreController(ztpserver.wsgiapp.Controller):
 
-    def __init__(self, name):
-        self.store = self._create_filestore(name)
+    def __init__(self, name, **kwargs):
+        self.store = self._create_filestore(name, path_prefix=kwargs.get('path_prefix'))
         super(StoreController, self).__init__()
 
-    def _create_filestore(self, name):
+    def _create_filestore(self, name, path_prefix=None):
         """ attempts to create a filestore with the given name """
 
         try:
-            filestore = ztpserver.repository.create_file_store(name)
+            filestore = ztpserver.repository.create_file_store(name, path_prefix)
         except ztpserver.repository.FileStoreError:
             log.warn('could not create FileStore due to invalid path')
-        else:
             filestore = None
         return filestore
 
