@@ -130,8 +130,6 @@ class BootstrapController(StoreController):
     def get_bootstrap(self, node):
         """ Returns the bootstrap script """
 
-        identifier = getattr(node, ztpserver.config.runtime.default.identifier)
-
         variables = dict()
         variables['DEFAULTSERVER'] = ztpserver.config.runtime.default.server_url
         variables['SYSLOG_ENABLED'] = ztpserver.config.runtime.syslog.enabled

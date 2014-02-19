@@ -211,7 +211,7 @@ class Config(collections.Mapping):
     def clear_value(self, name, group=None):
         """ clears the attributes value and resets it to default """
 
-        if not group and name in self_groups:
+        if not group and name in self._groups:
             raise AttributeError('cannot clear values for a group')
 
         item = self._attributes.get((group, name))

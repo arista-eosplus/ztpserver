@@ -36,6 +36,10 @@ try:
 except ImportError:
     YAML_AVAILABLE = False
 
+class SerializerError(Exception):
+    """ base error raised by serialization functions """
+    pass
+
 class YAMLSerializer(object):
 
     def __new__(cls):
@@ -77,7 +81,7 @@ class Serializer(object):
             handler = self._serialize_handler(content_type)
             return handler.serialize(data) if handler else str(data)
 
-        except TypeError, AttributeError:
+        except TypeError:
             raise SerializerError('Could not serialize data')
 
     def deserialize(self, data, content_type):
