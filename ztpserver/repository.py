@@ -67,9 +67,16 @@ class FileObject(object):
             self.name = os.path.join(path, name)
 
         self.type, self.encoding = mimetypes.guess_type(self.name)
+        self._contents = None
 
     def __repr__(self):
         return "FileObject(name=%s, type=%s)" % (self.name, self.type)
+
+    @property
+    def contents(self):
+        if self._contents = None:
+            self._contents = open(self.name).read()
+        return self._contents
 
 
 class FileStore(object):

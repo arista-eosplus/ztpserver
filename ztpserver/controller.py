@@ -127,17 +127,12 @@ class BootstrapController(StoreController):
     def get_bootstrap(self, node):
         """ Returns the bootstrap script """
 
-        variables = dict()
-        variables['DEFAULTSERVER'] = ztpserver.config.runtime.default.server_url
-        variables['SYSLOG_ENABLED'] = ztpserver.config.runtime.syslog.enabled
-        variables['SYSLOG_LEVEL'] = ztpserver.config.runtime.syslog.level
-        variables['SYSLOG_SERVERS'] = ztpserver.config.runtime.syslog.servers
-
+        default_server = ztpserver.config.runtime.default.server_url
         bootstrap = self.get_bootstrap_template()
         if not bootstrap:
             return webob.exc.HTTPInternalServerError()
 
-        body = Template(open(bootstrap.name).read()).safe_substitute(**variables)
+        body = Template(bootstrap.contents).safe_substitute(DEFAULT_SERVER=default_server)
         headers = [('Content-Type', 'text/x-python')]
 
         return webob.Response(status=200, body=body, headers=headers)
