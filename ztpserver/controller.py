@@ -44,7 +44,6 @@ COLLECTIONS = {
         "collection_name": "actions",
         "resource_name": "action",
         "member_prefix": "/{id}",
-        "path_prefix": "/repos/actions",
         "collection_actions": [],
         "member_actions": ['show']
     },
@@ -52,7 +51,6 @@ COLLECTIONS = {
         "collection_name": "objects",
         "resource_name": "object",
         "member_prefix": "/{id}",
-        "path_prefix": "/repos/objects",
         "collection_actions": [],
         "member_actions": ['show']
     },
@@ -60,7 +58,6 @@ COLLECTIONS = {
         "collection_name": "files",
         "resource_name": "file",
         "member_prefix": "/{id:.*}",
-        "path_prefix": "/repos/files",
         "collection_actions": [],
         "member_actions": ['show']
     }

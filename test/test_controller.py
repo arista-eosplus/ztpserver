@@ -48,7 +48,7 @@ class TestRouter(unittest.TestCase):
 
     def test_router_map(self):
         rtr = ztpserver.controller.Router()
-        for url in ['/bootstrap', '/repos/actions/test', '/repos/objects/test']:
+        for url in ['/bootstrap', '/actions/test', '/objects/test']:
             obj = rtr.map.match(url)
             self.assertIsNotNone(obj)
 
@@ -69,33 +69,33 @@ class TestRouter(unittest.TestCase):
 
     def test_router_req_get_actions_with_id_valid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/repos/actions/test.py')
+        req = webob.Request.blank('/actions/test.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
 
     def test_router_req_get_actions_with_id_invalid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/repos/actions/invalid.py')
+        req = webob.Request.blank('/actions/invalid.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 404)
 
     def test_router_req_post_actions_invalid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/repos/actions/test.py', method='POST')
+        req = webob.Request.blank('/actions/test.py', method='POST')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 404)
 
     def test_router_req_get_objects_with_id_valid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/repos/objects/test.py')
+        req = webob.Request.blank('/objects/test.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
 
     def test_router_req_get_objects_with_id_invalid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/repos/objects/invalid.py')
+        req = webob.Request.blank('/objects/invalid.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 404)
 
@@ -113,9 +113,9 @@ class TestFileStoreController(unittest.TestCase):
         collection = ztpserver.controller.COLLECTIONS['actions']
         mapper = routes.Mapper()
         mapper.collection(**collection)
-        kwargs = { 'urlvars': mapper.match('/repos/actions/test.py') }
+        kwargs = { 'urlvars': mapper.match('/actions/test.py') }
 
-        req = webob.Request.blank('/repos/actions/test/py', **kwargs)
+        req = webob.Request.blank('/actions/test/py', **kwargs)
 
         obj = controller.show(req, 'test.py')
         self.assertIsInstance(obj, webob.static.FileApp)
