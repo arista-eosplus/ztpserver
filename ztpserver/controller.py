@@ -84,7 +84,9 @@ class StoreController(ztpserver.wsgiapp.Controller):
 
 class ConfigController(ztpserver.wsgiapp.Controller):
     def index(self, request, **kwargs):
-        pass
+        body = dict(logging=list(), xmpp=dict())
+        headers = [('Content-Type', 'application/json')]
+        return webob.Response(status=200, body=body, headers=headers)
 
 class FileStoreController(StoreController):
 
@@ -171,7 +173,7 @@ class Router(ztpserver.wsgiapp.Router):
 
         mapper.connect('config', '/config',
                        controller=ConfigController(),
-                       actions='index')
+                       action='index')
 
         mapper.collection('nodes', 'node',
                           controller=NodeController(),
