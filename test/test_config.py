@@ -279,6 +279,9 @@ class TestConfig(unittest.TestCase):
         obj.set_value('interface', '1.1.1.1', 'server')
         self.assertEqual(obj.server.interface, '1.1.1.1')
 
+    def test_config_runtime_environ_vlaue(self):
+        raise NotImplementedError
+
     def test_load_config_file(self):
         f = tempfile.NamedTemporaryFile(mode='w')
         f.writelines(self.CONF)

@@ -69,6 +69,9 @@ class TestFileObject(unittest.TestCase):
         self.assertEqual(repr(obj), 'FileObject(name=%s, type=%s)' %
             (path, 'text/x-python'))
 
+    def test_get_file_contents(self):
+        raise NotImplementedError
+
 
 
 class TestFileStore(unittest.TestCase):
