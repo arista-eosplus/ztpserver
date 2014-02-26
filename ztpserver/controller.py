@@ -82,6 +82,10 @@ class StoreController(ztpserver.wsgiapp.Controller):
             filestore = None
         return filestore
 
+class ConfigController(ztpserver.wsgiapp.Controller):
+    def index(self, request, **kwargs):
+        pass
+
 class FileStoreController(StoreController):
 
     def __repr__(self):
@@ -164,6 +168,10 @@ class Router(ztpserver.wsgiapp.Router):
         mapper.connect('bootstrap', '/bootstrap',
                        controller=BootstrapController(),
                        action='index')
+
+        mapper.connect('config', '/config',
+                       controller=ConfigController(),
+                       actions='index')
 
         mapper.collection('nodes', 'node',
                           controller=NodeController(),

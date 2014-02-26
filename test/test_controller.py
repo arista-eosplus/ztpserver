@@ -48,7 +48,7 @@ class TestRouter(unittest.TestCase):
 
     def test_router_map(self):
         rtr = ztpserver.controller.Router()
-        for url in ['/bootstrap', '/actions/test', '/objects/test']:
+        for url in ['/bootstrap', '/actions/test', '/objects/test', '/config']:
             obj = rtr.map.match(url)
             self.assertIsNotNone(obj)
 
@@ -66,6 +66,13 @@ class TestRouter(unittest.TestCase):
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
+
+    def test_router_req_get_config(self):
+        rtr = ztpserver.controller.Router()
+        req = webob.Request.blank('/config')
+        resp = req.get_response(rtr)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content_type, 'application/json')
 
     def test_router_req_get_actions_with_id_valid(self):
         rtr = ztpserver.controller.Router()

@@ -62,7 +62,7 @@ log = logging.getLogger("ztpbootstrap")
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-DEFAULTSERVER = "$DEFAULTSERVER"
+DEFAULTSERVER = "$DEFAULT_SERVER"
 DEFINITION = $DEFINITION
 
 SYSLOG_ENABLED = $SYSLOG_ENABLED
