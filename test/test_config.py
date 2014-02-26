@@ -30,6 +30,7 @@
 import unittest
 import collections
 import tempfile
+import os
 
 import ztpserver.config
 
@@ -279,8 +280,37 @@ class TestConfig(unittest.TestCase):
         obj.set_value('interface', '1.1.1.1', 'server')
         self.assertEqual(obj.server.interface, '1.1.1.1')
 
-    def test_config_runtime_environ_vlaue(self):
-        raise NotImplementedError
+    def test_config_runtime_environ_env_set(self):
+        os.environ['ZTPS_ENV'] = 'environ'
+        obj = ztpserver.config.Config()
+        attr = ztpserver.config.StrAttr(name='env',
+                                        default='default',
+                                        environ='ZTPS_ENV')
+        obj.add_attribute(attr)
+        self.assertEqual(obj.default.env, 'environ')
+
+    def test_config_runtime_environ_env_notset(self):
+        obj = ztpserver.config.Config()
+        attr = ztpserver.config.StrAttr(name='env',
+                                        default='default',
+                                        environ='ZTPS_ENV')
+        obj.add_attribute(attr)
+        self.assertEqual(obj.default.env, 'default')
+
+    def test_config_runtime_environ_env_set_no_default(self):
+        os.environ['ZTPS_ENV'] = 'environ'
+        obj = ztpserver.config.Config()
+        attr = ztpserver.config.StrAttr(name='env',
+                                        environ='ZTPS_ENV')
+        obj.add_attribute(attr)
+        self.assertEqual(obj.default.env, 'environ')
+
+    def test_config_runtime_environ_env_notset_no_default(self):
+        obj = ztpserver.config.Config()
+        attr = ztpserver.config.StrAttr(name='env',
+                                        environ='ZTPS_ENV')
+        obj.add_attribute(attr)
+        self.assertIsNone(obj.default.env)
 
     def test_load_config_file(self):
         f = tempfile.NamedTemporaryFile(mode='w')
