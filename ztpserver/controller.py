@@ -38,6 +38,7 @@ import webob.static
 import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.repository
+from ztpserver.serializers import Serializer
 
 COLLECTIONS = {
     "actions": {
@@ -66,6 +67,8 @@ COLLECTIONS = {
 log = logging.getLogger(__name__)
 log.info('starting ztpserver.controller')
 
+serializer = Serializer()
+
 class StoreController(ztpserver.wsgiapp.Controller):
 
     def __init__(self, name, **kwargs):
@@ -81,12 +84,6 @@ class StoreController(ztpserver.wsgiapp.Controller):
             log.warn('could not create FileStore due to invalid path')
             filestore = None
         return filestore
-
-class ConfigController(ztpserver.wsgiapp.Controller):
-    def index(self, request, **kwargs):
-        body = dict(logging=list(), xmpp=dict())
-        headers = [('Content-Type', 'application/json')]
-        return webob.Response(status=200, body=body, headers=headers)
 
 class FileStoreController(StoreController):
 
@@ -124,40 +121,55 @@ class NodeController(StoreController):
 
 class BootstrapController(StoreController):
 
+    DEFAULTCONFIG = {
+        "logging": list(),
+        "xmpp": dict()
+    }
+
     def __init__(self):
         super(BootstrapController, self).__init__('bootstrap')
 
     def __repr__(self):
         return "BootstrapController"
 
-    def get_bootstrap(self, node):
+    def get_bootstrap(self):
         """ Returns the bootstrap script """
 
-        default_server = ztpserver.config.runtime.default.server_url
-        bootstrap = self.get_bootstrap_template()
-        if not bootstrap:
-            return webob.exc.HTTPInternalServerError()
+        filename = ztpserver.config.runtime.default.bootstrap_file
+        bootstrap = self.store.get_file(filename)
+        return serializer.deserialize(bootstrap.contents, 'text/x-python')
 
-        body = Template(bootstrap.contents).safe_substitute(DEFAULT_SERVER=default_server)
-        headers = [('Content-Type', 'text/x-python')]
+    def get_config(self):
+        """ returns the full bootstrap configuration as a dict """
 
+        conf = self.store.get_file('bootstrap.conf')
+        if conf.exists:
+            contents = serializer.deserialize(conf.contents, 'application/json')
+        else:
+            log.warn("bootstrap.conf file is missing")
+            contents = self.DEFAULTCONFIG
+        return contents
+
+    def config(self, request, **kwargs):
+        log.debug("requesting bootstrap config")
+        body = serializer.serialize(self.get_config(), 'application/json')
+        headers = [('Content-Type', 'application/json')]
         return webob.Response(status=200, body=body, headers=headers)
 
-    def get_bootstrap_template(self):
-        """ returns full path to the bootstrap template """
-
-        filename = ztpserver.config.runtime.default.bootstrap_file
-        return self.store.get_file(filename)
-
     def index(self, request, **kwargs):
-        node = ztpserver.repository.create_node(request.headers)
         try:
-            obj = self.get_bootstrap(node)
+            bootstrap = self.get_bootstrap()
+            if not bootstrap:
+                log.warn('bootstrap script does not exist')
+                return webob.exc.HTTPInternalServerError()
 
+            default_server = ztpserver.config.runtime.default.server_url
+            body = Template(bootstrap).safe_substitute(DEFAULT_SERVER=default_server)
+            headers = [('Content-Type', 'text/x-python')]
+            resp = webob.Response(status=200, body=body, headers=headers)
         except ztpserver.repository.FileObjectNotFound:
-            obj = webob.exc.HTTPNotFound()
-
-        return obj
+            resp = webob.exc.HTTPNotFound()
+        return resp
 
 
 
@@ -167,13 +179,9 @@ class Router(ztpserver.wsgiapp.Router):
     def __init__(self):
         mapper = routes.Mapper()
 
-        mapper.connect('bootstrap', '/bootstrap',
-                       controller=BootstrapController(),
-                       action='index')
-
-        mapper.connect('config', '/config',
-                       controller=ConfigController(),
-                       action='index')
+        bootstrap = mapper.submapper(controller=BootstrapController())
+        bootstrap.connect('bootstrap', '/bootstrap', action='index')
+        bootstrap.connect('bootstrap_config', '/bootstrap/config', action='config')
 
         mapper.collection('nodes', 'node',
                           controller=NodeController(),

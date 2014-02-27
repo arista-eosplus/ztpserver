@@ -48,7 +48,8 @@ class TestRouter(unittest.TestCase):
 
     def test_router_map(self):
         rtr = ztpserver.controller.Router()
-        for url in ['/bootstrap', '/actions/test', '/objects/test', '/config']:
+        for url in ['/bootstrap', '/actions/test', '/objects/test',
+            '/bootstrap/config']:
             obj = rtr.map.match(url)
             self.assertIsNotNone(obj)
 
@@ -69,10 +70,12 @@ class TestRouter(unittest.TestCase):
 
     def test_router_req_get_config(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/config')
+        req = webob.Request.blank('/bootstrap/config')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'application/json')
+        DEFAULTCONF = dict(logging=list(), xmpp=dict())
+        self.assertDictContainsSubset(DEFAULTCONF, resp.json)
 
     def test_router_req_get_actions_with_id_valid(self):
         rtr = ztpserver.controller.Router()

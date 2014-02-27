@@ -273,7 +273,8 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(BoolAttr(
     name='logging',
-    default=False
+    default=False,
+    environ='ZTPS_LOGGING'
 ))
 
 runtime.add_attribute(BoolAttr(
@@ -319,7 +320,14 @@ runtime.add_attribute(IntAttr(
 runtime.add_attribute(StrAttr(
     name='nodedb',
     group='db',
-    default='/var/lib/ztpserver/db/nodedb'
+    default='nodedb',
+    environ='ZTPS_NODEDB'
 ))
 
+runtime.add_attribute(StrAttr(
+    name='neighbordb',
+    group='db',
+    default='neighbordb',
+    environ='ZTPS_NEIGHBORDB'
+))
 
