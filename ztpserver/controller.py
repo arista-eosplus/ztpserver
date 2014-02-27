@@ -82,12 +82,6 @@ class StoreController(ztpserver.wsgiapp.Controller):
             filestore = None
         return filestore
 
-class ConfigController(ztpserver.wsgiapp.Controller):
-    def index(self, request, **kwargs):
-        body = dict(logging=list(), xmpp=dict())
-        headers = [('Content-Type', 'application/json')]
-        return webob.Response(status=200, body=body, headers=headers)
-
 class FileStoreController(StoreController):
 
     def __repr__(self):
@@ -149,6 +143,14 @@ class BootstrapController(StoreController):
         filename = ztpserver.config.runtime.default.bootstrap_file
         return self.store.get_file(filename)
 
+    def get_config(self):
+        body = dict(logging=list(), xmpp=dict())
+        headers = [('Content-Type', 'application/json')]
+        return webob.Response(status=200, body=body, headers=headers)
+
+    def config(self, request, **kwargs):
+        return self.get_config()
+
     def index(self, request, **kwargs):
         node = ztpserver.repository.create_node(request.headers)
         try:
@@ -167,13 +169,9 @@ class Router(ztpserver.wsgiapp.Router):
     def __init__(self):
         mapper = routes.Mapper()
 
-        mapper.connect('bootstrap', '/bootstrap',
-                       controller=BootstrapController(),
-                       action='index')
-
-        mapper.connect('config', '/config',
-                       controller=ConfigController(),
-                       action='index')
+        bootstrap = mapper.submapper(controller=BootstrapController())
+        bootstrap.connect('bootstrap', '/bootstrap', action='index')
+        bootstrap.connect('bootstrap_config', '/bootstrap/config', action='config')
 
         mapper.collection('nodes', 'node',
                           controller=NodeController(),
