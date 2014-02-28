@@ -156,6 +156,14 @@ class BootstrapController(StoreController):
         headers = [('Content-Type', 'application/json')]
         return webob.Response(status=200, body=body, headers=headers)
 
+    def get_config(self):
+        body = dict(logging=list(), xmpp=dict())
+        headers = [('Content-Type', 'application/json')]
+        return webob.Response(status=200, body=body, headers=headers)
+
+    def config(self, request, **kwargs):
+        return self.get_config()
+
     def index(self, request, **kwargs):
         try:
             bootstrap = self.get_bootstrap()
