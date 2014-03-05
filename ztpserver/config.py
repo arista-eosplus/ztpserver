@@ -28,6 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
 import collections
 import ConfigParser
 
@@ -52,8 +53,11 @@ class Attr(object):
         self.type = kwargs.get('type') or ztpserver.types.String()
         self.group = kwargs.get('group') or 'default'
         self.default = kwargs.get('default')
+        self.environ = kwargs.get('environ')
 
-        if self.default is not None:
+        if self.environ is not None and self.environ in os.environ:
+            self.default = self.type(os.environ.get(self.environ))
+        elif self.default is not None:
             self.default = self.type(self.default)
 
     def __repr__(self):
@@ -237,7 +241,8 @@ runtime = Config()
 # Group: default
 runtime.add_attribute(StrAttr(
     name='data_root',
-    default='/var/lib/ztpserver'
+    default='/var/lib/ztpserver',
+    environ='ZTPS_DATA_ROOT'
 ))
 
 runtime.add_attribute(StrAttr(
@@ -268,7 +273,8 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(BoolAttr(
     name='logging',
-    default=False
+    default=False,
+    environ='ZTPS_LOGGING'
 ))
 
 runtime.add_attribute(BoolAttr(
@@ -314,7 +320,14 @@ runtime.add_attribute(IntAttr(
 runtime.add_attribute(StrAttr(
     name='nodedb',
     group='db',
-    default='/var/lib/ztpserver/db/nodedb'
+    default='nodedb',
+    environ='ZTPS_NODEDB'
 ))
 
+runtime.add_attribute(StrAttr(
+    name='neighbordb',
+    group='db',
+    default='neighbordb',
+    environ='ZTPS_NEIGHBORDB'
+))
 

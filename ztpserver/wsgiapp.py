@@ -27,6 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import logging
+
 import webob
 import webob.dec
 import webob.exc
@@ -35,6 +37,8 @@ import routes
 import routes.middleware
 
 from ztpserver.serializers import Serializer
+
+log = logging.getLogger(__name__)
 
 class Controller(object):
 
@@ -71,7 +75,7 @@ class Controller(object):
 
         except Exception as e:
             resp = { 'body': e, 'content-type': content_type }
-            raise webob.exc.HTTPInternalServerError(resp)
+            raise webob.exc.HTTPInternalServerError(**resp)
 
         if isinstance(result, dict) or result is None:
             if not result:

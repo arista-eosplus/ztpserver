@@ -41,6 +41,9 @@ class SerializerError(Exception):
     pass
 
 class YAMLSerializer(object):
+    """ The :py:class:`YAMLSerializer` class will generate a
+    RuntimeWarning if the PyYaml module is unavialable
+    """
 
     def __new__(cls):
         if not YAML_AVAILABLE:
@@ -64,6 +67,11 @@ class JSONSerializer(object):
         return json.dumps(data)
 
 class Serializer(object):
+    """ The :py:class:`Serializer` will serialize a data structure
+    based on the content-type.   If the content-type is not supported
+    the :py:class:`Serializer` will simply return the data as a
+    :py:class:`str` object
+    """
 
     def serialize(self, data, content_type):
         """ serialize the data base on the content_type

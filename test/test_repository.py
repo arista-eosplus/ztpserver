@@ -69,7 +69,16 @@ class TestFileObject(unittest.TestCase):
         self.assertEqual(repr(obj), 'FileObject(name=%s, type=%s)' %
             (path, 'text/x-python'))
 
+    def test_get_file_contents_valid_file(self):
+        path = os.path.join(os.getcwd(), 'test')
+        fn = 'test_repository.py'
+        obj = ztpserver.repository.FileObject(fn, path)
+        fh = open(os.path.join(path, fn)).read()
+        self.assertEqual(obj.contents, fh)
 
+    def test_get_file_contents_invalid_file(self):
+        obj = ztpserver.repository.FileObject('this_is_an_invalid_file')
+        self.assertIsNone(obj.contents)
 
 class TestFileStore(unittest.TestCase):
 
