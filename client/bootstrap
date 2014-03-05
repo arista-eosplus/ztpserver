@@ -48,6 +48,7 @@ import requests
 import sleekxmpp
 import socket
 import subprocess
+import sys
 import time
 
 from logging.handlers import SysLogHandler
@@ -82,6 +83,7 @@ STARTUP_CONFIG = '/mnt/flash/startup-config'
 
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
+
 
 class ZtpBootstrapError(Exception):
     """ General exception raised by the bootstrap process """
@@ -290,7 +292,6 @@ class ServerConnection(object):
         return self._http_request('actions/%s' % action)
 
 
-
 class XmppClient(object):
     #pylint: disable=W0613
 
@@ -488,7 +489,12 @@ def main():
     apply_config(config)
 
     # Get definition
-    node = Node()
+    try:
+        node = Node()
+    except ZtpBootstrapError:
+        log('Failed to retrieve node information', error=True)
+        sys.exit(1)
+
     definition = server.post_definition(node.details())
 
     # Execute actions
