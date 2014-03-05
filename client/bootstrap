@@ -81,6 +81,8 @@ COMMAND_API_PROTOCOL = 'http'
 
 STARTUP_CONFIG = '/mnt/flash/startup-config'
 
+HTTP_TIMEOUT = 10
+
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
@@ -237,7 +239,7 @@ class SyslogManager(object):
 class ServerConnection(object):
 
     def __init__(self, url):
-        self.url = url
+        self.url = 'http://%s' % url
 
     def _http_request(self, path, method='get', headers=None,
                       payload=None, files=None):
@@ -255,20 +257,16 @@ class ServerConnection(object):
             log('ServerConnection: GET %s' % full_url)
             response = requests.get(full_url,
                                     data=json.dumps(payload),
-                                    header=headers,
-                                    files=request_files)
+                                    headers=headers,
+                                    files=request_files,
+                                    timeout=HTTP_TIMEOUT)
         elif method == 'post':
             log('ServerConnection: POST %s' % full_url)
             response = requests.post(full_url,
                                      data=json.dumps(payload),
                                      header=headers,
-                                     files=request_files)
-        elif method == 'put':
-            log('ServerConnection: PUT %s' % full_url)
-            response = requests.put(full_url,
-                                    data=json.dumps(payload),
-                                    header=headers,
-                                    files=request_files)
+                                     files=request_files,
+                                     timeout=HTTP_TIMEOUT)
         else:
             log('ServerConnection: Unknown method %s' % method, 
                 error=True)
@@ -424,7 +422,7 @@ def log(msg, error=False):
                                        'ERROR: ' if error else '',
                                        msg)
 
-    if xmpp_client.connected:
+    if xmpp_client and xmpp_client.connected:
         xmpp_client.message(msg)
 
     print msg
@@ -485,14 +483,21 @@ def main():
     server = ServerConnection(SERVER)
 
     # Retrieve and apply logging/XMPP configuration from server
-    config = server.get_config()
+    try:
+        config = server.get_config()
+    except requests.exceptions.Timeout:
+        log('Bootstrap process FAILURE - unable to retrieve config from server',
+            error=True)
+        sys.exit(1)
+
     apply_config(config)
 
     # Get definition
     try:
         node = Node()
     except ZtpBootstrapError:
-        log('Failed to retrieve node information', error=True)
+        log('Bootstrap process FAILURE - unable to retrieve node information', 
+            error=True)
         sys.exit(1)
 
     definition = server.post_definition(node.details())
