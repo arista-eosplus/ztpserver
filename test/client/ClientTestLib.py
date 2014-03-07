@@ -1,6 +1,31 @@
-#!/usr/bin/env python
-# Copyright (c) 2014 Arista Networks, Inc.  All rights reserved.
-# Arista Networks, Inc. Confidential and Proprietary.
+#!/usr/bin/env python 
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#  - Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#  - Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#  - Neither the name of Arista Networks nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import imp
 import json
@@ -10,6 +35,7 @@ import pdb
 import subprocess
 import time
 import thread
+import unittest
 
 import BaseHTTPServer
 
@@ -21,6 +47,10 @@ EAPI_PORT = 1080
 
 BOOTSTRAP_FILE = 'client/bootstrap'
 
+CLI_LOG = '/tmp/FastCli-log'
+EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
+
+STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
 
 def debug():
     pdb.set_trace()
@@ -45,36 +75,100 @@ def start_eapi_server():
         eapis.cleanup()
     return eapis
 
+def remove_file(filename):
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+
+def clear_cli_log():
+    remove_file(CLI_LOG)
+
+def clear_eapi_log():
+    remove_file(EAPI_LOG)
+
+def clear_startup_config():
+    remove_file(STARTUP_CONFIG)
+
+def clear_logs():
+    clear_cli_log()    
+    clear_eapi_log()
+
+def eapi_log():
+    try:
+        return [x.strip()
+                for x in open(EAPI_LOG, 'r').readlines()]
+    except IOError:
+        return []
+
+def cli_log():
+    try:
+        return [x.strip().split('-c ')[ -1 ] 
+                for x in open(CLI_LOG, 'r').readlines()]
+    except IOError:
+        return []
+
+def file_log(filename):
+    try:
+        return [x.strip() for x in open(filename, 'r').readlines()
+                if 'SyslogManager' not in x]
+    except IOError:
+        return []
+
+def startup_config_action():
+    return '''#!/bin/bash
+sudo touch %s
+sudo chmod 644 %s
+sudo chown %s %s''' % (STARTUP_CONFIG, STARTUP_CONFIG,
+                       os.getenv('USER'), STARTUP_CONFIG)
+
+
+class BaseTest(unittest.TestCase):
+    #pylint: disable=C0103,R0201,R0904
+
+    def tearDown(self):
+        # Clean up files in /tmp
+        for filename in os.listdir('/tmp'):
+            if (re.search('^bootstrap-', filename) or 
+                re.search('^ztps-log-', filename)) :
+                os.remove(os.path.join('/tmp', filename))
+
+        clear_logs()
+        
 
 class Bootstrap(object):
-    
-    def __init__(self, server=None):
+    #pylint: disable=R0201
+
+    def __init__(self, server=None, eapi_port=None):
         os.environ['PATH'] += ':%s/test/client' % os.getcwd()
 
-        self.server = server
-
-        if not self.server:
-            self.server = '%s:%s' % (ZTPS_SERVER, ZTPS_PORT)
+        self.server = server if server else '%s:%s' % (ZTPS_SERVER, ZTPS_PORT)
+        self.eapi_port = eapi_port if eapi_port else EAPI_PORT
 
         self.output = None
         self.error = None
         self.return_code = None
         self.filename = None
         self.module = None
-        
+
+        self.eapi = start_eapi_server()
+        self.ztps = start_ztp_server()
+
         self.configure()
 
     def configure(self):
         infile = open(BOOTSTRAP_FILE)
-        self.filename = '/tmp/bootstrap-%d' % os.getpid()
+        self.filename = '/tmp/bootstrap-%s' % os.getpid()
         outfile = open(self.filename, 'w')
 
         for line in infile:
             line = line.replace('$SERVER', self.server)
             line = line.replace("COMMAND_API_SERVER = 'localhost'", 
                                 "COMMAND_API_SERVER = 'localhost:%s'" % 
-                                EAPI_PORT)
-            
+                                self.eapi_port)
+            line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'", 
+                                "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
+
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
                 line = 'HTTP_TIMEOUT = 0.01'
@@ -84,10 +178,14 @@ class Bootstrap(object):
         infile.close()
         outfile.close()
         
-        os.chmod(self.filename, 0777)        
+        os.chmod(self.filename, 0777)
         self.module = imp.load_source('bootstrap', self.filename)
 
-    def run(self):
+    def end_test(self):
+        clear_logs()
+        remove_file(self.filename)
+
+    def start_test(self):
         try:
             proc = subprocess.Popen(self.filename, 
                                     stdin=subprocess.PIPE, 
@@ -99,6 +197,23 @@ class Bootstrap(object):
 
         self.return_code = proc.returncode             #pylint: disable=E1101
 
+    def node_information_collected(self):
+        cmds = ['show version', 
+                'show lldp neighbors']
+        return eapi_log()[:2] == cmds
+
+    def eapi_configured(self):
+        cmds = ['configure', 
+                'username ztps secret ztps-password privilege 15', 
+                'management api http-commands', 
+                'no protocol https', 
+                'protocol http', 
+                'no shutdown']
+        return cli_log()[:6] == cmds
+
+    def eapi_node_information_collected(self):
+        return self.eapi_configured() and self.node_information_collected()
+        
     def server_connection_failure(self):
         return self.return_code == 1
 
@@ -107,6 +222,9 @@ class Bootstrap(object):
 
     def missing_startup_config_failure(self):
         return self.return_code == 3
+
+    def success(self):
+        return self.return_code == 0
 
 
 class EAPIServer(object):
@@ -125,9 +243,11 @@ class EAPIServer(object):
             def do_POST(req):
                 request = req.rfile.read(int(req.headers.getheader(
                             'content-length')))
-                cmds = json.loads(request)['params'][1]
+                cmds = [x for x in json.loads(request)['params'][1] if x]
+                if cmds:
+                    open(EAPI_LOG, 'a+b').write('%s\n' % '\n'.join(cmds))
 
-                print 'EAPIServer: responding to request:%s(%s)' % ( 
+                print 'EAPIServer: responding to request:%s (%s)' % ( 
                     req.path, ', '.join(cmds))
 
                 req.send_response(200)
@@ -175,6 +295,9 @@ class ZTPServer(object):
 
     def set_response(self, url, content_type, output):
         self.responses[url] = (content_type, output)
+
+    def set_action_response(self, action, content_type, output):
+        self.responses['/actions/%s' % action ] = (content_type, output)
 
     def set_config_response(self, logging=None, xmpp=None):
         response = { 'logging': [],

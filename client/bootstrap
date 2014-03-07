@@ -87,8 +87,10 @@ syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
 
-class ZtpBootstrapError(Exception):
-    """ General exception raised by the bootstrap process """
+class ZtpBootstrapEapiError(Exception):
+    pass
+
+class ZtpServerConnectionError(Exception):
     pass
 
 
@@ -106,7 +108,7 @@ class Node(object):
         try:
             self._api_enable_cmds([])
         except socket.error:
-            raise ZtpBootstrapError('Unable to create Command API client')
+            raise ZtpBootstrapEapiError('Unable to create  EAPI client')
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
@@ -196,11 +198,15 @@ class SyslogManager(object):
 
     def _add_handler(self, handler, level=None):
         if level is None:
-            level = logging.DEBUG
-        else:
-            level = logging.getLevelName(level)           
+            level = 'DEBUG'
+
+        try:            
+            handler.setLevel(logging.getLevelName(level))
+        except ValueError:
+            log('SyslogManager: unknown logging level (%s) - using '
+                'log.DEFAULT instead' % level, error=True)
+            handler.setLevel(logging.DEBUG)
             
-        handler.setLevel(level)
         handler.setFormatter(self.formatter)
         self.log.addHandler(handler)
 
@@ -209,12 +215,12 @@ class SyslogManager(object):
         self._add_handler(SysLogHandler(address=SYSLOG))
 
     def _add_file_handler(self, filename, level=None):
-        log('SyslogManager: adding file handler (%s=%s)' % 
+        log('SyslogManager: adding file handler (%s - level:%s)' % 
             (filename, level))
         self._add_handler(logging.FileHandler(filename), level)
 
     def _add_remote_syslog_handler(self, host, port, level=None):
-        log('SyslogManager: adding remote handler (%s:%s=%s)' % 
+        log('SyslogManager: adding remote handler (%s:%s - level:%s)' % 
             (host, port, level))
         self._add_handler(SysLogHandler(address=(host, port)), level)
 
@@ -224,7 +230,7 @@ class SyslogManager(object):
                              entry['destination'])
             if match:
                 self._add_file_handler(match.groups()[ 0 ], 
-                                                entry['level'])
+                                       entry['level'])
             else:
                 match = re.match('^(.+):(.+)',
                                  entry['destination'])
@@ -254,23 +260,26 @@ class Server(object):
             request_files[entry] = open(entry,'rb')
             
         full_url = '%s/%s' % (self.url, path)
-        if method == 'get':
-            log('Server: GET %s' % full_url)
-            response = requests.get(full_url,
-                                    data=json.dumps(payload),
-                                    headers=headers,
-                                    files=request_files,
-                                    timeout=HTTP_TIMEOUT)
-        elif method == 'post':
-            log('Server: POST %s' % full_url)
-            response = requests.post(full_url,
-                                     data=json.dumps(payload),
-                                     headers=headers,
-                                     files=request_files,
-                                     timeout=HTTP_TIMEOUT)
-        else:
-            log('Server: Unknown method %s' % method, 
-                error=True)
+        try:
+            if method == 'get':
+                log('Server: GET %s' % full_url)
+                response = requests.get(full_url,
+                                        data=json.dumps(payload),
+                                        headers=headers,
+                                        files=request_files,
+                                        timeout=HTTP_TIMEOUT)
+            elif method == 'post':
+                log('Server: POST %s' % full_url)
+                response = requests.post(full_url,
+                                         data=json.dumps(payload),
+                                         headers=headers,
+                                         files=request_files,
+                                         timeout=HTTP_TIMEOUT)
+            else:
+                log('Server: Unknown method %s' % method, 
+                    error=True)
+        except requests.exceptions.ConnectionError:
+            raise ZtpServerConnectionError
 
         return response
 
@@ -402,15 +411,21 @@ def apply_config(config):
     log('Configuring XMPP')
     xmpp_config = config['xmpp']
     if xmpp_config:
-        xmpp_client = XmppClient(xmpp_config['username'], 
-                                 xmpp_config['domain'], 
-                                 xmpp_config['password'],
-                                 xmpp_config['server'], 
-                                 xmpp_config.get('port', 5222),
-                                 xmpp_config.get('nickname', 
-                                                 xmpp_config['username']),
-                                 xmpp_config.get('rooms', []))
-
+        if ('username' in xmpp_config and
+            'domain' in xmpp_config and
+            'password' in xmpp_config and
+            'server' in xmpp_config):
+            xmpp_client = XmppClient(xmpp_config['username'], 
+                                     xmpp_config['domain'], 
+                                     xmpp_config['password'],
+                                     xmpp_config['server'], 
+                                     xmpp_config.get('port', 5222),
+                                     xmpp_config.get('nickname', 
+                                                     xmpp_config['username']),
+                                     xmpp_config.get('rooms', []))
+        else:
+            log('XMPP configuration failed because server response is missing '
+                'config details', error=True)
 
 def log(msg, error=False):
     if syslog_manager:
@@ -487,7 +502,7 @@ def main():
     # Retrieve and apply logging/XMPP configuration from server
     try:
         config = server.get_config()
-    except requests.exceptions.Timeout:
+    except ZtpServerConnectionError:
         log('Bootstrap process FAILURE - unable to retrieve config from server',
             error=True)
         sys.exit(1)
@@ -498,7 +513,7 @@ def main():
     # Get definition
     try:
         node = Node()
-    except ZtpBootstrapError:
+    except ZtpBootstrapEapiError:
         log('Bootstrap process FAILURE - unable to retrieve node information', 
             error=True)
         sys.exit(2)
@@ -511,13 +526,15 @@ def main():
 
     ATTRIBUTES = definition['attributes']
     for action, details in definition['actions'].iteritems():
-        missing_attr = [x for x in details['requires'] if x not in ATTRIBUTES]
-        if missing_attr:
-            log('Failed to load action %s because the following '
-                'attributes are missing: %s' % (action, 
-                                                ', '.join(missing_attr)),
-                error=True)            
-            continue
+        if 'requires' in details:
+            missing_attr = [x for x in details['requires'] 
+                            if x not in ATTRIBUTES]
+            if missing_attr:
+                log('Failed to load action %s because the following '
+                    'attributes are missing: %s' % (action, 
+                                                    ', '.join(missing_attr)),
+                    error=True)            
+                continue
         execute_action(server, action, details)
 
     log('Definition %s applied successfully' % definition_name)
