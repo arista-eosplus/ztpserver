@@ -3,3 +3,4 @@ routes
 pyyaml
 jsonrpclib
 requests
+sleekxmpp
