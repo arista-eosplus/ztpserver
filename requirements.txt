@@ -1,3 +1,4 @@
 webob
 routes
 pyyaml
+jsonrpclib
