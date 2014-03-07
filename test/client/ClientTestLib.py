@@ -17,18 +17,39 @@ ZTPS_SERVER = '127.0.0.1'
 ZTPS_PORT = 12345
 
 EAPI_SERVER = '127.0.0.1'
-EAPI_PORT = 80
+EAPI_PORT = 1080
 
 BOOTSTRAP_FILE = 'client/bootstrap'
 
+
 def debug():
     pdb.set_trace()
+
+ztps = None    #pylint: disable=C0103
+def start_ztp_server():
+    global ztps     #pylint: disable=W0603
+    if not ztps:
+        ztps = ZTPServer()
+        ztps.start()
+    else:
+        ztps.cleanup()
+    return ztps
+
+eapis = None    #pylint: disable=C0103
+def start_eapi_server():
+    global eapis    #pylint: disable=W0603
+    if not eapis:
+        eapis = EAPIServer()
+        eapis.start()
+    else:
+        eapis.cleanup()
+    return eapis
+
 
 class Bootstrap(object):
     
     def __init__(self, server=None):
         os.environ['PATH'] += ':%s/test/client' % os.getcwd()
-        print os.environ['PATH']
 
         self.server = server
 
@@ -50,6 +71,9 @@ class Bootstrap(object):
 
         for line in infile:
             line = line.replace('$SERVER', self.server)
+            line = line.replace("COMMAND_API_SERVER = 'localhost'", 
+                                "COMMAND_API_SERVER = 'localhost:%s'" % 
+                                EAPI_PORT)
             
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -82,11 +106,14 @@ class Bootstrap(object):
         return self.return_code == 2
 
     def missing_startup_config_failure(self):
-        return self.return_code == 2
+        return self.return_code == 3
 
 
 class EAPIServer(object):
-    #pylint: disable=C0103,E0213
+    #pylint: disable=C0103,E0213,W0201
+
+    def cleanup(self):
+        self.responses = {}
 
     def start(self):
         thread.start_new_thread(self._run, ())
@@ -136,11 +163,15 @@ class EAPIServer(object):
             print time.asctime(), 'EAPIServer: Server stops - %s:%s' % (
                 EAPI_SERVER, EAPI_PORT)
 
+
 class ZTPServer(object):
     #pylint: disable=C0103,,E0213
 
     # { <URL>: ( <CONTNENT-TYPE>, <RESPONSE> ) }
     responses = {}
+
+    def cleanup(self):
+        self.responses = {}
 
     def set_response(self, url, content_type, output):
         self.responses[url] = (content_type, output)
