@@ -3,4 +3,10 @@
 # Arista Networks, Inc. Confidential and Proprietary.
 
 # This is used by the tests in order to simulate FastCli calls
-print ''
+import sys
+from ClientTestLib import CLI_LOG
+
+open(CLI_LOG, 'a+b').write('%s\n' % ' '.join(sys.argv))
+
+# Need to return something, so that the check for EAPI being enabled succeeds
+print 'Success!'
