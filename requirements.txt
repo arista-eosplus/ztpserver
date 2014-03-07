@@ -1,3 +1,6 @@
 webob
 routes
 pyyaml
+jsonrpclib
+requests
+sleekxmpp
