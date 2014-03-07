@@ -92,7 +92,7 @@ class ZtpBootstrapError(Exception):
     pass
 
 
-class Node( object ):
+class Node(object):
 
     def __init__(self):
         Node._enable_api()
@@ -152,6 +152,7 @@ class Node( object ):
     def system(self):
         result = {}
         info = self._api_enable_cmds(['show version'])[0]
+
 
         result['model'] = info['modelName']
         result['version'] = info['internalVersion']
@@ -236,7 +237,7 @@ class SyslogManager(object):
                         ' %s' % str( entry ), error=True)
 
 
-class ServerConnection(object):
+class Server(object):
 
     def __init__(self, url):
         self.url = 'http://%s' % url
@@ -254,39 +255,39 @@ class ServerConnection(object):
             
         full_url = '%s/%s' % (self.url, path)
         if method == 'get':
-            log('ServerConnection: GET %s' % full_url)
+            log('Server: GET %s' % full_url)
             response = requests.get(full_url,
                                     data=json.dumps(payload),
                                     headers=headers,
                                     files=request_files,
                                     timeout=HTTP_TIMEOUT)
         elif method == 'post':
-            log('ServerConnection: POST %s' % full_url)
+            log('Server: POST %s' % full_url)
             response = requests.post(full_url,
                                      data=json.dumps(payload),
-                                     header=headers,
+                                     headers=headers,
                                      files=request_files,
                                      timeout=HTTP_TIMEOUT)
         else:
-            log('ServerConnection: Unknown method %s' % method, 
+            log('Server: Unknown method %s' % method, 
                 error=True)
 
         return response
 
     def get_config(self):
-        log('ServerConnection: Retrieving server config')
+        log('Server: Retrieving server config')
         return self._http_request( 'bootstrap/config' ).json()
 
     def post_definition(self, node):
-        log('ServerConnection: Retrieving server config')
+        log('Server: Retrieving server config')
         headers = {'content-type': CONTENT_TYPE_JSON}
-        return self._http_request('bootstrap/config',
+        return self._http_request('nodes',
                                   method='post',
                                   headers=headers,
                                   payload=node).json()
 
     def get_action(self, action):
-        log('ServerConnection: Retrieving server config')
+        log('Server: Retrieving server config')
         return self._http_request('actions/%s' % action)
 
 
@@ -400,14 +401,15 @@ def apply_config(config):
 
     log('Configuring XMPP')
     xmpp_config = config['xmpp']
-    xmpp_client = XmppClient(xmpp_config['username'], 
-                             xmpp_config['domain'], 
-                             xmpp_config['password'],
-                             xmpp_config['server'], 
-                             xmpp_config.get('port', 5222),
-                             xmpp_config.get('nickname', 
-                                             xmpp_config['username']),
-                             xmpp_config.get('rooms', []))
+    if xmpp_config:
+        xmpp_client = XmppClient(xmpp_config['username'], 
+                                 xmpp_config['domain'], 
+                                 xmpp_config['password'],
+                                 xmpp_config['server'], 
+                                 xmpp_config.get('port', 5222),
+                                 xmpp_config.get('nickname', 
+                                                 xmpp_config['username']),
+                                 xmpp_config.get('rooms', []))
 
 
 def log(msg, error=False):
@@ -480,7 +482,7 @@ def main():
     #pylint: disable=W0603
     global ATTRIBUTES, syslog_manager                   
     syslog_manager = SyslogManager()
-    server = ServerConnection(SERVER)
+    server = Server(SERVER)
 
     # Retrieve and apply logging/XMPP configuration from server
     try:
@@ -490,6 +492,7 @@ def main():
             error=True)
         sys.exit(1)
 
+    log('Config retrieved from server')
     apply_config(config)
 
     # Get definition
@@ -498,7 +501,7 @@ def main():
     except ZtpBootstrapError:
         log('Bootstrap process FAILURE - unable to retrieve node information', 
             error=True)
-        sys.exit(1)
+        sys.exit(2)
 
     definition = server.post_definition(node.details())
 
@@ -523,6 +526,7 @@ def main():
     if not node.has_startup_config():
         log('Startup configuration is missing at the end of the '
             'bootstrap process', error=True)        
+        sys.exit(3)
 
 if __name__ == '__main__':
     main()

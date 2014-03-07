@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+# Copyright (c) 2014 Arista Networks, Inc.  All rights reserved.
+# Arista Networks, Inc. Confidential and Proprietary.
+
+# This is used by the tests in order to simulate FastCli calls
+print ''

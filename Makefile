@@ -41,6 +41,7 @@ clean:
 
 tests: clean
 	$(PYTHON)  -m unittest discover ./test -v
+	$(PYTHON)  -m unittest discover ./test/client -v
 
 python:
 	$(PYTHON) setup.py build
