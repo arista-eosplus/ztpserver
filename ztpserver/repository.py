@@ -74,9 +74,8 @@ class FileObject(object):
 
     @property
     def contents(self):
-        if self._contents is None:
-            if self.exists:
-                self._contents = open(self.name).read()
+        if self._contents is None and self.exists:
+            self._contents = open(self.name).read()
         return self._contents
 
     @property
