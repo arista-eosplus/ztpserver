@@ -30,8 +30,38 @@
 import unittest
 import os
 
-import ztpserver.config
 import ztpserver.data
+
+class Functions(unittest.TestCase):
+
+    def setUp(self):
+        self.Functions = ztpserver.data.Functions
+
+    def test_functions_exact_true(self):
+        self.assertTrue(self.Functions.exact('test', 'test'))
+
+    def test_functions_exact_false(self):
+        self.assertFalse(self.Functions.exact('test', 'nottest'))
+
+    def test_functions_includes_true(self):
+        self.assertTrue(self.Functions.includes('test', 'unittest'))
+
+    def test_functions_includes_false(self):
+        self.assertFalse(self.Functions.includes('test', 'functions'))
+
+    def test_functions_excludes_true(self):
+        self.assertTrue(self.Functions.excludes('test', 'functions'))
+
+    def test_functions_includes_false(self):
+        self.assertFalse(self.Functions.excludes('test', 'unittest'))
+
+    def test_functions_regex_true(self):
+        self.assertTrue(self.Functions.regex("\w+", "test"))
+
+    def test_functions_regex_false(self):
+        self.assertFalse(self.Functions.regex("\d+", "test"))
+
+
 
 class TestNodeDb(unittest.TestCase):
     pass
