@@ -39,6 +39,10 @@ FUNC_RE = re.compile("(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)
 
 serializer = ztpserver.serializers.Serializer()
 
+class NodeDbError(Exception):
+    """ base exception for raising NodeDb errrors"""
+    pass
+
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
         self.data = dict()
@@ -141,11 +145,14 @@ class NodeDb(Collection):
         return "NodeDb(entries=%d)" % len(self.data)
 
     def load(self, filename):
-        contents = serializer.deserialize(open(filename).read(),
-                                          'application/yaml')
+        try:
+            contents = serializer.deserialize(open(filename).read(),
+                                              'application/yaml')
 
-        for k,v in contents.items():
-            self.data[str(k)] = v
+            for k,v in contents.items():
+                self.data[str(k)] = v
+        except IOError:
+            raise NodeDbError("file not found")
 
 
 class Functions(object):
