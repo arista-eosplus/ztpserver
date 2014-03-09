@@ -107,6 +107,7 @@ class Interfaces(OrderedCollection):
     def add_interfaces(self, interface_list):
         if not isinstance(interface_list, list):
             raise TypeError("argument must be a list")
+
         for name in interface_list:
             self.add_interface(name)
 
@@ -183,9 +184,13 @@ class NeighborDb(object):
         self.variables = dict()
         self.patterns = { 'globals': dict(), 'nodes': dict() }
 
+    def __repr__(self):
+        return "NeighborDb(globals=%d, nodes=%s)" %\
+            (len(self.patterns['globals']), len(self.patterns['nodes']))
+
     def load(self, filename):
-        contents = serializers.deserialize(open(filename).read(),
-                                           'application/yaml')
+        contents = serializer.deserialize(open(filename).read(),
+                                          'application/yaml')
 
         self.variables = contents.get('variables') or dict()
         if 'any' in self.variables or 'none' in self.variables:
@@ -207,7 +212,7 @@ class NeighborDb(object):
                 obj.node = pattern['node']
                 self.patterns['nodes'][obj.node] = obj
             else:
-                self.patterns['global'][id(obj)] = obj
+                self.patterns['globals'][id(obj)] = obj
 
     def _parse_interface(self, interface, values):
 
@@ -245,7 +250,7 @@ class InterfacePattern(object):
         return "InterfacePattern(interface=%s, node=%s, port=%s)" %\
             (self.interface, self.node, self.port)
 
-    def _match_interfaces(self, pattern, interface_set):
+    def _match_interfaces(self, pattern, interface_set, match_all=True):
 
         indicies = lambda x: re.split("[a-zA-Z]*", x)[1]
 
@@ -253,7 +258,6 @@ class InterfacePattern(object):
         pattern = pattern.split(',')
 
         pattern_set = list()
-
         for item in pattern:
             if '-' in item:
                 start, stop = item.split('-')
@@ -263,7 +267,9 @@ class InterfacePattern(object):
                 pattern_set.append("Ethernet%s" % item)
 
         result = [i for i in pattern_set if i in interface_set]
-        if len(pattern_set) != len(result):
+        if len(result) == 0:
+            result = None
+        elif match_all and (len(pattern_set) != len(result)):
             result = None
 
         return result
@@ -271,7 +277,7 @@ class InterfacePattern(object):
     def match_interfaces(self, interface_set):
         return self._match_interfaces(self.interface, interface_set)
 
-    def match_node(self, neighbor):
+    def match_device(self, neighbor):
 
         if self.node is None:
             return neighbor is None
@@ -279,7 +285,7 @@ class InterfacePattern(object):
         m = FUNC_RE.match(self.node)
 
         method = m.group('function') if m else 'exact'
-        method = getattr(functions, method)
+        method = getattr(Functions, method)
         arg = m.group('arg') if m else self.node
 
         return method(arg, neighbor)
@@ -287,7 +293,7 @@ class InterfacePattern(object):
     def match_port(self, neighbor_port):
         if self.port == 'any' or (self.port is None and self.node is not None):
             return True
-        result = self._match_interfaces(self.port, neighbor_port)
+        result = self._match_interfaces(self.port, [neighbor_port], False)
         return False if result is None else True
 
 

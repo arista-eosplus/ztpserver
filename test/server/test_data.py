@@ -147,7 +147,41 @@ class TestNode(unittest.TestCase):
         self.assertRaises(TypeError, obj.add_interface, 'test')
 
 class TestNeighborDb(unittest.TestCase):
-    pass
+
+    def test_create_neighbordb(self):
+        obj = ztpserver.data.NeighborDb()
+        self.assertIsInstance(obj, ztpserver.data.NeighborDb)
+
+    def test_load_valid_filename_and_contents(self):
+        fn = os.path.join(os.getcwd(), "test/data/neighbordb.yml")
+        obj = ztpserver.data.NeighborDb()
+        obj.load(fn)
+        self.assertEqual(repr(obj), "NeighborDb(globals=3, nodes=2)")
+
+    def test_load_invalid_filename(self):
+        obj = ztpserver.data.NeighborDb()
+        self.assertRaises(IOError, obj.load, '/tmp/fake/file')
+
+    def test_parse_interface_values(self):
+        obj = ztpserver.data.NeighborDb()
+        values = dict(device='device', port='port', tags='tags')
+        result = obj._parse_interface('Ethernet', values)
+        expected = ('Ethernet', 'device', 'port', 'tags')
+        self.assertEqual(result, expected)
+
+    def test_parse_interface_any(self):
+        obj = ztpserver.data.NeighborDb()
+        result = obj._parse_interface('Ethernet', 'any')
+        expected = ('Ethernet', 'any', 'any', None)
+        self.assertEqual(result, expected)
+
+    def test_parse_interface_none(self):
+        obj = ztpserver.data.NeighborDb()
+        result = obj._parse_interface('Ethernet', 'none')
+        expected = ('Ethernet', None, None, None)
+        self.assertEqual(result, expected)
+
+
 
 class TestPattern(unittest.TestCase):
 
@@ -190,18 +224,49 @@ class TestInterfacePattern(unittest.TestCase):
         result = obj.match_interfaces(['Ethernet1', 'Ethernet2'])
         self.assertIsNone(result)
 
-    def test_match_device_valid(self):
-        pass
+    def test_match_device_exact_true(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "exact('spine')", "any")
+        self.assertTrue(obj.match_device('spine'))
 
-    def test_match_device_invalid(self):
-        pass
+    def test_match_device_exact_false(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "exact('spine')", "any")
+        self.assertFalse(obj.match_device('leaf'))
 
-    def test_match_port_valid(self):
-        pass
+    def test_match_device_includes_true(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "includes('spine')", "any")
+        self.assertTrue(obj.match_device('pod1-spine1'))
 
-    def test_match_port_invalid(self):
-        pass
+    def test_match_device_includes_false(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "includes('spine')", "any")
+        self.assertFalse(obj.match_device('pod1-leaf1'))
 
+    def test_match_device_excludes_true(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "excludes('spine')", "any")
+        self.assertTrue(obj.match_device('pod1-leaf1'))
+
+    def test_match_device_excludes_false(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "excludes('spine')", "any")
+        self.assertFalse(obj.match_device('pod1-spine1'))
+
+    def test_match_device_regex_true(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "regex('pod\d+-spine\d+')", "any")
+        self.assertTrue(obj.match_device('pod1-spine1'))
+
+    def test_match_device_regex_false(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "exact('pod\d+-spine\d+')", "any")
+        self.assertFalse(obj.match_device('pod1-leaf1'))
+
+    def test_match_port_true(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "any", "Ethernet1")
+        self.assertTrue(obj.match_port('Ethernet1'))
+
+    def test_match_port_true_range(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "any", "Ethernet1-3")
+        self.assertTrue(obj.match_port('Ethernet1'))
+
+    def test_match_port_false(self):
+        obj = ztpserver.data.InterfacePattern("Ethernet", "any", "Ethernet1")
+        self.assertFalse(obj.match_port('Ethernet2'))
 
 
 
