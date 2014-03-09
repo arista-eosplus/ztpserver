@@ -82,7 +82,7 @@ class Interface(object):
         self.neighbors = list()
 
     def __repr__(self):
-        return "Interface(name=%s, neighbor_count=%d)" % \
+        return "Interface(name=%s, neighbors=%d)" % \
             (self.name, len(self.neighbors))
 
     def add_neighbor(self, device, port):
@@ -116,14 +116,17 @@ class Node(object):
     network element
     """
 
-    def __init__(self):
-        self.model = None
-        self.systemmac = None
-        self.serialnumber = None
-        self.version = None
+    def __init__(self, **kwargs):
+        self.model = kwargs.get('model')
+        self.systemmac = kwargs.get('systemmac')
+        self.serialnumber = kwargs.get('serialnumber')
+        self.version = kwargs.get('version')
         self.interfaces = Interfaces()
 
         super(Node, self).__init__()
+
+    def __repr__(self):
+        return "Node(interfaces=%s)" % len(self.interfaces)
 
     def add_interface(self, name):
         if not name.startswith("Ethernet"):
@@ -178,10 +181,7 @@ class NeighborDb(object):
 
     def __init__(self):
         self.variables = dict()
-
-        self.patterns = dict()
-        self.patterns['global'] = dict()
-        self.patterns['nodes'] = dict()
+        self.patterns = { 'globals': dict(), 'nodes': dict() }
 
     def load(self, filename):
         contents = serializers.deserialize(open(filename).read(),
@@ -199,7 +199,6 @@ class NeighborDb(object):
             obj.variables = pattern.get('variables')
 
             for interface in pattern['interfaces']:
-
                 for key, values in interface.items():
                     args = self._parse_interface(key, values)
                     obj.add_interface(*args)
