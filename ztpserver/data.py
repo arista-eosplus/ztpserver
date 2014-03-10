@@ -98,7 +98,8 @@ class Interfaces(OrderedCollection):
         return "Interfaces(count=%d)" % len(self)
 
     def add_interface(self, obj):
-        if isinstance(obj, str):
+        # FIXME: we should handle unicode translation elsewhere
+        if isinstance(obj, str) or isinstance(obj, unicode):
             obj = Interface(obj)
         elif not isinstance(obj, Interface):
             raise TypeError("argument of type %s is not supported" % type(obj))
@@ -239,6 +240,7 @@ class NeighborDb(object):
 
 
 class InterfacePattern(object):
+    # FIXME: node should be device
 
     def __init__(self, interface, node, port, tags=None):
         self.interface = interface

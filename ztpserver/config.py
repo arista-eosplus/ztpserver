@@ -246,18 +246,14 @@ runtime.add_attribute(StrAttr(
 ))
 
 runtime.add_attribute(StrAttr(
-    name='hostdb',
-    default='hostdb'
-))
-
-runtime.add_attribute(StrAttr(
     name='bootstrap_file',
     default='default'
 ))
 
 runtime.add_attribute(StrAttr(
-    name='default_profile',
-    default='default'
+    name='definition',
+    default='default',
+    environ='ZTPS_DEFAULT_DEFINITION'
 ))
 
 runtime.add_attribute(StrAttr(
