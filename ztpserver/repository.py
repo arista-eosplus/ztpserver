@@ -74,9 +74,8 @@ class FileObject(object):
 
     @property
     def contents(self):
-        if self._contents is None:
-            if self.exists:
-                self._contents = open(self.name).read()
+        if self._contents is None and self.exists:
+            self._contents = open(self.name).read()
         return self._contents
 
     @property
@@ -106,6 +105,17 @@ class FileStore(object):
 
     def add_file(self, filepath):
         raise NotImplementedError
+
+    def add_folder(self, folderpath):
+        folderpath = self._transform(folderpath)
+        if not os.path.exists(folderpath):
+            os.makedirs(folderpath)
+        return folderpath
+
+    def write_file(self, filepath, contents, binary=False):
+        mode = 'wb' if binary else 'w'
+        filepath = self._transform(filepath)
+        fh = open(filepath, mode).writelines(contents)
 
     def exists(self, filepath):
         filepath = self._transform(filepath)

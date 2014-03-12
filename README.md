@@ -12,6 +12,7 @@ This ZTP Server provides a number of configurable features that extend beyond si
 
 ## Support
 
+* [Mailing List](https://groups.google.com/forum/#!forum/eosplus)
 * IRC: irc.freenode.net#arista
 
 ## Dependencies

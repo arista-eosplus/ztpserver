@@ -1,0 +1,74 @@
+variables:
+  not_spine: exclude('spine')
+  not_pod1: exclude('pod1')
+  ny_pod: regex("ny\d+")
+
+patterns:
+  - name: sample node template 1
+    definition: leaf_template
+    node: 000c29f5d27d
+    interfaces:
+      - Ethernet49: pod1-spine1:Ethernet1/1
+      - Ethernet50:
+          device: pod1-spine2
+          port: Ethernet1/1
+
+
+  - name: sample node template 2
+    definition: leaf_template
+    node: 001c73aabbcc
+    interfaces:
+      - Ethernet1-8: none
+      - Ethernet9,10,11-13: any:Ethernet50
+      - any: regex('pod\d+-spine\d+'):Ethernet1/$
+      - any:
+          device: regex('pod\d+-spine1')
+          port: Ethernet2/3
+
+
+  - name: sample global template 1
+    definition: dc-1/pod-1/leaf_template
+    variables:
+      not_spine: excludes('spine')
+      any_spine: regex('spine\d+')
+      any_pod: includes('pod')
+      any_pod_spine: any_spine and any_pod
+    interfaces:
+      - Ethernet1: pod1-spine1:Ethernet1
+      - Ethernet2: pod1-spine2:Ethernet1
+      - any: spine5:Ethernet2
+      - Ethernet49:
+          device: excludes('spine')
+          port: Ethernet49
+      - Ethernet50:
+          device: excludes('spine')
+          port: Ethernet50
+
+
+  - name: sample global template 2
+    definition: mlag_leaf_template
+    variables:
+      any_spine: includes('spine')
+      not_spine: not any_spine
+    interfaces:
+      - Ethernet1: any_spine:Ethernet1/$
+      - Ethernet2: any_spine:any
+      - Ethernet3: none
+      - Ethernet4: any
+      - Ethernet5:
+          device: includes('oob')
+          port: any
+      - Ethernet49: not_spine:Ethernet49
+      - Ethernet50: not_spine:Ethernet50
+
+  - name: sample global template 3
+    definition: mlag_leaf_template
+    variables:
+      any_spine: includes('spine')
+      not_spine: not any_spine
+    interfaces:
+      - Ethernet1-3: any_spine:Ethernet1/$
+      - Ethernet5,6,7: any_spine:any
+      - Ethernet49: not_spine:Ethernet49
+      - Ethernet50: not_spine:Ethernet50
+

@@ -7,6 +7,8 @@
 #   make sdist -- builds a source distribution
 #   make pyflakes, make pep8 -- source code checks
 #   make tests -- run the tests
+#   make test_server -- run server tests
+#   make test_client -- run client tests
 #   make clean -- cleans distutils
 
 ########################################################
@@ -39,9 +41,15 @@ clean:
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 
+test_client: clean
+	$(PYTHON)  -m unittest discover test/client -v
+
+test_server: clean
+	$(PYTHON)  -m unittest discover test/server -v
+
 tests: clean
 	$(PYTHON)  -m unittest discover test/client -v
-	$(PYTHON)  -m unittest discover test -v
+	$(PYTHON)  -m unittest discover test/server -v
 
 python:
 	$(PYTHON) setup.py build

@@ -70,7 +70,7 @@ class TestFileObject(unittest.TestCase):
             (path, 'text/x-python'))
 
     def test_get_file_contents_valid_file(self):
-        path = os.path.join(os.getcwd(), 'test')
+        path = os.path.join(os.getcwd(), 'test/server')
         fn = 'test_repository.py'
         obj = ztpserver.repository.FileObject(fn, path)
         fh = open(os.path.join(path, fn)).read()
@@ -90,7 +90,7 @@ class TestFileStore(unittest.TestCase):
         self.assertEqual(repr(obj), "FileStore(path=%s)" % path)
 
     def test_get_file_valid(self):
-        filestore = 'test'
+        filestore = 'test/server'
         filename = 'test_repository.py'
         path = os.path.join(os.getcwd(), filestore, filename)
         fspath = os.path.join(os.getcwd(), filestore)

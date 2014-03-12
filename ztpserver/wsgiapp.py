@@ -74,8 +74,8 @@ class Controller(object):
             result = method(request, **request.urlvars)
 
         except Exception as e:
-            resp = { 'body': e, 'content-type': content_type }
-            raise webob.exc.HTTPInternalServerError(**resp)
+            log.exception(e)
+            raise webob.exc.HTTPInternalServerError()
 
         if isinstance(result, dict) or result is None:
             if not result:

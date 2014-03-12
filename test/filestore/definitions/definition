@@ -1,0 +1,48 @@
+---
+- name: verify software image
+  action: install_image
+  on_start: validating installed software image
+  attributes:
+    filename: eos-4.13-1.swi
+    version: 4.13.1
+
+- name: install puppet client
+  action: install_extension
+  on_start: starting installation of puppet client
+  on_success: puppet client installed successfully
+  on_failure: puppet client installation failed
+  
+  attributes:
+    filename: puppet-client.rpm
+    autoload: true
+    
+- name: configure domain
+  action: add_config
+  attributes:
+    template: domain.template
+    variables:
+      domain: aristanewtorks.com
+    
+- name: configure uplinks
+  action: add_config_interface
+  attributes:
+    template: layer_3_uplink.template or layer_2.template
+    
+    
+- name: configure hostname
+  action: add_config
+  attributes:
+    template: hostname.template
+    variables:
+      hostname: spine-1
+    
+- name: configure management 1
+  action: add_config
+  on_start: configuring interface Ma1
+  attributes:
+    template: ma1.template
+    variables:
+      ipaddress: $ipaddress
+      description: this is my description
+
+

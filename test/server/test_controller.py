@@ -29,6 +29,7 @@
 #
 import unittest
 import os
+import httplib
 
 import routes
 import webob
@@ -129,7 +130,6 @@ class TestFileStoreController(unittest.TestCase):
 
         obj = controller.show(req, 'test.py')
         self.assertIsInstance(obj, webob.static.FileApp)
-
 
 
 
