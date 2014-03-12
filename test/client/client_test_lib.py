@@ -32,7 +32,9 @@ import json
 import re
 import os
 import pdb
+import random
 import subprocess
+import string
 import time
 import thread
 import unittest
@@ -122,6 +124,24 @@ sudo chmod 644 %s
 sudo chown %s %s''' % (STARTUP_CONFIG, STARTUP_CONFIG,
                        os.getenv('USER'), STARTUP_CONFIG)
 
+def bash_action(msg=None):
+    #pylint: disable=E0602
+    if not msg:
+        msg = ATTRIBUTES['bash_action']
+    return '''#!/bin/bash
+echo %s''' % msg
+
+def python_action(msg):
+    #pylint: disable=E0602
+    if not msg:
+        msg = ATTRIBUTES['python_action']
+    return '''#!/usr/bin/env python
+print %s''' % msg
+
+def random_string():
+    return ''.join(random.choice(
+            string.ascii_uppercase + 
+            string.digits) for _ in range(random.randint(10,100)))
 
 class BaseTest(unittest.TestCase):
     #pylint: disable=C0103,R0201,R0904
@@ -326,7 +346,7 @@ class ZTPServer(object):
 
 
         self.responses['/nodes'] = ('application/json', 
-                                               json.dumps(response))
+                                    json.dumps(response))
 
     def start(self):
         thread.start_new_thread(self._run, ())

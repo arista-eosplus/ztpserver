@@ -33,10 +33,11 @@ import os
 import os.path
 import unittest
 
-from ClientTestLib import debug    #pylint: disable=W0611
-from ClientTestLib import Bootstrap, BaseTest
-from ClientTestLib import cli_log, file_log, remove_file
-from ClientTestLib import startup_config_action, clear_startup_config
+from client_test_lib import debug    #pylint: disable=W0611
+from client_test_lib import Bootstrap, BaseTest
+from client_test_lib import cli_log, file_log, remove_file
+from client_test_lib import startup_config_action, clear_startup_config
+from client_test_lib import bash_action, python_action, random_string
 
 class ServerNotRunningTest(BaseTest):
     
@@ -154,22 +155,24 @@ class XmppConfigTest(BaseTest):
 
         bootstrap.end_test()
 
-class ActionTest(BaseTest):
+# TODO
+# class ActionTest(BaseTest):
 
-    def test(self):
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response()
-        bootstrap.ztps.set_definition_response(actions={'save_config' : {}})
-        bootstrap.ztps.set_action_response('save_config', 'text/plain',
-                                           startup_config_action())
-        bootstrap.start_test()
+    # def test_save_config(self):
+    #     bootstrap = Bootstrap()
+    #     bootstrap.ztps.set_config_response()
+    #     bootstrap.ztps.set_definition_response(actions={'save_config' : {}})
+    #     bootstrap.ztps.set_action_response('save_config', 'text/plain',
+    #                                        startup_config_action())
+    #     bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.success())
-        self.failIf(bootstrap.error)
+    #     self.failUnless(bootstrap.eapi_node_information_collected())
+    #     debug()
+    #     self.failUnless(bootstrap.success())
+    #     self.failIf(bootstrap.error)
 
-        clear_startup_config()
-        bootstrap.end_test()
+    #     clear_startup_config()
+    #     bootstrap.end_test()
 
 if __name__ == '__main__':
     unittest.main()
