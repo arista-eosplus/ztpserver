@@ -297,7 +297,7 @@ class Server(object):
                                     headers=headers)
         return (result.status_code,
                 result.headers['content-type'],
-                result.json())
+                result)
 
     def post_nodes(self, node):
         headers = {'content-type': CONTENT_TYPE_JSON}
@@ -314,7 +314,7 @@ class Server(object):
                                     headers=headers)
         return (result.status_code,
                 result.headers['content-type'],
-                result.json())
+                result)
 
     def get_action(self, action):
         headers = {'content-type': CONTENT_TYPE_HTML}
@@ -474,8 +474,7 @@ def download_action(server, action):
     try:
         status, content, action_response = server.get_action(action)
         if not ((status == STATUS_OK and
-                 content in [CONTENT_TYPE_PYTHON,
-                             CONTENT_TYPE_OTHER]) or
+                 content == CONTENT_TYPE_PYTHON) or
                 (status == STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             log('Bootstrap process failure - unexpected reponse from server '
@@ -499,40 +498,27 @@ def download_action(server, action):
         action_file.close()
 
     os.chmod(filename, 0777)
-    return (content, filename)
+    return filename
 
 def execute_action(server, action, action_details):
     log('Downloading action %s' % action)
-    content_type, filename = download_action(server, action)
+    filename = download_action(server, action)
 
     log('Executing action %s' % action)
     if 'onstart' in action_details:
         log('ACTION %s:%s' % (action, action_details['onstart']))
 
-    if content_type == CONTENT_TYPE_PYTHON:
-        try:
-            imp.load_source(action, filename)
-            log('Action %s executed succesfully' % action)
-            if 'onsuccess' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onsuccess']))
-        except Exception as err:                  #pylint: disable=W0703
-            log('Executing %s failed: %s' % (action, err), error=True)
-            if 'onfailure' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onfailure']))
-    elif content_type == CONTENT_TYPE_OTHER:
-        return_code = subprocess.call(filename, shell=True)
-        if return_code:
-            log('Executing %s failed: returncode=%s' % (action, return_code), 
-                error=True)
-            if 'onfailure' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onfailure']))
-        else:
-            log('Action %s executed succesfully' % action)
-            if 'onsuccess' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onsuccess']))
-    else:
-        log('Unable to execute action %s - unknown contenty-type %s' % 
-            (action, content_type), error=True)
+    try:
+        imp.load_source(action, filename)
+        log('Action %s executed succesfully' % action)
+        if 'onsuccess' in action_details:
+            log('ACTION %s:%s' % (action, action_details['onsuccess']))
+    except Exception as err:                  #pylint: disable=W0703
+        log('Executing %s failed: %s' % (action, err), error=True)
+        if 'onfailure' in action_details:
+            log('ACTION %s:%s' % (action, action_details['onfailure']))
+        sys.exit(8)
+
 
 def main():
     #pylint: disable=W0603,R0912,R0915
@@ -556,7 +542,7 @@ def main():
         sys.exit(1)
 
     log('Config retrieved from server')
-    apply_config(config)
+    apply_config(config.json())
 
 
     # Check node
@@ -588,23 +574,17 @@ def main():
             error=True)
         sys.exit(1)
 
-
     # Get definition
     try:
         status, content, definition = server.get_definition(node.details())
         if not ((status == STATUS_OK and
                  content == CONTENT_TYPE_JSON) or
-                (status in [STATUS_BAD_REQUEST, 
-                            STATUS_NOT_FOUND] and
+                (status == STATUS_BAD_REQUEST and
                  content == CONTENT_TYPE_HTML)):
             log('Bootstrap process failure - unexpected reponse from server '
                 '(status=%s; content-type=%s)' % (status, content), 
                 error=True)
             sys.exit(3)
-        elif status == STATUS_NOT_FOUND: 
-            log('Bootstrap process failure - node not found on server '
-                '(status=%s)' % status, error=True)
-            sys.exit(4)
         elif status == STATUS_BAD_REQUEST: 
             log('Bootstrap process failure - server-side topology check '
                 'failed (status=%s)' % status, error=True)
@@ -615,20 +595,22 @@ def main():
         sys.exit(1)
 
     # Execute actions
+    definition = definition.json()
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
 
     ATTRIBUTES = definition['attributes']
     for action, details in definition['actions'].iteritems():
-        if 'requires' in details:
-            missing_attr = [x for x in details['requires'] 
-                            if x not in ATTRIBUTES]
-            if missing_attr:
-                log('Failed to load action %s because the following '
-                    'attributes are missing: %s' % (action, 
-                                                    ', '.join(missing_attr)),
-                    error=True)            
-                continue
+        # Not supported for now
+        # if 'requires' in details:
+        #     missing_attr = [x for x in details['requires'] 
+        #                     if x not in ATTRIBUTES]
+        #     if missing_attr:
+        #         log('Failed to load action %s because the following '
+        #             'attributes are missing: %s' % (action, 
+        #                                             ', '.join(missing_attr)),
+        #             error=True)            
+        #         continue
         execute_action(server, action, details)
 
     log('Definition %s applied successfully' % definition_name)
@@ -638,7 +620,7 @@ def main():
     if not node.has_startup_config():
         log('Startup configuration is missing at the end of the '
             'bootstrap process', error=True)        
-        sys.exit(3)
+        sys.exit(7)
 
 if __name__ == '__main__':
     main()
