@@ -69,6 +69,7 @@ LOGGING_FACILITY = 'ztpbootstrap'
 SYSLOG = '/dev/log'
 
 CONTENT_TYPE_PYTHON = 'text/x-python'
+CONTENT_TYPE_HTML = 'text/html'
 CONTENT_TYPE_OTHER = 'text/plain'
 CONTENT_TYPE_JSON = 'application/json'
 
@@ -78,6 +79,13 @@ COMMAND_API_SERVER = 'localhost'
 COMMAND_API_USERNAME = 'ztps'
 COMMAND_API_PASSWORD = 'ztps-password'
 COMMAND_API_PROTOCOL = 'http'
+
+STATUS_OK = 200
+STATUS_CREATED = 201
+STATUS_BAD_REQUEST = 400
+STATUS_NOT_FOUND = 404
+STATUS_CONFLICT = 409
+
 
 STARTUP_CONFIG = '/mnt/flash/startup-config'
 
@@ -170,7 +178,7 @@ class Node(object):
         for entry in info['lldpNeighbors']:
             neighbor = {}
             neighbor['device'] = entry['neighborDevice']
-            neighbor['remote_interface'] = entry['neighborPort']
+            neighbor['port'] = entry['neighborPort']
             if result['neighbors'][entry['port']]:
                 result['neighbors'][entry['port']] += [neighbor]
             else:
@@ -284,20 +292,37 @@ class Server(object):
         return response
 
     def get_config(self):
-        log('Server: Retrieving server config')
-        return self._http_request( 'bootstrap/config' ).json()
+        headers = {'content-type': CONTENT_TYPE_HTML}
+        result = self._http_request('bootstrap/config',
+                                    headers=headers)
+        return (result.status_code,
+                result.headers['content-type'],
+                result)
 
-    def post_definition(self, node):
-        log('Server: Retrieving server config')
+    def post_nodes(self, node):
         headers = {'content-type': CONTENT_TYPE_JSON}
-        return self._http_request('nodes',
-                                  method='post',
-                                  headers=headers,
-                                  payload=node).json()
+        result = self._http_request('nodes',
+                                    method='post',
+                                    headers=headers,
+                                    payload=node)
+        return (result.status_code,
+                result.headers['content-type'])
+
+    def get_definition(self, node):
+        headers = {'content-type': CONTENT_TYPE_HTML}
+        result = self._http_request('nodes/%s' % node['systemmac'],
+                                    headers=headers)
+        return (result.status_code,
+                result.headers['content-type'],
+                result)
 
     def get_action(self, action):
-        log('Server: Retrieving server config')
-        return self._http_request('actions/%s' % action)
+        headers = {'content-type': CONTENT_TYPE_HTML}
+        result = self._http_request('actions/%s' % action,
+                                    headers=headers)
+        return (result.status_code,
+                result.headers['content-type'],
+                result)
 
 
 class XmppClient(object):
@@ -446,104 +471,156 @@ def log(msg, error=False):
 
 
 def download_action(server, action):
-    response = server.get_action(action)
+    try:
+        status, content, action_response = server.get_action(action)
+        if not ((status == STATUS_OK and
+                 content == CONTENT_TYPE_PYTHON) or
+                (status == STATUS_NOT_FOUND and
+                 content == CONTENT_TYPE_HTML)):
+            log('Bootstrap process failure - unexpected reponse from server '
+                '(status=%s; content-type=%s)' % (status, content), 
+                error=True)
+            sys.exit(3)
+        elif status == STATUS_NOT_FOUND: 
+            log('Bootstrap process failure - action not found on server '
+                '(status=%s)' % status, error=True)
+            sys.exit(6)
+    except ZtpServerConnectionError:
+        log('Bootstrap process FAILURE - server connection error',
+            error=True)
+        sys.exit(1)
 
     filename = os.path.join(TEMP, action)
     with open(filename, 'wb') as action_file:
-        for chunk in response.iter_content(chunk_size=1024):
+        for chunk in action_response.iter_content(chunk_size=1024):
             if chunk:
                 action_file.write(chunk)
         action_file.close()
 
     os.chmod(filename, 0777)
-
-    return (response.headers['content-type'], filename)
-    
+    return filename
 
 def execute_action(server, action, action_details):
     log('Downloading action %s' % action)
-    content_type, filename = download_action(server, action)
+    filename = download_action(server, action)
 
     log('Executing action %s' % action)
     if 'onstart' in action_details:
         log('ACTION %s:%s' % (action, action_details['onstart']))
 
-    if content_type == CONTENT_TYPE_PYTHON:
-        try:
-            imp.load_source(action, filename)
-            log('Action %s executed succesfully' % action)
-            if 'onsuccess' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onsuccess']))
-        except Exception as err:                  #pylint: disable=W0703
-            log('Executing %s failed: %s' % (action, err), error=True)
-            if 'onfailure' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onfailure']))
-    elif content_type == CONTENT_TYPE_OTHER:
-        return_code = subprocess.call(filename, shell=True)
-        if return_code:
-            log('Executing %s failed: returncode=%s' % (action, return_code), 
-                error=True)
-            if 'onfailure' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onfailure']))
-        else:
-            log('Action %s executed succesfully' % action)
-            if 'onsuccess' in action_details:
-                log('ACTION %s:%s' % (action, action_details['onsuccess']))
-    else:
-        log('Unable to execute action %s - unknown contenty-type %s' % 
-            (action, content_type), error=True)
+    try:
+        imp.load_source(action, filename)
+        log('Action %s executed succesfully' % action)
+        if 'onsuccess' in action_details:
+            log('ACTION %s:%s' % (action, action_details['onsuccess']))
+    except Exception as err:                  #pylint: disable=W0703
+        log('Executing %s failed: %s' % (action, err), error=True)
+        if 'onfailure' in action_details:
+            log('ACTION %s:%s' % (action, action_details['onfailure']))
+        sys.exit(8)
+
 
 def main():
-    #pylint: disable=W0603
+    #pylint: disable=W0603,R0912,R0915
     global ATTRIBUTES, syslog_manager                   
     syslog_manager = SyslogManager()
     server = Server(SERVER)
 
     # Retrieve and apply logging/XMPP configuration from server
+    log('Retrieving config from server')
     try:
-        config = server.get_config()
+        status, content, config = server.get_config()
+        if(status != STATUS_OK or
+           content != CONTENT_TYPE_JSON):
+            log('Bootstrap process failure - unexpected reponse from server '
+                '(status=%s; content-type=%s)' % (status, content), 
+                error=True)
+            sys.exit(3)
     except ZtpServerConnectionError:
-        log('Bootstrap process FAILURE - unable to retrieve config from server',
+        log('Bootstrap process FAILURE - server connection error',
             error=True)
         sys.exit(1)
 
     log('Config retrieved from server')
-    apply_config(config)
+    apply_config(config.json())
 
-    # Get definition
+
+    # Check node
+    log('Collecting node information')
     try:
         node = Node()
     except ZtpBootstrapEapiError:
-        log('Bootstrap process FAILURE - unable to retrieve node information', 
+        log('Bootstrap process FAILURE - unable to enable eAPI', 
             error=True)
         sys.exit(2)
 
-    definition = server.post_definition(node.details())
+    # Checking node on server
+    try:
+        status, content = server.post_nodes(node.details())
+        if(status not in [STATUS_CREATED, 
+                          STATUS_BAD_REQUEST, 
+                          STATUS_CONFLICT] or
+           content != CONTENT_TYPE_HTML):
+            log('Bootstrap process failure - unexpected reponse from server '
+                '(status=%s; content-type=%s)' % (status, content), 
+                error=True)
+            sys.exit(3)
+        elif status == STATUS_BAD_REQUEST: 
+            log('Bootstrap process failure - node not found on server '
+                '(status=%s)' % status, error=True)
+            sys.exit(4)
+    except ZtpServerConnectionError:
+        log('Bootstrap process FAILURE - server connection error',
+            error=True)
+        sys.exit(1)
+
+    # Get definition
+    try:
+        status, content, definition = server.get_definition(node.details())
+        if not ((status == STATUS_OK and
+                 content == CONTENT_TYPE_JSON) or
+                (status == STATUS_BAD_REQUEST and
+                 content == CONTENT_TYPE_HTML)):
+            log('Bootstrap process failure - unexpected reponse from server '
+                '(status=%s; content-type=%s)' % (status, content), 
+                error=True)
+            sys.exit(3)
+        elif status == STATUS_BAD_REQUEST: 
+            log('Bootstrap process failure - server-side topology check '
+                'failed (status=%s)' % status, error=True)
+            sys.exit(5)
+    except ZtpServerConnectionError:
+        log('Bootstrap process FAILURE - server connection error',
+            error=True)
+        sys.exit(1)
 
     # Execute actions
+    definition = definition.json()
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
 
     ATTRIBUTES = definition['attributes']
     for action, details in definition['actions'].iteritems():
-        if 'requires' in details:
-            missing_attr = [x for x in details['requires'] 
-                            if x not in ATTRIBUTES]
-            if missing_attr:
-                log('Failed to load action %s because the following '
-                    'attributes are missing: %s' % (action, 
-                                                    ', '.join(missing_attr)),
-                    error=True)            
-                continue
+        # Not supported for now
+        # if 'requires' in details:
+        #     missing_attr = [x for x in details['requires'] 
+        #                     if x not in ATTRIBUTES]
+        #     if missing_attr:
+        #         log('Failed to load action %s because the following '
+        #             'attributes are missing: %s' % (action, 
+        #                                             ', '.join(missing_attr)),
+        #             error=True)            
+        #         continue
         execute_action(server, action, details)
 
     log('Definition %s applied successfully' % definition_name)
+
 
     # Check for startup-config
     if not node.has_startup_config():
         log('Startup configuration is missing at the end of the '
             'bootstrap process', error=True)        
-        sys.exit(3)
+        sys.exit(7)
 
 if __name__ == '__main__':
     main()

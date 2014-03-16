@@ -32,7 +32,9 @@ import json
 import re
 import os
 import pdb
+import random
 import subprocess
+import string                        #pylint: disable=W0402
 import time
 import thread
 import unittest
@@ -51,6 +53,14 @@ CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
 STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
+
+STATUS_OK = 200
+STATUS_CREATED = 201
+STATUS_BAD_REQUEST = 400
+STATUS_NOT_FOUND = 404
+STATUS_CONFLICT = 409
+
+SYSTEM_MAC = '1234567890'
 
 def debug():
     pdb.set_trace()
@@ -116,12 +126,43 @@ def file_log(filename):
         return []
 
 def startup_config_action():
-    return '''#!/bin/bash
-sudo touch %s
-sudo chmod 644 %s
-sudo chown %s %s''' % (STARTUP_CONFIG, STARTUP_CONFIG,
-                       os.getenv('USER'), STARTUP_CONFIG)
+    user = os.getenv('USER')
+    return '''#!/usr/bin/env python
+import os
+import pwd
 
+user = pwd.getpwnam('%s').pw_uid
+group = pwd.getpwnam('%s').pw_gid
+
+f = file('%s', 'w')
+f.write('test')
+f.close()
+
+os.chmod('%s', 0777)
+os.chown('%s', user, group)
+''' % (user, user,
+       STARTUP_CONFIG, STARTUP_CONFIG, STARTUP_CONFIG)
+
+def print_action(msg='TEST', use_attribute=False):
+    #pylint: disable=E0602
+    if use_attribute:
+        return '''#!/usr/bin/env python
+print ATTRIBUTES['print_action']
+'''
+    
+    return '''#!/usr/bin/env python
+print '%s'
+''' % msg
+
+def fail_action():
+    return '''#!/usr/bin/env python
+return 2
+'''
+
+def random_string():
+    return ''.join(random.choice(
+            string.ascii_uppercase + 
+            string.digits) for _ in range(random.randint(10,100)))
 
 class BaseTest(unittest.TestCase):
     #pylint: disable=C0103,R0201,R0904
@@ -220,8 +261,23 @@ class Bootstrap(object):
     def eapi_failure(self):
         return self.return_code == 2
 
-    def missing_startup_config_failure(self):
+    def unexpected_response_failure(self):
         return self.return_code == 3
+
+    def node_not_found_failure(self):
+        return self.return_code == 4
+
+    def toplogy_check_failure(self):
+        return self.return_code == 5
+
+    def action_not_found_failure(self):
+        return self.return_code == 6
+
+    def missing_startup_config_failure(self):
+        return self.return_code == 7
+
+    def action_failure(self):
+        return self.return_code == 8
 
     def success(self):
         return self.return_code == 0
@@ -238,7 +294,7 @@ class EAPIServer(object):
 
     def _run(self):
 
-        class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+        class EAPIHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             def do_POST(req):
                 request = req.rfile.read(int(req.headers.getheader(
@@ -250,7 +306,7 @@ class EAPIServer(object):
                 print 'EAPIServer: responding to request:%s (%s)' % ( 
                     req.path, ', '.join(cmds))
 
-                req.send_response(200)
+                req.send_response(STATUS_OK)
 
                 if req.path == '/command-api':
                     req.send_header('Content-type', 'application/json')
@@ -260,7 +316,8 @@ class EAPIServer(object):
                                                   [{'modelName' : '',
                                                     'internalVersion' : '',
                                                     'serialNumber' : '',
-                                                    'systemMacAddress' : ''}]}))
+                                                    'systemMacAddress' : 
+                                                    SYSTEM_MAC}]}))
                     elif cmds == ['show lldp neighbors']:
                         req.wfile.write(json.dumps({'result' : 
                                                   [{'lldpNeighbors': []}]}))
@@ -271,7 +328,7 @@ class EAPIServer(object):
                     print 'EAPIServer: No RESPONSE'
 
         server_class = BaseHTTPServer.HTTPServer
-        httpd = server_class((EAPI_SERVER, EAPI_PORT), MyHandler)
+        httpd = server_class((EAPI_SERVER, EAPI_PORT), EAPIHandler)
         print time.asctime(), 'EAPIServer: Server starts - %s:%s' % (
             EAPI_SERVER, EAPI_PORT)
         try:
@@ -287,19 +344,25 @@ class EAPIServer(object):
 class ZTPServer(object):
     #pylint: disable=C0103,,E0213
 
-    # { <URL>: ( <CONTNENT-TYPE>, <RESPONSE> ) }
+    # { <URL>: ( <CONTNENT-TYPE>, <STATUS>, <RESPONSE> ) }
     responses = {}
 
     def cleanup(self):
         self.responses = {}
 
-    def set_response(self, url, content_type, output):
-        self.responses[url] = (content_type, output)
+    def set_response(self, url, content_type, status, output):
+        self.responses[url] = (content_type, status, output)
 
-    def set_action_response(self, action, content_type, output):
-        self.responses['/actions/%s' % action ] = (content_type, output)
+    def set_action_response(self, action, output,
+                            content_type='text/x-python',
+                            status=STATUS_OK):
+        self.responses['/actions/%s' % action ] = (content_type, 
+                                                   status, 
+                                                   output)
 
-    def set_config_response(self, logging=None, xmpp=None):
+    def set_config_response(self, logging=None, xmpp=None,
+                            content_type='application/json',
+                            status=STATUS_OK):
         response = { 'logging': [],
                      'xmpp': {}
                      }
@@ -309,11 +372,22 @@ class ZTPServer(object):
         if xmpp:
             response['xmpp'] = xmpp
             
-        self.responses['/bootstrap/config'] = ('application/json', 
+        self.responses['/bootstrap/config'] = (content_type, status,
                                                json.dumps(response))
 
-    def set_definition_response(self, name='DEFAULT_DEFINITION',
-                               actions=None, attributes=None):
+    def set_node_check_response(self, content_type='text/html',
+                                status=None):
+        if status is None:
+            status = random.choice([STATUS_CONFLICT, 
+                                    STATUS_CREATED])
+
+        self.responses['/nodes'] = (content_type, status, '')        
+
+    def set_definition_response(self, node_id=SYSTEM_MAC,
+                                name='DEFAULT_DEFINITION',
+                                actions=None, attributes=None,
+                                content_type='application/json',
+                                status=STATUS_OK):
         response = { 'name': name,
                      'actions': {},
                      'attributes': {}
@@ -325,46 +399,48 @@ class ZTPServer(object):
             response['attributes'] = attributes
 
 
-        self.responses['/nodes'] = ('application/json', 
-                                               json.dumps(response))
+        self.responses['/nodes/%s' % node_id] = (content_type, status,
+                                                 json.dumps(response))
 
     def start(self):
         thread.start_new_thread(self._run, ())
 
     def _run(self):
 
-        class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+        class ZTPSHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
-            def do_GET(req):
-                print 'ZTPS: responding to GET request:%s' % req.path
-                req.send_response(200)
-
+            @classmethod
+            def do_request(cls, req):
                 if req.path in self.responses:
+                    # if self.responses[req.path][1] == STATUS_OK:
+                    #     req.send_response(self.responses[req.path][1])
+                    # else:
+                    #     req.send_error(self.responses[req.path][1]) 
+
+                    req.send_response(self.responses[req.path][1])
+                    req.error_content_type = self.responses[req.path][0]
+
                     req.send_header('Content-type', self.responses[req.path][0])
                     req.end_headers()
-                    req.wfile.write(self.responses[req.path][1])
-                    print 'ZTPS: RESPONSE: (%s, %s)' % (
+                    req.wfile.write(self.responses[req.path][2])
+                    print 'ZTPS: RESPONSE: (ct=%s, status=%s, output=%s)' % (
                         self.responses[req.path][0], 
-                        self.responses[req.path][1])
+                        self.responses[req.path][1], 
+                        self.responses[req.path][2])
                 else:
                     print 'ZTPS: No RESPONSE'
 
+            def do_GET(req):
+                print 'ZTPS: responding to GET request:%s' % req.path
+                ZTPSHandler.do_request(req)
+
             def do_POST(req):
                 print 'ZTPS: responding to POST request:%s' % req.path
-                req.send_response(200)
-
-                if req.path in self.responses:
-                    req.send_header('Content-type', self.responses[req.path][0])
-                    req.end_headers()
-                    req.wfile.write(self.responses[req.path][1])
-                    print 'ZTPS: RESPONSE: (%s, %s)' % (
-                        self.responses[req.path][0], 
-                        self.responses[req.path][1])
-                else:
-                    print 'ZTPS: No RESPONSE'                    
+                print self.responses
+                ZTPSHandler.do_request(req)
 
         server_class = BaseHTTPServer.HTTPServer
-        httpd = server_class((ZTPS_SERVER, ZTPS_PORT), MyHandler)
+        httpd = server_class((ZTPS_SERVER, ZTPS_PORT), ZTPSHandler)
         print time.asctime(), 'ZTPS: Server starts - %s:%s' % (
             ZTPS_SERVER, ZTPS_PORT)
         try:

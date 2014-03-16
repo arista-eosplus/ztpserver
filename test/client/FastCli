@@ -29,7 +29,7 @@
 
 # This is used by the tests in order to simulate FastCli calls
 import sys
-from ClientTestLib import CLI_LOG
+from client_test_lib import CLI_LOG
 
 open(CLI_LOG, 'a+b').write('%s\n' % ' '.join(sys.argv))
 
