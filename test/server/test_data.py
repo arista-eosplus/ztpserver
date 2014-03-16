@@ -61,23 +61,6 @@ class Functions(unittest.TestCase):
     def test_functions_regex_false(self):
         self.assertFalse(self.Functions.regex("\d+", "test"))
 
-class TestNodeDb(unittest.TestCase):
-
-    def test_nodedb_instance(self):
-        obj = ztpserver.data.NodeDb()
-        self.assertEqual(repr(obj), "NodeDb(entries=0)")
-
-    def test_nodedb_load_valid(self):
-        fn = os.path.join(os.getcwd(), "test/data/nodedb.yml")
-        obj = ztpserver.data.NodeDb()
-        obj.load(fn)
-        self.assertEqual(repr(obj), "NodeDb(entries=6)")
-
-    def test_nodedb_load_invalid(self):
-        fn = os.path.join(os.getcwd(), "/tmp/path/to/invalid/file/nodedb.yml")
-        obj = ztpserver.data.NodeDb()
-        self.assertRaises(ztpserver.data.NodeDbError, obj.load, fn)
-
 class TestInterface(unittest.TestCase):
 
     def test_create_interface(self):

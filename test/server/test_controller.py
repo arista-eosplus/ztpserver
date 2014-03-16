@@ -49,7 +49,7 @@ class TestRouter(unittest.TestCase):
 
     def test_router_map(self):
         rtr = ztpserver.controller.Router()
-        for url in ['/bootstrap', '/actions/test', '/objects/test',
+        for url in ['/bootstrap', '/actions/test', '/packages/test',
             '/bootstrap/config']:
             obj = rtr.map.match(url)
             self.assertIsNotNone(obj)
@@ -99,14 +99,14 @@ class TestRouter(unittest.TestCase):
 
     def test_router_req_get_objects_with_id_valid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/objects/test.py')
+        req = webob.Request.blank('/packages/test.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
 
     def test_router_req_get_objects_with_id_invalid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/objects/invalid.py')
+        req = webob.Request.blank('/packages/invalid.py')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 404)
 

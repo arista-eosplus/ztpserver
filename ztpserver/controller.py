@@ -49,9 +49,9 @@ COLLECTIONS = {
         "collection_actions": [],
         "member_actions": ['show']
     },
-    "objects": {
-        "collection_name": "objects",
-        "resource_name": "object",
+    "packages": {
+        "collection_name": "packages",
+        "resource_name": "package",
         "member_prefix": "/{id}",
         "collection_actions": [],
         "member_actions": ['show']
@@ -119,7 +119,24 @@ class NodeController(StoreController):
         return 'NodeController'
 
     def show(self, request, id, **kwargs):
-        pass
+        if self.store.exists('%s/startup-config' % id):
+            pass
+
+        elif self.store.exists('%s/definition' % id):
+            definition = self.store.get_file('definition')
+            attributes = self.store.get_file('attributes')
+
+            definition = serializer.deserialize(definition.contents)
+            attributes = serializer.deserialize(attributes.contents)
+
+            definition['attributes'].update(attributes)
+
+            body = serializer.serialize(definition, content_type='applicaton/json')
+            headers = (('Content-Type', 'application/json'))
+
+            return webob.Response(status=200, body=body, headers=headers)
+
+        return webob.exc.HTTPNotFound()
 
     def update(self, request, id, **kwargs):
         pass
@@ -184,11 +201,18 @@ class NodeController(StoreController):
             return db.patterns['globals'].values()
 
     def _create_node_definition(self, node, definition_url):
-        log.debug("definition_url is %s" % definition_url)
+        """ creates the node definition on the server """
 
-        definition = self.definitions.get_file('definition')
-        log.debug(definition.contents)
+        log.info("creating node with identifier %s" % node.systemmac)
+        self.store.add_folder(node.systemmac)
+        definition = self.definitions.get_file(definition_url)
+        definition = serializer.deserialize(definition.contents)
 
+        attributes = defintion.get('attributes')
+        self.store.write_file('definition', \
+            serializer.serialize(definition.contents))
+
+        self.store.write_file('definition', definition.contents)
 
     def _create_node(self, req):
 
@@ -337,8 +361,10 @@ class BootstrapController(StoreController):
             body = Template(bootstrap).safe_substitute(DEFAULT_SERVER=default_server)
             headers = [('Content-Type', 'text/x-python')]
             resp = webob.Response(status=200, body=body, headers=headers)
+
         except ztpserver.repository.FileObjectNotFound:
             resp = webob.exc.HTTPNotFound()
+
         return resp
 
 
