@@ -39,10 +39,6 @@ FUNC_RE = re.compile("(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)
 
 serializer = ztpserver.serializers.Serializer()
 
-class NodeDbError(Exception):
-    """ base exception for raising NodeDb errrors"""
-    pass
-
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
         self.data = dict()
