@@ -37,7 +37,6 @@ import subprocess
 import string                        #pylint: disable=W0402
 import time
 import thread
-import unittest
 
 import BaseHTTPServer
 
@@ -101,6 +100,7 @@ def clear_startup_config():
     remove_file(STARTUP_CONFIG)
 
 def clear_logs():
+    clear_startup_config()
     clear_cli_log()    
     clear_eapi_log()
 
@@ -131,15 +131,16 @@ def startup_config_action():
 import os
 import pwd
 
-user = pwd.getpwnam('%s').pw_uid
-group = pwd.getpwnam('%s').pw_gid
+def main( attributes ):
+   user = pwd.getpwnam('%s').pw_uid
+   group = pwd.getpwnam('%s').pw_gid
 
-f = file('%s', 'w')
-f.write('test')
-f.close()
+   f = file('%s', 'w')
+   f.write('test')
+   f.close()
 
-os.chmod('%s', 0777)
-os.chown('%s', user, group)
+   os.chmod('%s', 0777)
+   os.chown('%s', user, group)
 ''' % (user, user,
        STARTUP_CONFIG, STARTUP_CONFIG, STARTUP_CONFIG)
 
@@ -147,16 +148,42 @@ def print_action(msg='TEST', use_attribute=False):
     #pylint: disable=E0602
     if use_attribute:
         return '''#!/usr/bin/env python
-print ATTRIBUTES['print_action']
+
+def main(attributes):
+   print attributes['print_action']
 '''
     
     return '''#!/usr/bin/env python
-print '%s'
+
+def main(attributes):
+   print '%s'
 ''' % msg
 
 def fail_action():
     return '''#!/usr/bin/env python
-return 2
+
+def main(attributes):
+   return 2
+'''
+
+def erroneous_action():
+    return '''THIS_IS_NOT_PYTHON'''
+
+def missing_main_action():
+    return '''#!/usr/bin/env python'''
+
+def wrong_signature_action():
+    return '''#!/usr/bin/env python
+
+def main():
+   pass
+'''
+
+def exception_action():
+    return '''#!/usr/bin/env python
+
+def main(attributes):
+   raise Exception
 '''
 
 def random_string():
@@ -164,18 +191,6 @@ def random_string():
             string.ascii_uppercase + 
             string.digits) for _ in range(random.randint(10,100)))
 
-class BaseTest(unittest.TestCase):
-    #pylint: disable=C0103,R0201,R0904
-
-    def tearDown(self):
-        # Clean up files in /tmp
-        for filename in os.listdir('/tmp'):
-            if (re.search('^bootstrap-', filename) or 
-                re.search('^ztps-log-', filename)) :
-                os.remove(os.path.join('/tmp', filename))
-
-        clear_logs()
-        
 
 class Bootstrap(object):
     #pylint: disable=R0201
@@ -222,9 +237,26 @@ class Bootstrap(object):
         os.chmod(self.filename, 0777)
         self.module = imp.load_source('bootstrap', self.filename)
 
-    def end_test(self):
-        clear_logs()
+    def end_test(self, clean_files=None):
+        # Clean up actions
+        if not clean_files:
+            clean_files = []
+            
+        for filename in clean_files:
+            remove_file('/tmp/%s' % filename)
+            remove_file('/tmp/%sc' % filename)
+
+        # Clean up log files
+        for filename in os.listdir('/tmp'):
+            if re.search('^ztps-log-', filename):
+                os.remove(os.path.join('/tmp', filename))
+                
+        # Clean up bootstrap script
         remove_file(self.filename)
+        remove_file('%sc' % self.filename)
+                
+        # Clean up logs
+        clear_logs()
 
     def start_test(self):
         try:

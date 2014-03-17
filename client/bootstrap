@@ -101,6 +101,9 @@ class ZtpBootstrapEapiError(Exception):
 class ZtpServerConnectionError(Exception):
     pass
 
+class ZtpActionError(Exception):
+    pass
+
 
 class Node(object):
 
@@ -509,7 +512,10 @@ def execute_action(server, action, action_details):
         log('ACTION %s:%s' % (action, action_details['onstart']))
 
     try:
-        imp.load_source(action, filename)
+        module = imp.load_source(action, filename)
+        ret = module.main( ATTRIBUTES )
+        if ret:
+            raise ZtpActionError('return code %s' % ret)
         log('Action %s executed succesfully' % action)
         if 'onsuccess' in action_details:
             log('ACTION %s:%s' % (action, action_details['onsuccess']))
