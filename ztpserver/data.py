@@ -48,10 +48,7 @@ class Collection(collections.Mapping, collections.Callable):
         self.data = dict()
 
     def __call__(self, key=None):
-        if key is None:
-            return self.keys()
-        else:
-            return self.get(key)
+        return self.keys() if key is None else self.get(key)
 
     def __getitem__(self, key):
         return self.data[key]
@@ -62,13 +59,9 @@ class Collection(collections.Mapping, collections.Callable):
     def __len__(self):
         return len(self.data)
 
-
 class OrderedCollection(collections.OrderedDict, collections.Callable):
     def __call__(self, key=None):
-        if key is None:
-            return self.keys()
-        else:
-            return self.get(key)
+        return self.keys() if key is None else self.get(key)
 
 class Interface(object):
     """ The :py:class:`'Interface' object represents a single
@@ -144,22 +137,6 @@ class Node(object):
         return collection
 
 
-class NodeDb(Collection):
-
-    def __repr__(self):
-        return "NodeDb(entries=%d)" % len(self.data)
-
-    def load(self, filename):
-        try:
-            contents = serializer.deserialize(open(filename).read(),
-                                              'application/yaml')
-
-            for k,v in contents.items():
-                self.data[str(k)] = v
-        except IOError:
-            raise NodeDbError("file not found")
-
-
 class Functions(object):
 
     @classmethod
@@ -206,7 +183,7 @@ class NeighborDb(object):
 
             for interface in pattern['interfaces']:
                 for key, values in interface.items():
-                    args = self._parse_interface(key, values)
+                    args = self._parse_interface(key, values, obj.variables)
                     obj.add_interface(*args)
 
             if 'node' in pattern:
@@ -215,7 +192,7 @@ class NeighborDb(object):
             else:
                 self.patterns['globals'][id(obj)] = obj
 
-    def _parse_interface(self, interface, values):
+    def _parse_interface(self, interface, values, variables=None):
 
         if isinstance(values, dict):
             device = values.get('device')
@@ -235,12 +212,19 @@ class NeighborDb(object):
                 device, port = ANYDEVICE_PARSER_RE.split(values)
             port, tags = port.split(':') if ':' in port else (port, None)
 
+        #perform variable substitution
+        if variables is not None and (device is not None and device != 'any'):
+            if device in variables:
+                device = variables[device]
+
+            elif device in self.variables:
+                device = variables[device]
+
         return (interface, device, port, tags)
 
 
 
 class InterfacePattern(object):
-    # FIXME: node should be device
 
     def __init__(self, interface, node, port, tags=None):
         self.interface = interface
