@@ -131,7 +131,7 @@ def startup_config_action():
 import os
 import pwd
 
-def main( attributes ):
+def main(attributes):
    user = pwd.getpwnam('%s').pw_uid
    group = pwd.getpwnam('%s').pw_gid
 
@@ -150,14 +150,24 @@ def print_action(msg='TEST', use_attribute=False):
         return '''#!/usr/bin/env python
 
 def main(attributes):
-   print attributes['print_action']
+   print attributes.get('print_action-attr')
 '''
-    
-    return '''#!/usr/bin/env python
+    else:
+        return '''#!/usr/bin/env python
 
 def main(attributes):
    print '%s'
 ''' % msg
+
+def print_attributes_action(attributes):
+    #pylint: disable=E0602
+    result = '''#!/usr/bin/env python
+
+def main(attributes):
+'''
+    for attr in attributes:
+        result += '    print attributes.get(\'%s\')\n' % attr
+    return result
 
 def fail_action():
     return '''#!/usr/bin/env python
