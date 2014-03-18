@@ -52,6 +52,8 @@ def main(attributes):
                      node.api_enable_cmds(self, cmds, text_format=False)
                      node.append_startup_config_lines(self, lines)
                      node.has_startup_config(self)
+                     node.log_msg(self, msg, error=False)
+
     Returns:
         0 - success
         1 - missing attribute('install_image-software_url')
