@@ -117,6 +117,7 @@ class Attributes(object):
 
 
 class Node(object):
+     #pylint: disable=R0201
 
     def __init__(self):
         Node._enable_api()
@@ -128,7 +129,7 @@ class Node(object):
         self.client = jsonrpclib.Server(url)
 
         try:
-            self._api_enable_cmds([])
+            self.api_enable_cmds([])
         except socket.error:
             raise ZtpBootstrapEapiError('Unable to create  EAPI client')
 
@@ -165,7 +166,7 @@ class Node(object):
                 'show management api http-commands | grep running')
             
 
-    def _api_enable_cmds(self, cmds, text_format=False):
+    def api_enable_cmds(self, cmds, text_format=False):
         req_format = 'text' if text_format else 'json'
         result = self.client.runCmds(1, cmds, req_format)
         if text_format:
@@ -175,7 +176,7 @@ class Node(object):
 
     def system(self):
         result = {}
-        info = self._api_enable_cmds(['show version'])[0]
+        info = self.api_enable_cmds(['show version'])[0]
 
 
         result['model'] = info['modelName']
@@ -187,7 +188,7 @@ class Node(object):
 
     def neighbors(self):
         result = {}
-        info = self._api_enable_cmds(['show lldp neighbors'])[0]
+        info = self.api_enable_cmds(['show lldp neighbors'])[0]
         result['neighbors'] = {}
         for entry in info['lldpNeighbors']:
             neighbor = {}
@@ -203,8 +204,14 @@ class Node(object):
         return dict(self.system().items() + 
                     self.neighbors().items())
 
-    def has_startup_config(self):                    #pylint: disable=R0201
+    def has_startup_config(self):
         return os.path.isfile(STARTUP_CONFIG)
+
+    def append_startup_config_lines(self, lines):
+        with open(STARTUP_CONFIG, 'a') as startup_config:
+            startup_config.write('\n')
+            startup_config.write('\n'.join(lines))
+            startup_config.write('\n')
 
 
 class SyslogManager(object):

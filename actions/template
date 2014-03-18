@@ -27,5 +27,25 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-def main( attributes ): 
-    pass
+def main(attributes): 
+    '''TITLE
+
+    SHORT_DESCRIPTION
+
+    Args:
+       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
+                   to read attribute values
+
+       Special attributes:
+           node: attributes.get('NODE')
+                 API:
+                     node.api_enable_cmds(self, cmds, text_format=False)
+                     node.append_startup_config_lines(self, lines)
+                     node.has_startup_config(self)
+    Returns:
+        RETURN CODES
+
+    Raises:
+        EXCEPTIONS
+    '''
+    print attributes

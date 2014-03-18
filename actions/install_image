@@ -27,5 +27,80 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-def main( attributes ): 
-    pass
+#pylint: disable=W0702
+
+import re
+import urllib
+
+STARTUP_CONFIG = '/mnt/flash/startup-config'
+
+def main(attributes): 
+    '''Installs software image on the switch.
+
+    If the current software image is the same as the  
+    'install_image-software_version' attribute value, then this action
+    is a no-op.  Otherwise, the action will replace the existing software 
+    image.
+
+    Args:
+       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
+                   to read attribute values
+
+       Special attributes:
+           node: attributes.get('NODE')
+                 API:
+                     node.api_enable_cmds(self, cmds, text_format=False)
+                     node.append_startup_config_lines(self, lines)
+                     node.has_startup_config(self)
+    Returns:
+        0 - success
+        1 - missing attribute('install_image-software_url')
+        2 - missing attribute('install_image-software_version')
+        3 - missing attribute('NODE')
+        4 - unable to retrieve image file from url
+        5 - unable to write startup-config
+
+    Raises:
+        None
+    '''
+
+    url = attributes.get('install_image-software_url')
+    if not url:
+        return 1
+
+    software_version = attributes.get('install_image-software_version')
+    if not software_version:
+        return 2
+    
+    node = attributes.get('NODE')
+    if not node:
+        return 3
+    
+    current_version = node.api_enable_cmds(['show version'])[0]['version']
+    if current_version == software_version:
+        return
+
+    image = '%s.swi' % software_version
+    try:
+        urllib.urlretrieve (url, '/mnt/flash/%s.swi')
+    except:
+        return 4
+
+    boot_line = '! boot system flash:/%s' % image
+    try:
+        if node.has_startup_config():
+            startup_config = open(STARTUP_CONFIG, 'r')
+            lines = startup_config.readlines()
+            startup_config.close()
+        
+            startup_config = open(STARTUP_CONFIG, 'w')
+            for line in lines:
+                if re.search('! boot system', line):
+                    startup_config.write(boot_line)
+                else:
+                    startup_config.write(line)                    
+            startup_config.close()
+        else:
+            node.append_startup_config_lines(boot_line)
+    except:
+        return 5
