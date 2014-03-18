@@ -84,6 +84,7 @@ STATUS_CONFLICT = 409
 
 
 STARTUP_CONFIG = '/mnt/flash/startup-config'
+RC_EOS = '/mnt/flash/rc.eos'
 
 HTTP_TIMEOUT = 10
 
@@ -207,11 +208,21 @@ class Node(object):
     def has_startup_config(self):
         return os.path.isfile(STARTUP_CONFIG)
 
+    def _has_rc_eos(self):
+        return os.path.isfile(RC_EOS)
+
+    def _append_lines(self, filename, lines):
+        with open(filename, 'a') as output:
+            output.write('\n')
+            output.write('\n'.join(lines))
+
     def append_startup_config_lines(self, lines):
-        with open(STARTUP_CONFIG, 'a') as startup_config:
-            startup_config.write('\n')
-            startup_config.write('\n'.join(lines))
-            startup_config.write('\n')
+        self._append_lines(STARTUP_CONFIG, lines)
+
+    def append_rc_eos_lines(self, lines):
+        if not self._has_rc_eos():
+            lines = ['#!/bin/bash'] + lines
+        self._append_lines(RC_EOS, lines)
 
     def log_msg(self, msg, error=False):
         log(msg, error)

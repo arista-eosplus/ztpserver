@@ -50,8 +50,7 @@ def main(attributes):
     Returns:
         0 - success
         1 - missing attribute('add_config-url')
-        2 - missing attribute('NODE')
-        3 - unable to retrieve config from URL
+        2 - unable to retrieve config from URL
 
     Raises:
         None
@@ -60,12 +59,8 @@ def main(attributes):
     if not url:
         return 1
 
-    node = attributes.get('NODE')
-    if not node:
-        return 2
-
     try:
-        urllib.urlretrieve (url, TEMP_CONFIG)
+        urllib.urlretrieve(url, TEMP_CONFIG)
     except:
         return 3
 
@@ -73,4 +68,4 @@ def main(attributes):
     lines = config.readlines()
     config.close()
 
-    node.append_startup_config_lines(lines)
+    attributes.get('NODE').append_startup_config_lines(lines)

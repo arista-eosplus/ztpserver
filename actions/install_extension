@@ -29,18 +29,19 @@
 
 #pylint: disable=W0702
 
-import re
+EXTENSIONS_DIR = '/mnt/flash/.extensions'
+BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
+
+import os
+import errno
 import urllib
 
-STARTUP_CONFIG = '/mnt/flash/startup-config'
-
 def main(attributes): 
-    '''Installs software image on the switch.
+    '''Installs EOS extension.
 
-    If the current software image is the same as the  
-    'install_image-software_version' attribute value, then this action
-    is a no-op.  Otherwise, the action will replace the existing software 
-    image.
+    Installs extension based on the value of the
+    'install_extension-url' attribute. If 'install_extension-force' is 
+    set, then the dependency checks are overridden.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -52,45 +53,35 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('install_image-software_url')
-        2 - missing attribute('install_image-software_version')
-        3 - unable to retrieve image file from URL
+        1 - missing attribute('install_extension-url')
+        2 - unable to create /mnt/flash/.extensions
+        3 - unable to retrieve extension from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('install_image-software_url')
+    url = attributes.get('install_extension-url')
     if not url:
         return 1
 
-    software_version = attributes.get('install_image-software_version')
-    if not software_version:
-        return 2
+    force = attributes.get('install_extension-force')
     
-    node = attributes.get('NODE')
-    current_version = node.api_enable_cmds(['show version'])[0]['version']
-    if current_version == software_version:
-        return
-
-    image = '%s.swi' % software_version
     try:
-        urllib.urlretrieve(url, '/mnt/flash/%s.swi')
+        os.makedirs(EXTENSIONS_DIR)
+    except OSError, error:
+        if error.errno != errno.EEXIST:
+            return 2
+
+    name = url.split('/')[ -1 ]
+    try:
+        urllib.urlretrieve(url, '%s/%s' % (EXTENSIONS_DIR,
+                                           name))
     except:
         return 3
-
-    boot_line = '! boot system flash:/%s' % image
-    if node.has_startup_config():
-        startup_config = open(STARTUP_CONFIG, 'r')
-        lines = startup_config.readlines()
-        startup_config.close()
+    
+    line = name
+    if force:
+        line = line + ' force' 
         
-        startup_config = open(STARTUP_CONFIG, 'w')
-        for line in lines:
-            if re.search('! boot system', line):
-                startup_config.write(boot_line)
-            else:
-                startup_config.write(line)                    
-        startup_config.close()
-    else:
-        node.append_startup_config_lines([boot_line])
+    open(BOOT_EXTENSIONS, 'a').write('\r\n%s' % line)
