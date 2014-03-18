@@ -48,11 +48,7 @@ def main(attributes):
 
        Special attributes:
            node: attributes.get('NODE')
-                 API:
-                     node.api_enable_cmds(self, cmds, text_format=False)
-                     node.append_startup_config_lines(self, lines)
-                     node.has_startup_config(self)
-                     node.log_msg(self, msg, error=False)
+                 API: see documentation
 
     Returns:
         0 - success
