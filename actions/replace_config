@@ -53,7 +53,7 @@ def main(attributes):
         2 - unable to retrieve config from URL
 
     Raises:
-        None.
+        None
     '''
     url = attributes.get('replace_config-url')
     if not url:
