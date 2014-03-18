@@ -62,7 +62,7 @@ def main(attributes):
     try:
         urllib.urlretrieve(url, TEMP_CONFIG)
     except:
-        return 3
+        return 2
 
     config = open(TEMP_CONFIG, 'r')
     lines = config.readlines()
