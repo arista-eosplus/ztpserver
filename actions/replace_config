@@ -58,6 +58,6 @@ def main(attributes):
         return 1
 
     try:
-        urllib.urlretrieve(url, '/mnt/flash/startup-config')
+        urllib.urlretrieve(url, attributes.get('NODE').startup_config())
     except:
         return 2

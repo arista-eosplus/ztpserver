@@ -75,7 +75,7 @@ def main(attributes):
     image = '%s.swi' % software_version
     try:
         urllib.urlretrieve(url, '%s/%s' % (node.flash(), image))
-    except Exception, e:
+    except:
         return 3
 
     boot_line = '! boot system flash:/%s' % image
