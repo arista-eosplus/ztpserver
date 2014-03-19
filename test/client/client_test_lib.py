@@ -52,6 +52,7 @@ CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
 STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
+FLASH = '/tmp'
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -125,7 +126,13 @@ def file_log(filename):
     except IOError:
         return []
 
-def startup_config_action():
+def get_action(action):
+    return open('actions/%s' % action, 'r').read()
+
+def startup_config_action(lines=None):
+    if not lines:
+        lines = ['test']        
+
     user = os.getenv('USER')
     return '''#!/usr/bin/env python
 import os
@@ -136,13 +143,13 @@ def main(attributes):
    group = pwd.getpwnam('%s').pw_gid
 
    f = file('%s', 'w')
-   f.write('test')
+   f.write('%s')
    f.close()
 
    os.chmod('%s', 0777)
    os.chown('%s', user, group)
-''' % (user, user,
-       STARTUP_CONFIG, STARTUP_CONFIG, STARTUP_CONFIG)
+''' % (user, user, STARTUP_CONFIG, '\n'.join(lines),
+       STARTUP_CONFIG, STARTUP_CONFIG)
 
 def print_action(msg='TEST', use_attribute=False):
     #pylint: disable=E0602
@@ -205,7 +212,8 @@ def random_string():
 class Bootstrap(object):
     #pylint: disable=R0201
 
-    def __init__(self, server=None, eapi_port=None):
+    def __init__(self, server=None, eapi_port=None,
+                 ztps_default_config=False):
         os.environ['PATH'] += ':%s/test/client' % os.getcwd()
 
         self.server = server if server else '%s:%s' % (ZTPS_SERVER, ZTPS_PORT)
@@ -221,6 +229,10 @@ class Bootstrap(object):
         self.ztps = start_ztp_server()
 
         self.configure()
+        
+        if ztps_default_config:
+            self.ztps.set_config_response()
+            self.ztps.set_node_check_response()
 
     def configure(self):
         infile = open(BOOTSTRAP_FILE)
@@ -234,6 +246,8 @@ class Bootstrap(object):
                                 self.eapi_port)
             line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'", 
                                 "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
+            line = line.replace("FLASH = '/mnt/flash'", 
+                                "FLASH = '%s'" % FLASH)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -247,12 +261,10 @@ class Bootstrap(object):
         os.chmod(self.filename, 0777)
         self.module = imp.load_source('bootstrap', self.filename)
 
-    def end_test(self, clean_files=None):
+    def end_test(self):
         # Clean up actions
-        if not clean_files:
-            clean_files = []
-            
-        for filename in clean_files:
+        for url in self.ztps.responses.keys():
+            filename = url.split('/')[-1]
             remove_file('/tmp/%s' % filename)
             remove_file('/tmp/%sc' % filename)
 
@@ -328,6 +340,13 @@ class Bootstrap(object):
 class EAPIServer(object):
     #pylint: disable=C0103,E0213,W0201
 
+    def __init__(self, mac=SYSTEM_MAC, model='', 
+                 serial_number='', version=''):
+        self.mac = mac
+        self.model = model
+        self.serial_number = serial_number
+        self.version = version
+
     def cleanup(self):
         self.responses = {}
 
@@ -354,12 +373,12 @@ class EAPIServer(object):
                     req.send_header('Content-type', 'application/json')
                     req.end_headers()
                     if cmds == ['show version']:
-                        req.wfile.write(json.dumps({'result' : 
-                                                  [{'modelName' : '',
-                                                    'internalVersion' : '',
-                                                    'serialNumber' : '',
-                                                    'systemMacAddress' : 
-                                                    SYSTEM_MAC}]}))
+                        req.wfile.write(json.dumps(
+                                {'result' : 
+                                 [{'modelName' : self.model,
+                                   'internalVersion' : self.version,
+                                   'serialNumber' : self.serial_number,
+                                   'systemMacAddress' : self.mac}]}))
                     elif cmds == ['show lldp neighbors']:
                         req.wfile.write(json.dumps({'result' : 
                                                   [{'lldpNeighbors': []}]}))
@@ -394,6 +413,13 @@ class ZTPServer(object):
 
     def set_response(self, url, content_type, status, output):
         self.responses[url] = (content_type, status, output)
+
+    def set_file_response(self, filename, output,
+                            content_type='application/octet-stream',
+                            status=STATUS_OK):
+        self.responses['/%s' % filename ] = (content_type, 
+                                             status, 
+                                             output)
 
     def set_action_response(self, action, output,
                             content_type='text/x-python',
@@ -431,11 +457,11 @@ class ZTPServer(object):
                                 content_type='application/json',
                                 status=STATUS_OK):
         response = { 'name': name,
-                     'actions': {},
+                     'actions': [],
                      'attributes': {}
                      }
         if actions:
-            response['actions'] = actions
+            response['actions'] += actions
 
         if attributes:
             response['attributes'] = attributes

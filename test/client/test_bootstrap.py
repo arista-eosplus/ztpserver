@@ -389,7 +389,8 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action'}])
         bootstrap.ztps.set_action_response('test_action', action)
         bootstrap.start_test()
 
@@ -400,7 +401,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['test_action'])
+            bootstrap.end_test()
 
     def test_return_code_action_failed(self):
         self.action_fail_test(fail_action())
@@ -421,7 +422,8 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201)
         bootstrap.start_test()
@@ -433,13 +435,14 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['test_action'])
+            bootstrap.end_test()
 
     def test_content_type(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            content_type='test/plain')
         bootstrap.start_test()
@@ -451,14 +454,14 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['test_action'])
+            bootstrap.end_test()
 
     def test_status_content_type(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={
-                'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201,
                                            content_type='test/plain')
@@ -471,7 +474,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['test_action'])
+            bootstrap.end_test()
 
     def test_action_failure_log(self):
         log = '/tmp/ztps-log-%s-debug' % os.getpid()
@@ -486,10 +489,11 @@ class ActionFailureTest(unittest.TestCase):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'test_action' : {'onstart' : text_onstart,
-                                      'onsuccess' : text_onsuccess,
-                                      'onfailure' : text_onfailure},
-                     })
+            actions=[{'name' : 'test_action',
+                      'onstart' : text_onstart,
+                      'onsuccess' : text_onsuccess,
+                      'onfailure' : text_onfailure},
+                     ])
         bootstrap.ztps.set_action_response('test_action',
                                            fail_action())
         bootstrap.start_test()
@@ -505,7 +509,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['test_action'])
+            bootstrap.end_test()
 
 
 class BootstrapSuccessTest(unittest.TestCase):
@@ -514,8 +518,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={
-                'startup_config_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()
@@ -527,16 +531,16 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action'])
+            bootstrap.end_test()
 
     def test_multiple_actions(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={
-                'startup_config_action' : {},
-                'print_action_1' : {},
-                'print_action_2' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action_1'},
+                     {'name' : 'print_action_2'}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
 
@@ -557,9 +561,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action',
-                                            'print_action_1',
-                                            'print_action_2'])
+            bootstrap.end_test()
 
     def test_global_attribute(self):
         bootstrap = Bootstrap()
@@ -567,8 +569,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_node_check_response()
         text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'startup_config_action' : {},
-                     'print_action' : {}},
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action'}],
             attributes={'print_action-attr' : text})
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
@@ -584,8 +586,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action',
-                                        'print_action'])
+            bootstrap.end_test()
 
     def test_local_attribute(self):
         bootstrap = Bootstrap()
@@ -593,9 +594,9 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_node_check_response()
         text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'startup_config_action' : {},
-                     'print_action' : {'attributes' : 
-                                       {'print_action-attr':text}}})
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action',
+                      'attributes' : {'print_action-attr':text}}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.ztps.set_action_response('print_action',
@@ -610,8 +611,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action',
-                                        'print_action'])
+            bootstrap.end_test()
 
     def test_overlapping_attributes(self):
         bootstrap = Bootstrap()
@@ -620,9 +620,9 @@ class BootstrapSuccessTest(unittest.TestCase):
         global_text = random_string()
         local_text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'startup_config_action' : {},
-                     'print_action' : {'attributes' :
-                                           {'print_action-attr' : local_text}}},
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action',
+                      'attributes' : {'print_action-attr' : local_text}}],
             attributes={'print_action-attr' : global_text})
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
@@ -639,8 +639,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action',
-                                        'print_action'])
+            bootstrap.end_test()
 
     def test_all_attributes(self):
         bootstrap = Bootstrap()
@@ -649,10 +648,10 @@ class BootstrapSuccessTest(unittest.TestCase):
         global_text = random_string()
         local_text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'startup_config_action' : {},
-                     'print_attributes_action' : 
-                     {'attributes' : {'print_action-attr_local' : 
-                                      local_text}}},
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_attributes_action',
+                      'attributes' : {'print_action-attr_local' : 
+                                      local_text}}],
             attributes={'print_action-attr_global' : global_text})
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
@@ -671,8 +670,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action',
-                                        'print_attributes_action'])
+            bootstrap.end_test()
 
 
     def test_action_success_log(self):
@@ -688,11 +686,11 @@ class BootstrapSuccessTest(unittest.TestCase):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'startup_config_action' : 
-                     {'onstart' : text_onstart,
-                      'onsuccess' : text_onsuccess,
-                      'onfailure' : text_onfailure},
-                     })
+            actions=[{'name' : 'startup_config_action',
+                     'onstart' : text_onstart,
+                     'onsuccess' : text_onsuccess,
+                     'onfailure' : text_onfailure,
+                     }])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()
@@ -708,7 +706,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test(clean_files=['startup_config_action'])
+            bootstrap.end_test()
 
 
 if __name__ == '__main__':

@@ -85,6 +85,7 @@ STATUS_CONFLICT = 409
 
 STARTUP_CONFIG = '/mnt/flash/startup-config'
 RC_EOS = '/mnt/flash/rc.eos'
+FLASH = '/mnt/flash'
 
 HTTP_TIMEOUT = 10
 
@@ -179,7 +180,6 @@ class Node(object):
         result = {}
         info = self.api_enable_cmds(['show version'])[0]
 
-
         result['model'] = info['modelName']
         result['version'] = info['internalVersion']
         result['systemmac'] = info['systemMacAddress']
@@ -226,6 +226,12 @@ class Node(object):
 
     def log_msg(self, msg, error=False):
         log(msg, error)
+
+    def flash(self):
+        return FLASH
+
+    def startup_config(self):
+        return STARTUP_CONFIG
 
 
 class SyslogManager(object):
@@ -535,7 +541,8 @@ def download_action(server, action):
     os.chmod(filename, 0777)
     return filename
 
-def execute_action(server, action, action_details, global_attr):
+def execute_action(server, action_details, global_attr):
+    action = action_details['name']
     log('Downloading action %s' % action)
     filename = download_action(server, action)
 
@@ -642,8 +649,8 @@ def main():
     
     global_attr = definition['attributes']
     global_attr['NODE'] = node
-    for action, details in definition['actions'].iteritems():
-        execute_action(server, action, details, global_attr)
+    for details in definition['actions']:
+        execute_action(server, details, global_attr)
 
     log('Definition %s applied successfully' % definition_name)
 

@@ -32,8 +32,6 @@
 import re
 import urllib
 
-STARTUP_CONFIG = '/mnt/flash/startup-config'
-
 def main(attributes): 
     '''Installs software image on the switch.
 
@@ -69,23 +67,24 @@ def main(attributes):
         return 2
     
     node = attributes.get('NODE')
-    current_version = node.api_enable_cmds(['show version'])[0]['version']
+    current_version = \
+        node.api_enable_cmds(['show version'])[0]['internalVersion']
     if current_version == software_version:
         return
 
     image = '%s.swi' % software_version
     try:
-        urllib.urlretrieve(url, '/mnt/flash/%s.swi')
-    except:
+        urllib.urlretrieve(url, '%s/%s' % (node.flash(), image))
+    except Exception, e:
         return 3
 
     boot_line = '! boot system flash:/%s' % image
     if node.has_startup_config():
-        startup_config = open(STARTUP_CONFIG, 'r')
+        startup_config = open(node.startup_config(), 'r')
         lines = startup_config.readlines()
         startup_config.close()
         
-        startup_config = open(STARTUP_CONFIG, 'w')
+        startup_config = open(node.startup_config(), 'w')
         for line in lines:
             if re.search('! boot system', line):
                 startup_config.write(boot_line)
