@@ -643,20 +643,9 @@ def main():
     global_attr = definition['attributes']
     global_attr['NODE'] = node
     for action, details in definition['actions'].iteritems():
-        # Not supported for now
-        # if 'requires' in details:
-        #     missing_attr = [x for x in details['requires'] 
-        #                     if x not in ATTRIBUTES]
-        #     if missing_attr:
-        #         log('Failed to load action %s because the following '
-        #             'attributes are missing: %s' % (action, 
-        #                                             ', '.join(missing_attr)),
-        #             error=True)            
-        #         continue
         execute_action(server, action, details, global_attr)
 
     log('Definition %s applied successfully' % definition_name)
-
 
     # Check for startup-config
     if not node.has_startup_config():

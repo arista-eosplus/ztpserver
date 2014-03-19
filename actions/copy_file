@@ -29,18 +29,31 @@
 
 #pylint: disable=W0702
 
-CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
-PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
+BACKUP_SUFFIX = '.backup'
+PERSISTENT_DIR = '/mnt/flash/.ztp-files'
 
 import errno
 import os
 import urllib
 
 def main(attributes): 
-    '''Installs EOS CliPlugin.
+    '''Copies file to the switch.
 
-    Installs CliPlugin based on the value of the
-    'install_cli_plugin-url' attribute.
+    Copies file based on the values of 'copy_file-src_url' and
+    'copy_file-dst_url' attributes (both should point to the filename
+    itself, and not the containing folder).  If 'copy_file-overwrite'
+    is set to:
+       - 'replace': the file is copied to the switch regardless
+         of whether there is already a file with the same name at the 
+         destination;
+       - 'keep-original': the file is copied to the switch only if
+         there is not already a file with the same name at the
+         destination; if there is, then the action is a no-op;
+       - 'backup': the file is copied to the switch; if there is
+         already another file at the destination, that file is renamed
+         by appending the '.backup' suffix
+    If 'copy_file-overwrite' is not set, then 'replace' is the default
+    behaviour.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -52,33 +65,47 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('install_cli_plugin-url')
-        2 - unable to create /mnt/flash/ztp-plugins
-        3 - unable to retrieve extension from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('install_cli_plugin-url')
-    if not url:
+    src_url = attributes.get('copy_file-src_url')
+    if not src_url:
         return 1
-    
+
+    dst_url = attributes.get('copy_file-dst_url')
+    if not dst_url:
+        return 2
+
+    overwrite = attributes.get('copy_file-overwrite')
+    if not overwrite:
+        overwrite = 'replace'
+
     try:
-        os.makedirs(PERSISTENT_PLUGIN_DIR)
+        os.makedirs(PERSISTENT_DIR)
     except OSError, error:
         if error.errno != errno.EEXIST:
             return 2
 
-    name = url.split('/')[ -1 ]
-    try:
-        urllib.urlretrieve(url, '%s/%s' % (PERSISTENT_PLUGIN_DIR,
-                                           name))
-    except:
+    name = dst_url.split('/')[ -1 ]
+    lines = ['sudo cp %s/%s %s'  % (PERSISTENT_DIR,
+                                    name, dst_url)]
+
+    if overwrite == 'keep-original':
+        if os.path.isfile(dst_url):
+            return
+    elif overwrite == 'backup':
+        if os.path.isfile(dst_url):
+            lines = ['sudo mv %s %s%s' % (dst_url, dst_url,
+                                          BACKUP_SUFFIX)] + lines
+    elif overwrite != 'replace':
         return 3
-    
-    lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
-                                    name,
-                                    CLI_PLUGIN_DIR)]
-    
+
+    try:
+        urllib.urlretrieve(src_url, 
+                           '%s/%s' % (PERSISTENT_DIR, name))
+    except:
+        return 4
+
     attributes.get('NODE').append_rc_eos_lines(lines)
