@@ -29,6 +29,7 @@
 
 #pylint: disable=W0702
 
+import os
 import urllib
 
 TEMP_CONFIG = '/tmp/tmp-config'
@@ -69,3 +70,5 @@ def main(attributes):
     config.close()
 
     attributes.get('NODE').append_startup_config_lines(lines)
+
+    os.remove(TEMP_CONFIG)

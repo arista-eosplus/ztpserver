@@ -34,116 +34,108 @@ import os.path
 import unittest
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import FLASH, STARTUP_CONFIG
+from client_test_lib import STARTUP_CONFIG
 from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import file_log, remove_file, get_action
-from client_test_lib import startup_config_action, random_string
-from client_test_lib import print_action
+from client_test_lib import file_log, get_action, random_string
+from client_test_lib import startup_config_action
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('install_image', 1)
-
-    def test_missing_software_version(self):
-        self.basic_test('install_image', 2,
-                        attributes={'install_image-software_url' :
-                                        random_string()})
+        self.basic_test('add_config', 1)
 
     def test_url_failure(self):
-        self.basic_test('install_image', 3,
-                        attributes={'install_image-software_url' : 
-                                    random_string(),
-                                    'install_image-software_version' : 
+        self.basic_test('add_config', 2,
+                        attributes={'add_config-url' : 
                                     random_string()})
 
 
 class SuccessTest(unittest.TestCase):
 
-    def test_no_op(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        version = random_string()
-        bootstrap.eapi.version = version
-        bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'},
-                     {'name' :'startup_config_action'}],
-            attributes={
-                'install_image-software_url' : random_string(),
-                'install_image-software_version' : version})
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('install_image'))
-        bootstrap.ztps.set_action_response('startup_config_action',
-                                           startup_config_action())
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
-
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
-        version = random_string()
-        image = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, image)
+        config = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'name' : 'test_action'}],
-            attributes={
-                'install_image-software_url' : url,
-                'install_image-software_version' : version})
+            attributes={'add_config-url' : url})
         bootstrap.ztps.set_action_response('test_action',
-                                           get_action('install_image'))
-        bootstrap.ztps.set_file_response(image, print_action())
+                                           get_action('add_config'))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
-        image_file = '%s/%s.swi' % (FLASH, version)
         try:
-            self.failUnless('! boot system flash:/%s.swi' % version
-                            in file_log(STARTUP_CONFIG))
-            self.failUnless(os.path.isfile(image_file))
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
-            remove_file(image_file)
             bootstrap.end_test()
 
-    def test_startup_config(self):
+    def test_append(self):
         bootstrap = Bootstrap(ztps_default_config=True)
-        version = random_string()
-        image = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, image)
+        config = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'name' : 'startup_config_action'},
                      {'name' : 'test_action'}],
-            attributes={
-                'install_image-software_url' : url,
-                'install_image-software_version' : version})
-        wrong_version = '%s_test' % version
+            attributes={'add_config-url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+
+        startup_config_text = random_string()
         bootstrap.ztps.set_action_response(
             'startup_config_action',
-            startup_config_action(lines=['! boot system flash:/%s.swi' % 
-                                         wrong_version]))
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('install_image'))
-        bootstrap.ztps.set_file_response(image, print_action())
+            startup_config_action(lines=[startup_config_text]))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
-        image_file = '%s/%s.swi' % (FLASH, version)
         try:
-            self.failUnless('! boot system flash:/%s.swi' % version
-                            in file_log(STARTUP_CONFIG))
-            self.failUnless('! boot system flash:/%s.swi' % wrong_version
-                            not in file_log(STARTUP_CONFIG))
-            self.failUnless(os.path.isfile(image_file))
-            print bootstrap.output
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            log = file_log(STARTUP_CONFIG)
+            self.failUnless(contents in log)
+            self.failUnless(startup_config_text in log)
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
-            remove_file(image_file)
+            bootstrap.end_test()
+
+    def test_multi_lines(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, config)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'test_action'}],
+            attributes={'add_config-url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+
+        startup_config_lines = [random_string(), random_string(),
+                                random_string(), random_string()]
+        bootstrap.ztps.set_action_response(
+            'startup_config_action',
+            startup_config_action(lines=startup_config_lines))
+        contents = '\n'.join([random_string(), random_string(),
+                              random_string(), random_string(),
+                              random_string(), random_string()])
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            log = file_log(STARTUP_CONFIG)
+            all_lines = startup_config_lines + contents.split()
+            for line in all_lines:
+                self.failUnless(line in log)
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
             bootstrap.end_test()
 
 

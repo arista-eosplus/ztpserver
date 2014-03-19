@@ -37,6 +37,7 @@ import subprocess
 import string                        #pylint: disable=W0402
 import time
 import thread
+import unittest
 
 import BaseHTTPServer
 
@@ -121,8 +122,10 @@ def cli_log():
 
 def file_log(filename):
     try:
-        return [x.strip() for x in open(filename, 'r').readlines()
-                if 'SyslogManager' not in x]
+        return [y for y in [x.strip() for x
+                            in open(filename, 'r').readlines()
+                            if 'SyslogManager' not in x]
+                if y]
     except IOError:
         return []
 
@@ -143,7 +146,7 @@ def main(attributes):
    group = pwd.getpwnam('%s').pw_gid
 
    f = file('%s', 'w')
-   f.write('%s')
+   f.write(\'\'\'%s\'\'\')
    f.close()
 
    os.chmod('%s', 0777)
@@ -206,7 +209,7 @@ def main(attributes):
 def random_string():
     return ''.join(random.choice(
             string.ascii_uppercase + 
-            string.digits) for _ in range(random.randint(10,100)))
+            string.digits) for _ in range(random.randint(3, 20)))
 
 
 class Bootstrap(object):
@@ -519,3 +522,27 @@ class ZTPServer(object):
             httpd.server_close()
             print time.asctime(), 'ZTPS: Server stops - %s:%s' % (
                 ZTPS_SERVER, ZTPS_PORT)
+
+class ActionFailureTest(unittest.TestCase):
+    #pylint: disable=R0904
+
+    def basic_test(self, action, return_code, attributes=None):
+        if not attributes:
+            attributes = {}
+
+        bootstrap = Bootstrap(ztps_default_config=True)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action'}],
+            attributes=attributes)
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action(action))
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.action_failure())
+            msg = [x for x in bootstrap.output.split('\n') if x][-1]
+            self.failUnless('return code %s' % return_code in msg)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()        

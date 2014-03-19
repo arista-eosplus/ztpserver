@@ -34,49 +34,18 @@ import os.path
 import unittest
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import FLASH, STARTUP_CONFIG
-from client_test_lib import Bootstrap
-from client_test_lib import file_log, remove_file, get_action
-from client_test_lib import startup_config_action, random_string
-from client_test_lib import print_action
+from client_test_lib import STARTUP_CONFIG
+from client_test_lib import Bootstrap, ActionFailureTest
+from client_test_lib import file_log, get_action, random_string
 
-class FailureTest(unittest.TestCase):
+class FailureTest(ActionFailureTest):
     
     def test_missing_url(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}])
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('replace_config'))
-        bootstrap.start_test()
+        self.basic_test('replace_config', 1)
 
-        try:
-            self.failUnless(bootstrap.action_failure())
-            msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 1' in msg)
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
-    
     def test_url_failure(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        version = random_string()
-        bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}],
-            attributes={'replace_config-url' : random_string()})
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('replace_config'))
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.action_failure())
-            msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 2' in msg)
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
+        self.basic_test('replace_config', 2,
+                        attributes={'replace_config-url' : random_string()})
 
 
 class SuccessTest(unittest.TestCase):
@@ -102,6 +71,7 @@ class SuccessTest(unittest.TestCase):
             raise
         finally:
             bootstrap.end_test()
+
 
 if __name__ == '__main__':
     unittest.main()
