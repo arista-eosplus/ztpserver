@@ -56,21 +56,22 @@ class YAMLSerializer(object):
         else:
             return super(YAMLSerializer, cls).__new__(cls)
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         return yaml.load(data)
 
-    def serialize(self, data):
+    def serialize(self, data, safe_dump=False, **kwargs):
+        if safe_dump:
+            return yaml.safe_dump(data, default_flow_style=False)
         return yaml.dump(data, default_flow_style=False)
 
 class JSONSerializer(object):
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         return json.loads(data)
 
-    def serialize(self, data):
+    def serialize(self, data, **kwargs):
         return json.dumps(data)
 
-# TODO refacter this whole module as functions
 class Serializer(object):
     """ The :py:class:`Serializer` will serialize a data structure
     based on the content-type.   If the content-type is not supported
@@ -78,7 +79,7 @@ class Serializer(object):
     :py:class:`str` object
     """
 
-    def serialize(self, data, content_type):
+    def serialize(self, data, content_type, **kwargs):
         """ serialize the data base on the content_type
 
         If a valid handler does not exist for the requested
@@ -92,12 +93,14 @@ class Serializer(object):
 
         try:
             handler = self._serialize_handler(content_type)
-            return handler.serialize(data) if handler else str(data)
+            if hasattr(data, 'serialize'):
+                data = data.serialize()
+            return handler.serialize(data, **kwargs) if handler else str(data)
 
         except TypeError:
             raise SerializerError('Could not serialize data')
 
-    def deserialize(self, data, content_type):
+    def deserialize(self, data, content_type, **kwargs):
         """ deserialize the data base on the content_type
 
         If a valid handler does not exist for the requested
@@ -111,7 +114,9 @@ class Serializer(object):
 
         try:
             handler = self._deserialize_handler(content_type)
-            return handler.deserialize(data) if handler else str(data)
+            if hasattr(data, 'deserialize'):
+                data = data.deserialize()
+            return handler.deserialize(data, **kwargs) if handler else str(data)
 
         except Exception:
             raise SerializerError('Could not deserialize data')

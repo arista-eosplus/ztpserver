@@ -258,6 +258,12 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_DEFAULT_DEFINITION'
 ))
 
+runtime.add_attribute(BoolAttr(
+    name='disable_pattern_checks',
+    default=False,
+    environ='ZTPS_DISABLE_PATTERN_CHECKS'
+))
+
 runtime.add_attribute(StrAttr(
     name='identifier',
     choices=['systemmac', 'serialnum'],
@@ -315,13 +321,6 @@ runtime.add_attribute(IntAttr(
 ))
 
 # Group: db
-runtime.add_attribute(StrAttr(
-    name='nodedb',
-    group='db',
-    default='nodedb',
-    environ='ZTPS_NODEDB'
-))
-
 runtime.add_attribute(StrAttr(
     name='neighbordb',
     group='db',

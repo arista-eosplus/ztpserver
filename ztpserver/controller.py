@@ -44,17 +44,7 @@ import ztpserver.config
 import ztpserver.repository
 import ztpserver.data
 
-CONTENT_TYPE_PYTHON = 'text/x-python'
-CONTENT_TYPE_HTML = 'text/html'
-CONTENT_TYPE_OTHER = 'text/plain'
-CONTENT_TYPE_JSON = 'application/json'
-CONTENT_TYPE_YAML = 'application/yaml'
-
-HTTP_STATUS_OK = 200
-HTTP_STATUS_CREATED = 201
-HTTP_STATUS_BAD_REQUEST = 400
-HTTP_STATUS_NOT_FOUND = 404
-HTTP_STATUS_CONFLICT = 409
+from ztpserver.constants import *
 
 FILESTORES = {
     "actions": {
@@ -80,7 +70,7 @@ FILESTORES = {
     }
 }
 
-log = logging.getLogger(__name__)    #pylint: disable=C0103
+log = logging.getLogger(__name__)    # pylint: disable=C0103
 
 class StoreController(ztpserver.wsgiapp.Controller):
 
@@ -151,25 +141,33 @@ class NodeController(StoreController):
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            if self.store.exists('attributes'):
-                attributes = self.deserialize(self.get_file_contents('attributes'),
+            if self.store.exists('%s/attributes' % id):
+                filepath = '%s/attributes' % id
+                attributes = self.deserialize(self.get_file_contents(filepath),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('pattern'):
+            if self.store.exists('%s/pattern' % id) and \
+                not ztpserver.config.runtime.default.disable_pattern_checks:
+
+                filepath = '%s/pattern' % id
                 # this needs to validate pattern
-                pattern = self.store.get_file_contents('pattern')
+                pattern = self.store.get_file_contents(filepath)
                 pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
-                # FIXME this is broken as node is no longer defined in
-                #       this function
+
+                if self.store.exists('%s/topology' % id):
+                    filepath = '%s/topology' % id
+                    neighbors = self.store.get_file_contents(filepath)
+                    neighbors = self.deserialize(neighbors)
+
+                nodeattrs = dict(systemmac=id)
+                nodeattrs['neighbors'] = neighbors or dict()
+                node = self.create_node_object(nodeattrs)
+
                 if not self.match_pattern(pattern, node):
-                    log.info("node %s failed to match existing pattern" %
-                        id)
+                    log.info("node %s failed to match existing pattern" % id)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            elif self.store.exists('topology'):
-                # this needs to validate exact topology
-                pass
 
             response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
@@ -199,10 +197,10 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in body:
-            neighbordb = self._load_neighbordb(ztpserver.config.runtime.db.neighbordb)
+            filepath = ztpserver.config.runtime.db.neighbordb
+            neighbordb = self._load_neighbordb(filepath)
             if neighbordb is None:
-                log.error('could not load neighbordb (%s)' % \
-                    ztpserver.config.runtime.db.neighbordb)
+                log.error('could not load neighbordb (%s)' % filepath)
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             patterns = neighbordb.get_node_patterns(node.systemmac)
@@ -231,7 +229,7 @@ class NodeController(StoreController):
         return set(self.REQ_FIELDS).issubset(set(req.keys()))
 
     def _load_neighbordb(self, filename):
-        #pylint: disable=R0201
+        # pylint: disable=R0201
         database = ztpserver.data.NeighborDb()
         database.load(filename)
         return database
@@ -248,8 +246,9 @@ class NodeController(StoreController):
             pattern = kwargs.get('pattern')
             neighbors = request.get('neighbors')
 
-            definition = self.definitions.get_file_contents(pattern.defintion)
-            definition = self.deserialize(definition)
+            definition = self.definitions.get_file(pattern.definition)
+            definition = self.deserialize(definition.contents,
+                                          CONTENT_TYPE_YAML)
 
             definition.setdefault('attributes',
                                   self._process_attributes(definition))
@@ -257,27 +256,28 @@ class NodeController(StoreController):
             filename = '%s/definition' % node.systemmac
             contents = self.serialize(definition)
 
-            self.store.write_file('pattern',
-                                  self.serialize(pattern, 'application/yaml'))
-            self.store.write_file('topology',
-                                  self.serialize(neighbors, 'application/yaml'))
+            self.store.write_file('%s/pattern' % node.systemmac,
+                                  self.serialize(pattern, CONTENT_TYPE_JSON))
+
+            self.store.write_file('%s/topology' % node.systemmac,
+                                  self.serialize(neighbors, CONTENT_TYPE_JSON))
 
         self.store.write_file(filename, contents)
         return '/nodes/%s' % node.systemmac
 
     def _process_attributes(self, definition):
         # TODO finish definition of function
-        return list()
+        return dict()
 
-    def create_node_object(self, req):
+    def create_node_object(self, nodeattrs):
         # pylint: disable=R0201
         # create node object
-        node = ztpserver.data.Node(**req)   #pylint: disable=W0142
+        node = ztpserver.data.Node(**nodeattrs)   # pylint: disable=W0142
         node.systemmac = str(node.systemmac).replace(':', '')
 
-        if 'neighbors' in req.keys():
+        if 'neighbors' in nodeattrs.keys():
             # add interfaces and neighbors
-            for interface, neighbors in req.get('neighbors').items():
+            for interface, neighbors in nodeattrs['neighbors'].items():
                 obj = node.add_interface(interface)
                 for neighbor in neighbors:
                     obj.add_neighbor(neighbor['device'], neighbor['port'])
@@ -327,7 +327,7 @@ class NodeController(StoreController):
         return result
 
     def match_interface_pattern(self, pattern, node):
-        #pylint: disable=R0201
+        # pylint: disable=R0201
         if pattern.interface == 'any':
             for interface in node.interfaces():
                 neighbors = node.interfaces(interface).neighbors
@@ -381,7 +381,7 @@ class BootstrapController(StoreController):
         return contents or self.DEFAULTCONFIG
 
     def config(self, request, **kwargs):
-        #pylint: disable=W0613
+        # pylint: disable=W0613
         log.debug("requesting bootstrap config")
         return dict(body=self.get_config(), content_type=CONTENT_TYPE_JSON)
 
@@ -428,7 +428,7 @@ class Router(ztpserver.wsgiapp.Router):
         # configure filestores
         for filestore, kwargs in FILESTORES.items():
             controller = FileStoreController(filestore)
-            mapper.collection(controller=controller, **kwargs)   #pylint: disable=W0142
+            mapper.collection(controller=controller, **kwargs)   # pylint: disable=W0142
 
         super(Router, self).__init__(mapper)
 

@@ -41,6 +41,7 @@ import routes
 import routes.middleware
 
 from ztpserver.serializers import Serializer
+from ztpserver.constants import *
 
 log = logging.getLogger(__name__)
 
@@ -70,11 +71,11 @@ class Controller(object):
     def edit(self, request, id, **kwargs):
         return webob.exc.HTTPNoContent()
 
-    def serialize(self, data, content_type='text/html'):
-        return self.serializer.serialize(data, content_type)
+    def serialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):
+        return self.serializer.serialize(data, content_type, **kwargs)
 
-    def deserialize(self, data, content_type='text/html'):
-        return self.serializer.deserialize(data, content_type)
+    def deserialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):
+        return self.serializer.deserialize(data, content_type, **kwargs)
 
     def response(self, **kwargs):
         return webob.Response(**kwargs)
@@ -101,7 +102,7 @@ class Controller(object):
                 result['body'] = self.serialize(result['body'], content_type)
 
             result.setdefault('status', 200)
-            result.setdefault('content_type', 'text/html')
+            result.setdefault('content_type', CONTENT_TYPE_HTML)
 
             result = self.response(**result)   #pylint: disable=W0142
 
