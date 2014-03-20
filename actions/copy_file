@@ -32,7 +32,6 @@
 BACKUP_SUFFIX = '.backup'
 PERSISTENT_DIR = '/mnt/flash/.ztp-files'
 
-import errno
 import os
 import urllib
 
@@ -65,6 +64,10 @@ def main(attributes):
 
     Returns:
         0 - success
+        1 - missing attribute('copy_file-src_url')
+        2 - missing attribute('copy_file-dst_url')
+        3 - erroneous 'copy_file-overwrite' value
+        4 - unable to retrieve file from URL
 
     Raises:
         None
@@ -78,29 +81,34 @@ def main(attributes):
     if not dst_url:
         return 2
 
+    name = dst_url.split('/')[ -1 ]
+
     overwrite = attributes.get('copy_file-overwrite')
     if not overwrite:
         overwrite = 'replace'
 
+    lines = []
+    if overwrite == 'keep-original':
+        lines = lines + ['[ ! -f %s ] && '
+                         'sudo cp %s/%s %s'  % (dst_url, PERSISTENT_DIR,
+                                                name, dst_url)]
+    elif overwrite == 'backup':
+        lines = lines + ['[ -f %s ] && '
+                         'sudo mv %s %s%s' % (dst_url, dst_url, 
+                                              dst_url, BACKUP_SUFFIX)]
+        lines = lines + ['sudo cp %s/%s %s'  % (PERSISTENT_DIR,
+                                                name, dst_url)]
+    elif overwrite == 'replace':
+        lines = lines + ['sudo cp %s/%s %s'  % (PERSISTENT_DIR,
+                                                name, dst_url)]
+    else:
+        return 3
+
     try:
         os.makedirs(PERSISTENT_DIR)
-    except OSError, error:
-        if error.errno != errno.EEXIST:
-            return 2
-
-    name = dst_url.split('/')[ -1 ]
-    lines = ['sudo cp %s/%s %s'  % (PERSISTENT_DIR,
-                                    name, dst_url)]
-
-    if overwrite == 'keep-original':
-        if os.path.isfile(dst_url):
-            return
-    elif overwrite == 'backup':
-        if os.path.isfile(dst_url):
-            lines = ['sudo mv %s %s%s' % (dst_url, dst_url,
-                                          BACKUP_SUFFIX)] + lines
-    elif overwrite != 'replace':
-        return 3
+    except OSError:
+        # file exists
+        pass
 
     try:
         urllib.urlretrieve(src_url, 

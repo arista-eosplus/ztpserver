@@ -532,16 +532,20 @@ class ZTPServer(object):
 class ActionFailureTest(unittest.TestCase):
     #pylint: disable=R0904
 
-    def basic_test(self, action, return_code, attributes=None):
+    def basic_test(self, action, return_code, attributes=None, 
+                   action_value=None):
         if not attributes:
             attributes = {}
+
+        if not action_value:
+            action_value = get_action(action)
 
         bootstrap = Bootstrap(ztps_default_config=True)
         bootstrap.ztps.set_definition_response(
             actions=[{'name' : 'test_action'}],
             attributes=attributes)
         bootstrap.ztps.set_action_response('test_action',
-                                           get_action(action))
+                                           action_value)
         bootstrap.start_test()
 
         try:

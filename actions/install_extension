@@ -34,7 +34,6 @@ BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
 
 import ast
 import os
-import errno
 import urllib
 
 def main(attributes): 
@@ -70,7 +69,7 @@ def main(attributes):
 
     try:
         os.makedirs(EXTENSIONS_DIR)
-    except OSError, error:
+    except OSError:
         # file exists
         pass 
 

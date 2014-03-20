@@ -29,14 +29,12 @@
 
 #pylint: disable=R0904
 
-import copy
 import os
 import os.path
 import unittest
 import shutil
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action, remove_file
