@@ -1,31 +1,34 @@
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import re
 import collections
@@ -33,21 +36,18 @@ import collections
 import ztpserver.config
 import ztpserver.serializers
 
-DEVICENAME_PARSER_RE = re.compile(":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
-ANYDEVICE_PARSER_RE = re.compile(":(?=[any])")
-FUNC_RE = re.compile("(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)")
+DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
+ANYDEVICE_PARSER_RE = re.compile(r":(?=[any])")
+FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)")
 
-serializer = ztpserver.serializers.Serializer()
-
-class NodeDbError(Exception):
-    """ base exception for raising NodeDb errrors"""
-    pass
+serializer = ztpserver.serializers.Serializer() #pylint: disable=C0103
 
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
         self.data = dict()
 
     def __call__(self, key=None):
+        #pylint: disable=W0221
         return self.keys() if key is None else self.get(key)
 
     def __getitem__(self, key):
@@ -61,6 +61,7 @@ class Collection(collections.Mapping, collections.Callable):
 
 class OrderedCollection(collections.OrderedDict, collections.Callable):
     def __call__(self, key=None):
+        #pylint: disable=W0221
         return self.keys() if key is None else self.get(key)
 
 class Interface(object):
@@ -140,27 +141,27 @@ class Node(object):
 class Functions(object):
 
     @classmethod
-    def exact(self, arg, value):
+    def exact(cls, arg, value):
         return arg == value
 
     @classmethod
-    def regex(self, arg, value):
-        m = re.match(arg, value)
-        return True if m else False
+    def regex(cls, arg, value):
+        match = re.match(arg, value)
+        return True if match else False
 
     @classmethod
-    def includes(self, arg, value):
+    def includes(cls, arg, value):
         return arg in value
 
     @classmethod
-    def excludes(self, arg, value):
+    def excludes(cls, arg, value):
         return arg not in value
 
 class NeighborDb(object):
 
     def __init__(self):
         self.variables = dict()
-        self.patterns = { 'globals': dict(), 'nodes': dict() }
+        self.patterns = {'globals': dict(), 'nodes': dict()}
 
     def __repr__(self):
         return "NeighborDb(globals=%d, nodes=%s)" %\
@@ -184,13 +185,21 @@ class NeighborDb(object):
             for interface in pattern['interfaces']:
                 for key, values in interface.items():
                     args = self._parse_interface(key, values, obj.variables)
-                    obj.add_interface(*args)
+                    obj.add_interface(*args) #pylint: disable=W0142
 
             if 'node' in pattern:
                 obj.node = pattern['node']
                 self.patterns['nodes'][obj.node] = obj
             else:
                 self.patterns['globals'][id(obj)] = obj
+
+    def get_node_patterns(self, node):
+        """ returns a list of possible patterns for the given node """
+
+        if node in self.patterns['nodes'].keys():
+            return [self.patterns['nodes'].get(node)]
+        else:
+            return self.patterns['globals'].values()
 
     def _parse_interface(self, interface, values, variables=None):
 
@@ -247,8 +256,8 @@ class InterfacePattern(object):
         for item in pattern:
             if '-' in item:
                 start, stop = item.split('-')
-                for z in range(int(start), int(stop)+1):
-                    pattern_set.append("Ethernet%d" % z)
+                for index in range(int(start), int(stop)+1):
+                    pattern_set.append("Ethernet%d" % index)
             else:
                 pattern_set.append("Ethernet%s" % item)
 
@@ -268,11 +277,11 @@ class InterfacePattern(object):
         if self.node is None:
             return neighbor is None
 
-        m = FUNC_RE.match(self.node)
+        match = FUNC_RE.match(self.node)
 
-        method = m.group('function') if m else 'exact'
+        method = match.group('function') if match else 'exact'
         method = getattr(Functions, method)
-        arg = m.group('arg') if m else self.node
+        arg = match.group('arg') if match else self.node
 
         return method(arg, neighbor)
 

@@ -1,31 +1,35 @@
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=W1201
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import logging
 
@@ -39,9 +43,20 @@ import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.repository
 import ztpserver.data
-from ztpserver.serializers import Serializer
 
-COLLECTIONS = {
+CONTENT_TYPE_PYTHON = 'text/x-python'
+CONTENT_TYPE_HTML = 'text/html'
+CONTENT_TYPE_OTHER = 'text/plain'
+CONTENT_TYPE_JSON = 'application/json'
+CONTENT_TYPE_YAML = 'application/yaml'
+
+HTTP_STATUS_OK = 200
+HTTP_STATUS_CREATED = 201
+HTTP_STATUS_BAD_REQUEST = 400
+HTTP_STATUS_NOT_FOUND = 404
+HTTP_STATUS_CONFLICT = 409
+
+FILESTORES = {
     "actions": {
         "collection_name": "actions",
         "resource_name": "action",
@@ -65,10 +80,7 @@ COLLECTIONS = {
     }
 }
 
-log = logging.getLogger(__name__)
-log.info('starting ztpserver.controller')
-
-serializer = Serializer()
+log = logging.getLogger(__name__)    #pylint: disable=C0103
 
 class StoreController(ztpserver.wsgiapp.Controller):
 
@@ -78,14 +90,21 @@ class StoreController(ztpserver.wsgiapp.Controller):
         super(StoreController, self).__init__()
 
     def _create_filestore(self, name, path_prefix=None):
-        """ attempts to create a filestore with the given name """
+        # pylint: disable=R0201
 
         try:
-            filestore = ztpserver.repository.create_file_store(name, path_prefix)
+            store = ztpserver.repository.create_file_store(name, path_prefix)
         except ztpserver.repository.FileStoreError:
             log.warn('could not create FileStore due to invalid path')
-            filestore = None
-        return filestore
+            store = None
+        return store
+
+    def get_file(self, filename):
+        return self.store.get_file(filename)
+
+    def get_file_contents(self, filename):
+        return self.get_file(filename).contents
+
 
 class FileStoreController(StoreController):
 
@@ -93,23 +112,22 @@ class FileStoreController(StoreController):
         return "FileStoreController"
 
     def show(self, request, id, **kwargs):
-
         urlvars = request.urlvars
-        fn = urlvars.get('id')
+        filename = urlvars.get('id')
         if urlvars.get('format') is not None:
-            fn += '.%s' % urlvars.get('format')
+            filename += '.%s' % urlvars.get('format')
 
         try:
-            obj = self.store.get_file(fn)
+            obj = self.get_file(filename)
 
         except ztpserver.repository.FileObjectNotFound:
-            return webob.exc.HTTPNotFound()
+            return dict(status=HTTP_STATUS_NOT_FOUND)
 
         return webob.static.FileApp(obj.name)
 
 class NodeController(StoreController):
 
-    REQ_FIELDS = [ 'systemmac' ]
+    REQ_FIELDS = ['systemmac']
 
     def __init__(self):
         self.definitions = self._create_filestore('definitions')
@@ -119,105 +137,142 @@ class NodeController(StoreController):
         return 'NodeController'
 
     def show(self, request, id, **kwargs):
+
+        # check if startup-config exists
         if self.store.exists('%s/startup-config' % id):
-            pass
+            filepath = '%s/startup-config' % id
+            response = dict(body=self.get_file_contents(filepath),
+                            content_type=CONTENT_TYPE_OTHER)
 
+        # check if definition exists
         elif self.store.exists('%s/definition' % id):
-            definition = self.store.get_file('definition')
-            attributes = self.store.get_file('attributes')
+            filepath = '%s/definition' % id
+            definition = self.deserialize(self.get_file_contents(filepath),
+                                          CONTENT_TYPE_YAML)
 
-            definition = serializer.deserialize(definition.contents)
-            attributes = serializer.deserialize(attributes.contents)
+            # update attributes with node static attributes
+            if self.store.exists('attributes'):
+                attributes = self.deserialize(self.get_file_contents('attributes'),
+                                              CONTENT_TYPE_YAML)
+                definition['attributes'].update(attributes)
 
-            definition['attributes'].update(attributes)
+            if self.store.exists('pattern'):
+                # this needs to validate pattern
+                pattern = self.store.get_file_contents('pattern')
+                pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
+                # FIXME this is broken as node is no longer defined in
+                #       this function
+                if not self.match_pattern(pattern, node):
+                    log.info("node %s failed to match existing pattern" %
+                        id)
+                    return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            body = serializer.serialize(definition, content_type='applicaton/json')
-            headers = (('Content-Type', 'application/json'))
+            elif self.store.exists('topology'):
+                # this needs to validate exact topology
+                pass
 
-            return webob.Response(status=200, body=body, headers=headers)
+            response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
-        return webob.exc.HTTPNotFound()
+        else:
+            log.info("requested node id %s not found" % id)
+            response = dict(status=HTTP_STATUS_NOT_FOUND)
 
-    def update(self, request, id, **kwargs):
-        pass
+        return response
 
     def create(self, request, **kwargs):
 
-        if not self._validate_request(request.json):
-            log.debug("NodeController.create: missing required fields")
-            return webob.exc.HTTPBadRequest('missing required fields')
+        body = self.deserialize(request.json, CONTENT_TYPE_JSON)
 
-        node = self._create_node(request.json)
-        identifier = node.systemmac
+        if not self._validate_request(body):
+            log.debug("POST request is missing required fields")
+            return dict(status=HTTP_STATUS_BAD_REQUEST)
 
+        node = self.create_node_object(body)
+
+        # check if the node exists and return 409 if it does
         if self.store.exists(node.systemmac):
-            log.debug("NodeController.create: node already exists")
-            return webob.exc.HTTPConflict('node already exists')
+            log.debug("node already exists")
+            return dict(status=HTTP_STATUS_CONFLICT)
 
-        if 'config' in request.json.keys():
-            path = self.store.add_folder(identifier)
-            filename = '%s/startup-config' % identifier
-            self.store.write_file(filename, request.json['config'])
-            location = '/nodes/%s' % identifier
-            headers = [('Location', location)]
-            return webob.exc.HTTPCreated(headers=headers)
+        if 'config' in body:
+            location = self.add_node(node, body)
+            response = dict(status=HTTP_STATUS_CREATED, location=location)
 
-        elif 'neighbors' in request.json.keys():
+        elif 'neighbors' in body:
             neighbordb = self._load_neighbordb(ztpserver.config.runtime.db.neighbordb)
-            patterns = self._get_patterns(neighbordb, node.systemmac)
+            if neighbordb is None:
+                log.error('could not load neighbordb (%s)' % \
+                    ztpserver.config.runtime.db.neighbordb)
+                return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            matches = self._match_patterns(patterns, node)
+            patterns = neighbordb.get_node_patterns(node.systemmac)
+
+            matches = self.match_patterns(patterns, node)
             log.info("found %d pattern matches" % len(matches))
 
-            # create node resource using first pattern match
-            if matches:
-                log.debug("creating node definition with pattern %s" %
+            if not matches:
+                log.info("unable to match any valid pattern")
+                response = dict(status=HTTP_STATUS_BAD_REQUEST)
+
+            else:
+                # create node resource using first pattern match
+                log.info("creating node definition with pattern %s" %
                     matches[0].name)
-                self._create_node_definition(node, matches[0].definition)
-                location = '/nodes/%s' % node.systemmac
-                headers = [('Location', location)]
-                return webob.exc.HTTPCreated(headers=headers)
+                location = self.add_node(node, body, pattern=matches[0])
+                response = dict(status=HTTP_STATUS_CREATED, location=location)
 
-        # create node using default definition, if it exists
-        elif ztpserver.config.runtime.default.defintion:
-            pass
+        else:
+            log.info('unable to handle POST')
+            response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
-        return webob.exc.HTTPBadRequest()
+        return response
 
     def _validate_request(self, req):
         return set(self.REQ_FIELDS).issubset(set(req.keys()))
 
     def _load_neighbordb(self, filename):
-        db = ztpserver.data.NeighborDb()
-        db.load(filename)
-        return db
+        #pylint: disable=R0201
+        database = ztpserver.data.NeighborDb()
+        database.load(filename)
+        return database
 
-    def _get_patterns(self, db, nodeid):
-        if nodeid in db.patterns['nodes'].keys():
-            log.debug("found node specific entry in neighbordb")
-            return [db.patterns['nodes'].get(nodeid)]
-        else:
-            log.debug("attempting to match non-specific patterns")
-            return db.patterns['globals'].values()
+    def add_node(self, node, request, **kwargs):
 
-    def _create_node_definition(self, node, definition_url):
-        """ creates the node definition on the server """
-
-        log.info("creating node with identifier %s" % node.systemmac)
         self.store.add_folder(node.systemmac)
-        definition = self.definitions.get_file(definition_url)
-        definition = serializer.deserialize(definition.contents)
 
-        attributes = defintion.get('attributes')
-        self.store.write_file('definition', \
-            serializer.serialize(definition.contents))
+        if 'config' in request:
+            filename = '%s/startup-config'
+            contents = kwargs.get('config')
 
-        self.store.write_file('definition', definition.contents)
+        if 'neighbors' in request and 'pattern' in kwargs:
+            pattern = kwargs.get('pattern')
+            neighbors = request.get('neighbors')
 
-    def _create_node(self, req):
+            definition = self.definitions.get_file_contents(pattern.defintion)
+            definition = self.deserialize(definition)
 
+            definition.setdefault('attributes',
+                                  self._process_attributes(definition))
+
+            filename = '%s/definition' % node.systemmac
+            contents = self.serialize(definition)
+
+            self.store.write_file('pattern',
+                                  self.serialize(pattern, 'application/yaml'))
+            self.store.write_file('topology',
+                                  self.serialize(neighbors, 'application/yaml'))
+
+        self.store.write_file(filename, contents)
+        return '/nodes/%s' % node.systemmac
+
+    def _process_attributes(self, definition):
+        # TODO finish definition of function
+        return list()
+
+    def create_node_object(self, req):
+        # pylint: disable=R0201
         # create node object
-        node = ztpserver.data.Node(**req)
+        node = ztpserver.data.Node(**req)   #pylint: disable=W0142
         node.systemmac = str(node.systemmac).replace(':', '')
 
         if 'neighbors' in req.keys():
@@ -229,73 +284,50 @@ class NodeController(StoreController):
 
         return node
 
-    def _match_patterns(self, patterns, node):
-        """ attempts to match the requesting node to a pattern entry
-
-        :param patterns: the list of patterns to attempt to match
-        :param node: the node object of type :py:class:`ztpserver.data.Node`
-
-        """
-
+    def match_patterns(self, patterns, node):
         matches = list()
         for pattern in patterns:
-            result = self._validate_pattern(pattern, node)
-
-            if result is None:
-                log.info("Pattern %s does not match node %s" % \
-                    (pattern.name, node.systemmac))
-
-            else:
-                log.info("Pattern %s matches node %s" % \
-                    (pattern.name, node.systemmac))
+            result = self.match_pattern(pattern, node)
+            if result:
                 matches.append(pattern)
-
+            else:
+                log.info('pattern %s does not match node %s' % \
+                    (pattern.name, node.systemmac))
         return matches
 
-    def _validate_pattern(self, pattern, node):
-        """ validates a pattern against a set of interfaces
-
-        :param pattern: object of type :py:class:`ztpserver.data.Pattern`
-                        to validate against
-        :param node: the set of interfaces available from the
-                      object of type :py:class:`ztpserver.data.Node`
-
-        """
-
+    def match_pattern(self, pattern, node):
         interfaces = node.interfaces()
-        log.debug("start validation of %s with interfaces %s" % \
-            (pattern.name, ','.join(interfaces)))
-
         result = dict()
-        for interface_pattern in pattern.interfaces:
 
-            if interface_pattern.node is None and \
-                interface_pattern.interface in interfaces:
-                log.debug("pattern failed due to 'none' interface present")
+        for entry in pattern.interfaces:
+            # pattern specifies nothing connected but we have a neighbor
+            # on the specified interfaces so the rule is violated
+            if entry.node is None and entry.interface in interfaces:
+                log.info("pattern failed due to 'none' interface present")
                 return None
 
-            elif interface_pattern.node == 'any' and \
-                interface_pattern.interface not in interfaces:
-                log.debug("failed due to 'any' interface not present")
+            # pattern specifies any connected but we did not find a
+            # neighbor on the specified interface so the rule is violated
+            elif entry.node == 'any' and entry.interface not in interfaces:
+                log.info("failed due to 'any' interface not present")
                 return None
 
-            else:
-                matches = self._validate_interface_pattern(interface_pattern, node)
+            matches = self.match_interface_pattern(entry, node)
+            if matches is None:
+                log.info("failed to match %s" % entry.interface)
+                return None
 
-                if matches is None:
-                    log.debug("failed to match %s" % interface_pattern.interface)
-                    return None
+            result[entry.interface] = matches
+            log.info("pattern %s matches %s" % (entry.interface, matches))
 
-                else:
-                    result[interface_pattern.interface] = matches
-                    interfaces = [x for x in interfaces if x not in matches]
-
-                log.debug("pattern %s matches %s" % \
-                    (interface_pattern.interface, matches))
-
+            # remove the interface as an available match from the set
+            # of interfaces
+            # TODO this should probably be a set not a list
+            interfaces = [x for x in interfaces if x not in matches]
         return result
 
-    def _validate_interface_pattern(self, pattern, node):
+    def match_interface_pattern(self, pattern, node):
+        #pylint: disable=R0201
         if pattern.interface == 'any':
             for interface in node.interfaces():
                 neighbors = node.interfaces(interface).neighbors
@@ -329,41 +361,46 @@ class BootstrapController(StoreController):
     def get_bootstrap(self):
         """ Returns the bootstrap script """
 
-        filename = ztpserver.config.runtime.default.bootstrap_file
-        bootstrap = self.store.get_file(filename)
-        return serializer.deserialize(bootstrap.contents, 'text/x-python')
+        try:
+            filename = ztpserver.config.runtime.default.bootstrap_file
+            data = self.deserialize(self.get_file_contents(filename),
+                                    CONTENT_TYPE_PYTHON)
+
+        except ztpserver.repository.FileObjectNotFound as exc:
+            log.exception(exc)
+            data = None
+
+        return data
 
     def get_config(self):
         """ returns the full bootstrap configuration as a dict """
 
-        conf = self.store.get_file('bootstrap.conf')
-        if conf.exists:
-            contents = serializer.deserialize(conf.contents, 'application/json')
-        else:
-            log.warn("bootstrap.conf file is missing")
-            contents = self.DEFAULTCONFIG
-        return contents
+        data = self.get_file_contents('bootstrap.conf')
+        contents = self.deserialize(data, CONTENT_TYPE_YAML)
+
+        return contents or self.DEFAULTCONFIG
 
     def config(self, request, **kwargs):
+        #pylint: disable=W0613
         log.debug("requesting bootstrap config")
-        body = serializer.serialize(self.get_config(), 'application/json')
-        headers = [('Content-Type', 'application/json')]
-        return webob.Response(status=200, body=body, headers=headers)
+        return dict(body=self.get_config(), content_type=CONTENT_TYPE_JSON)
 
     def index(self, request, **kwargs):
         try:
             bootstrap = self.get_bootstrap()
             if not bootstrap:
                 log.warn('bootstrap script does not exist')
-                return webob.exc.HTTPBadRequest()
+                return dict(status=HTTP_STATUS_BAD_REQUEST)
 
+            # TODO need to capture and log an error if substitution fails
             default_server = ztpserver.config.runtime.default.server_url
             body = Template(bootstrap).safe_substitute(DEFAULT_SERVER=default_server)
-            headers = [('Content-Type', 'text/x-python')]
-            resp = webob.Response(status=200, body=body, headers=headers)
 
-        except ztpserver.repository.FileObjectNotFound:
-            resp = webob.exc.HTTPNotFound()
+            resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
+
+        except ztpserver.repository.FileObjectNotFound as exc:
+            log.exception(exc)
+            resp = dict(status=HTTP_STATUS_NOT_FOUND)
 
         return resp
 
@@ -375,18 +412,23 @@ class Router(ztpserver.wsgiapp.Router):
     def __init__(self):
         mapper = routes.Mapper()
 
+        # configure /bootstrap
         bootstrap = mapper.submapper(controller=BootstrapController())
         bootstrap.connect('bootstrap', '/bootstrap', action='index')
-        bootstrap.connect('bootstrap_config', '/bootstrap/config', action='config')
+        bootstrap.connect('bootstrap_config',
+                          '/bootstrap/config',
+                          action='config')
 
+        # configure /nodes
         mapper.collection('nodes', 'node',
                           controller=NodeController(),
                           collection_actions=['create'],
-                          member_actions=['show', 'update'])
+                          member_actions=['show'])
 
-        for filestore, kwargs in COLLECTIONS.items():
+        # configure filestores
+        for filestore, kwargs in FILESTORES.items():
             controller = FileStoreController(filestore)
-            mapper.collection(controller=controller, **kwargs)
+            mapper.collection(controller=controller, **kwargs)   #pylint: disable=W0142
 
         super(Router, self).__init__(mapper)
 
