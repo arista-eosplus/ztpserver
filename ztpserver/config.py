@@ -1,32 +1,34 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import os
 import collections
@@ -73,8 +75,8 @@ class StrAttr(Attr):
 
     def __init__(self, name, choices=None, **kwargs):
         self.choices = choices
-        type = ztpserver.types.String(choices=choices)
-        super(StrAttr, self).__init__(name, type=type, **kwargs)
+        attrtype = ztpserver.types.String(choices=choices)
+        super(StrAttr, self).__init__(name, type=attrtype, **kwargs)
 
 class IntAttr(Attr):
     """ Integer attribute class derived from Attr
@@ -87,15 +89,15 @@ class IntAttr(Attr):
     def __init__(self, name, minvalue=None, maxvalue=None, **kwargs):
         self.minvalue = minvalue
         self.maxvalue = maxvalue
-        type = ztpserver.types.Integer(minvalue=minvalue, maxvalue=maxvalue)
-        super(IntAttr, self).__init__(name, type=type, **kwargs)
+        attrtype = ztpserver.types.Integer(minvalue=minvalue, maxvalue=maxvalue)
+        super(IntAttr, self).__init__(name, type=attrtype, **kwargs)
 
 class BoolAttr(Attr):
     """ Boolean attribute class derived from Attr """
 
     def __init__(self, name, **kwargs):
-        type = ztpserver.types.Boolean()
-        super(BoolAttr, self).__init__(name, type=type, **kwargs)
+        attrtype = ztpserver.types.Boolean()
+        super(BoolAttr, self).__init__(name, type=attrtype, **kwargs)
 
 class ListAttr(Attr):
     """ List attribute class derived from Attr
@@ -105,8 +107,8 @@ class ListAttr(Attr):
     """
 
     def __init__(self, name, delimiter=',', **kwargs):
-        type = ztpserver.types.List(delimiter=delimiter)
-        super(ListAttr, self).__init__(name, type=type, **kwargs)
+        attrtype = ztpserver.types.List(delimiter=delimiter)
+        super(ListAttr, self).__init__(name, type=attrtype, **kwargs)
 
 class Group(collections.Mapping):
     """ The Group class provides a logical grouping of attributes in a
@@ -123,7 +125,7 @@ class Group(collections.Mapping):
         self.config = config
 
     def __getattr__(self, name):
-        return self.config._get_attribute(name, self.name)
+        return self.config._get_attribute(name, self.name) # pylint: disable=W0212
 
     def __getitem__(self, name):
         return self.__getattr__(name)
@@ -226,7 +228,7 @@ class Config(collections.Mapping):
             item['value'] = self._transform(item, item['_metadata'].default)
 
     def read(self, filename):
-        cp = ConfigParser.ConfigParser()
+        cp = ConfigParser.ConfigParser() #pylint: disable=C0103
         cp.read(filename)
 
         for section in cp.sections():
@@ -236,7 +238,7 @@ class Config(collections.Mapping):
                 except AttributeError:
                     continue
 
-runtime = Config()
+runtime = Config() #pylint: disable=C0103
 
 # Group: default
 runtime.add_attribute(StrAttr(
