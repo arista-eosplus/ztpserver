@@ -44,17 +44,7 @@ import ztpserver.config
 import ztpserver.repository
 import ztpserver.data
 
-CONTENT_TYPE_PYTHON = 'text/x-python'
-CONTENT_TYPE_HTML = 'text/html'
-CONTENT_TYPE_OTHER = 'text/plain'
-CONTENT_TYPE_JSON = 'application/json'
-CONTENT_TYPE_YAML = 'application/yaml'
-
-HTTP_STATUS_OK = 200
-HTTP_STATUS_CREATED = 201
-HTTP_STATUS_BAD_REQUEST = 400
-HTTP_STATUS_NOT_FOUND = 404
-HTTP_STATUS_CONFLICT = 409
+from ztpserver.constants import *
 
 FILESTORES = {
     "actions": {
@@ -157,7 +147,7 @@ class NodeController(StoreController):
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('pattern') and
+            if self.store.exists('pattern') and \
                 not ztpserver.config.runtime.default.disable_pattern_checks:
                 # this needs to validate pattern
                 pattern = self.store.get_file_contents('pattern')
@@ -201,10 +191,10 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in body:
-            neighbordb = self._load_neighbordb(ztpserver.config.runtime.db.neighbordb)
+            filepath = ztpserver.config.runtime.db.neighbordb
+            neighbordb = self._load_neighbordb(filepath)
             if neighbordb is None:
-                log.error('could not load neighbordb (%s)' % \
-                    ztpserver.config.runtime.db.neighbordb)
+                log.error('could not load neighbordb (%s)' % filepath)
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             patterns = neighbordb.get_node_patterns(node.systemmac)
@@ -252,7 +242,7 @@ class NodeController(StoreController):
 
             definition = self.definitions.get_file(pattern.definition)
             definition = self.deserialize(definition.contents,
-                                          'application/yaml')
+                                          CONTENT_TYPE_YAML)
 
             definition.setdefault('attributes',
                                   self._process_attributes(definition))
@@ -260,17 +250,20 @@ class NodeController(StoreController):
             filename = '%s/definition' % node.systemmac
             contents = self.serialize(definition)
 
-            self.store.write_file('pattern',
-                                  self.serialize(pattern, 'application/yaml'))
-            self.store.write_file('topology',
-                                  self.serialize(neighbors, 'application/yaml'))
+            self.store.write_file('%s/pattern' % node.systemmac,
+                                  self.serialize(pattern, CONTENT_TYPE_YAML))
+
+            self.store.write_file('%s/topology' % node.systemmac,
+                                  self.serialize(neighbors,
+                                                 CONTENT_TYPE_YAML,
+                                                 safe_dump=True))
 
         self.store.write_file(filename, contents)
         return '/nodes/%s' % node.systemmac
 
     def _process_attributes(self, definition):
         # TODO finish definition of function
-        return list()
+        return dict()
 
     def create_node_object(self, req):
         # pylint: disable=R0201
