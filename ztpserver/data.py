@@ -242,7 +242,7 @@ class InterfacePattern(object):
         self.tags = tags
 
     def __repr__(self):
-        return "InterfacePattern(interface=%s, node=%s, port=%s)" %\
+        return "InterfacePattern(interface=%s, node=%s, port=%s)" % \
             (self.interface, self.node, self.port)
 
     def _match_interfaces(self, pattern, interface_set, match_all=True):
@@ -306,5 +306,32 @@ class Pattern(object):
 
     def add_interface(self, interface, node, port, tags=None):
         self.interfaces.append(InterfacePattern(interface, node, port, tags))
+
+    def serialize(self):
+        data = dict(name=self.name,
+                    definition=self.definition,
+                    variables=self.variables)
+
+        if self.node:
+            data['node'] = self.node
+
+        interfaces = list()
+        for entry in self.interfaces:
+            obj = dict()
+            if entry.node is None:
+                obj['node'] = 'none'
+            else:
+                obj['node'] = entry.node
+                obj['port'] = entry.port
+
+            if entry.tags is not None:
+                obj['tags'] = entry.tags
+            interfaces.append({entry.interface: obj})
+        data['interfaces'] = interfaces
+
+        return data
+
+
+
 
 

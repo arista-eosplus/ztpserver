@@ -56,20 +56,20 @@ class YAMLSerializer(object):
         else:
             return super(YAMLSerializer, cls).__new__(cls)
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         return yaml.load(data)
 
-    def serialize(self, data, safe_dump=False):
+    def serialize(self, data, safe_dump=False, **kwargs):
         if safe_dump:
             return yaml.safe_dump(data, default_flow_style=False)
         return yaml.dump(data, default_flow_style=False)
 
 class JSONSerializer(object):
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         return json.loads(data)
 
-    def serialize(self, data):
+    def serialize(self, data, **kwargs):
         return json.dumps(data)
 
 class Serializer(object):
@@ -93,6 +93,8 @@ class Serializer(object):
 
         try:
             handler = self._serialize_handler(content_type)
+            if hasattr(data, 'serialize'):
+                data = data.serialize()
             return handler.serialize(data, **kwargs) if handler else str(data)
 
         except TypeError:
@@ -112,6 +114,8 @@ class Serializer(object):
 
         try:
             handler = self._deserialize_handler(content_type)
+            if hasattr(data, 'deserialize'):
+                data = data.deserialize()
             return handler.deserialize(data, **kwargs) if handler else str(data)
 
         except Exception:

@@ -141,27 +141,33 @@ class NodeController(StoreController):
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            filepath = '%s/attributes' % id
-            if self.store.exists(filepath):
+            if self.store.exists('%s/attributes' % id):
+                filepath = '%s/attributes' % id
                 attributes = self.deserialize(self.get_file_contents(filepath),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('pattern') and \
+            if self.store.exists('%s/pattern' % id) and \
                 not ztpserver.config.runtime.default.disable_pattern_checks:
+
+                filepath = '%s/pattern' % id
                 # this needs to validate pattern
-                pattern = self.store.get_file_contents('pattern')
+                pattern = self.store.get_file_contents(filepath)
                 pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
-                # FIXME this is broken as node is no longer defined in
-                #       this function
+
+                if self.store.exists('%s/topology' % id):
+                    filepath = '%s/topology' % id
+                    neighbors = self.store.get_file_contents(filepath)
+                    neighbors = self.deserialize(neighbors)
+
+                nodeattrs = dict(systemmac=id)
+                nodeattrs['neighbors'] = neighbors or dict()
+                node = self.create_node_object(nodeattrs)
+
                 if not self.match_pattern(pattern, node):
-                    log.info("node %s failed to match existing pattern" %
-                        id)
+                    log.info("node %s failed to match existing pattern" % id)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            elif self.store.exists('topology'):
-                # this needs to validate exact topology
-                pass
 
             response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
@@ -251,12 +257,10 @@ class NodeController(StoreController):
             contents = self.serialize(definition)
 
             self.store.write_file('%s/pattern' % node.systemmac,
-                                  self.serialize(pattern, CONTENT_TYPE_YAML))
+                                  self.serialize(pattern, CONTENT_TYPE_JSON))
 
             self.store.write_file('%s/topology' % node.systemmac,
-                                  self.serialize(neighbors,
-                                                 CONTENT_TYPE_YAML,
-                                                 safe_dump=True))
+                                  self.serialize(neighbors, CONTENT_TYPE_JSON))
 
         self.store.write_file(filename, contents)
         return '/nodes/%s' % node.systemmac
@@ -265,15 +269,15 @@ class NodeController(StoreController):
         # TODO finish definition of function
         return dict()
 
-    def create_node_object(self, req):
+    def create_node_object(self, nodeattrs):
         # pylint: disable=R0201
         # create node object
-        node = ztpserver.data.Node(**req)   # pylint: disable=W0142
+        node = ztpserver.data.Node(**nodeattrs)   # pylint: disable=W0142
         node.systemmac = str(node.systemmac).replace(':', '')
 
-        if 'neighbors' in req.keys():
+        if 'neighbors' in nodeattrs.keys():
             # add interfaces and neighbors
-            for interface, neighbors in req.get('neighbors').items():
+            for interface, neighbors in nodeattrs['neighbors'].items():
                 obj = node.add_interface(interface)
                 for neighbor in neighbors:
                     obj.add_neighbor(neighbor['device'], neighbor['port'])
