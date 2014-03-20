@@ -38,7 +38,7 @@ from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
-from client_test_lib import startup_config_action, remove_file
+from client_test_lib import startup_config_action
 
 class FailureTest(ActionFailureTest):
 
@@ -65,14 +65,14 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
 
-        PLUGIN_DIR = '/tmp'
-        PERSISTENT_DIR = '/tmp/persistent'
+        plugin_dir = '/tmp'
+        persistent_dir = '/tmp/persistent'
         action = get_action('install_cli_plugin')
         action = action.replace('/usr/lib/python2.7/site-packages/CliPlugin',
-                                PLUGIN_DIR)
+                                plugin_dir)
 
         action = action.replace('/mnt/flash/.ztp-plugins',
-                                PERSISTENT_DIR)
+                                persistent_dir)
         bootstrap.ztps.set_action_response('test_action',
                                            action)
 
@@ -85,15 +85,15 @@ class SuccessTest(unittest.TestCase):
             log = file_log(RC_EOS)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s/%s %s' % 
-                            (PERSISTENT_DIR, plugin, PLUGIN_DIR) in log)
+                            (persistent_dir, plugin, plugin_dir) in log)
 
             self.failUnless(contents in 
-                            file_log('%s/%s' % (PERSISTENT_DIR, plugin)))
+                            file_log('%s/%s' % (persistent_dir, plugin)))
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
-            shutil.rmtree(PERSISTENT_DIR)
+            shutil.rmtree(persistent_dir)
             bootstrap.end_test()
 
 

@@ -32,7 +32,6 @@
 CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
 PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
 
-import errno
 import os
 import urllib
 
@@ -65,7 +64,7 @@ def main(attributes):
     
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
-    except OSError, error:
+    except OSError:
         # file exists
         pass
 
