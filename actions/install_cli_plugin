@@ -53,8 +53,7 @@ def main(attributes):
     Returns:
         0 - success
         1 - missing attribute('install_cli_plugin-url')
-        2 - unable to create /mnt/flash/ztp-plugins
-        3 - unable to retrieve extension from URL
+        2 - unable to retrieve extension from URL
 
     Raises:
         None
@@ -67,15 +66,15 @@ def main(attributes):
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
     except OSError, error:
-        if error.errno != errno.EEXIST:
-            return 2
+        # file exists
+        pass
 
     name = url.split('/')[ -1 ]
     try:
         urllib.urlretrieve(url, '%s/%s' % (PERSISTENT_PLUGIN_DIR,
                                            name))
     except:
-        return 3
+        return 2
     
     lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
                                     name,

@@ -82,7 +82,6 @@ STATUS_BAD_REQUEST = 400
 STATUS_NOT_FOUND = 404
 STATUS_CONFLICT = 409
 
-
 STARTUP_CONFIG = '/mnt/flash/startup-config'
 RC_EOS = '/mnt/flash/rc.eos'
 FLASH = '/mnt/flash'
@@ -226,6 +225,9 @@ class Node(object):
 
     def log_msg(self, msg, error=False):
         log(msg, error)
+
+    def rc_eos(self):
+        return RC_EOS
 
     def flash(self):
         return FLASH

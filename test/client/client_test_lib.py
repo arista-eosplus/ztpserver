@@ -54,6 +54,7 @@ EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
 STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
 FLASH = '/tmp'
+RC_EOS = '/tmp/rc.eos'
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -101,8 +102,10 @@ def clear_eapi_log():
 def clear_startup_config():
     remove_file(STARTUP_CONFIG)
 
+def clear_rc_eos():
+    remove_file(RC_EOS)
+
 def clear_logs():
-    clear_startup_config()
     clear_cli_log()    
     clear_eapi_log()
 
@@ -251,6 +254,8 @@ class Bootstrap(object):
                                 "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
             line = line.replace("FLASH = '/mnt/flash'", 
                                 "FLASH = '%s'" % FLASH)
+            line = line.replace("RC_EOS = '/mnt/flash/rc.eos'", 
+                                "RC_EOS = '%s'" % RC_EOS)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -282,6 +287,10 @@ class Bootstrap(object):
                 
         # Clean up logs
         clear_logs()
+
+        # Other
+        clear_startup_config()
+        clear_rc_eos()
 
     def start_test(self):
         try:
