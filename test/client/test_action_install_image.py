@@ -93,8 +93,13 @@ class SuccessTest(unittest.TestCase):
             attributes={
                 'install_image-software_url' : url,
                 'install_image-software_version' : version})
+
+        boot_file = '/tmp/boot-config'
+        action = get_action('install_image')
+        action = action.replace('/mnt/flash/boot-config',
+                                boot_file)
         bootstrap.ztps.set_action_response('test_action',
-                                           get_action('install_image'))
+                                           action)
         bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
@@ -103,11 +108,14 @@ class SuccessTest(unittest.TestCase):
             self.failUnless('! boot system flash:/%s.swi' % version
                             in file_log(STARTUP_CONFIG))
             self.failUnless(os.path.isfile(image_file))
+            self.failUnless(['SWI=flash:/%s.swi' % version] ==
+                            file_log(boot_file))
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
             remove_file(image_file)
+            remove_file(boot_file)
             bootstrap.end_test()
 
     def test_startup_config(self):
@@ -126,8 +134,13 @@ class SuccessTest(unittest.TestCase):
             'startup_config_action',
             startup_config_action(lines=['! boot system flash:/%s.swi' % 
                                          wrong_version]))
+
+        boot_file = '/tmp/boot-config'
+        action = get_action('install_image')
+        action = action.replace('/mnt/flash/boot-config',
+                                boot_file)
         bootstrap.ztps.set_action_response('test_action',
-                                           get_action('install_image'))
+                                           action)
         bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
@@ -138,12 +151,14 @@ class SuccessTest(unittest.TestCase):
             self.failUnless('! boot system flash:/%s.swi' % wrong_version
                             not in file_log(STARTUP_CONFIG))
             self.failUnless(os.path.isfile(image_file))
-            print bootstrap.output
+            self.failUnless(['SWI=flash:/%s.swi' % version] ==
+                            file_log(boot_file))
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
             remove_file(image_file)
+            remove_file(boot_file)
             bootstrap.end_test()
 
 

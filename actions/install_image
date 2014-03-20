@@ -32,6 +32,8 @@
 import re
 import urllib
 
+BOOT_CONFIG = '/mnt/flash/boot-config'
+
 def main(attributes): 
     '''Installs software image on the switch.
 
@@ -93,3 +95,8 @@ def main(attributes):
         startup_config.close()
     else:
         node.append_startup_config_lines([boot_line])
+
+    boot_line = 'SWI=flash:/%s\n' % image
+    boot_file = open(BOOT_CONFIG, 'w')
+    boot_file.write(boot_line)
+    boot_file.close()
