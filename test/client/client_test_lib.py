@@ -493,22 +493,18 @@ class ZTPServer(object):
 
             @classmethod
             def do_request(cls, req):
-                if req.path in self.responses:
-                    # if self.responses[req.path][1] == STATUS_OK:
-                    #     req.send_response(self.responses[req.path][1])
-                    # else:
-                    #     req.send_error(self.responses[req.path][1]) 
+                if req.path in self.responses.keys():
+                    response = self.responses[req.path]
+                    req.send_response(response[1])
+                    req.error_content_type = response[0]
 
-                    req.send_response(self.responses[req.path][1])
-                    req.error_content_type = self.responses[req.path][0]
-
-                    req.send_header('Content-type', self.responses[req.path][0])
+                    req.send_header('Content-type', response[0])
                     req.end_headers()
-                    req.wfile.write(self.responses[req.path][2])
-                    print 'ZTPS: RESPONSE: (ct=%s, status=%s, output=%s)' % (
-                        self.responses[req.path][0], 
-                        self.responses[req.path][1], 
-                        self.responses[req.path][2])
+                    req.wfile.write(response[2])
+                    print 'ZTPS: RESPONSE: (ct=%s, status=%s, output=%s...)' % (
+                        response[0], 
+                        response[1], 
+                        response[2][:100])
                 else:
                     print 'ZTPS: No RESPONSE'
 
@@ -518,7 +514,6 @@ class ZTPServer(object):
 
             def do_POST(req):
                 print 'ZTPS: responding to POST request:%s' % req.path
-                print self.responses
                 ZTPSHandler.do_request(req)
 
         server_class = BaseHTTPServer.HTTPServer

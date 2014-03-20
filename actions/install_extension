@@ -32,6 +32,7 @@
 EXTENSIONS_DIR = '/mnt/flash/.extensions'
 BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
 
+import ast
 import os
 import errno
 import urllib
@@ -54,8 +55,7 @@ def main(attributes):
     Returns:
         0 - success
         1 - missing attribute('install_extension-url')
-        2 - unable to create /mnt/flash/.extensions
-        3 - unable to retrieve extension from URL
+        2 - unable to retrieve extension from URL
 
     Raises:
         None
@@ -65,21 +65,22 @@ def main(attributes):
     if not url:
         return 1
 
-    force = attributes.get('install_extension-force')
-    
+    force = ast.literal_eval(
+        str(attributes.get('install_extension-force')))
+
     try:
         os.makedirs(EXTENSIONS_DIR)
     except OSError, error:
-        if error.errno != errno.EEXIST:
-            return 2
+        # file exists
+        pass 
 
     name = url.split('/')[ -1 ]
     try:
         urllib.urlretrieve(url, '%s/%s' % (EXTENSIONS_DIR,
                                            name))
     except:
-        return 3
-    
+        return 2
+
     line = name
     if force:
         line = line + ' force' 
