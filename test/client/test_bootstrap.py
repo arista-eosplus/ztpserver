@@ -325,12 +325,18 @@ class FileLogConfigTest(unittest.TestCase):
             self.failUnless(bootstrap.missing_startup_config_failure())
             for filename in filenames.itervalues():
                 self.failUnless(file_log(filename))
-            self.assertEquals(file_log(filenames['DEBUG']),
-                              file_log(filenames['bogus']))
-            self.assertEquals(file_log(filenames['DEBUG']),
-                              file_log(filenames['INFO']))
-            self.failIfEqual(file_log(filenames['DEBUG']),
-                             file_log(filenames['ERROR']))
+            self.assertEquals(file_log(filenames['DEBUG'],
+                                       ignore_string='SyslogManager'),
+                              file_log(filenames['bogus'],
+                                       ignore_string='SyslogManager'))
+            self.assertEquals(file_log(filenames['DEBUG'],
+                                       ignore_string='SyslogManager'),
+                              file_log(filenames['INFO'],
+                                       ignore_string='SyslogManager'))
+            self.failIfEqual(file_log(filenames['DEBUG'],
+                                       ignore_string='SyslogManager'),
+                             file_log(filenames['ERROR'],
+                                       ignore_string='SyslogManager'))
             self.failUnless(set(file_log(filenames['ERROR'])).issubset(
                     set(file_log(filenames['DEBUG']))))
             for filename in filenames.itervalues():

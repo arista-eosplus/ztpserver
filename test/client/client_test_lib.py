@@ -123,12 +123,14 @@ def cli_log():
     except IOError:
         return []
 
-def file_log(filename):
+def file_log(filename, ignore_string=None):
+
     try:
-        return [y for y in [x.strip() for x
-                            in open(filename, 'r').readlines()
-                            if 'SyslogManager' not in x]
-                if y]
+        lines = [x.strip() for x in open(filename, 'r').readlines()]
+        if ignore_string:
+            return [y for y in lines if y and ignore_string not in y]
+        else:
+            return [y for y in lines if y]
     except IOError:
         return []
 
