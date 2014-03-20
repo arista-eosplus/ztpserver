@@ -151,13 +151,14 @@ class NodeController(StoreController):
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            attributes_file = '%s/attributes' % id
-            if self.store.exists(attributes_file):
-                attributes = self.deserialize(self.get_file_contents(attributes_file),
+            filepath = '%s/attributes' % id
+            if self.store.exists(filepath):
+                attributes = self.deserialize(self.get_file_contents(filepath),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('pattern'):
+            if self.store.exists('pattern') and
+                not ztpserver.config.runtime.default.disable_pattern_checks:
                 # this needs to validate pattern
                 pattern = self.store.get_file_contents('pattern')
                 pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
