@@ -27,7 +27,7 @@ patterns:
 
 
   - name: sample global template 1
-    definition: dc-1/pod-1/leaf_template
+    definition: test
     variables:
       not_spine: excludes('spine')
       any_spine: regex('spine\d+')

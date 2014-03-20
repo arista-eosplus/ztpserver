@@ -80,7 +80,7 @@ FILESTORES = {
     }
 }
 
-log = logging.getLogger(__name__)    #pylint: disable=C0103
+log = logging.getLogger(__name__)    # pylint: disable=C0103
 
 class StoreController(ztpserver.wsgiapp.Controller):
 
@@ -151,8 +151,9 @@ class NodeController(StoreController):
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            if self.store.exists('attributes'):
-                attributes = self.deserialize(self.get_file_contents('attributes'),
+            attributes_file = '%s/attributes' % id
+            if self.store.exists(attributes_file):
+                attributes = self.deserialize(self.get_file_contents(attributes_file),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
@@ -231,7 +232,7 @@ class NodeController(StoreController):
         return set(self.REQ_FIELDS).issubset(set(req.keys()))
 
     def _load_neighbordb(self, filename):
-        #pylint: disable=R0201
+        # pylint: disable=R0201
         database = ztpserver.data.NeighborDb()
         database.load(filename)
         return database
@@ -248,8 +249,9 @@ class NodeController(StoreController):
             pattern = kwargs.get('pattern')
             neighbors = request.get('neighbors')
 
-            definition = self.definitions.get_file_contents(pattern.defintion)
-            definition = self.deserialize(definition)
+            definition = self.definitions.get_file(pattern.definition)
+            definition = self.deserialize(definition.contents,
+                                          'application/yaml')
 
             definition.setdefault('attributes',
                                   self._process_attributes(definition))
@@ -272,7 +274,7 @@ class NodeController(StoreController):
     def create_node_object(self, req):
         # pylint: disable=R0201
         # create node object
-        node = ztpserver.data.Node(**req)   #pylint: disable=W0142
+        node = ztpserver.data.Node(**req)   # pylint: disable=W0142
         node.systemmac = str(node.systemmac).replace(':', '')
 
         if 'neighbors' in req.keys():
@@ -327,7 +329,7 @@ class NodeController(StoreController):
         return result
 
     def match_interface_pattern(self, pattern, node):
-        #pylint: disable=R0201
+        # pylint: disable=R0201
         if pattern.interface == 'any':
             for interface in node.interfaces():
                 neighbors = node.interfaces(interface).neighbors
@@ -381,7 +383,7 @@ class BootstrapController(StoreController):
         return contents or self.DEFAULTCONFIG
 
     def config(self, request, **kwargs):
-        #pylint: disable=W0613
+        # pylint: disable=W0613
         log.debug("requesting bootstrap config")
         return dict(body=self.get_config(), content_type=CONTENT_TYPE_JSON)
 
@@ -428,7 +430,7 @@ class Router(ztpserver.wsgiapp.Router):
         # configure filestores
         for filestore, kwargs in FILESTORES.items():
             controller = FileStoreController(filestore)
-            mapper.collection(controller=controller, **kwargs)   #pylint: disable=W0142
+            mapper.collection(controller=controller, **kwargs)   # pylint: disable=W0142
 
         super(Router, self).__init__(mapper)
 
