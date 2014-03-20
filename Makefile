@@ -44,12 +44,16 @@ clean:
 test_client: clean
 	$(PYTHON)  -m unittest discover test/client -v
 
+test_actions: clean
+	$(PYTHON)  -m unittest discover test/actions -v
+
 test_server: clean
 	$(PYTHON)  -m unittest discover test/server -v
 
 tests: clean
 	$(PYTHON)  -m unittest discover test/client -v
 	$(PYTHON)  -m unittest discover test/server -v
+	$(PYTHON)  -m unittest discover test/actions -v
 
 python:
 	$(PYTHON) setup.py build

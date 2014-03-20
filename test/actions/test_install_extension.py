@@ -27,27 +27,29 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904
+#pylint: disable=R0904,F0401,W0232,E1101
 
 import os
 import os.path
 import unittest
 import shutil
+import sys
+
+sys.path.append('test/client')
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
-from client_test_lib import startup_config_action
+from client_test_lib import startup_config_action, remove_file
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('install_cli_plugin', 1)
+        self.basic_test('install_extension', 1)
 
     def test_url_failure(self):
-        self.basic_test('install_cli_plugin', 2,
-                        attributes={'install_cli_plugin-url' : 
+        self.basic_test('install_extension', 2,
+                        attributes={'install_extension-url' : 
                                     random_string()})
 
 
@@ -55,45 +57,67 @@ class SuccessTest(unittest.TestCase):
 
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
-        plugin = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, plugin)
+
+        extension = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, extension)
+
+        extension_force = random_string()
+        url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
+
         bootstrap.ztps.set_definition_response(
             actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
-            attributes={'install_cli_plugin-url' : url})
+                     {'name' : 'test_action'},
+                     {'name' : 'test_action_force',
+                      'attributes' :
+                      {'install_extension-url' : url_force,
+                       'install_extension-force' : True}}
+                     ],
+            attributes={'install_extension-url' : url})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
 
-        plugin_dir = '/tmp'
-        persistent_dir = '/tmp/persistent'
-        action = get_action('install_cli_plugin')
-        action = action.replace('/usr/lib/python2.7/site-packages/CliPlugin',
-                                plugin_dir)
+        extensions_dir = '/tmp/extensions'
+        boot_extensions = '/tmp/boot-extensions'
+        action = get_action('install_extension')
+        action = action.replace('/mnt/flash/.extensions',
+                                extensions_dir)
+        action = action.replace('/mnt/flash/boot-extensions',
+                                boot_extensions)
 
-        action = action.replace('/mnt/flash/.ztp-plugins',
-                                persistent_dir)
         bootstrap.ztps.set_action_response('test_action',
                                            action)
-
         contents = random_string()
-        bootstrap.ztps.set_file_response(plugin, contents)
+        bootstrap.ztps.set_file_response(extension, contents)
+
+        bootstrap.ztps.set_action_response('test_action_force',
+                                           action)
+        contents_force = random_string()
+        bootstrap.ztps.set_file_response(extension_force, contents_force)
+
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
-            self.failUnless('#!/bin/bash' in log)
-            self.failUnless('sudo cp %s/%s %s' % 
-                            (persistent_dir, plugin, plugin_dir) in log)
+            ext_filename = '%s/%s' % (extensions_dir, extension)
+            self.failUnless(os.path.isfile(ext_filename))
+            self.failUnless([contents] == 
+                            file_log(ext_filename))
+            self.failUnless(extension in file_log(boot_extensions))
 
-            self.failUnless(contents in 
-                            file_log('%s/%s' % (persistent_dir, plugin)))
+            ext_filename_force = '%s/%s' % (extensions_dir, extension_force)
+            self.failUnless(os.path.isfile(ext_filename_force))
+
+            self.failUnless([contents_force] == 
+                            file_log(ext_filename_force))
+            self.failUnless('%s force' % extension_force in 
+                            file_log(boot_extensions))
+
             self.failUnless(bootstrap.success())
         except AssertionError:
             raise
         finally:
-            shutil.rmtree(persistent_dir)
+            shutil.rmtree(extensions_dir)
+            remove_file(boot_extensions)
             bootstrap.end_test()
 
 
