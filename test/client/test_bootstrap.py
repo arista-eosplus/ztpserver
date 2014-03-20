@@ -34,46 +34,60 @@ import os.path
 import unittest
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import Bootstrap, BaseTest
+from client_test_lib import Bootstrap
 from client_test_lib import cli_log, file_log, remove_file
-from client_test_lib import startup_config_action, clear_startup_config
+from client_test_lib import startup_config_action
 from client_test_lib import fail_action, print_action, random_string
+from client_test_lib import print_attributes_action
+from client_test_lib import erroneous_action, missing_main_action
+from client_test_lib import wrong_signature_action, exception_action
 
 
-class ServerNotRunningTest(BaseTest):
+class ServerNotRunningTest(unittest.TestCase):
     
     def test(self):
         bootstrap = Bootstrap(server='127.0.0.2')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.server_connection_failure())
-        self.assertEquals(cli_log(), [])
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.server_connection_failure())
+            self.assertEquals(cli_log(), [])
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class ConfigRequestErrorTest(BaseTest):
+class ConfigRequestErrorTest(unittest.TestCase):
 
     def test_status(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response(status=201)
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.assertEquals(cli_log(), [])
-        self.failIf(bootstrap.error)
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.assertEquals(cli_log(), [])
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_content_type(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response(content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.assertEquals(cli_log(), [])
-        self.failIf(bootstrap.error)
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.assertEquals(cli_log(), [])
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_status_content_type(self):
         bootstrap = Bootstrap()
@@ -82,27 +96,34 @@ class ConfigRequestErrorTest(BaseTest):
             content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.assertEquals(cli_log(), [])
-        self.failIf(bootstrap.error)
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.assertEquals(cli_log(), [])
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
 
-class EAPIErrorTest(BaseTest):
+class EAPIErrorTest(unittest.TestCase):
 
     def test(self):
         bootstrap = Bootstrap(eapi_port=54321)
         bootstrap.ztps.set_config_response()
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_configured())
-        self.failUnless(bootstrap.eapi_failure())
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_configured())
+            self.failUnless(bootstrap.eapi_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class CheckNodeErrorTest(BaseTest):
+class CheckNodeErrorTest(unittest.TestCase):
 
     def test_status(self):
         bootstrap = Bootstrap()
@@ -110,11 +131,14 @@ class CheckNodeErrorTest(BaseTest):
         bootstrap.ztps.set_node_check_response(status=200)
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_content_type(self):
         bootstrap = Bootstrap()
@@ -123,11 +147,14 @@ class CheckNodeErrorTest(BaseTest):
             content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_status_content_type(self):
         bootstrap = Bootstrap()
@@ -137,11 +164,14 @@ class CheckNodeErrorTest(BaseTest):
             content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_node_not_found(self):
         bootstrap = Bootstrap()
@@ -149,14 +179,17 @@ class CheckNodeErrorTest(BaseTest):
         bootstrap.ztps.set_node_check_response(status=400)
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.node_not_found_failure())
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.node_not_found_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class DefinitionErrorTest(BaseTest):
+class DefinitionErrorTest(unittest.TestCase):
 
     def test_definition_missing(self):
         bootstrap = Bootstrap()
@@ -164,11 +197,14 @@ class DefinitionErrorTest(BaseTest):
         bootstrap.ztps.set_node_check_response()
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.server_connection_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.server_connection_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_status(self):
         bootstrap = Bootstrap()
@@ -178,11 +214,14 @@ class DefinitionErrorTest(BaseTest):
 
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_content_type(self):
         bootstrap = Bootstrap()
@@ -192,11 +231,14 @@ class DefinitionErrorTest(BaseTest):
             content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_status_content_type(self):
         bootstrap = Bootstrap()
@@ -207,11 +249,14 @@ class DefinitionErrorTest(BaseTest):
             content_type='text/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_topology_check(self):
         bootstrap = Bootstrap()
@@ -222,14 +267,17 @@ class DefinitionErrorTest(BaseTest):
             content_type='text/html')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.toplogy_check_failure())
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.toplogy_check_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class MissingStartupConfigTest(BaseTest):
+class MissingStartupConfigTest(unittest.TestCase):
 
     def test(self):
         bootstrap = Bootstrap()
@@ -238,14 +286,17 @@ class MissingStartupConfigTest(BaseTest):
         bootstrap.ztps.set_definition_response()
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.missing_startup_config_failure())
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.missing_startup_config_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class FileLogConfigTest(BaseTest):
+class FileLogConfigTest(unittest.TestCase):
 
     def test(self):
         filenames = {
@@ -269,26 +320,29 @@ class FileLogConfigTest(BaseTest):
         bootstrap.ztps.set_definition_response()
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.missing_startup_config_failure())
-        for filename in filenames.itervalues():
-            self.failUnless(file_log(filename))
-        self.assertEquals(file_log(filenames['DEBUG']),
-                         file_log(filenames['bogus']))
-        self.assertEquals(file_log(filenames['DEBUG']),
-                         file_log(filenames['INFO']))
-        self.failIfEqual(file_log(filenames['DEBUG']),
-                            file_log(filenames['ERROR']))
-        self.failUnless(set(file_log(filenames['ERROR'])).issubset(
-                set(file_log(filenames['DEBUG']))))
-        for filename in filenames.itervalues():
-            remove_file(filename)
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.missing_startup_config_failure())
+            for filename in filenames.itervalues():
+                self.failUnless(file_log(filename))
+            self.assertEquals(file_log(filenames['DEBUG']),
+                              file_log(filenames['bogus']))
+            self.assertEquals(file_log(filenames['DEBUG']),
+                              file_log(filenames['INFO']))
+            self.failIfEqual(file_log(filenames['DEBUG']),
+                             file_log(filenames['ERROR']))
+            self.failUnless(set(file_log(filenames['ERROR'])).issubset(
+                    set(file_log(filenames['DEBUG']))))
+            for filename in filenames.itervalues():
+                remove_file(filename)
+                self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
-
-class XmppConfigTest(BaseTest):
+class XmppConfigTest(unittest.TestCase):
 
     def test_full(self):
         self.xmpp_sanity_test({'server' : 'test-server',
@@ -318,79 +372,109 @@ class XmppConfigTest(BaseTest):
         bootstrap.ztps.set_definition_response()
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.missing_startup_config_failure())
-        self.failIf(bootstrap.error)
-        self.failIf('XmppClient' not in ''.join(file_log(log)))
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.missing_startup_config_failure())
+            self.failIf(bootstrap.error)
+            self.failIf('XmppClient' not in ''.join(file_log(log)))
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        bootstrap.end_test()
 
+class ActionFailureTest(unittest.TestCase):
 
-class ActionFailureTest(BaseTest):
+    def action_fail_test(self, action):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action'}])
+        bootstrap.ztps.set_action_response('test_action', action)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.action_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
+    def test_return_code_action_failed(self):
+        self.action_fail_test(fail_action())
+
+    def test_erroneous_action_failed(self):
+        self.action_fail_test(erroneous_action())
+
+    def test_missing_main_action_failed(self):
+        self.action_fail_test(missing_main_action())
+
+    def test_wrong_sig_action_failed(self):
+        self.action_fail_test(wrong_signature_action())
+
+    def test_exception_action_failed(self):
+        self.action_fail_test(exception_action())
 
     def test_status(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201)
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        clear_startup_config()
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_content_type(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            content_type='test/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        clear_startup_config()
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_status_content_type(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201,
                                            content_type='test/plain')
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.unexpected_response_failure())
-        self.failIf(bootstrap.error)
-
-        clear_startup_config()
-        bootstrap.end_test()
-
-    def test_action_failed(self):
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response()
-        bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'test_action' : {}})
-        bootstrap.ztps.set_action_response('test_action', fail_action())
-        bootstrap.start_test()
-
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.action_failure())
-        self.failIf(bootstrap.error)
-
-        clear_startup_config()
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.unexpected_response_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_action_failure_log(self):
         log = '/tmp/ztps-log-%s-debug' % os.getpid()
@@ -405,52 +489,59 @@ class ActionFailureTest(BaseTest):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'test_action' : {'onstart' : text_onstart,
-                                      'onsuccess' : text_onsuccess,
-                                      'onfailure' : text_onfailure},
-                     })
+            actions=[{'name' : 'test_action',
+                      'onstart' : text_onstart,
+                      'onsuccess' : text_onsuccess,
+                      'onfailure' : text_onfailure},
+                     ])
         bootstrap.ztps.set_action_response('test_action',
                                            fail_action())
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.action_failure())
-        self.failIf(bootstrap.error)
-        log  = ''.join(file_log(log))
-        self.failUnless(text_onstart in log)
-        self.failUnless(text_onsuccess not in log)
-        self.failUnless(text_onfailure in log)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.action_failure())
+            self.failIf(bootstrap.error)
+            log  = ''.join(file_log(log))
+            self.failUnless(text_onstart in log)
+            self.failUnless(text_onsuccess not in log)
+            self.failUnless(text_onfailure in log)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        clear_startup_config()
-        bootstrap.end_test()
 
-
-class BootstrapSuccessTest(BaseTest):
+class BootstrapSuccessTest(unittest.TestCase):
 
     def test_success(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'save_config' : {}})
-        bootstrap.ztps.set_action_response('save_config',
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'}])
+        bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.success())
-        self.failIf(bootstrap.error)
-
-        clear_startup_config()
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
     def test_multiple_actions(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response(actions={'save_config' : {},
-                                                        'print_action_1' : {},
-                                                        'print_action_2' : {}})
-        bootstrap.ztps.set_action_response('save_config',
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action_1'},
+                     {'name' : 'print_action_2'}])
+        bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
 
         text_1 = random_string()
@@ -461,41 +552,126 @@ class BootstrapSuccessTest(BaseTest):
                                            print_action(text_2))
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.success())
-        self.failUnless(text_1 in bootstrap.output)
-        self.failUnless(text_2 in bootstrap.output)
-        self.failIf(bootstrap.error)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(text_1 in bootstrap.output)
+            self.failUnless(text_2 in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-        clear_startup_config()
-        bootstrap.end_test()
+    def test_global_attribute(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        text = random_string()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action'}],
+            attributes={'print_action-attr' : text})
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.ztps.set_action_response('print_action',
+                                           print_action(use_attribute=True))
+        bootstrap.start_test()
 
-    # Not supported yet
-    # def test_attributes(self):
-    #     bootstrap = Bootstrap()
-    #     bootstrap.ztps.set_config_response()
-    #     bootstrap.ztps.set_node_check_response()
-    #     text = random_string()
-    #     bootstrap.ztps.set_definition_response(
-    #         actions={'save_config' : {},
-    #                  'print_action' : {}},
-    #         attributes={'print_action':text})
-    #     bootstrap.ztps.set_action_response('save_config',
-    #                                    startup_config_action())
-    #     bootstrap.ztps.set_action_response('print_action',
-    #                                        print_action(use_attribute=True))
-    #     bootstrap.start_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(text in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-    #     self.failUnless(bootstrap.eapi_node_information_collected())
-    #     self.failUnless(bootstrap.success())
-    #     debug()
+    def test_local_attribute(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        text = random_string()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action',
+                      'attributes' : {'print_action-attr':text}}])
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.ztps.set_action_response('print_action',
+                                           print_action(use_attribute=True))
+        bootstrap.start_test()
 
-    #     self.failUnless(text in bootstrap.output)
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(text in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
-    #     self.failIf(bootstrap.error)
+    def test_overlapping_attributes(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        global_text = random_string()
+        local_text = random_string()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_action',
+                      'attributes' : {'print_action-attr' : local_text}}],
+            attributes={'print_action-attr' : global_text})
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.ztps.set_action_response('print_action',
+                                           print_action(use_attribute=True))
+        bootstrap.start_test()
 
-    #     clear_startup_config()
-    #     bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(local_text in bootstrap.output)
+            self.failUnless(global_text not in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
+    def test_all_attributes(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        global_text = random_string()
+        local_text = random_string()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'startup_config_action'},
+                     {'name' : 'print_attributes_action',
+                      'attributes' : {'print_action-attr_local' : 
+                                      local_text}}],
+            attributes={'print_action-attr_global' : global_text})
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.ztps.set_action_response(
+            'print_attributes_action',
+            print_attributes_action(['print_action-attr_global',
+                                     'print_action-attr_local']))
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(local_text in bootstrap.output)
+            self.failUnless(global_text in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
 
     def test_action_success_log(self):
         log = '/tmp/ztps-log-%s-debug' % os.getpid()
@@ -510,24 +686,27 @@ class BootstrapSuccessTest(BaseTest):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions={'save_config' : {'onstart' : text_onstart,
-                                      'onsuccess' : text_onsuccess,
-                                      'onfailure' : text_onfailure},
-                     })
-        bootstrap.ztps.set_action_response('save_config',
+            actions=[{'name' : 'startup_config_action',
+                     'onstart' : text_onstart,
+                     'onsuccess' : text_onsuccess,
+                     'onfailure' : text_onfailure,
+                     }])
+        bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()
 
-        self.failUnless(bootstrap.eapi_node_information_collected())
-        self.failUnless(bootstrap.success())
-        self.failIf(bootstrap.error)
-        log  = ''.join(file_log(log))
-        self.failUnless(text_onstart in log)
-        self.failUnless(text_onsuccess in log)
-        self.failUnless(text_onfailure not in log)
-
-        clear_startup_config()
-        bootstrap.end_test()
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failIf(bootstrap.error)
+            log  = ''.join(file_log(log))
+            self.failUnless(text_onstart in log)
+            self.failUnless(text_onsuccess in log)
+            self.failUnless(text_onfailure not in log)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
 
 if __name__ == '__main__':

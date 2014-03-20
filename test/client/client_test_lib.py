@@ -53,6 +53,7 @@ CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
 STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
+FLASH = '/tmp'
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -101,6 +102,7 @@ def clear_startup_config():
     remove_file(STARTUP_CONFIG)
 
 def clear_logs():
+    clear_startup_config()
     clear_cli_log()    
     clear_eapi_log()
 
@@ -120,67 +122,101 @@ def cli_log():
 
 def file_log(filename):
     try:
-        return [x.strip() for x in open(filename, 'r').readlines()
-                if 'SyslogManager' not in x]
+        return [y for y in [x.strip() for x
+                            in open(filename, 'r').readlines()
+                            if 'SyslogManager' not in x]
+                if y]
     except IOError:
         return []
 
-def startup_config_action():
+def get_action(action):
+    return open('actions/%s' % action, 'r').read()
+
+def startup_config_action(lines=None):
+    if not lines:
+        lines = ['test']        
+
     user = os.getenv('USER')
     return '''#!/usr/bin/env python
 import os
 import pwd
 
-user = pwd.getpwnam('%s').pw_uid
-group = pwd.getpwnam('%s').pw_gid
+def main(attributes):
+   user = pwd.getpwnam('%s').pw_uid
+   group = pwd.getpwnam('%s').pw_gid
 
-f = file('%s', 'w')
-f.write('test')
-f.close()
+   f = file('%s', 'w')
+   f.write(\'\'\'%s\'\'\')
+   f.close()
 
-os.chmod('%s', 0777)
-os.chown('%s', user, group)
-''' % (user, user,
-       STARTUP_CONFIG, STARTUP_CONFIG, STARTUP_CONFIG)
+   os.chmod('%s', 0777)
+   os.chown('%s', user, group)
+''' % (user, user, STARTUP_CONFIG, '\n'.join(lines),
+       STARTUP_CONFIG, STARTUP_CONFIG)
 
 def print_action(msg='TEST', use_attribute=False):
     #pylint: disable=E0602
     if use_attribute:
         return '''#!/usr/bin/env python
-print ATTRIBUTES['print_action']
+
+def main(attributes):
+   print attributes.get('print_action-attr')
 '''
-    
-    return '''#!/usr/bin/env python
-print '%s'
+    else:
+        return '''#!/usr/bin/env python
+
+def main(attributes):
+   print '%s'
 ''' % msg
+
+def print_attributes_action(attributes):
+    #pylint: disable=E0602
+    result = '''#!/usr/bin/env python
+
+def main(attributes):
+'''
+    for attr in attributes:
+        result += '    print attributes.get(\'%s\')\n' % attr
+    return result
 
 def fail_action():
     return '''#!/usr/bin/env python
-return 2
+
+def main(attributes):
+   return 2
+'''
+
+def erroneous_action():
+    return '''THIS_IS_NOT_PYTHON'''
+
+def missing_main_action():
+    return '''#!/usr/bin/env python'''
+
+def wrong_signature_action():
+    return '''#!/usr/bin/env python
+
+def main():
+   pass
+'''
+
+def exception_action():
+    return '''#!/usr/bin/env python
+
+def main(attributes):
+   raise Exception
 '''
 
 def random_string():
     return ''.join(random.choice(
             string.ascii_uppercase + 
-            string.digits) for _ in range(random.randint(10,100)))
+            string.digits) for _ in range(random.randint(3, 20)))
 
-class BaseTest(unittest.TestCase):
-    #pylint: disable=C0103,R0201,R0904
-
-    def tearDown(self):
-        # Clean up files in /tmp
-        for filename in os.listdir('/tmp'):
-            if (re.search('^bootstrap-', filename) or 
-                re.search('^ztps-log-', filename)) :
-                os.remove(os.path.join('/tmp', filename))
-
-        clear_logs()
-        
 
 class Bootstrap(object):
     #pylint: disable=R0201
 
-    def __init__(self, server=None, eapi_port=None):
+    def __init__(self, server=None, eapi_port=None,
+                 ztps_default_config=False):
         os.environ['PATH'] += ':%s/test/client' % os.getcwd()
 
         self.server = server if server else '%s:%s' % (ZTPS_SERVER, ZTPS_PORT)
@@ -196,6 +232,10 @@ class Bootstrap(object):
         self.ztps = start_ztp_server()
 
         self.configure()
+        
+        if ztps_default_config:
+            self.ztps.set_config_response()
+            self.ztps.set_node_check_response()
 
     def configure(self):
         infile = open(BOOTSTRAP_FILE)
@@ -209,6 +249,8 @@ class Bootstrap(object):
                                 self.eapi_port)
             line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'", 
                                 "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
+            line = line.replace("FLASH = '/mnt/flash'", 
+                                "FLASH = '%s'" % FLASH)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -223,8 +265,23 @@ class Bootstrap(object):
         self.module = imp.load_source('bootstrap', self.filename)
 
     def end_test(self):
-        clear_logs()
+        # Clean up actions
+        for url in self.ztps.responses.keys():
+            filename = url.split('/')[-1]
+            remove_file('/tmp/%s' % filename)
+            remove_file('/tmp/%sc' % filename)
+
+        # Clean up log files
+        for filename in os.listdir('/tmp'):
+            if re.search('^ztps-log-', filename):
+                os.remove(os.path.join('/tmp', filename))
+                
+        # Clean up bootstrap script
         remove_file(self.filename)
+        remove_file('%sc' % self.filename)
+                
+        # Clean up logs
+        clear_logs()
 
     def start_test(self):
         try:
@@ -286,6 +343,13 @@ class Bootstrap(object):
 class EAPIServer(object):
     #pylint: disable=C0103,E0213,W0201
 
+    def __init__(self, mac=SYSTEM_MAC, model='', 
+                 serial_number='', version=''):
+        self.mac = mac
+        self.model = model
+        self.serial_number = serial_number
+        self.version = version
+
     def cleanup(self):
         self.responses = {}
 
@@ -312,12 +376,12 @@ class EAPIServer(object):
                     req.send_header('Content-type', 'application/json')
                     req.end_headers()
                     if cmds == ['show version']:
-                        req.wfile.write(json.dumps({'result' : 
-                                                  [{'modelName' : '',
-                                                    'internalVersion' : '',
-                                                    'serialNumber' : '',
-                                                    'systemMacAddress' : 
-                                                    SYSTEM_MAC}]}))
+                        req.wfile.write(json.dumps(
+                                {'result' : 
+                                 [{'modelName' : self.model,
+                                   'internalVersion' : self.version,
+                                   'serialNumber' : self.serial_number,
+                                   'systemMacAddress' : self.mac}]}))
                     elif cmds == ['show lldp neighbors']:
                         req.wfile.write(json.dumps({'result' : 
                                                   [{'lldpNeighbors': []}]}))
@@ -352,6 +416,13 @@ class ZTPServer(object):
 
     def set_response(self, url, content_type, status, output):
         self.responses[url] = (content_type, status, output)
+
+    def set_file_response(self, filename, output,
+                            content_type='application/octet-stream',
+                            status=STATUS_OK):
+        self.responses['/%s' % filename ] = (content_type, 
+                                             status, 
+                                             output)
 
     def set_action_response(self, action, output,
                             content_type='text/x-python',
@@ -389,11 +460,11 @@ class ZTPServer(object):
                                 content_type='application/json',
                                 status=STATUS_OK):
         response = { 'name': name,
-                     'actions': {},
+                     'actions': [],
                      'attributes': {}
                      }
         if actions:
-            response['actions'] = actions
+            response['actions'] += actions
 
         if attributes:
             response['attributes'] = attributes
@@ -451,3 +522,27 @@ class ZTPServer(object):
             httpd.server_close()
             print time.asctime(), 'ZTPS: Server stops - %s:%s' % (
                 ZTPS_SERVER, ZTPS_PORT)
+
+class ActionFailureTest(unittest.TestCase):
+    #pylint: disable=R0904
+
+    def basic_test(self, action, return_code, attributes=None):
+        if not attributes:
+            attributes = {}
+
+        bootstrap = Bootstrap(ztps_default_config=True)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'name' : 'test_action'}],
+            attributes=attributes)
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action(action))
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.action_failure())
+            msg = [x for x in bootstrap.output.split('\n') if x][-1]
+            self.failUnless('return code %s' % return_code in msg)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()        
