@@ -287,8 +287,8 @@ class SyslogManager(object):
                                  entry['destination'])
                 if match:
                     self._add_remote_syslog_handler(match.groups()[ 0 ], 
-                                                   match.groups()[ 1 ],
-                                                   entry['level'])
+                                                    match.groups()[ 1 ],
+                                                    entry['level'])
                 else:
                     log('SyslogManager: Unable to create syslog handler for'
                         ' %s' % str( entry ), error=True)
