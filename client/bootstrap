@@ -365,7 +365,7 @@ class Server(object):
         result = self._http_request('actions/%s' % action,
                                     headers=headers)
         return (result.status_code,
-                result.headers['content-type'].split(',')[0],
+                result.headers['content-type'].split(';')[0],
                 result)
 
 
