@@ -353,7 +353,8 @@ class Server(object):
 
     def get_definition(self, node):
         headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request('nodes/%s' % node['systemmac'],
+        mac = ''.join(node['systemmac'].split(':'))
+        result = self._http_request('nodes/%s' % mac,
                                     headers=headers)
         return (result.status_code,
                 result.headers['content-type'],
@@ -364,7 +365,7 @@ class Server(object):
         result = self._http_request('actions/%s' % action,
                                     headers=headers)
         return (result.status_code,
-                result.headers['content-type'],
+                result.headers['content-type'].split(',')[0],
                 result)
 
 
