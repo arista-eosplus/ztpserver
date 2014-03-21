@@ -339,7 +339,7 @@ class Server(object):
         result = self._http_request('bootstrap/config',
                                     headers=headers)
         return (result.status_code,
-                result.headers['content-type'],
+                result.headers['content-type'].split(';')[0],
                 result)
 
     def post_nodes(self, node):
@@ -349,7 +349,7 @@ class Server(object):
                                     headers=headers,
                                     payload=node)
         return (result.status_code,
-                result.headers['content-type'])
+                result.headers['content-type'].split(';')[0])
 
     def get_definition(self, node):
         headers = {'content-type': CONTENT_TYPE_HTML}
@@ -357,7 +357,7 @@ class Server(object):
         result = self._http_request('nodes/%s' % mac,
                                     headers=headers)
         return (result.status_code,
-                result.headers['content-type'],
+                result.headers['content-type'].split(';')[0],
                 result)
 
     def get_action(self, action):
