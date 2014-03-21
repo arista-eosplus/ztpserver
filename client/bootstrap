@@ -297,7 +297,7 @@ class SyslogManager(object):
 class Server(object):
 
     def __init__(self, url):
-        self.url = 'http://%s' % url
+        self.url = url
 
     def _http_request(self, path, method='get', headers=None,
                       payload=None, files=None):

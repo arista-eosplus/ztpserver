@@ -248,7 +248,7 @@ class Bootstrap(object):
         outfile = open(self.filename, 'w')
 
         for line in infile:
-            line = line.replace('$SERVER', self.server)
+            line = line.replace('$SERVER', 'http://%s' % self.server)
             line = line.replace("COMMAND_API_SERVER = 'localhost'", 
                                 "COMMAND_API_SERVER = 'localhost:%s'" % 
                                 self.eapi_port)
