@@ -252,12 +252,6 @@ runtime.add_attribute(StrAttr(
     default='default'
 ))
 
-runtime.add_attribute(StrAttr(
-    name='definition',
-    default='default',
-    environ='ZTPS_DEFAULT_DEFINITION'
-))
-
 runtime.add_attribute(BoolAttr(
     name='disable_pattern_checks',
     default=False,
@@ -272,7 +266,8 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(StrAttr(
     name='server_url',
-    default='http://ztpserver:8080'
+    default='http://ztpserver:8080',
+    environ='ZTPS_SERVER'
 ))
 
 runtime.add_attribute(BoolAttr(
@@ -327,4 +322,12 @@ runtime.add_attribute(StrAttr(
     default='neighbordb',
     environ='ZTPS_NEIGHBORDB'
 ))
+
+runtime.add_attribute(StrAttr(
+    name='actions_filepath',
+    group='db',
+    environ='ZTPS_ACTIONS_FILEPATH'
+))
+
+
 

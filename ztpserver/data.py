@@ -36,11 +36,13 @@ import collections
 import ztpserver.config
 import ztpserver.serializers
 
+from ztpserver.constants import *
+
 DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
 ANYDEVICE_PARSER_RE = re.compile(r":(?=[any])")
 FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)")
 
-serializer = ztpserver.serializers.Serializer() #pylint: disable=C0103
+serializer = ztpserver.serializers.Serializer() # pylint: disable=C0103
 
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
@@ -59,83 +61,53 @@ class Collection(collections.Mapping, collections.Callable):
     def __len__(self):
         return len(self.data)
 
+
 class OrderedCollection(collections.OrderedDict, collections.Callable):
     def __call__(self, key=None):
         #pylint: disable=W0221
         return self.keys() if key is None else self.get(key)
 
-class Interface(object):
-    """ The :py:class:`'Interface' object represents a single
-    node interface and all associated neighbors
-    """
-
-    LldpNeighbor = collections.namedtuple("LldpNeighbor", ['device', 'port'])
-
-    def __init__(self, name):
-        self.name = name
-        self.neighbors = list()
-
-    def __repr__(self):
-        return "Interface(name=%s, neighbors=%d)" % \
-            (self.name, len(self.neighbors))
-
-    def add_neighbor(self, device, port):
-        self.neighbors.append(self.LldpNeighbor(device, port))
-
-
-class Interfaces(OrderedCollection):
-    """ The :py:class:`Interfaces` object is a container for holding
-    node interface data of type :py:class:`Interface`
-    """
-
-    def __repr__(self):
-        return "Interfaces(count=%d)" % len(self)
-
-    def add_interface(self, obj):
-        # FIXME: we should handle unicode translation elsewhere
-        if isinstance(obj, str) or isinstance(obj, unicode):
-            obj = Interface(obj)
-        elif not isinstance(obj, Interface):
-            raise TypeError("argument of type %s is not supported" % type(obj))
-        self[obj.name] = obj
-
-    def add_interfaces(self, interface_list):
-        if not isinstance(interface_list, list):
-            raise TypeError("argument must be a list")
-
-        for name in interface_list:
-            self.add_interface(name)
-
-
 class Node(object):
-    """ The :py:class:`Node` object is an instantiation of the
-    network element
-    """
+
+    Neighbor = collections.namedtuple("Neighbor", ['device', 'port'])
 
     def __init__(self, **kwargs):
         self.model = kwargs.get('model')
         self.systemmac = kwargs.get('systemmac')
         self.serialnumber = kwargs.get('serialnumber')
         self.version = kwargs.get('version')
-        self.interfaces = Interfaces()
+
+        self.neighbors = OrderedCollection()
+        if 'neighbors' in kwargs:
+            self.add_neighbors(kwargs['neighbors'])
 
         super(Node, self).__init__()
 
-    def __repr__(self):
-        return "Node(interfaces=%s)" % len(self.interfaces)
+    def add_neighbors(self, neighbors):
+        for interface, neighbor_list in neighbors.items():
+            collection = list()
+            for neighbor in neighbor_list:
+                collection.append(self.Neighbor(**neighbor))
+            self.neighbors[interface] = collection
 
-    def add_interface(self, name):
-        if not name.startswith("Ethernet"):
-            raise TypeError("interface name is invalid")
-        self.interfaces.add_interface(name)
-        return self.interfaces(name)
+    def hasneighbors(self):
+        return len(self.neighbors) > 0
 
-    def add_interfaces(self, interface_list):
-        collection = list()
-        for name in interface_list:
-            self.add_interface(name)
-            collection.append(self.interfaces(name))
-        return collection
+    def serialize(self):
+        attrs = dict()
+        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
+            if getattr(self, prop) is not None:
+                attrs[prop] = getattr(self, prop)
+
+        neighbors = dict()
+        if self.hasneighbors():
+            for interface, neighbors in self.neighbors.items():
+                collection = list()
+                for neighbor in neighbors:
+                    collection.append(dict(device=neighbor.device,
+                                           port=neighbor.port))
+                neighbors[interface] = collection
+        attrs['neighbors'] = neighbors
 
 
 class Functions(object):
@@ -157,51 +129,89 @@ class Functions(object):
     def excludes(cls, arg, value):
         return arg not in value
 
+
+
 class NeighborDb(object):
 
-    def __init__(self):
+    def __init__(self, contents=None):
         self.variables = dict()
-        self.patterns = {'globals': dict(), 'nodes': dict()}
+        self.patterns = {'globals': list(), 'nodes': dict()}
 
-    def __repr__(self):
-        return "NeighborDb(globals=%d, nodes=%s)" %\
-            (len(self.patterns['globals']), len(self.patterns['nodes']))
+        if contents is not None:
+            self.deserialize(contents)
 
     def load(self, filename):
         contents = serializer.deserialize(open(filename).read(),
-                                          'application/yaml')
+                                          CONTENT_TYPE_YAML)
+        self.deserialize(contents)
 
+    def deserialize(self, contents):
         self.variables = contents.get('variables') or dict()
         if 'any' in self.variables or 'none' in self.variables:
-            raise ValueError("cannot assign value to reserved word")
+            log.debug('cannot assign value to reserved word')
+            if 'any' in self.variables:
+                del self.variables['any']
+            if 'none' in self.variables:
+                del self.variables['none']
 
         for pattern in contents.get('patterns'):
-            name = pattern['name']
-            definition = pattern['definition']
+            pattern = self.add_pattern(pattern)
 
-            obj = Pattern(name, definition)
-            obj.variables = pattern.get('variables')
+    def add_pattern(self, pattern):
 
-            for interface in pattern['interfaces']:
-                for key, values in interface.items():
-                    args = self._parse_interface(key, values, obj.variables)
-                    obj.add_interface(*args) #pylint: disable=W0142
+        try:
+            obj = Pattern(**pattern)
 
-            if 'node' in pattern:
-                obj.node = pattern['node']
-                self.patterns['nodes'][obj.node] = obj
-            else:
-                self.patterns['globals'][id(obj)] = obj
+            if self.variables is not None:
+                for item in obj.interfaces:
+                    if item.device not in [None, 'any'] and \
+                        item.device in self.variables:
+                        item.device = self.variables[item.device]
 
-    def get_node_patterns(self, node):
-        """ returns a list of possible patterns for the given node """
+        except TypeError:
+            log.debug('Unable to parse pattern entry')
+            return
+
+        if 'node' in pattern:
+            self.patterns['nodes'][obj.node] = obj
+        else:
+            self.patterns['globals'].append(obj)
+
+
+    def get_patterns(self, node):
+        """ returns a list of possible patterns for a given node """
 
         if node in self.patterns['nodes'].keys():
             return [self.patterns['nodes'].get(node)]
         else:
-            return self.patterns['globals'].values()
+            return self.patterns['globals']
 
-    def _parse_interface(self, interface, values, variables=None):
+
+
+class Pattern(object):
+
+    def __init__(self, name, definition, **kwargs):
+
+        self.name = name
+        self.definition = definition
+
+        self.node = kwargs.get('node')
+        self.variables = kwargs.get('variables') or dict()
+
+        self.interfaces = list()
+        if 'interfaces' in kwargs:
+            self.add_interfaces(kwargs['interfaces'])
+
+    def add_interface(self, interface, device, port, tags=None):
+        self.interfaces.append(InterfacePattern(interface, device, port, tags))
+
+    def add_interfaces(self, interfaces):
+        for interface in interfaces:
+            for key, values in interface.items():
+                args = self._parse_interface(key, values)
+                self.add_interface(*args) #pylint: disable=W0142
+
+    def _parse_interface(self, interface, values):
 
         if isinstance(values, dict):
             device = values.get('device')
@@ -222,28 +232,33 @@ class NeighborDb(object):
             port, tags = port.split(':') if ':' in port else (port, None)
 
         #perform variable substitution
-        if variables is not None and (device is not None and device != 'any'):
-            if device in variables:
-                device = variables[device]
-
-            elif device in self.variables:
-                device = variables[device]
+        if device not in [None, 'any'] and device in self.variables:
+            device = self.variables[device]
 
         return (interface, device, port, tags)
 
 
+    def serialize(self):
+        data = dict(name=self.name, definition=self.definition)
+        data['variables'] = self.variables or dict()
+
+        if self.node:
+            data['node'] = self.node
+
+        interfaces = list()
+        for entry in self.interfaces:
+            interfaces.append({entry.interface: entry.serialize()})
+        data['interfaces'] = interfaces
+        return data
+
 
 class InterfacePattern(object):
 
-    def __init__(self, interface, node, port, tags=None):
+    def __init__(self, interface, device, port, tags=None):
         self.interface = interface
-        self.node = node
+        self.device = device
         self.port = port
-        self.tags = tags
-
-    def __repr__(self):
-        return "InterfacePattern(interface=%s, node=%s, port=%s)" % \
-            (self.interface, self.node, self.port)
+        self.tags = tags or list()
 
     def _match_interfaces(self, pattern, interface_set, match_all=True):
 
@@ -272,66 +287,32 @@ class InterfacePattern(object):
     def match_interfaces(self, interface_set):
         return self._match_interfaces(self.interface, interface_set)
 
-    def match_device(self, neighbor):
-
-        if self.node is None:
-            return neighbor is None
-
+    def match_device(self, nbrdevice):
+        if self.device is None:
+            return nbrdevice is None
         match = FUNC_RE.match(self.node)
-
         method = match.group('function') if match else 'exact'
         method = getattr(Functions, method)
-        arg = match.group('arg') if match else self.node
+        arg = match.group('arg') if match else self.device
+        return method(arg, nbrdevice)
 
-        return method(arg, neighbor)
-
-    def match_port(self, neighbor_port):
-        if self.port == 'any' or (self.port is None and self.node is not None):
+    def match_port(self, nbrport):
+        if self.port == 'any' or \
+          (self.port is None and  self.device is not None):
             return True
-        result = self._match_interfaces(self.port, [neighbor_port], False)
+        result = self._match_interfaces(self.port, [nbrport], False)
         return False if result is None else True
 
-
-class Pattern(object):
-
-    def __init__(self, name, definition, **kwargs):
-
-        self.name = name
-        self.definition = definition
-
-        self.node = kwargs.get('node')
-
-        self.variables = kwargs.get('variables') or dict()
-        self.interfaces = kwargs.get('interfaces') or list()
-
-    def add_interface(self, interface, node, port, tags=None):
-        self.interfaces.append(InterfacePattern(interface, node, port, tags))
-
     def serialize(self):
-        data = dict(name=self.name,
-                    definition=self.definition,
-                    variables=self.variables)
-
-        if self.node:
-            data['node'] = self.node
-
-        interfaces = list()
-        for entry in self.interfaces:
-            obj = dict()
-            if entry.node is None:
-                obj['node'] = 'none'
-            else:
-                obj['node'] = entry.node
-                obj['port'] = entry.port
-
-            if entry.tags is not None:
-                obj['tags'] = entry.tags
-            interfaces.append({entry.interface: obj})
-        data['interfaces'] = interfaces
-
-        return data
-
-
+        obj = dict()
+        if self.device is None:
+            obj['device'] = 'none'
+        else:
+            obj['device'] = self.device
+            obj['port'] = self.port
+        if self.tags is not None:
+            obj['tags'] = self.tags
+        return obj
 
 
 

@@ -32,6 +32,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import warnings
+import collections
 import json
 
 try:
@@ -92,6 +93,7 @@ class Serializer(object):
         """
 
         try:
+            data = self.convert(data)
             handler = self._serialize_handler(content_type)
             if hasattr(data, 'serialize'):
                 data = data.serialize()
@@ -100,7 +102,7 @@ class Serializer(object):
         except TypeError:
             raise SerializerError('Could not serialize data')
 
-    def deserialize(self, data, content_type, **kwargs):
+    def deserialize(self, data, content_type, clsobj=None, **kwargs):
         """ deserialize the data base on the content_type
 
         If a valid handler does not exist for the requested
@@ -109,6 +111,7 @@ class Serializer(object):
         :param data: data to be deserialized
         :param content_type: string specifies the deserialize
                              handler to use
+        :param clsobj: class object to return if specified
 
         """
 
@@ -116,7 +119,13 @@ class Serializer(object):
             handler = self._deserialize_handler(content_type)
             if hasattr(data, 'deserialize'):
                 data = data.deserialize()
-            return handler.deserialize(data, **kwargs) if handler else str(data)
+            data = handler.deserialize(data, **kwargs) if handler else str(data)
+            data = self.convert(data)
+
+            if clsobj is not None:
+                return clsobj(data)
+            else:
+                return data
 
         except Exception:
             raise SerializerError('Could not deserialize data')
@@ -136,3 +145,13 @@ class Serializer(object):
             'application/yaml': YAMLSerializer()
         }
         return handlers.get(content_type)
+
+    def convert(self, data):
+        if isinstance(data, basestring):
+            return str(data)
+        elif isinstance(data, collections.Mapping):
+            return dict(map(self.convert, data.iteritems()))
+        elif isinstance(data, collections.Iterable):
+            return type(data)(map(self.convert, data))
+        else:
+            return data
