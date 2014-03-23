@@ -83,6 +83,9 @@ class Node(object):
 
         super(Node, self).__init__()
 
+    def __repr__(self):
+        return "Node(neighbors=%d)" % len(self.neighbors)
+
     def add_neighbors(self, neighbors):
         for interface, neighbor_list in neighbors.items():
             collection = list()
@@ -139,6 +142,10 @@ class NeighborDb(object):
 
         if contents is not None:
             self.deserialize(contents)
+
+    def __repr__(self):
+        return "NeighborDb(globals=%d, nodes=%d)" % \
+            (len(self.patterns['globals']), len(self.patterns['nodes']))
 
     def load(self, filename):
         contents = serializer.deserialize(open(filename).read(),
@@ -260,6 +267,10 @@ class InterfacePattern(object):
         self.port = port
         self.tags = tags or list()
 
+    def __repr__(self):
+        return "InterfacePattern(interface=%s, node=%s, port=%s)" % \
+            (self.interface, self.device, self.port)
+
     def _match_interfaces(self, pattern, interface_set, match_all=True):
 
         indicies = lambda x: re.split("[a-zA-Z]*", x)[1]
@@ -290,7 +301,7 @@ class InterfacePattern(object):
     def match_device(self, nbrdevice):
         if self.device is None:
             return nbrdevice is None
-        match = FUNC_RE.match(self.node)
+        match = FUNC_RE.match(self.device)
         method = match.group('function') if match else 'exact'
         method = getattr(Functions, method)
         arg = match.group('arg') if match else self.device
