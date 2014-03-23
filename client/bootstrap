@@ -194,7 +194,7 @@ class Node(object):
             neighbor = {}
             neighbor['device'] = entry['neighborDevice']
             neighbor['port'] = entry['neighborPort']
-            if result['neighbors'][entry['port']]:
+            if entry['port'] in result['neighbors']:
                 result['neighbors'][entry['port']] += [neighbor]
             else:
                 result['neighbors'][entry['port']] = [neighbor]
