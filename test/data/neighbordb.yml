@@ -72,3 +72,8 @@ patterns:
       - Ethernet49: not_spine:Ethernet49
       - Ethernet50: not_spine:Ethernet50
 
+  - name: default catch all
+    definition: test
+    interfaces:
+      - Ethernet1: none
+
