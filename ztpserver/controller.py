@@ -113,7 +113,7 @@ class ActionsController(StoreController):
     def __init__(self):
         prefix = ztpserver.config.runtime.actions.path_prefix
         folder = ztpserver.config.runtime.actions.folder
-        super(ActionsController, self).__init__('actions', path_prefix=prefix)
+        super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
     def show(self, request, id, **kwargs):
         log.info("Requesting action: %s" % id)

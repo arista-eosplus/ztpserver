@@ -1,5 +1,5 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0613,C0103,R0201,W0622
+# pylint: disable=W0613,C0103,R0201,W0622,W0614
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
