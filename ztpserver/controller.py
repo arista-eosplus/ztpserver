@@ -109,6 +109,7 @@ class FileStoreController(StoreController):
         return webob.static.FileApp(obj.name)
 
 class ActionsController(StoreController):
+
     def __init__(self):
         prefix = ztpserver.config.runtime.db.actions_filepath
         super(ActionsController, self).__init__('actions', path_prefix=prefix)
@@ -142,8 +143,8 @@ class NodeController(StoreController):
         if not self.store.exists(filepath):
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
         else:
-            contents = self.get_file_contents(filepath)
-            response = dict(body=contents, content_type=CONTENT_TYPE_OTHER)
+            response = dict(body=self.get_file_contents(filepath),
+                            content_type=CONTENT_TYPE_OTHER)
         return response
 
     def show(self, request, id, **kwargs):
@@ -151,7 +152,8 @@ class NodeController(StoreController):
         # check if startup-config exists
         if self.store.exists('%s/startup-config' % id):
             log.debug("Sending startup-config definition to node %s" % id)
-            url = str('/nodes/%s/startup-config' % id)
+            url = '%s/nodes/%s/startup-config' %
+                (ztpserver.config.runtime.default.server_url, str(id))
             response = self.startup_config_definition(url)
 
         # check if definition exists
@@ -362,13 +364,20 @@ class NodeController(StoreController):
         return matches
 
     def startup_config_definition(self, url):
-        action = dict(name='install config',
-              action='replace_config',
-              attributes=[{'config_url': url}])
+        """ manually build a definition with a single action replace_config
 
-        definition = dict(name='startup-config',
-                          actions=action,
-                          attributes=dict())
+        :param url: the url pointing to the startup-config file
+
+        """
+
+        action = dict(name='install config',
+                      description='install static startup configuration',
+                      action='replace_config',
+                      attributes=[])
+
+        definition = dict(name='install startup-config',
+                          actions=[action],
+                          attributes={'replace_config-url': url})
 
         return dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
