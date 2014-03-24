@@ -318,30 +318,39 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_NEIGHBORDB'
 ))
 
+# Group: actions
 runtime.add_attribute(StrAttr(
-    name='actions_filepath',
-    group='db',
-    environ='ZTPS_ACTIONS_FILEPATH'
+    name='folder',
+    group='actions',
+    default='actions',
+    environ='ZTPS_ACTIONS_FOLDER'
 ))
 
 runtime.add_attribute(StrAttr(
-    name='bootstrap_folder',
-    group='db',
+    name='path_prefix',
+    group='actions',
+    environ='ZTPS_ACTIONS_PATH_PREFIX'
+))
+
+# Group: bootstrap
+runtime.add_attribute(StrAttr(
+    name='folder',
+    group='bootstrap',
     default='bootstrap',
     environ='ZTPS_BOOTSTRAP_FOLDER'
 ))
 
 runtime.add_attribute(StrAttr(
-    name='bootstrap_filepath',
-    group='db',
-    environ='ZTPS_BOOTSTRAP_FILEPATH'
+    name='path_prefix',
+    group='bootstrap',
+    environ='ZTPS_BOOTSTRAP_PATH_PREFIX'
 ))
 
 runtime.add_attribute(StrAttr(
-    name='bootstrap_file',
-    group='db',
+    name='filename',
+    group='bootstrap',
     default='default',
-    environ='ZTPS_BOOTSTRAP_FILE'
+    environ='ZTPS_BOOTSTRAP_FILENAME'
 ))
 
 

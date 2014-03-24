@@ -107,7 +107,7 @@ def start_wsgiapp(conf=None):
     """
 
     conf = conf or DEFAULT_CONF
-    conf = os.environ.get('ZTPSERVER_CONF', conf)
+    conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
         ztpserver.config.runtime.read(conf)

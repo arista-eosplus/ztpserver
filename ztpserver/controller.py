@@ -111,7 +111,8 @@ class FileStoreController(StoreController):
 class ActionsController(StoreController):
 
     def __init__(self):
-        prefix = ztpserver.config.runtime.db.actions_filepath
+        prefix = ztpserver.config.runtime.actions.path_prefix
+        folder = ztpserver.config.runtime.actions.folder
         super(ActionsController, self).__init__('actions', path_prefix=prefix)
 
     def show(self, request, id, **kwargs):
@@ -391,8 +392,8 @@ class BootstrapController(StoreController):
     }
 
     def __init__(self):
-        prefix = ztpserver.config.runtime.db.bootstrap_filepath
-        folder = ztpserver.config.runtime.db.bootstrap_folder
+        prefix = ztpserver.config.runtime.bootstrap.path_prefix
+        folder = ztpserver.config.runtime.bootstrap.folder
         super(BootstrapController, self).__init__(folder, path_prefix=prefix)
 
     def __repr__(self):
@@ -402,12 +403,12 @@ class BootstrapController(StoreController):
         """ Returns the bootstrap script """
 
         try:
-            filename = ztpserver.config.runtime.db.bootstrap_file
+            filename = ztpserver.config.runtime.bootstrap.filename
             data = self.deserialize(self.get_file_contents(filename),
                                     CONTENT_TYPE_PYTHON)
 
         except ztpserver.repository.FileObjectNotFound as exc:
-            log.exception(exc)
+            log.debug(exc)
             data = None
 
         return data
@@ -418,6 +419,7 @@ class BootstrapController(StoreController):
         try:
             data = self.get_file_contents('bootstrap.conf')
             contents = self.deserialize(data, CONTENT_TYPE_YAML)
+
         except ztpserver.repository.FileObjectNotFound:
             log.debug("Bootstrap config file not found...using defaults")
             contents = self.DEFAULTCONFIG
