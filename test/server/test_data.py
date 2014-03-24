@@ -100,7 +100,7 @@ class TestNeighborDb(unittest.TestCase):
 
     def test_load_invalid_filename(self):
         obj = ztpserver.data.NeighborDb()
-        self.assertRaises(IOError, obj.load, '/tmp/fake/file')
+        self.assertRaises(ztpserver.data.NeighborDbError, obj.load, '/tmp/fake/file')
 
 class TestPattern(unittest.TestCase):
 
