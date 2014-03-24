@@ -80,7 +80,7 @@ class TestRouter(unittest.TestCase):
 
     def test_router_req_get_actions_with_id_valid(self):
         rtr = ztpserver.controller.Router()
-        req = webob.Request.blank('/actions/test.py')
+        req = webob.Request.blank('/actions/test')
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
@@ -117,19 +117,7 @@ class TestFileStoreController(unittest.TestCase):
         obj = ztpserver.controller.FileStoreController('actions', path_prefix=path)
         self.assertEqual(repr(obj), 'FileStoreController')
 
-    def test_file_store_controller_get_actions_with_id(self):
-        path = os.path.join(os.getcwd(), 'test/filestore')
-        controller = ztpserver.controller.FileStoreController('actions', path_prefix=path)
 
-        collection = ztpserver.controller.FILESTORES['actions']
-        mapper = routes.Mapper()
-        mapper.collection(**collection)
-        kwargs = { 'urlvars': mapper.match('/actions/test.py') }
-
-        req = webob.Request.blank('/actions/test/py', **kwargs)
-
-        obj = controller.show(req, 'test.py')
-        self.assertIsInstance(obj, webob.static.FileApp)
 
 
 

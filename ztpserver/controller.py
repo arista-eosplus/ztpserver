@@ -47,13 +47,6 @@ import ztpserver.data
 from ztpserver.constants import *
 
 FILESTORES = {
-    "actions": {
-        "collection_name": "actions",
-        "resource_name": "action",
-        "member_prefix": "/{id}",
-        "collection_actions": [],
-        "member_actions": ['show']
-    },
     "packages": {
         "collection_name": "packages",
         "resource_name": "package",
@@ -115,6 +108,24 @@ class FileStoreController(StoreController):
 
         return webob.static.FileApp(obj.name)
 
+class ActionsController(StoreController):
+
+    def __init__(self):
+        prefix = ztpserver.config.runtime.db.actions_filepath
+        super(ActionsController, self).__init__('actions', path_prefix=prefix)
+
+    def show(self, request, id, **kwargs):
+        log.info("Requesting action: %s" % id)
+        if not self.store.exists(id):
+            log.info("Requested action not found")
+            return dict(status=HTTP_STATUS_NOT_FOUND)
+
+        return dict(status=HTTP_STATUS_OK,
+                    content_type=CONTENT_TYPE_PYTHON,
+                    body=self.get_file_contents(id))
+
+
+
 class NodeController(StoreController):
 
     REQ_FIELDS = ['systemmac']
@@ -154,6 +165,7 @@ class NodeController(StoreController):
                 # this needs to validate pattern
                 pattern = self.get_file_contents(filepath)
                 pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
+
 
                 if self.store.exists('%s/topology' % id):
                     filepath = '%s/topology' % id
@@ -200,7 +212,7 @@ class NodeController(StoreController):
                 log.error('could not load neighbordb (%s)' % filepath)
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            patterns = neighbordb.get_node_patterns(node.systemmac)
+            patterns = neighbordb.get_patterns(node.systemmac)
 
             matches = self.match_patterns(patterns, node)
             log.info("found %d pattern matches" % len(matches))
@@ -271,15 +283,7 @@ class NodeController(StoreController):
         # create node object
         node = ztpserver.data.Node(**nodeattrs)   # pylint: disable=W0142
         node.systemmac = str(node.systemmac).replace(':', '')
-
-        neighbors = nodeattrs.get('neighbors')
-        if neighbors:
-            # add interfaces and neighbors
-            for interface, neighbors in nodeattrs['neighbors'].items():
-                obj = node.add_interface(interface)
-                for neighbor in neighbors:
-                    obj.add_neighbor(neighbor['device'], neighbor['port'])
-
+        log.debug("Node object created with attrs %s" % nodeattrs)
         return node
 
     def match_patterns(self, patterns, node):
@@ -294,42 +298,40 @@ class NodeController(StoreController):
         return matches
 
     def match_pattern(self, pattern, node):
-        interfaces = node.interfaces()
+        neighbors = node.neighbors()
         result = dict()
 
-        for items in pattern.interfaces:
-            for entry in items:
-                # pattern specifies nothing connected but we have a neighbor
-                # on the specified interfaces so the rule is violated
-                if entry.node is None and entry.interface in interfaces:
-                    log.info("pattern failed due to 'none' interface present")
+        for entry in pattern.interfaces:
+            # pattern specifies nothing connected but we have a neighbor
+            # on the specified interfaces so the rule is violated
+            if entry.device is None and entry.interface in neighbors:
+                log.info("pattern failed due to 'none' interface present")
+                return None
+
+            # pattern specifies any connected but we did not find a
+            # neighbor on the specified interface so the rule is violated
+            elif entry.device == 'any' and entry.interface not in neighbors:
+                log.info("failed due to 'any' interface not present")
+                return None
+
+            # pattern specifices no connected neighbor and interface is
+            # not present so the rule is matches
+            if entry.device is None and entry.interface not in neighbors:
+                log.debug("pattern matched on 'none' for interface %s" % \
+                    entry.interface)
+                result[entry.interface] = None
+
+            else:
+                matches = self.match_interface_pattern(entry, node)
+                if matches is None:
+                    log.info("failed to match %s" % entry.interface)
                     return None
+                result[entry.interface] = matches
+                log.info("pattern %s matches %s" % (entry.interface, matches))
 
-                # pattern specifies any connected but we did not find a
-                # neighbor on the specified interface so the rule is violated
-                elif entry.node == 'any' and entry.interface not in interfaces:
-                    log.info("failed due to 'any' interface not present")
-                    return None
-
-                # pattern specifices no connected neighbor and interface is
-                # not present so the rule is matches
-                if entry.node is None and entry.interface not in interfaces:
-                    log.debug("pattern matched on 'none' for interface %s" % \
-                        entry.interface)
-                    result[entry.interface] = None
-
-                else:
-                    matches = self.match_interface_pattern(entry, node)
-                    if matches is None:
-                        log.info("failed to match %s" % entry.interface)
-                        return None
-                    result[entry.interface] = matches
-                    log.info("pattern %s matches %s" % (entry.interface, matches))
-
-                # remove the interface as an available match from the set
-                # of interfaces
-                # TODO this should probably be a set not a list
-                interfaces = [x for x in interfaces if x not in matches]
+            # remove the interface as an available match from the set
+            # of interfaces
+            neighbors = [x for x in neighbors if x not in matches]
         return result
 
     def match_interface_pattern(self, pattern, node):
@@ -347,7 +349,7 @@ class NodeController(StoreController):
                             (neighbor, node_match, port_match))
             matches = None
         else:
-            matches = pattern.match_interfaces(node.interfaces())
+            matches = pattern.match_interfaces(node.neighbors())
         return matches
 
 
@@ -429,6 +431,12 @@ class Router(ztpserver.wsgiapp.Router):
         mapper.collection('nodes', 'node',
                           controller=NodeController(),
                           collection_actions=['create'],
+                          member_actions=['show'])
+
+        # configure /actions
+        mapper.collection('actions', 'action',
+                          controller=ActionsController(),
+                          collection_actions=[],
                           member_actions=['show'])
 
         # configure filestores

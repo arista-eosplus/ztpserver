@@ -147,9 +147,9 @@ class NeighborDb(object):
         return "NeighborDb(globals=%d, nodes=%d)" % \
             (len(self.patterns['globals']), len(self.patterns['nodes']))
 
-    def load(self, filename):
+    def load(self, filename, content_type=CONTENT_TYPE_YAML):
         contents = serializer.deserialize(open(filename).read(),
-                                          CONTENT_TYPE_YAML)
+                                          content_type)
         self.deserialize(contents)
 
     def deserialize(self, contents):
@@ -208,6 +208,22 @@ class Pattern(object):
         self.interfaces = list()
         if 'interfaces' in kwargs:
             self.add_interfaces(kwargs['interfaces'])
+
+    def load(self, filename, content_type=CONTENT_TYPE_JSON):
+        contents = serializer.deserialize(open(filename).read(),
+                                          content_type)
+        self.deserialize(contents)
+
+    def deserialize(self, contents):
+        self.name = contents.get('name')
+        self.definition = contents.get('definition')
+
+        self.node = contents.get('node')
+        self.variables = contents.get('variables') or dict()
+
+        self.interfaces = list()
+        if 'interfaces' in contents:
+            self.add_interfaces(contents.get('interfaces'))
 
     def add_interface(self, interface, device, port, tags=None):
         self.interfaces.append(InterfacePattern(interface, device, port, tags))
