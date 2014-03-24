@@ -65,9 +65,9 @@ class SuccessTest(unittest.TestCase):
         url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'},
-                     {'name' : 'test_action_force',
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'},
+                     {'action' : 'test_action_force',
                       'attributes' :
                       {'install_extension-url' : url_force,
                        'install_extension-force' : True}}

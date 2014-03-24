@@ -58,7 +58,7 @@ class SuccessTest(unittest.TestCase):
         config = random_string()
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}],
+            actions=[{'action' : 'test_action'}],
             attributes={'replace_config-url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('replace_config'))

@@ -542,7 +542,7 @@ class ActionFailureTest(unittest.TestCase):
 
         bootstrap = Bootstrap(ztps_default_config=True)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}],
+            actions=[{'action' : 'test_action'}],
             attributes=attributes)
         bootstrap.ztps.set_action_response('test_action',
                                            action_value)

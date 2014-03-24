@@ -396,7 +396,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}])
+            actions=[{'action' : 'test_action'}])
         bootstrap.ztps.set_action_response('test_action', action)
         bootstrap.start_test()
 
@@ -429,7 +429,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action' }])
+            actions=[{'action' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201)
         bootstrap.start_test()
@@ -448,7 +448,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action' }])
+            actions=[{'action' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            content_type='test/plain')
         bootstrap.start_test()
@@ -467,7 +467,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action' }])
+            actions=[{'action' : 'test_action' }])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201,
                                            content_type='test/plain')
@@ -495,7 +495,7 @@ class ActionFailureTest(unittest.TestCase):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action',
+            actions=[{'action' : 'test_action',
                       'onstart' : text_onstart,
                       'onsuccess' : text_onsuccess,
                       'onfailure' : text_onfailure},
@@ -525,7 +525,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'}])
+            actions=[{'action' : 'startup_config_action'}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()
@@ -544,9 +544,9 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'print_action_1'},
-                     {'name' : 'print_action_2'}])
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action_1'},
+                     {'action' : 'print_action_2'}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
 
@@ -575,8 +575,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_node_check_response()
         text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'print_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action'}],
             attributes={'print_action-attr' : text})
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
@@ -600,8 +600,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_node_check_response()
         text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'print_action',
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action',
                       'attributes' : {'print_action-attr':text}}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
@@ -626,8 +626,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         global_text = random_string()
         local_text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'print_action',
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action',
                       'attributes' : {'print_action-attr' : local_text}}],
             attributes={'print_action-attr' : global_text})
         bootstrap.ztps.set_action_response('startup_config_action',
@@ -654,8 +654,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         global_text = random_string()
         local_text = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'print_attributes_action',
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_attributes_action',
                       'attributes' : {'print_action-attr_local' : 
                                       local_text}}],
             attributes={'print_action-attr_global' : global_text})
@@ -692,7 +692,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         text_onsuccess = random_string()
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action',
+            actions=[{'action' : 'startup_config_action',
                      'onstart' : text_onstart,
                      'onsuccess' : text_onsuccess,
                      'onfailure' : text_onfailure,
