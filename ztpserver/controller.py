@@ -174,9 +174,9 @@ class NodeController(StoreController):
                 not ztpserver.config.runtime.default.disable_pattern_checks:
 
                 filepath = '%s/pattern' % id
-                # this needs to validate pattern
-                pattern = self.get_file_contents(filepath)
-                pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
+                contents = self.get_file_contents(filepath)
+                attrs = self.deserialize(contents, CONTENT_TYPE_JSON)
+                pattern = ztpserver.data.Pattern(**attrs)
 
                 if self.store.exists('%s/topology' % id):
                     filepath = '%s/topology' % id
@@ -219,10 +219,13 @@ class NodeController(StoreController):
 
         elif 'neighbors' in request.json:
             try:
-                filepath = ztpserver.config.runtime.db.neighbordb
-                neighbordb = self._load_neighbordb(filepath)
+                filename = ztpserver.config.runtime.default.neighbordb
+                if not filename.startswith('/'):
+                    prefix = ztpserver.config.runtime.default.data_root
+                    filename = os.path.join(prefix, filename)
+                neighbordb = self._load_neighbordb(filename)
             except ztpserver.data.NeighborDbError:
-                log.error('could not load neighbordb (%s)' % filepath)
+                log.error('could not load neighbordb (%s)' % filename)
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             patterns = neighbordb.get_patterns(node.systemmac)
@@ -294,9 +297,10 @@ class NodeController(StoreController):
     def create_node_object(self, nodeattrs):
         # pylint: disable=R0201
         # create node object
-        node = ztpserver.data.Node(**nodeattrs)   # pylint: disable=W0142
-        node.systemmac = str(node.systemmac).replace(':', '')
-        log.debug("Node object created with attrs %s" % nodeattrs)
+        node = ztpserver.data.Node(**nodeattrs)
+        if node.systemmac is not None:
+            node.systemmac = node.systemmac.replace(':', '')
+        log.debug("Created node object %r" % node)
         return node
 
     def match_patterns(self, patterns, node):
@@ -350,15 +354,15 @@ class NodeController(StoreController):
     def match_interface_pattern(self, pattern, node):
         # pylint: disable=R0201
         if pattern.interface == 'any':
-            for interface in node.interfaces():
-                neighbors = node.interfaces(interface).neighbors
+            for interface in node.neighbors():
+                neighbors = node.neighbors(interface)
                 for neighbor in neighbors:
                     node_match = pattern.match_device(neighbor.device)
                     port_match = pattern.match_port(neighbor.port)
                     if node_match and port_match:
                         return [interface]
                     else:
-                        log.debug("port match results for %s (node=%s, port=%s)" % \
+                        log.debug("match results for %s (node=%s, port=%s)" % \
                             (neighbor, node_match, port_match))
             matches = None
         else:

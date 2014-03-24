@@ -71,6 +71,9 @@ class OrderedCollection(collections.OrderedDict, collections.Callable):
         #pylint: disable=W0221
         return self.keys() if key is None else self.get(key)
 
+class NodeErrror(Exception):
+    pass
+
 class Node(object):
 
     Neighbor = collections.namedtuple("Neighbor", ['device', 'port'])
@@ -80,11 +83,11 @@ class Node(object):
         self.systemmac = kwargs.get('systemmac')
         self.serialnumber = kwargs.get('serialnumber')
         self.version = kwargs.get('version')
-
+        
         self.neighbors = OrderedCollection()
         if 'neighbors' in kwargs:
             self.add_neighbors(kwargs['neighbors'])
-
+            
         super(Node, self).__init__()
 
     def __repr__(self):
@@ -96,7 +99,7 @@ class Node(object):
             for neighbor in neighbor_list:
                 collection.append(self.Neighbor(**neighbor))
             self.neighbors[interface] = collection
-
+            
     def hasneighbors(self):
         return len(self.neighbors) > 0
 
@@ -154,7 +157,6 @@ class NeighborDb(object):
             (len(self.patterns['globals']), len(self.patterns['nodes']))
 
     def load(self, filename, content_type=CONTENT_TYPE_YAML):
-
         try:
             contents = serializer.deserialize(open(filename).read(),
                                               content_type)
@@ -176,7 +178,6 @@ class NeighborDb(object):
             pattern = self.add_pattern(pattern)
 
     def add_pattern(self, pattern):
-
         try:
             obj = Pattern(**pattern)
 
@@ -220,10 +221,11 @@ class Pattern(object):
         if 'interfaces' in kwargs:
             self.add_interfaces(kwargs['interfaces'])
 
-    def load(self, filename, content_type=CONTENT_TYPE_JSON):
+    @classmethod
+    def load(cls, filename, content_type=CONTENT_TYPE_JSON):
         contents = serializer.deserialize(open(filename).read(),
                                           content_type)
-        self.deserialize(contents)
+        obj = cls(contents['name'], contents['definition'], **contents)
 
     def deserialize(self, contents):
         self.name = contents.get('name')
@@ -353,4 +355,9 @@ class InterfacePattern(object):
         return obj
 
 
+def create_pattern_object(attrs):
+    name = attrs.get('name')
+    definition = attrs.get('definition')
+    return Pattern(**attrs)
+    
 

@@ -247,6 +247,13 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_DATA_ROOT'
 ))
 
+runtime.add_attribute(StrAttr(
+    name='neighbordb',
+    group='default',
+    default='neighbordb',
+    environ='ZTPS_NEIGHBORDB'
+))
+
 runtime.add_attribute(BoolAttr(
     name='disable_pattern_checks',
     default=False,
@@ -308,14 +315,6 @@ runtime.add_attribute(IntAttr(
     minvalue=1,
     maxvalue=65534,
     default=8080
-))
-
-# Group: db
-runtime.add_attribute(StrAttr(
-    name='neighbordb',
-    group='db',
-    default='neighbordb',
-    environ='ZTPS_NEIGHBORDB'
 ))
 
 # Group: actions

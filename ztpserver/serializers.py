@@ -103,7 +103,7 @@ class Serializer(object):
             raise SerializerError('Could not serialize data')
 
     def deserialize(self, data, content_type, clsobj=None, **kwargs):
-        """ deserialize the data base on the content_type
+        """ deserialize the data based on the content_type
 
         If a valid handler does not exist for the requested
         content_type, then the data is returned as a string
@@ -121,7 +121,6 @@ class Serializer(object):
                 data = data.deserialize()
             data = handler.deserialize(data, **kwargs) if handler else str(data)
             data = self.convert(data)
-
             if clsobj is not None:
                 return clsobj(data)
             else:
