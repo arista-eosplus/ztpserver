@@ -247,11 +247,6 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_DATA_ROOT'
 ))
 
-runtime.add_attribute(StrAttr(
-    name='bootstrap_file',
-    default='default'
-))
-
 runtime.add_attribute(BoolAttr(
     name='disable_pattern_checks',
     default=False,
@@ -329,5 +324,24 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_ACTIONS_FILEPATH'
 ))
 
+runtime.add_attribute(StrAttr(
+    name='bootstrap_folder',
+    group='db',
+    default='bootstrap',
+    environ='ZTPS_BOOTSTRAP_FOLDER'
+))
+
+runtime.add_attribute(StrAttr(
+    name='bootstrap_filepath',
+    group='db',
+    environ='ZTPS_BOOTSTRAP_FILEPATH'
+))
+
+runtime.add_attribute(StrAttr(
+    name='bootstrap_file',
+    group='db',
+    default='default',
+    environ='ZTPS_BOOTSTRAP_FILE'
+))
 
 

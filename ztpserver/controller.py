@@ -217,9 +217,10 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in request.json:
-            filepath = ztpserver.config.runtime.db.neighbordb
-            neighbordb = self._load_neighbordb(filepath)
-            if neighbordb is None:
+            try:
+                filepath = ztpserver.config.runtime.db.neighbordb
+                neighbordb = self._load_neighbordb(filepath)
+            except ztpserver.data.NeighborDbError:
                 log.error('could not load neighbordb (%s)' % filepath)
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
@@ -259,8 +260,8 @@ class NodeController(StoreController):
         self.store.add_folder(node.systemmac)
 
         if 'config' in request:
-            filename = '%s/startup-config'
-            contents = kwargs.get('config')
+            filename = '%s/startup-config' % node.systemmac
+            contents = request.get('config')
 
         if 'neighbors' in request and 'pattern' in kwargs:
             pattern = kwargs.get('pattern')
@@ -390,7 +391,9 @@ class BootstrapController(StoreController):
     }
 
     def __init__(self):
-        super(BootstrapController, self).__init__('bootstrap')
+        prefix = ztpserver.config.runtime.db.bootstrap_filepath
+        folder = ztpserver.config.runtime.db.bootstrap_folder
+        super(BootstrapController, self).__init__(folder, path_prefix=prefix)
 
     def __repr__(self):
         return "BootstrapController"
@@ -399,7 +402,7 @@ class BootstrapController(StoreController):
         """ Returns the bootstrap script """
 
         try:
-            filename = ztpserver.config.runtime.default.bootstrap_file
+            filename = ztpserver.config.runtime.db.bootstrap_file
             data = self.deserialize(self.get_file_contents(filename),
                                     CONTENT_TYPE_PYTHON)
 
@@ -412,10 +415,14 @@ class BootstrapController(StoreController):
     def get_config(self):
         """ returns the full bootstrap configuration as a dict """
 
-        data = self.get_file_contents('bootstrap.conf')
-        contents = self.deserialize(data, CONTENT_TYPE_YAML)
+        try:
+            data = self.get_file_contents('bootstrap.conf')
+            contents = self.deserialize(data, CONTENT_TYPE_YAML)
+        except ztpserver.repository.FileObjectNotFound:
+            log.debug("Bootstrap config file not found...using defaults")
+            contents = self.DEFAULTCONFIG
 
-        return contents or self.DEFAULTCONFIG
+        return contents
 
     def config(self, request, **kwargs):
         # pylint: disable=W0613

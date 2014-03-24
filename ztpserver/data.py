@@ -32,6 +32,7 @@
 #
 import re
 import collections
+import logging
 
 import ztpserver.config
 import ztpserver.serializers
@@ -42,7 +43,9 @@ DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
 ANYDEVICE_PARSER_RE = re.compile(r":(?=[any])")
 FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)")
 
+log = logging.getLogger(__name__)
 serializer = ztpserver.serializers.Serializer() # pylint: disable=C0103
+
 
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
@@ -133,6 +136,8 @@ class Functions(object):
         return arg not in value
 
 
+class NeighborDbError(Exception):
+    pass
 
 class NeighborDb(object):
 
@@ -148,9 +153,14 @@ class NeighborDb(object):
             (len(self.patterns['globals']), len(self.patterns['nodes']))
 
     def load(self, filename, content_type=CONTENT_TYPE_YAML):
-        contents = serializer.deserialize(open(filename).read(),
-                                          content_type)
-        self.deserialize(contents)
+
+        try:
+            contents = serializer.deserialize(open(filename).read(),
+                                              content_type)
+            self.deserialize(contents)
+        except IOError as exc:
+            log.debug(exc)
+            raise NeighborDbError
 
     def deserialize(self, contents):
         self.variables = contents.get('variables') or dict()
