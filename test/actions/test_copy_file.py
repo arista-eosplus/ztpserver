@@ -87,8 +87,8 @@ class SuccessTest(unittest.TestCase):
 
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes={'copy_file-src_url' : url,
                         'copy_file-dst_url' : destination})
 
@@ -144,8 +144,8 @@ class SuccessTest(unittest.TestCase):
             attributes['copy_file-overwrite'] = 'replace'
 
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes=attributes)
 
         bootstrap.ztps.set_action_response(
@@ -192,8 +192,8 @@ class SuccessTest(unittest.TestCase):
 
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes={'copy_file-src_url' : url,
                         'copy_file-dst_url' : destination,
                         'copy_file-overwrite' : 'keep-original'})
@@ -243,8 +243,8 @@ class SuccessTest(unittest.TestCase):
 
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes={'copy_file-src_url' : url,
                         'copy_file-dst_url' : destination,
                         'copy_file-overwrite' : 'backup'})

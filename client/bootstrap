@@ -545,8 +545,13 @@ def download_action(server, action):
     return filename
 
 def execute_action(server, action_details, global_attr):
-    action = action_details['name']
-    log('Downloading action %s' % action)
+    action = action_details['action']
+    
+    description = ''
+    if 'description'in action_details:
+        description = '(%s)' % action_details['description']
+
+    log('Downloading action %s%s' % (action, description))
     filename = download_action(server, action)
 
     log('Executing action %s' % action)
@@ -651,6 +656,9 @@ def main():
     log('Applying definition %s' % definition_name)
     
     global_attr = definition['attributes']
+    if global_attr is None:
+        global_attr = {}
+
     global_attr['NODE'] = node
     for details in definition['actions']:
         execute_action(server, details, global_attr)

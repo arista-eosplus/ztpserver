@@ -62,8 +62,8 @@ class SuccessTest(unittest.TestCase):
         plugin = random_string()
         url = 'http://%s/%s' % (bootstrap.server, plugin)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes={'install_cli_plugin-url' : url})
 
         bootstrap.ztps.set_action_response(

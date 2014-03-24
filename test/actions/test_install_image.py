@@ -68,8 +68,8 @@ class SuccessTest(unittest.TestCase):
         version = random_string()
         bootstrap.eapi.version = version
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'},
-                     {'name' :'startup_config_action'}],
+            actions=[{'action' : 'test_action'},
+                     {'action' :'startup_config_action'}],
             attributes={
                 'install_image-software_url' : random_string(),
                 'install_image-software_version' : version})
@@ -92,7 +92,7 @@ class SuccessTest(unittest.TestCase):
         image = random_string()
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'test_action'}],
+            actions=[{'action' : 'test_action'}],
             attributes={
                 'install_image-software_url' : url,
                 'install_image-software_version' : version})
@@ -127,8 +127,8 @@ class SuccessTest(unittest.TestCase):
         image = random_string()
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
-            actions=[{'name' : 'startup_config_action'},
-                     {'name' : 'test_action'}],
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
             attributes={
                 'install_image-software_url' : url,
                 'install_image-software_version' : version})
