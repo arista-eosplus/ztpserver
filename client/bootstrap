@@ -651,6 +651,9 @@ def main():
     log('Applying definition %s' % definition_name)
     
     global_attr = definition['attributes']
+    if global_attr is None:
+        global_attr = {}
+
     global_attr['NODE'] = node
     for details in definition['actions']:
         execute_action(server, details, global_attr)
