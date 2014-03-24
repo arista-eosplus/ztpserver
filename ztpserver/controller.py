@@ -152,7 +152,7 @@ class NodeController(StoreController):
         # check if startup-config exists
         if self.store.exists('%s/startup-config' % id):
             log.debug("Sending startup-config definition to node %s" % id)
-            url = '%s/nodes/%s/startup-config' %
+            url = '%s/nodes/%s/startup-config' % \
                 (ztpserver.config.runtime.default.server_url, str(id))
             response = self.startup_config_definition(url)
 
