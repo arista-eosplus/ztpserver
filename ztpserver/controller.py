@@ -109,7 +109,6 @@ class FileStoreController(StoreController):
         return webob.static.FileApp(obj.name)
 
 class ActionsController(StoreController):
-
     def __init__(self):
         prefix = ztpserver.config.runtime.db.actions_filepath
         super(ActionsController, self).__init__('actions', path_prefix=prefix)
@@ -137,13 +136,23 @@ class NodeController(StoreController):
     def __repr__(self):
         return 'NodeController'
 
+    def getconfig(self, request, id, **kwargs):
+        log.debug('Sending startup-config contents to node %s' % id)
+        filepath = '%s/startup-config' % id
+        if not self.store.exists(filepath):
+            response = dict(status=HTTP_STATUS_BAD_REQUEST)
+        else:
+            contents = self.get_file_contents(filepath)
+            response = dict(body=contents, content_type=CONTENT_TYPE_OTHER)
+        return response
+
     def show(self, request, id, **kwargs):
 
         # check if startup-config exists
         if self.store.exists('%s/startup-config' % id):
-            filepath = '%s/startup-config' % id
-            response = dict(body=self.get_file_contents(filepath),
-                            content_type=CONTENT_TYPE_OTHER)
+            log.debug("Sending startup-config definition to node %s" % id)
+            url = str('/nodes/%s/startup-config' % id)
+            response = self.startup_config_definition(url)
 
         # check if definition exists
         elif self.store.exists('%s/definition' % id):
@@ -166,7 +175,6 @@ class NodeController(StoreController):
                 pattern = self.get_file_contents(filepath)
                 pattern = self.deserialize(pattern, CONTENT_TYPE_YAML)
 
-
                 if self.store.exists('%s/topology' % id):
                     filepath = '%s/topology' % id
                     neighbors = self.get_file_contents(filepath)
@@ -186,6 +194,7 @@ class NodeController(StoreController):
             log.info("requested node id %s not found" % id)
             response = dict(status=HTTP_STATUS_NOT_FOUND)
 
+        log.debug("NodeController response: %s" % response)
         return response
 
     def create(self, request, **kwargs):
@@ -352,6 +361,17 @@ class NodeController(StoreController):
             matches = pattern.match_interfaces(node.neighbors())
         return matches
 
+    def startup_config_definition(self, url):
+        action = dict(name='install config',
+              action='replace_config',
+              attributes=[{'config_url': url}])
+
+        definition = dict(name='startup-config',
+                          actions=action,
+                          attributes=dict())
+
+        return dict(body=definition, content_type=CONTENT_TYPE_JSON)
+
 
 class BootstrapController(StoreController):
 
@@ -428,10 +448,15 @@ class Router(ztpserver.wsgiapp.Router):
                           action='config')
 
         # configure /nodes
+        controller = NodeController()
         mapper.collection('nodes', 'node',
-                          controller=NodeController(),
+                          controller=controller,
                           collection_actions=['create'],
                           member_actions=['show'])
+
+        nodeconfig = mapper.submapper(controller=controller)
+        nodeconfig.connect('nodeconfig', '/nodes/{id}/startup-config',
+                           action='getconfig')
 
         # configure /actions
         mapper.collection('actions', 'action',
