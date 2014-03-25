@@ -1,0 +1,146 @@
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+import os
+import smtplib
+
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEBase import MIMEBase
+from email.MIMEText import MIMEText
+from email.Utils import COMMASPACE, formatdate
+from email import Encoders
+
+node = None
+
+def send_message(smarthost, sender, receivers, msg):
+    smtp = smtplib.SMTP(smarthost)
+    smtp.sendmail(sender, COMMASPACE.join(receivers), msg.as_string())
+    smtp.close()
+
+def run_command(command):
+    command = command.strip()
+    output = node.api_enable_cmds([command], text_format=True)
+    filename = str(command).replace(" ", "_")
+    open(filename, 'w').write(output)
+    return filename
+
+def main(attributes):
+    '''Sends an email using an SMTP relay host
+
+    Generates an email from the bootstrap process and routes it through a
+    smarthost.  The parameters value expects a dictionary with the
+    following values in order for this function to work properly.
+
+        {
+            "smarthost": <hostname of smarthost>,
+            "sender": <from email address>
+            "receivers": [ <array of recipients to send email to> ],
+            "subject": <subject line of the message>,
+            "body": <the message body>,
+            "attachments": [ <array of files to attach> ],
+            "commands": [ <array of commands to run and attach> ]
+        }
+
+    The required fields for this function are smarthost, sender, and
+    receivers. All other fields are optional.
+
+    Args:
+       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
+                   to read attribute values
+
+       Special attributes:
+           node: attributes.get('NODE')
+                 API: see documentation
+
+    Returns:
+        0 - success
+        1 - missing smarthost attribute
+        2 - missing sender attribute
+        3 - missing receivers attribute
+
+
+    Raises:
+        None
+    '''
+
+    smarthost = attributes.get('smarthost')
+    if not smarthost:
+        return 1
+
+    sender = attributes.get('sender')
+    if not sender:
+        return 2
+
+    receivers = attributes.get('receivers')
+    if not receivers:
+        return 3
+
+    msg = MIMEMultipart()
+    msg['From'] = sender
+    msg['To'] = COMMASPACE.join(receivers)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = attributes.get('subject') or 'ZTP Bootstrap'
+
+    body = attributes.get('body')
+
+    global node
+    node = attributes.get('NODE')
+
+    attachments = attributes.get('attachments') or list()
+    commands = attributes.get('commands') or list()
+
+    if commands:
+        body += "\nThe output from the following commmands have been added as attachments:"
+        for command in commands:
+            filename = run_command(command, node)
+            attachments.append(filename)
+            body += "\n\t* %s (%s)" % (command, filename)
+
+    if attachments:
+        for filename in attachments:
+            if not os.path.exists(filename):
+                break
+            filename = filename.strip()
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload(open(filename,"rb").read())
+            Encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment; filename="%s"' %
+              os.path.basename(filename))
+            msg.attach(part)
+
+    msg.attach(MIMEText(body))
+
+    send_message(smarthost, sender, receivers, msg)
+
+
+
+
+
