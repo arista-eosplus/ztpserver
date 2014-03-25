@@ -31,6 +31,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
 import logging
 
 from string import Template
@@ -114,7 +115,7 @@ class ActionsController(StoreController):
         prefix = ztpserver.config.runtime.actions.path_prefix
         folder = ztpserver.config.runtime.actions.folder
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
-        
+
     def show(self, request, id, **kwargs):
         log.info("Requesting action: %s" % id)
         if not self.store.exists(id):
