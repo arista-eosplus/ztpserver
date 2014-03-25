@@ -244,20 +244,19 @@ runtime = Config() #pylint: disable=C0103
 runtime.add_attribute(StrAttr(
     name='data_root',
     default='/var/lib/ztpserver',
-    environ='ZTPS_DATA_ROOT'
+    environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
 runtime.add_attribute(StrAttr(
     name='neighbordb',
     group='default',
     default='neighbordb',
-    environ='ZTPS_NEIGHBORDB'
+    environ='ZTPS_DEFAULT_NEIGHBORDB'
 ))
 
 runtime.add_attribute(BoolAttr(
     name='disable_pattern_checks',
-    default=False,
-    environ='ZTPS_DISABLE_PATTERN_CHECKS'
+    default=False
 ))
 
 runtime.add_attribute(StrAttr(
@@ -269,37 +268,18 @@ runtime.add_attribute(StrAttr(
 runtime.add_attribute(StrAttr(
     name='server_url',
     default='http://ztpserver:8080',
-    environ='ZTPS_SERVER'
+    environ='ZTPS_DEFAULT_SERVER'
 ))
 
 runtime.add_attribute(BoolAttr(
     name='logging',
     default=False,
-    environ='ZTPS_LOGGING'
+    environ='ZTPS_DEFAULT_LOGGING'
 ))
 
 runtime.add_attribute(BoolAttr(
     name='console_logging',
     default=True
-))
-
-# Group: syslog
-runtime.add_attribute(BoolAttr(
-    name='enabled',
-    group='syslog',
-    default=False
-))
-
-runtime.add_attribute(ListAttr(
-    name='servers',
-    group='syslog'
-))
-
-runtime.add_attribute(StrAttr(
-    name='level',
-    choices=['info', 'debug'],
-    default='debug',
-    group='syslog'
 ))
 
 # Group: server

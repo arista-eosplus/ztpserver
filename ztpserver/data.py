@@ -83,11 +83,11 @@ class Node(object):
         self.systemmac = kwargs.get('systemmac')
         self.serialnumber = kwargs.get('serialnumber')
         self.version = kwargs.get('version')
-        
+
         self.neighbors = OrderedCollection()
         if 'neighbors' in kwargs:
             self.add_neighbors(kwargs['neighbors'])
-            
+
         super(Node, self).__init__()
 
     def __repr__(self):
@@ -99,7 +99,7 @@ class Node(object):
             for neighbor in neighbor_list:
                 collection.append(self.Neighbor(**neighbor))
             self.neighbors[interface] = collection
-            
+
     def hasneighbors(self):
         return len(self.neighbors) > 0
 
@@ -354,10 +354,4 @@ class InterfacePattern(object):
             obj['tags'] = self.tags
         return obj
 
-
-def create_pattern_object(attrs):
-    name = attrs.get('name')
-    definition = attrs.get('definition')
-    return Pattern(**attrs)
-    
 

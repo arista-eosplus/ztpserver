@@ -93,7 +93,7 @@ class TestNeighborDb(unittest.TestCase):
         self.assertIsInstance(obj, ztpserver.data.NeighborDb)
 
     def test_load_valid_filename_and_contents(self):
-        fn = os.path.join(os.getcwd(), "test/data/neighbordb.yml")
+        fn = os.path.join(os.getcwd(), "test/filestore/neighbordb")
         obj = ztpserver.data.NeighborDb()
         obj.load(fn)
         self.assertEqual(repr(obj), "NeighborDb(globals=4, nodes=2)")

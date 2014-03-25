@@ -36,6 +36,7 @@ import webob
 
 import ztpserver.config
 import ztpserver.controller
+import ztpserver.data
 
 class TestRouter(unittest.TestCase):
 
@@ -110,18 +111,89 @@ class TestRouter(unittest.TestCase):
         resp = req.get_response(rtr)
         self.assertEqual(resp.status_code, 404)
 
-class TestFileStoreController(unittest.TestCase):
 
-    def test_file_store_controller_object(self):
+class TestActionsController(unittest.TestCase):
+
+    def setUp(self):
         path = os.path.join(os.getcwd(), 'test/filestore')
-        obj = ztpserver.controller.FileStoreController('actions', path_prefix=path)
-        self.assertEqual(repr(obj), 'FileStoreController')
+        ztpserver.config.runtime.set_value('data_root', path, 'default')
 
+    def test_actions_show_valid(self):
+        controller = ztpserver.controller.ActionsController()
+        req = webob.Request.blank('/actions/test')
+        resp = controller.show(req, 'test')
+        self.assertEqual(resp['status'], 200)
+        self.assertEqual(resp['content_type'], 'text/x-python')
 
+    def test_actions_show_invalid(self):
+        controller = ztpserver.controller.ActionsController()
+        req = webob.Request.blank('/actions/invalid')
+        resp = controller.show(req, 'invalid')
+        self.assertEqual(resp['status'], 404)
 
+class TestNodeController(unittest.TestCase):
 
+    def setUp(self):
+        path = os.path.join(os.getcwd(), 'test/filestore')
+        ztpserver.config.runtime.set_value('data_root', path, 'default')
 
+    def test_getconfig_valid_systemmac(self):
+        controller = ztpserver.controller.NodeController()
+        req = webob.Request.blank('/node/123')
+        resp = controller.getconfig(req, '123')
+        self.assertEqual(resp['body'], 'test startup-config\n')
+        self.assertEqual(resp['content_type'], 'text/plain')
 
+    def test_getconfig_invalid_systemmac(self):
+        controller = ztpserver.controller.NodeController()
+        req = webob.Request.blank('/node/abc')
+        resp = controller.getconfig(req, 'abc')
+        self.assertEqual(resp['status'], 400)
+
+    def test_show_valid_systemmac(self):
+        pass
+
+    def test_show_invalid_systemmac(self):
+        pass
+
+    def test_create_valid_systemmac(self):
+        pass
+
+    def test_create_invalid_systemmac(self):
+        pass
+
+    def test_validate_request_valid(self):
+        controller = ztpserver.controller.NodeController()
+        resp = controller._validate_request({'systemmac': 'test'})
+        self.assertTrue(resp)
+
+    def test_validate_request_invalid(self):
+        controller = ztpserver.controller.NodeController()
+        resp = controller._validate_request({'serialnumber': 'test'})
+        self.assertFalse(resp)
+
+    def test_load_neighbordb_valid(self):
+        controller = ztpserver.controller.NodeController()
+        path = os.path.join(os.getcwd(), 'test/filestore/neighbordb')
+        resp = controller._load_neighbordb(path)
+        self.assertIsInstance(resp, ztpserver.data.NeighborDb)
+
+    def test_load_neighbordb_invalid(self):
+        controller = ztpserver.controller.NodeController()
+        path = os.path.join(os.getcwd(), 'test/filestore/invalid')
+        self.assertRaises(ztpserver.data.NeighborDbError,
+                          controller._load_neighbordb,
+                          path)
+
+    def test_create_node_object_with_systemmac(self):
+        controller = ztpserver.controller.NodeController()
+        resp = controller.create_node_object({"systemmac": "test"})
+        self.assertIsInstance(resp, ztpserver.data.Node)
+
+    def test_create_node_object_without_systemmac(self):
+        controller = ztpserver.controller.NodeController()
+        resp = controller.create_node_object({"serialnumber": "test"})
+        self.assertIsInstance(resp, ztpserver.data.Node)
 
 
 
