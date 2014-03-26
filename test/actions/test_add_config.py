@@ -49,7 +49,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('add_config', 2,
-                        attributes={'add_config-url' : 
+                        attributes={'url' : 
                                     random_string()})
 
 
@@ -61,7 +61,7 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
-            attributes={'add_config-url' : url})
+            attributes={'url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = random_string()
@@ -84,7 +84,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'add_config-url' : url})
+            attributes={'url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
 
@@ -114,7 +114,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'add_config-url' : url})
+            attributes={'url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
 

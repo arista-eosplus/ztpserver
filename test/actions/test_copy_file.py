@@ -50,16 +50,16 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_dst_url(self):
         self.basic_test('copy_file', 2,
-                        attributes={'copy_file-src_url' : 
+                        attributes={'src_url' : 
                                     random_string()})
 
     def test_wrong_overwrite_value(self):
         self.basic_test('copy_file', 3,
-                        attributes={'copy_file-src_url' : 
+                        attributes={'src_url' : 
                                     random_string(),
-                                    'copy_file-dst_url' :
+                                    'dst_url' :
                                     random_string(),
-                                    'copy_file-overwrite' :
+                                    'overwrite' :
                                     'bogus'})
 
     def test_url_failure(self):
@@ -68,9 +68,9 @@ class FailureTest(ActionFailureTest):
                                 '/tmp')
 
         self.basic_test('copy_file', 4,
-                        attributes={'copy_file-src_url' : 
+                        attributes={'src_url' : 
                                     random_string(),
-                                    'copy_file-dst_url' :
+                                    'dst_url' :
                                     random_string()},
                         action_value=action)
 
@@ -89,8 +89,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'copy_file-src_url' : url,
-                        'copy_file-dst_url' : destination})
+            attributes={'src_url' : url,
+                        'dst_url' : destination})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -136,12 +136,12 @@ class SuccessTest(unittest.TestCase):
                                   destination_file)
 
         url = 'http://%s/%s' % (bootstrap.server, source)
-        attributes = {'copy_file-src_url' : url,
-                      'copy_file-dst_url' : destination}
+        attributes = {'src_url' : url,
+                      'dst_url' : destination}
 
         # 'replace' is the default
         if bool(random.getrandbits(1)):
-            attributes['copy_file-overwrite'] = 'replace'
+            attributes['overwrite'] = 'replace'
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
@@ -194,9 +194,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'copy_file-src_url' : url,
-                        'copy_file-dst_url' : destination,
-                        'copy_file-overwrite' : 'keep-original'})
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'keep-original'})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -245,9 +245,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'copy_file-src_url' : url,
-                        'copy_file-dst_url' : destination,
-                        'copy_file-overwrite' : 'backup'})
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'backup'})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())

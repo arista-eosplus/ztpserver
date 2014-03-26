@@ -49,7 +49,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('install_extension', 2,
-                        attributes={'install_extension-url' : 
+                        attributes={'url' : 
                                     random_string()})
 
 
@@ -69,10 +69,10 @@ class SuccessTest(unittest.TestCase):
                      {'action' : 'test_action'},
                      {'action' : 'test_action_force',
                       'attributes' :
-                      {'install_extension-url' : url_force,
-                       'install_extension-force' : True}}
+                      {'url' : url_force,
+                       'force' : True}}
                      ],
-            attributes={'install_extension-url' : url})
+            attributes={'url' : url})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())

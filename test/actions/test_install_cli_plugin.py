@@ -51,7 +51,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('install_cli_plugin', 2,
-                        attributes={'install_cli_plugin-url' : 
+                        attributes={'url' : 
                                     random_string()})
 
 
@@ -64,7 +64,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
-            attributes={'install_cli_plugin-url' : url})
+            attributes={'url' : url})
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())

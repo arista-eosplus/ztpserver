@@ -35,7 +35,7 @@ def main(attributes):
     '''Replaces stratup-config on the switch.
 
     Replaces/adds /mnt/flash/startup-config based on the value of the
-    'replace_config-url' attribute.
+    'url' attribute.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -47,13 +47,13 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('replace_config-url')
+        1 - missing attribute('url')
         2 - unable to retrieve config from URL
 
     Raises:
         None
     '''
-    url = attributes.get('replace_config-url')
+    url = attributes.get('url')
     if not url:
         return 1
 

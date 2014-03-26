@@ -39,7 +39,7 @@ def main(attributes):
     '''Installs EOS CliPlugin.
 
     Installs CliPlugin based on the value of the
-    'install_cli_plugin-url' attribute.
+    'url' attribute.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -51,14 +51,14 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('install_cli_plugin-url')
+        1 - missing attribute('url')
         2 - unable to retrieve extension from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('install_cli_plugin-url')
+    url = attributes.get('url')
     if not url:
         return 1
     

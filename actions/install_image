@@ -38,7 +38,7 @@ def main(attributes):
     '''Installs software image on the switch.
 
     If the current software image is the same as the  
-    'install_image-software_version' attribute value, then this action
+    'software_version' attribute value, then this action
     is a no-op.  Otherwise, the action will replace the existing software 
     image.
 
@@ -52,19 +52,19 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('install_image-software_url')
-        2 - missing attribute('install_image-software_version')
+        1 - missing attribute('software_url')
+        2 - missing attribute('software_version')
         3 - unable to retrieve image file from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('install_image-software_url')
+    url = attributes.get('software_url')
     if not url:
         return 1
 
-    software_version = attributes.get('install_image-software_version')
+    software_version = attributes.get('software_version')
     if not software_version:
         return 2
     

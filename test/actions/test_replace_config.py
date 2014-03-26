@@ -48,7 +48,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('replace_config', 2,
-                        attributes={'replace_config-url' : random_string()})
+                        attributes={'url' : random_string()})
 
 
 class SuccessTest(unittest.TestCase):
@@ -59,7 +59,7 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
-            attributes={'replace_config-url' : url})
+            attributes={'url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('replace_config'))
         contents = random_string()
