@@ -91,6 +91,30 @@ HTTP_TIMEOUT = 10
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
+def log(msg, error=False):
+    print msg
+
+    if syslog_manager:
+        if error:
+            syslog_manager.log.error(msg)
+        else:
+            syslog_manager.log.info(msg)           
+
+    timestamp = datetime.datetime.now().strftime( '%Y-%m-%d_%H:%M:%S' )
+    msg = '%s: ztp-bootstrap: %s%s' % (timestamp, 
+                                       'ERROR: ' if error else '',
+                                       msg)
+
+    if xmpp_client and xmpp_client.connected:
+        xmpp_client.message(msg)
+
+def exit_bootstrap(code):
+    if xmpp_client:
+        try:
+            xmpp_client.abort()
+        except:
+            pass
+    sys.exit(code)
 
 class ZtpBootstrapEapiError(Exception):
     pass
@@ -158,7 +182,7 @@ class Node(object):
 
         _, out, _ = cls._cli_enable_cmd('show management api http-commands |'
                                         ' grep running')
-        retries = 30
+        retries = 3
         while not out and retries:
             log( 'Waiting for CommandAPI to be enabled...')
             time.sleep( 1 )
@@ -369,104 +393,88 @@ class Server(object):
                 result)
 
 
-class XmppClient(object):
-    #pylint: disable=W0613
+class XmppClient(sleekxmpp.ClientXMPP):
+    #pylint: disable=W0613, R0904, R0201, R0924
 
-    def __init__(self, user, domain, password,
-                 server, port, nick, rooms):
+    def __init__(self, user, domain, password, rooms, 
+                 nick, server, port):
 
-        self.user = user
-        self.domain = domain
-        self.password = password
-        self.server = server
-        self.port = port
-        self.nick = nick
-        self.rooms = rooms
+        sleekxmpp.ClientXMPP.__init__(self, '%s@%s' % (user, domain), 
+                                      password)
+        self.xmpp_jid = '%s@%s' % (user, domain)
 
-        if self.rooms is None:
-            self.rooms = []
 
-        self.jid = '%s@%s' % (user, domain)
+        self.xmpp_nick =  nick
+        self.xmpp_rooms = rooms
+
+        self.xmpp_rooms = []
+        for room in rooms:
+            self.xmpp_rooms.append('%s@conference.%s' % (room, domain))
+
+        self.add_event_handler('session_start', self._session_connected)
+        self.add_event_handler('connect', self._session_connected)
+        self.add_event_handler('disconnected', self._session_disconnected)
+        self.add_event_handler("message", self._session_message)
+        self.add_event_handler("groupchat_message", self._session_muc_message)
+
+        # Multi-User Chat
+        self.register_plugin('xep_0045')
+        # XMPP Ping
+        self.register_plugin('xep_0199') 
+        # Service Discovery
+        self.register_plugin('xep_0030') 
+
         self.connected = False
 
-        self.client = self._client()
-        self.connect()
+        log('XmppClient connecting to server...')
+        if server != None:
+            self.connect((server, port), reattempt=False)
+        else:
+            self.connect(reattempt=False)            
 
-    def _client(self):
-        log('XmppClient: Configuring client for %s' % self.jid)
-        client = sleekxmpp.ClientXMPP(self.jid, self.password)
-
-        client.add_event_handler('session_start', self._session_connected)
-        client.add_event_handler('connect', self._session_connected)
-        client.add_event_handler('disconnected', self._session_disconnected)
-
-        # # Multi-User Chat
-        client.register_plugin('xep_0045')
-        # XMPP Ping
-        client.register_plugin('xep_0199') 
-        # Service Discovery
-        client.register_plugin('xep_0030') 
-
-        return client
+        retries = 3
+        while not self.connected and retries:
+            # Wait to connect
+            time.sleep(1)
+            retries -= 1
+        
+        # Enable for DEBUG logging
+        # logging.basicConfig(level=logging.DEBUG,
+        #                     format='%(levelname)-8s %(message)s')
 
     def _session_connected(self, event):
-        log('XmppClient: Session connected (%s)' % self.jid)
-        self.client.get_roster()
-        self.client.send_presence()
-
-        # Joining rooms
-        for room in self.rooms:
-            self.client.plugin['xep_0045'].joinMUC(room, self.nick, 
-                                                   wait=True)
-            log('XmppClient: Joining room %s as %s' % 
-                (room, self.nick))
+        log('XmppClient: Session connected (%s)' % self.xmpp_jid)
+        self.send_presence()
+        self.get_roster()
 
         self.connected = True
 
+        # Joining rooms
+        for room in self.xmpp_rooms:
+            self.plugin['xep_0045'].joinMUC(room, 
+                                            self.xmpp_nick, 
+                                            wait=True)
+            log('XmppClient: Joined room %s as %s' % 
+                (room, self.xmpp_nick))
+
+    def _session_message(self, msg):
+        log('XmppClient: Received message from %s: \n%s\n' %  
+            (msg['from'], msg['body']))
+
+    def _session_muc_message(self, msg):
+        log('XmppClient: Received message from room %s: \n%s\n' %  
+            (msg['from'], msg['body']))
+            
     def _session_disconnected(self, event):
-        log('XmppClient: Session disconnected (%s)' % self.jid)
+        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid)
         self.connected = False
-
-    def connect(self):
-        log('XmppClient: Connecting to XMPP server %s:%s as %s' % 
-            (self.server, self.port, self.jid))
-
-        retries = 3
-        while not retries:
-            if self.client.connect((self.server, self.port)):
-                self.client.process(block=False)
-                break
-            else:
-                log('XmppClient: Failed to connect to XMPP server %s:%s '
-                    'as %s. Retrying in 10 seconds...' % 
-                    (self.server, self.port, self.jid))                    
-                time.sleep( 10 )
-                retries = retries - 1
 
     def message(self, message):
-        if not self.connected:
-            log('XmppClient: Failed to send mesage because %s ' 
-                'is not connected to server'% self.jid, error=True)
-            return
-
-        log('XmppClient: %s says %s' % (self.jid, self.nick))
-        for room in self.rooms:
-            self.client.send_message(mto=room,
-                                     mbody=message,
-                                     mtype='groupchat',
-                                     mfrom=self.nick)
-
-    def disconnect(self):
-        if not self.connected:
-            return
-
-        for room in self.rooms:
-            log('XmppClient: Leaving room %s (%s)' % 
-                (room, self.nick))           
-            self.client.plugin['xep_0045'].leaveMUC(room, self.nick)
-
-        self.client.disconnect(wait=True)
-        self.connected = False
+        log('XmppClient: %s says %s' % (self.xmpp_jid, message))
+        for room in self.xmpp_rooms:
+            self.send_message(mto=room,
+                              mbody=message,
+                              mtype='groupchat')
 
 
 def apply_config(config):
@@ -483,36 +491,19 @@ def apply_config(config):
         if ('username' in xmpp_config and
             'domain' in xmpp_config and
             'password' in xmpp_config and
-            'server' in xmpp_config):
+            'rooms' in xmpp_config and
+            xmpp_config['rooms']):
             xmpp_client = XmppClient(xmpp_config['username'], 
                                      xmpp_config['domain'], 
                                      xmpp_config['password'],
-                                     xmpp_config['server'], 
-                                     xmpp_config.get('port', 5222),
+                                     xmpp_config['rooms'],
                                      xmpp_config.get('nickname', 
                                                      xmpp_config['username']),
-                                     xmpp_config.get('rooms', []))
+                                     xmpp_config.get('server', None),
+                                     xmpp_config.get('port', 5222))
         else:
             log('XMPP configuration failed because server response is missing '
                 'config details', error=True)
-
-def log(msg, error=False):
-    if syslog_manager:
-        if error:
-            syslog_manager.log.error(msg)
-        else:
-            syslog_manager.log.info(msg)           
-
-    timestamp = datetime.datetime.now().strftime( '%Y-%m-%d_%H:%M:%S' )
-    msg = '%s: ztp-bootstrap: %s%s' % (timestamp, 
-                                       'ERROR: ' if error else '',
-                                       msg)
-
-    if xmpp_client and xmpp_client.connected:
-        xmpp_client.message(msg)
-
-    print msg
-
 
 def download_action(server, action):
     try:
@@ -524,15 +515,15 @@ def download_action(server, action):
             log('Bootstrap process failure - unexpected reponse from server '
                 '(status=%s; content-type=%s)' % (status, content), 
                 error=True)
-            sys.exit(3)
+            exit_bootstrap(3)
         elif status == STATUS_NOT_FOUND: 
             log('Bootstrap process failure - action not found on server '
                 '(status=%s)' % status, error=True)
-            sys.exit(6)
+            exit_bootstrap(6)
     except ZtpServerConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
-        sys.exit(1)
+        exit_bootstrap(1)
 
     filename = os.path.join(TEMP, action)
     with open(filename, 'wb') as action_file:
@@ -573,7 +564,7 @@ def execute_action(server, action_details, global_attr):
         log('Executing %s failed: %s' % (action, err), error=True)
         if 'onfailure' in action_details:
             log('ACTION %s:%s' % (action, action_details['onfailure']))
-        sys.exit(8)
+        exit_bootstrap(8)
 
 
 def main():
@@ -591,11 +582,11 @@ def main():
             log('Bootstrap process failure - unexpected reponse from server '
                 '(status=%s; content-type=%s)' % (status, content), 
                 error=True)
-            sys.exit(3)
+            exit_bootstrap(3)
     except ZtpServerConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
-        sys.exit(1)
+        exit_bootstrap(1)
 
     log('Config retrieved from server')
     apply_config(config.json())
@@ -608,7 +599,7 @@ def main():
     except ZtpBootstrapEapiError:
         log('Bootstrap process FAILURE - unable to enable eAPI', 
             error=True)
-        sys.exit(2)
+        exit_bootstrap(2)
 
     # Checking node on server
     try:
@@ -620,15 +611,15 @@ def main():
             log('Bootstrap process failure - unexpected reponse from server '
                 '(status=%s; content-type=%s)' % (status, content), 
                 error=True)
-            sys.exit(3)
+            exit_bootstrap(3)
         elif status == STATUS_BAD_REQUEST: 
             log('Bootstrap process failure - node not found on server '
                 '(status=%s)' % status, error=True)
-            sys.exit(4)
+            exit_bootstrap(4)
     except ZtpServerConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
-        sys.exit(1)
+        exit_bootstrap(1)
 
     # Get definition
     try:
@@ -640,15 +631,15 @@ def main():
             log('Bootstrap process failure - unexpected reponse from server '
                 '(status=%s; content-type=%s)' % (status, content), 
                 error=True)
-            sys.exit(3)
+            exit_bootstrap(3)
         elif status == STATUS_BAD_REQUEST: 
             log('Bootstrap process failure - server-side topology check '
                 'failed (status=%s)' % status, error=True)
-            sys.exit(5)
+            exit_bootstrap(5)
     except ZtpServerConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
-        sys.exit(1)
+        exit_bootstrap(1)
 
     # Execute actions
     definition = definition.json()
@@ -669,7 +660,7 @@ def main():
     if not node.has_startup_config():
         log('Startup configuration is missing at the end of the '
             'bootstrap process', error=True)        
-        sys.exit(7)
+        exit_bootstrap(7)
 
 if __name__ == '__main__':
     main()
