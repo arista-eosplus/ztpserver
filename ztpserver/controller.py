@@ -327,8 +327,7 @@ class NodeController(StoreController):
             # pattern specifies nothing connected but we have a neighbor
             # on the specified interfaces so the rule is violated
             if entry.device is None and entry.interface in neighbors:
-                log.debug("Pattern Failed: pattern entry specified 'none', \
-                    pattern interface found in neighbors")
+                log.debug("Pattern Failed: pattern entry specified 'none', pattern interface found in neighbors")
                 return None
 
             # pattern specifies any connected but we did not find a
@@ -341,8 +340,8 @@ class NodeController(StoreController):
             # pattern specifices no connected neighbor and interface is
             # not present so the rule is matches
             if entry.device is None and entry.interface not in neighbors:
-                log.debug("Pattern matched device on 'none' for interface \
-                    %s in neighbors" % entry.interface)
+                log.debug("Pattern matched device on 'none' for interface %s in neighbors" \
+                    % entry.interface)
                 result[entry.interface] = None
 
             else:
@@ -355,9 +354,9 @@ class NodeController(StoreController):
                 log.debug("Pattern interface[%s] matches node neighbors%s" % \
                     (entry.interface, matches))
 
-            # remove the interface as an available match from the set
-            # of interfaces
-            neighbors = [x for x in neighbors if x not in matches]
+                # remove the interface as an available match from the set
+                # of interfaces
+                neighbors = [x for x in neighbors if x not in matches]
         return result
 
     def match_interface_pattern(self, pattern, node):
@@ -378,6 +377,9 @@ class NodeController(StoreController):
         else:
             matches = pattern.match_interfaces(node.neighbors())
             log.debug("NodeController: match interfaces is %s" % matches)
+            if matches is None:
+                log.debug("NodeController: no interface matches found")
+                return None
             for match in matches:
                 for neighbor in node.neighbors(match):
                     node_match = pattern.match_device(neighbor.device)
