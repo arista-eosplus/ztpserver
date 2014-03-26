@@ -117,9 +117,9 @@ class ActionsController(StoreController):
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
     def show(self, request, id, **kwargs):
-        log.info("Requesting action: %s" % id)
+        log.debug("Requesting action: %s" % id)
         if not self.store.exists(id):
-            log.info("Requested action not found")
+            log.debug("Requested action not found")
             return dict(status=HTTP_STATUS_NOT_FOUND)
 
         return dict(status=HTTP_STATUS_OK,
@@ -189,13 +189,13 @@ class NodeController(StoreController):
                 node = self.create_node_object(nodeattrs)
 
                 if not self.match_pattern(pattern, node):
-                    log.info("node %s failed to match existing pattern" % id)
+                    log.debug("node %s failed to match existing pattern" % id)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
         else:
-            log.info("requested node id %s not found" % id)
+            log.debug("requested node id %s not found" % id)
             response = dict(status=HTTP_STATUS_NOT_FOUND)
 
         log.debug("NodeController response: %s" % response)
@@ -232,21 +232,21 @@ class NodeController(StoreController):
             patterns = neighbordb.get_patterns(node.systemmac)
 
             matches = self.match_patterns(patterns, node)
-            log.info("found %d pattern matches" % len(matches))
+            log.debug("Found %d pattern matches" % len(matches))
 
             if not matches:
-                log.info("unable to match any valid pattern")
+                log.debug("unable to match any valid pattern")
                 response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
             else:
                 # create node resource using first pattern match
-                log.info("creating node definition with pattern %s" %
+                log.debug("Creating node definition with pattern %s" %
                     matches[0].name)
                 location = self.add_node(node, request.json, pattern=matches[0])
                 response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         else:
-            log.info('unable to handle POST')
+            log.debug('unable to handle POST')
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
         return response
@@ -261,6 +261,11 @@ class NodeController(StoreController):
         return database
 
     def add_node(self, node, request, **kwargs):
+
+        if ztpserver.config.runtime.default.disable_node_creation:
+            log.debug("Skipping node creation for node %s due to disable_node_creation=True" \
+                % node)
+            return '/nodes/%s' % node.systemmac
 
         self.store.add_folder(node.systemmac)
 
@@ -292,7 +297,6 @@ class NodeController(StoreController):
         return '/nodes/%s' % node.systemmac
 
     def _process_attributes(self, definition):
-        # TODO finish definition of function
         return definition.get('attributes') or dict()
 
     def create_node_object(self, nodeattrs):
@@ -307,7 +311,7 @@ class NodeController(StoreController):
     def match_patterns(self, patterns, node):
         matches = list()
         for pattern in patterns:
-            log.debug('try to match pattern %s' % pattern.name)
+            log.debug('Trying to match pattern %s' % pattern.name)
             result = self.match_pattern(pattern, node)
             if result:
                 matches.append(pattern)
@@ -323,29 +327,33 @@ class NodeController(StoreController):
             # pattern specifies nothing connected but we have a neighbor
             # on the specified interfaces so the rule is violated
             if entry.device is None and entry.interface in neighbors:
-                log.info("pattern failed due to 'none' interface present")
+                log.debug("Pattern Failed: pattern entry specified 'none', \
+                    pattern interface found in neighbors")
                 return None
 
             # pattern specifies any connected but we did not find a
             # neighbor on the specified interface so the rule is violated
             elif entry.device == 'any' and entry.interface not in neighbors:
-                log.info("failed due to 'any' interface not present")
+                log.debug("Pattern Failed: pattern device entry specified \
+                    'any', pattern interface not found in neighbors")
                 return None
 
             # pattern specifices no connected neighbor and interface is
             # not present so the rule is matches
             if entry.device is None and entry.interface not in neighbors:
-                log.debug("pattern matched on 'none' for interface %s" % \
-                    entry.interface)
+                log.debug("Pattern matched device on 'none' for interface \
+                    %s in neighbors" % entry.interface)
                 result[entry.interface] = None
 
             else:
                 matches = self.match_interface_pattern(entry, node)
                 if matches is None:
-                    log.info("failed to match %s" % entry.interface)
+                    log.debug("Pattern Failed: could not find a match for pattern interface[%s]" \
+                        % entry.interface)
                     return None
                 result[entry.interface] = matches
-                log.info("pattern %s matches %s" % (entry.interface, matches))
+                log.debug("Pattern interface[%s] matches node neighbors%s" % \
+                    (entry.interface, matches))
 
             # remove the interface as an available match from the set
             # of interfaces
@@ -355,6 +363,7 @@ class NodeController(StoreController):
     def match_interface_pattern(self, pattern, node):
         # pylint: disable=R0201
         if pattern.interface == 'any':
+            log.debug("Attempting to match pattern interface 'any'")
             for interface in node.neighbors():
                 neighbors = node.neighbors(interface)
                 for neighbor in neighbors:
@@ -368,6 +377,14 @@ class NodeController(StoreController):
             matches = None
         else:
             matches = pattern.match_interfaces(node.neighbors())
+            log.debug("NodeController: match interfaces is %s" % matches)
+            for match in matches:
+                for neighbor in node.neighbors(match):
+                    node_match = pattern.match_device(neighbor.device)
+                    port_match = pattern.match_port(neighbor.port)
+                    if not node_match or not port_match:
+                        log.debug('Interface pattern failed due to node or port mismatch')
+                        return None
         return matches
 
     def startup_config_definition(self, url):

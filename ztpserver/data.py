@@ -201,8 +201,12 @@ class NeighborDb(object):
         """ returns a list of possible patterns for a given node """
 
         if node in self.patterns['nodes'].keys():
+            log.debug("Returning node pattern[%s] for node[%s]" % \
+                (self.patterns['nodes'].get(node).name, node))
             return [self.patterns['nodes'].get(node)]
         else:
+            log.debug("Returning node pattern[globals] patterns for \
+                node[%s]" % node)
             return self.patterns['globals']
 
 
@@ -306,6 +310,7 @@ class InterfacePattern(object):
 
         pattern = indicies(pattern)
         pattern = pattern.split(',')
+        log.debug("InterfacePattern: pattern indicies is %s" % pattern)
 
         pattern_set = list()
         for item in pattern:
@@ -316,6 +321,7 @@ class InterfacePattern(object):
             else:
                 pattern_set.append("Ethernet%s" % item)
 
+        log.debug("InterfacePattern: pattern set is %s" % pattern_set)
         result = [i for i in pattern_set if i in interface_set]
         if len(result) == 0:
             result = None
@@ -325,6 +331,7 @@ class InterfacePattern(object):
         return result
 
     def match_interfaces(self, interface_set):
+        log.debug("PatternInterface: trying to match interfaces")
         return self._match_interfaces(self.interface, interface_set)
 
     def match_device(self, nbrdevice):
