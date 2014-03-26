@@ -259,6 +259,11 @@ runtime.add_attribute(BoolAttr(
     default=False
 ))
 
+runtime.add_attribute(BoolAttr(
+    name='disable_node_creation',
+    default=False
+))
+
 runtime.add_attribute(StrAttr(
     name='identifier',
     choices=['systemmac', 'serialnum'],
