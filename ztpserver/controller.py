@@ -42,8 +42,8 @@ import webob.static
 
 import ztpserver.wsgiapp
 import ztpserver.config
-import ztpserver.repository
 
+from ztpserver.repository import create_file_store, FileStoreError
 from ztpserver.topology import neighbordb
 from ztpserver.constants import *
 
@@ -70,18 +70,17 @@ class StoreController(ztpserver.wsgiapp.Controller):
 
     def __init__(self, name, **kwargs):
         path_prefix = kwargs.get('path_prefix')
-        self.store = self._create_filestore(name, path_prefix=path_prefix)
+        self.create_filestore(name, path_prefix=path_prefix)
         super(StoreController, self).__init__()
 
-    def _create_filestore(self, name, path_prefix=None):
-        # pylint: disable=R0201
+    def create_filestore(self, name, path_prefix=None):
 
         try:
-            store = ztpserver.repository.create_file_store(name, path_prefix)
+            self.store = create_file_store(name, basepath=path_prefix)
+
         except ztpserver.repository.FileStoreError:
             log.warn('could not create FileStore due to invalid path')
-            store = None
-        return store
+            self.store = None
 
     def get_file(self, filename):
         return self.store.get_file(filename)
@@ -133,7 +132,7 @@ class NodeController(StoreController):
     REQ_FIELDS = ['systemmac']
 
     def __init__(self):
-        self.definitions = self._create_filestore('definitions')
+        self.definitions = self.create_filestore('definitions')
         super(NodeController, self).__init__('nodes')
 
     def __repr__(self):

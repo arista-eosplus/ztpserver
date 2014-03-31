@@ -29,17 +29,22 @@
 #
 import unittest
 
+from server_test_lib import create_filestore, delete_filestore
+from server_test_lib import ztpserver_conf
+
 import ztpserver.app
 
 class TestApp(unittest.TestCase):
 
+    def setUp(self):
+        create_filestore()
+
+    def tearDown(self):
+        delete_filestore()
+
     def test_application_defaults(self):
-
-        with open('/tmp/ztpserver.conf', 'w') as conf:
-            conf.write('[default]\n')
-            conf.write('data_root = test/server/filestore\n')
-
-        obj = ztpserver.app.start_wsgiapp(conf='/tmp/ztpserver.conf')
+        conf = ztpserver_conf()
+        obj = ztpserver.app.start_wsgiapp(conf=conf)
         self.assertIsInstance(obj, ztpserver.controller.Router)
 
 

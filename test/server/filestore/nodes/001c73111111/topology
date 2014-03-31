@@ -1,1 +1,0 @@
-{"Ethernet2": [{"device": "pod1-spine2", "port": "Ethernet1"}], "Ethernet50": [{"device": "localhost", "port": "Ethernet50"}], "Ethernet1": [{"device": "pod1-spine1", "port": "Ethernet1"}], "Ethernet49": [{"device": "localhost", "port": "Ethernet49"}], "Ethernet5": [{"device": "spine5", "port": "Ethernet2"}]}
