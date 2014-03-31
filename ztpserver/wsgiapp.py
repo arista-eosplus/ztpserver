@@ -60,16 +60,16 @@ class Controller(object):
         return webob.exc.HTTPNoContent()
 
     def show(self, request, id, **kwargs):
-        return webob.exc.HTTPNoContent()
+        return webob.exc.HTTPNotFound()
 
     def update(self, request, id, **kwargs):
-        return webob.exc.HTTPNoContent()
+        return webob.exc.HTTPNotFound()
 
     def delete(self, request, id, **kwargs):
-        return webob.exc.HTTPNoContent()
+        return webob.exc.HTTPNotFound()
 
     def edit(self, request, id, **kwargs):
-        return webob.exc.HTTPNoContent()
+        return webob.exc.HTTPNotFound()
 
     def serialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):
         return self.serializer.serialize(data, content_type, **kwargs)
@@ -101,7 +101,7 @@ class Controller(object):
                 content_type = result.get('content_type')
                 result['body'] = self.serialize(result['body'], content_type)
 
-            result.setdefault('status', 200)
+            result.setdefault('status', HTTP_STATUS_OK)
             result.setdefault('content_type', CONTENT_TYPE_HTML)
 
             result = self.response(**result)   #pylint: disable=W0142

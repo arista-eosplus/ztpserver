@@ -8,9 +8,9 @@ patterns:
     definition: leaf_template
     node: 000c29f5d27d
     interfaces:
-      - Ethernet49: pod1-spine1:Ethernet1/1
+      - Ethernet49: localhost:Ethernet1/1
       - Ethernet50:
-          device: pod1-spine2
+          device: localhost
           port: Ethernet1/1
 
 

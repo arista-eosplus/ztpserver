@@ -247,13 +247,6 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
-runtime.add_attribute(StrAttr(
-    name='neighbordb',
-    group='default',
-    default='neighbordb',
-    environ='ZTPS_DEFAULT_NEIGHBORDB'
-))
-
 runtime.add_attribute(BoolAttr(
     name='disable_pattern_checks',
     default=False
@@ -335,6 +328,14 @@ runtime.add_attribute(StrAttr(
     group='bootstrap',
     default='default',
     environ='ZTPS_BOOTSTRAP_FILENAME'
+))
+
+# Group: neighbordb
+runtime.add_attribute(StrAttr(
+    name='filename',
+    group='neighbordb',
+    default='neighbordb',
+    environ='ZTPS_NEIGHBORDB_FILENAME'
 ))
 
 

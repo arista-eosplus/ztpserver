@@ -51,8 +51,6 @@ class TestNode(unittest.TestCase):
         self.assertEqual(obj.serialnumber, '1234567890')
 
 
-
-
 class TestFileObject(unittest.TestCase):
 
     def test_create_file_object_with_path(self):

@@ -30,17 +30,47 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import unittest
+import httplib
 
-CONTENT_TYPE_PYTHON = 'text/x-python'
-CONTENT_TYPE_HTML = 'text/html'
-CONTENT_TYPE_OTHER = 'text/plain'
-CONTENT_TYPE_JSON = 'application/json'
-CONTENT_TYPE_YAML = 'application/yaml'
+import routes
 
-HTTP_STATUS_OK = 200
-HTTP_STATUS_CREATED = 201
-HTTP_STATUS_NO_CONTENT = 204
-HTTP_STATUS_BAD_REQUEST = 400
-HTTP_STATUS_NOT_FOUND = 404
-HTTP_STATUS_CONFLICT = 409
-HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
+import webob
+
+class
+
+class TestHttpRequests(unittest.TestCase):
+
+    def __init__(self):
+        self.application = None
+
+    def __init__(self, application):
+        self.application = application
+
+    def request(self, url, method='GET', **kwargs):
+        req = webob.Request.blank(url, method=method, **kwargs)
+        return req.get_response(self.application)
+
+    def get_url(self, url, expected_status, **kwargs):
+        resp = self.request(url, 'GET', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+
+    def post_url(self, url, expected_status, **kwargs):
+        resp = self.request(url, 'POST', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+
+    def put_url(self, url, expected_status, **kwargs):
+        resp = self.request(url, 'PUT', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+
+    def delete_url(self, url, expected_status, **kwargs):
+        resp = self.request(url, 'DELETE', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+
+
+
+

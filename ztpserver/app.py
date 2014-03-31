@@ -39,8 +39,9 @@ from logging.handlers import SysLogHandler
 
 from wsgiref.simple_server import make_server
 
-import ztpserver.controller
 import ztpserver.config
+import ztpserver.controller
+import ztpserver.topology
 
 DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
 
@@ -59,34 +60,6 @@ def enable_handler_console(level='DEBUG'):
     ch.setLevel(level)
     ch.setFormatter(formatter)
     log.addHandler(ch)
-
-def enable_handler_syslog(ipaddr, port=514, level='INFO'):
-    """ enables logging to a syslog server """
-
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
-    sh = SysLogHandler(address=(ipaddr, port))
-    if level is None:
-        level = 'INFO'
-    level = str(level).upper()
-    level = logging.getLevelName(level)
-    sh.setLevel(level)
-    sh.setFormatter(formatter)
-    log.addHandler(sh)
-
-def enable_handler_file(filename, level='DEBUG', overwrite=True):
-    """ Enables logging to a local file on the node. """
-
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
-    if overwrite and os.path.exists(filename):
-        os.remove(filename)
-    fh = logging.FileHandler(filename)
-    if level is None:
-        level = 'DEBUG'
-    level = str(level).upper()
-    level = logging.getLevelName(level)
-    fh.setLevel(level)
-    fh.setFormatter(formatter)
-    log.addHandler(fh)
 
 def start_logging():
     """ reads the runtime config and starts logging if enabled """
@@ -115,6 +88,7 @@ def start_wsgiapp(conf=None):
     start_logging()
     log.info('Logging started for ztpserver')
 
+    ztpserver.topology.load()
     return ztpserver.controller.Router()
 
 def run_server(conf):

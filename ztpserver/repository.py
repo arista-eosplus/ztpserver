@@ -138,7 +138,9 @@ class FileStore(object):
         return obj
 
     def delete_file(self, filepath):
-        raise NotImplementedError
+        filepath = self._transform(filepath)
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 
 def create_file_store(name, basepath=None):

@@ -1,129 +1,116 @@
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import unittest
+import httplib
+import json
 
 import routes
+
 import webob
 
 import ztpserver.wsgiapp
+from ztpserver.constants import *
 
-class TestRouter(unittest.TestCase):
+class TestWsgiApp(unittest.TestCase):
 
     def setUp(self):
-        self.mapper = routes.Mapper()
-
-        self.mapper.collection('tests', 'test',
-                                controller=ztpserver.wsgiapp.Controller())
-
-
-    @webob.dec.wsgify
-    def _index(self, request):
-        return webob.Response(status=200)
-
-    def test_router_index(self):
-        self.mapper.connect('index', '/',
-               controller=self._index,
-               action='index')
-
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.status, '200 OK')
-
-    def test_router_wsgiapp_controller_index(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_create(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_new(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_show(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_update(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_delete(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-    def test_router_wsgiapp_controller_edit(self):
-        obj = ztpserver.wsgiapp.Router(self.mapper)
-        req = webob.Request.blank('/tests', method='POST')
-        resp = req.get_response(obj)
-
-        self.assertIsInstance(resp, webob.Response)
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(resp.status, '204 No Content')
-
-
+        self.controller = ztpserver.wsgiapp.Controller()
+        
+        mapper = routes.Mapper()
+        mapper.collection('tests', 'test', controller=self.controller)
+        
+        self.router = ztpserver.wsgiapp.Router(mapper)
+        
+    def request(self, url, method='GET', **kwargs):
+        req = webob.Request.blank(url, method=method, **kwargs)
+        return req.get_response(self.router)
+        
+    def get_url(self, url, expected_status=httplib.OK, **kwargs):
+        resp = self.request(url, **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+        
+    def post_url(self, url, expected_status=httplib.OK, **kwargs):
+        resp = self.request(url, 'POST', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+        
+    def put_url(self, url, expected_status=httplib.OK, **kwargs):
+        resp = self.request(url, 'PUT', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+        
+    def delete_url(self, url, expected_status=httplib.OK, **kwargs):
+        resp = self.request(url, 'DELETE', **kwargs)
+        self.assertEqual(resp.status_code, expected_status)
+        return resp
+        
+    def test_get_url_collection(self):
+        self.get_url('/tests', HTTP_STATUS_NO_CONTENT)
+        
+    def test_get_url_resource(self):
+        self.get_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+    
+    def test_get_url_missing(self):
+        self.get_url('/missing', HTTP_STATUS_NOT_FOUND)
+    
+    def test_post_url_collection(self):
+        self.post_url('/tests', HTTP_STATUS_NO_CONTENT)
+        
+    def test_post_url_resource(self):
+        self.post_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+            
+    def test_post_url_missing(self):
+        self.post_url('/missing', HTTP_STATUS_NOT_FOUND)
+        
+    def test_put_url_collection(self):
+        self.put_url('/tests', HTTP_STATUS_NOT_FOUND)
+        
+    def test_put_url_resource(self):
+        self.put_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        
+    def test_put_url_missing(self):
+        self.put_url('/missing', HTTP_STATUS_NOT_FOUND)
+        
+    def test_delete_url_collection(self):
+        self.delete_url('/tests', HTTP_STATUS_NOT_FOUND)
+        
+    def test_delete_url_resource(self):
+        self.delete_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        
+    def test_delete_url_missing(self):
+        self.delete_url('/missing', HTTP_STATUS_NOT_FOUND)
+        
 if __name__ == '__main__':
     unittest.main()
 

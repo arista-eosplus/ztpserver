@@ -1,0 +1,40 @@
+[FORMAT]
+
+[MESSAGES CONTROL]
+# Used when an except catches Exception instances.
+disable=W0703
+
+# Too many branches
+disable=R0912
+
+# Too many return statements
+disable=R0911
+
+# No exception type specified
+disable=W0702
+
+# Disable statistics by type
+disable=RP0101
+
+# Allow local disables
+# Missing docstring
+disable=I0011,C0111
+
+[REPORTS]
+# Include message's id in output
+include-ids=yes
+
+[DESIGN]
+
+# Maximum number of arguments for function / method
+max-args=10
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods=0
+
+# Maximum number of public methods for a class (see R0904).
+max-public-methods=20
+
+# Maximum number of attributes for a class (see R0902).
+max-attributes=20
+

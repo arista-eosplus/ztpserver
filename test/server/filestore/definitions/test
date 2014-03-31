@@ -1,0 +1,5 @@
+---
+actions:
+- name: test action
+  action: test_action
+

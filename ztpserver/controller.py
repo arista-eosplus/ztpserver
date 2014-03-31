@@ -43,8 +43,8 @@ import webob.static
 import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.repository
-import ztpserver.data
 
+from ztpserver.topology import neighbordb
 from ztpserver.constants import *
 
 FILESTORES = {
@@ -177,7 +177,7 @@ class NodeController(StoreController):
                 filepath = '%s/pattern' % id
                 contents = self.get_file_contents(filepath)
                 attrs = self.deserialize(contents, CONTENT_TYPE_JSON)
-                pattern = ztpserver.data.Pattern(**attrs)
+                pattern = ztpserver.topology.Pattern(**attrs)
 
                 if self.store.exists('%s/topology' % id):
                     filepath = '%s/topology' % id
@@ -186,7 +186,7 @@ class NodeController(StoreController):
 
                 nodeattrs = dict(systemmac=id)
                 nodeattrs['neighbors'] = neighbors or dict()
-                node = self.create_node_object(nodeattrs)
+                node = ztpserver.topology.create_node(nodeattrs)
 
                 if not self.match_pattern(pattern, node):
                     log.debug("node %s failed to match existing pattern" % id)
@@ -203,11 +203,11 @@ class NodeController(StoreController):
 
     def create(self, request, **kwargs):
 
-        if not self._validate_request(request.json):
+        if not set(self.REQ_FIELDS).issubset(set(request.json.keys())):
             log.debug("POST request is missing required fields")
             return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-        node = self.create_node_object(request.json)
+        node = ztpserver.topology.create_node(request.json)
 
         # check if the node exists and return 409 if it does
         if self.store.exists(node.systemmac):
@@ -219,23 +219,15 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in request.json:
-            try:
-                filename = ztpserver.config.runtime.default.neighbordb
-                if not filename.startswith('/'):
-                    prefix = ztpserver.config.runtime.default.data_root
-                    filename = os.path.join(prefix, filename)
-                neighbordb = self._load_neighbordb(filename)
-            except ztpserver.data.NeighborDbError:
-                log.error('could not load neighbordb (%s)' % filename)
+            if neighbordb is None:
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            patterns = neighbordb.get_patterns(node.systemmac)
-
-            matches = self.match_patterns(patterns, node)
+            matches = neighbordb.match_node(node)
             log.debug("Found %d pattern matches" % len(matches))
+            log.debug("Matched patterns: %s" % [x.name for x in matches])
 
             if not matches:
-                log.debug("unable to match any valid pattern")
+                log.debug("Unable to match any valid pattern")
                 response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
             else:
@@ -250,15 +242,6 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
         return response
-
-    def _validate_request(self, req):
-        return set(self.REQ_FIELDS).issubset(set(req.keys()))
-
-    def _load_neighbordb(self, filename):
-        # pylint: disable=R0201
-        database = ztpserver.data.NeighborDb()
-        database.load(filename)
-        return database
 
     def add_node(self, node, request, **kwargs):
 
@@ -281,8 +264,7 @@ class NodeController(StoreController):
             definition = self.deserialize(definition.contents,
                                           CONTENT_TYPE_YAML)
 
-            definition.setdefault('attributes',
-                                  self._process_attributes(definition))
+            definition.setdefault('attributes', dict())
 
             filename = '%s/definition' % node.systemmac
             contents = self.serialize(definition)
@@ -295,99 +277,6 @@ class NodeController(StoreController):
 
         self.store.write_file(filename, contents)
         return '/nodes/%s' % node.systemmac
-
-    def _process_attributes(self, definition):
-        return definition.get('attributes') or dict()
-
-    def create_node_object(self, nodeattrs):
-        # pylint: disable=R0201
-        # create node object
-        node = ztpserver.data.Node(**nodeattrs)
-        if node.systemmac is not None:
-            node.systemmac = node.systemmac.replace(':', '')
-        log.debug("Created node object %r" % node)
-        return node
-
-    def match_patterns(self, patterns, node):
-        matches = list()
-        for pattern in patterns:
-            log.debug('Trying to match pattern %s' % pattern.name)
-            result = self.match_pattern(pattern, node)
-            if result:
-                matches.append(pattern)
-            else:
-                log.debug('pattern does not match')
-        return matches
-
-    def match_pattern(self, pattern, node):
-        neighbors = node.neighbors()
-        result = dict()
-
-        for entry in pattern.interfaces:
-            # pattern specifies nothing connected but we have a neighbor
-            # on the specified interfaces so the rule is violated
-            if entry.device is None and entry.interface in neighbors:
-                log.debug("Pattern Failed: pattern entry specified 'none', pattern interface found in neighbors")
-                return None
-
-            # pattern specifies any connected but we did not find a
-            # neighbor on the specified interface so the rule is violated
-            elif entry.device == 'any' and entry.interface not in neighbors:
-                log.debug("Pattern Failed: pattern device entry specified \
-                    'any', pattern interface not found in neighbors")
-                return None
-
-            # pattern specifices no connected neighbor and interface is
-            # not present so the rule is matches
-            if entry.device is None and entry.interface not in neighbors:
-                log.debug("Pattern matched device on 'none' for interface %s in neighbors" \
-                    % entry.interface)
-                result[entry.interface] = None
-
-            else:
-                matches = self.match_interface_pattern(entry, node)
-                if matches is None:
-                    log.debug("Pattern Failed: could not find a match for pattern interface[%s]" \
-                        % entry.interface)
-                    return None
-                result[entry.interface] = matches
-                log.debug("Pattern interface[%s] matches node neighbors%s" % \
-                    (entry.interface, matches))
-
-                # remove the interface as an available match from the set
-                # of interfaces
-                neighbors = [x for x in neighbors if x not in matches]
-        return result
-
-    def match_interface_pattern(self, pattern, node):
-        # pylint: disable=R0201
-        if pattern.interface == 'any':
-            log.debug("Attempting to match pattern interface 'any'")
-            for interface in node.neighbors():
-                neighbors = node.neighbors(interface)
-                for neighbor in neighbors:
-                    node_match = pattern.match_device(neighbor.device)
-                    port_match = pattern.match_port(neighbor.port)
-                    if node_match and port_match:
-                        return [interface]
-                    else:
-                        log.debug("match results for %s (node=%s, port=%s)" % \
-                            (neighbor, node_match, port_match))
-            matches = None
-        else:
-            matches = pattern.match_interfaces(node.neighbors())
-            log.debug("NodeController: match interfaces is %s" % matches)
-            if matches is None:
-                log.debug("NodeController: no interface matches found")
-                return None
-            for match in matches:
-                for neighbor in node.neighbors(match):
-                    node_match = pattern.match_device(neighbor.device)
-                    port_match = pattern.match_port(neighbor.port)
-                    if not node_match or not port_match:
-                        log.debug('Interface pattern failed due to node or port mismatch')
-                        return None
-        return matches
 
     def startup_config_definition(self, url):
         """ manually build a definition with a single action replace_config
