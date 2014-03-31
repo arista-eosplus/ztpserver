@@ -6,18 +6,23 @@
 # useful targets:
 #   make sdist -- builds a source distribution
 #   make pyflakes, make pep8 -- source code checks
+#   make pylint -- source code checks
 #   make tests -- run the tests
-#   make test_server -- run all server tests (including pattern)
+#   make test_server -- run all server tests (including neighbordb)
+#   make test_server TESTNAME=<name of test>
 #   make test_client -- run client tests
+#   make test_client TESTNAME=<name of test>
 #   make test_actions -- run action tests only
-#   make test_patterns -- run pattern tests only
+#   make test_actions TESTNAME=<name of test>
+#   make test_neighbordb -- run neighbordb tests only
 #   make clean -- cleans distutils
-
+#
 ########################################################
 # variable section
 
 NAME = "ztpserver"
 PYTHON = python
+TESTNAME = discover
 
 VERSION := $(shell cat VERSION)
 
@@ -35,6 +40,10 @@ pep8:
 pyflakes:
 	pyflakes ztpserver/* bin/*
 
+pylint:
+	pylint --rcfile .pylintrc ztpserver
+	pylint --rcfile .pylintrc client/bootstrap
+
 clean:
 	@echo "Cleaning up distutils stuff"
 	rm -rf build
@@ -43,17 +52,29 @@ clean:
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 
-test_patterns: clean
-	$(PTYHON)  test/server/test_patterns.py
+test_neighbordb: clean
+	$(PYTHON)  ./test/server/test_neighbordb.py
 
 test_client: clean
+ifeq ($(TESTNAME),discover)
 	$(PYTHON)  -m unittest discover test/client -v
+else
+	$(PYTHON)  test/client/$(TESTNAME) -v
+endif
 
 test_actions: clean
+ifeq ($(TESTNAME),discover)
 	$(PYTHON)  -m unittest discover test/actions -v
+else
+	$(PYTHON)  test/actions/$(TESTNAME) -v
+endif
 
 test_server: clean
+ifeq ($(TESTNAME),discover)
 	$(PYTHON)  -m unittest discover test/server -v
+else
+	$(PYTHON)  test/server/$(TESTNAME) -v
+endif
 
 tests: clean test_server test_client test_actions
 
