@@ -85,14 +85,15 @@ def get_dirs(dir=None):
 
 def load_tests(loader, tests, pattern):
     suite = unittest.TestSuite()
-    path = os.path.join(os.getcwd(), 'test/patterns')
+    path = os.path.join(os.getcwd(), 'test/neighbordb')
     for folder in get_dirs(dir=path):
-        path = os.path.join(path, folder)
-        definition = yaml.load(open(os.path.join(path, 'definition')))
-        neighbordb = os.path.join(path, definition.get('neighbordb'))
+        fp = os.path.join(path, folder)
+
+        definition = yaml.load(open(os.path.join(fp, 'test_definition')))
+        neighbordb = os.path.join(fp, definition.get('neighbordb'))
 
         for node in definition.get('nodes'):
-            node['node'] = os.path.join(path, node['node'])
+            node['node'] = os.path.join(fp, node['node'])
             suite.addTest(TestDefinition('run_test', neighbordb, node))
 
     return suite
