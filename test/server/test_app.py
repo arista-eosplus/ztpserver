@@ -34,7 +34,12 @@ import ztpserver.app
 class TestApp(unittest.TestCase):
 
     def test_application_defaults(self):
-        obj = ztpserver.app.start_wsgiapp()
+
+        with open('/tmp/ztpserver.conf', 'w') as conf:
+            conf.write('[default]\n')
+            conf.write('data_root = test/server/filestore\n')
+
+        obj = ztpserver.app.start_wsgiapp(conf='/tmp/ztpserver.conf')
         self.assertIsInstance(obj, ztpserver.controller.Router)
 
 
