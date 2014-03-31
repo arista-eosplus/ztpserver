@@ -40,7 +40,7 @@ def main(attributes):
     '''Installs EOS extension.
 
     Installs extension based on the value of the
-    'install_extension-url' attribute. If 'install_extension-force' is 
+    'url' attribute. If 'force' is 
     set, then the dependency checks are overridden.
 
     Args:
@@ -53,19 +53,19 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('install_extension-url')
+        1 - missing attribute('url')
         2 - unable to retrieve extension from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('install_extension-url')
+    url = attributes.get('url')
     if not url:
         return 1
 
     force = ast.literal_eval(
-        str(attributes.get('install_extension-force')))
+        str(attributes.get('force')))
 
     try:
         os.makedirs(EXTENSIONS_DIR)

@@ -346,7 +346,7 @@ class FileLogConfigTest(unittest.TestCase):
             raise
         finally:
             bootstrap.end_test()
-
+ 
 
 class XmppConfigTest(unittest.TestCase):
 
@@ -361,7 +361,7 @@ class XmppConfigTest(unittest.TestCase):
 
 
     def test_partial(self):
-        self.xmpp_sanity_test({'server' : 'test-server',
+        self.xmpp_sanity_test({'rooms' : ['test-room-1'],
                                'username' : 'test-username',
                                'password' : 'test-password',
                                'domain' :   'test-domain'})
