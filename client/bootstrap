@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,12 +30,12 @@
 # Bootstrap script
 #
 #    Version 0.1.0 3/1/2014
-#    Written by: 
+#    Written by:
 #       EOS+, Arista Networks
 #
 #    Revision history:
 #       0.1.0 - initial release
- 
+
 
 import datetime
 import imp
@@ -98,10 +98,10 @@ def log(msg, error=False):
         if error:
             syslog_manager.log.error(msg)
         else:
-            syslog_manager.log.info(msg)           
+            syslog_manager.log.info(msg)
 
     timestamp = datetime.datetime.now().strftime( '%Y-%m-%d_%H:%M:%S' )
-    msg = '%s: ztp-bootstrap: %s%s' % (timestamp, 
+    msg = '%s: ztp-bootstrap: %s%s' % (timestamp,
                                        'ERROR: ' if error else '',
                                        msg)
 
@@ -131,7 +131,7 @@ class Attributes(object):
     def __init__(self, local_attr=None, global_attr=None):
         self.local_attr = local_attr if local_attr else []
         self.global_attr = global_attr if global_attr else []
-        
+
     def get(self, attr):
         if attr in self.local_attr:
             return self.local_attr[attr]
@@ -147,8 +147,8 @@ class Node(object):
     def __init__(self):
         Node._enable_api()
 
-        url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL, 
-                                             COMMAND_API_USERNAME, 
+        url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
+                                             COMMAND_API_USERNAME,
                                              COMMAND_API_PASSWORD,
                                              COMMAND_API_SERVER )
         self.client = jsonrpclib.Server(url)
@@ -173,7 +173,7 @@ class Node(object):
     @classmethod
     def _enable_api(cls):
         cls._cli_config_cmds(['username %s secret %s privilege 15' %
-                              (COMMAND_API_USERNAME, 
+                              (COMMAND_API_USERNAME,
                                COMMAND_API_PASSWORD),
                               'management api http-commands',
                               'no protocol https',
@@ -189,7 +189,7 @@ class Node(object):
             retries = retries - 1
             _, out, _ = cls._cli_enable_cmd(
                 'show management api http-commands | grep running')
-            
+
 
     def api_enable_cmds(self, cmds, text_format=False):
         req_format = 'text' if text_format else 'json'
@@ -207,7 +207,7 @@ class Node(object):
         result['version'] = info['internalVersion']
         result['systemmac'] = info['systemMacAddress']
         result['serialnumber'] = info['serialNumber']
-        
+
         return result
 
     def neighbors(self):
@@ -223,9 +223,9 @@ class Node(object):
             else:
                 result['neighbors'][entry['port']] = [neighbor]
         return result
-    
+
     def details(self):
-        return dict(self.system().items() + 
+        return dict(self.system().items() +
                     self.neighbors().items())
 
     def has_startup_config(self):
@@ -261,7 +261,7 @@ class Node(object):
 
 
 class SyslogManager(object):
-    
+
     def __init__(self):
         self.log = logging.getLogger('ztpbootstrap')
         self.log.setLevel(logging.DEBUG)
@@ -275,13 +275,13 @@ class SyslogManager(object):
         if level is None:
             level = 'DEBUG'
 
-        try:            
+        try:
             handler.setLevel(logging.getLevelName(level))
         except ValueError:
             log('SyslogManager: unknown logging level (%s) - using '
                 'log.DEFAULT instead' % level, error=True)
             handler.setLevel(logging.DEBUG)
-            
+
         handler.setFormatter(self.formatter)
         self.log.addHandler(handler)
 
@@ -290,12 +290,12 @@ class SyslogManager(object):
         self._add_handler(SysLogHandler(address=SYSLOG))
 
     def _add_file_handler(self, filename, level=None):
-        log('SyslogManager: adding file handler (%s - level:%s)' % 
+        log('SyslogManager: adding file handler (%s - level:%s)' %
             (filename, level))
         self._add_handler(logging.FileHandler(filename), level)
 
     def _add_remote_syslog_handler(self, host, port, level=None):
-        log('SyslogManager: adding remote handler (%s:%s - level:%s)' % 
+        log('SyslogManager: adding remote handler (%s:%s - level:%s)' %
             (host, port, level))
         self._add_handler(SysLogHandler(address=(host, port)), level)
 
@@ -304,13 +304,13 @@ class SyslogManager(object):
             match = re.match('^file:(.+)',
                              entry['destination'])
             if match:
-                self._add_file_handler(match.groups()[ 0 ], 
+                self._add_file_handler(match.groups()[ 0 ],
                                        entry['level'])
             else:
                 match = re.match('^(.+):(.+)',
                                  entry['destination'])
                 if match:
-                    self._add_remote_syslog_handler(match.groups()[ 0 ], 
+                    self._add_remote_syslog_handler(match.groups()[ 0 ],
                                                     match.groups()[ 1 ],
                                                     entry['level'])
                 else:
@@ -333,7 +333,7 @@ class Server(object):
         request_files = []
         for entry in files:
             request_files[entry] = open(entry,'rb')
-            
+
         full_url = '%s/%s' % (self.url, path)
         try:
             if method == 'get':
@@ -351,7 +351,7 @@ class Server(object):
                                          files=request_files,
                                          timeout=HTTP_TIMEOUT)
             else:
-                log('Server: Unknown method %s' % method, 
+                log('Server: Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpServerConnectionError
@@ -396,10 +396,10 @@ class Server(object):
 class XmppClient(sleekxmpp.ClientXMPP):
     #pylint: disable=W0613, R0904, R0201, R0924
 
-    def __init__(self, user, domain, password, rooms, 
+    def __init__(self, user, domain, password, rooms,
                  nick, server, port):
 
-        sleekxmpp.ClientXMPP.__init__(self, '%s@%s' % (user, domain), 
+        sleekxmpp.ClientXMPP.__init__(self, '%s@%s' % (user, domain),
                                       password)
         self.xmpp_jid = '%s@%s' % (user, domain)
 
@@ -420,9 +420,9 @@ class XmppClient(sleekxmpp.ClientXMPP):
         # Multi-User Chat
         self.register_plugin('xep_0045')
         # XMPP Ping
-        self.register_plugin('xep_0199') 
+        self.register_plugin('xep_0199')
         # Service Discovery
-        self.register_plugin('xep_0030') 
+        self.register_plugin('xep_0030')
 
         self.connected = False
 
@@ -430,14 +430,14 @@ class XmppClient(sleekxmpp.ClientXMPP):
         if server != None:
             self.connect((server, port), reattempt=False)
         else:
-            self.connect(reattempt=False)            
+            self.connect(reattempt=False)
 
         retries = 3
         while not self.connected and retries:
             # Wait to connect
             time.sleep(1)
             retries -= 1
-        
+
         # Enable for DEBUG logging
         # logging.basicConfig(level=logging.DEBUG,
         #                     format='%(levelname)-8s %(message)s')
@@ -451,20 +451,20 @@ class XmppClient(sleekxmpp.ClientXMPP):
 
         # Joining rooms
         for room in self.xmpp_rooms:
-            self.plugin['xep_0045'].joinMUC(room, 
-                                            self.xmpp_nick, 
+            self.plugin['xep_0045'].joinMUC(room,
+                                            self.xmpp_nick,
                                             wait=True)
-            log('XmppClient: Joined room %s as %s' % 
+            log('XmppClient: Joined room %s as %s' %
                 (room, self.xmpp_nick))
 
     def _session_message(self, msg):
-        log('XmppClient: Received message from %s: \n%s\n' %  
+        log('XmppClient: Received message from %s: \n%s\n' %
             (msg['from'], msg['body']))
 
     def _session_muc_message(self, msg):
-        log('XmppClient: Received message from room %s: \n%s\n' %  
+        log('XmppClient: Received message from room %s: \n%s\n' %
             (msg['from'], msg['body']))
-            
+
     def _session_disconnected(self, event):
         log('XmppClient: Session disconnected (%s)' % self.xmpp_jid)
         self.connected = False
@@ -493,11 +493,11 @@ def apply_config(config):
             'password' in xmpp_config and
             'rooms' in xmpp_config and
             xmpp_config['rooms']):
-            xmpp_client = XmppClient(xmpp_config['username'], 
-                                     xmpp_config['domain'], 
+            xmpp_client = XmppClient(xmpp_config['username'],
+                                     xmpp_config['domain'],
                                      xmpp_config['password'],
                                      xmpp_config['rooms'],
-                                     xmpp_config.get('nickname', 
+                                     xmpp_config.get('nickname',
                                                      xmpp_config['username']),
                                      xmpp_config.get('server', None),
                                      xmpp_config.get('port', 5222))
@@ -513,10 +513,10 @@ def download_action(server, action):
                 (status == STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content), 
+                '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
-        elif status == STATUS_NOT_FOUND: 
+        elif status == STATUS_NOT_FOUND:
             log('Bootstrap process failure - action not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(6)
@@ -537,20 +537,25 @@ def download_action(server, action):
 
 def execute_action(server, action_details, global_attr):
     action = action_details['action']
-    
+
     description = ''
     if 'description'in action_details:
         description = '(%s)' % action_details['description']
 
-    log('Downloading action %s%s' % (action, description))
-    filename = download_action(server, action)
+    if action not in sys.modules:
+        log('Downloading action %s%s' % (action, description))
+        filename = download_action(server, action)
 
     log('Executing action %s' % action)
     if 'onstart' in action_details:
         log('ACTION %s:%s' % (action, action_details['onstart']))
 
     try:
-        module = imp.load_source(action, filename)
+        if action in sys.modules:
+            module = sys.modules[action]
+        else:
+            module = imp.load_source(action, filename)
+
         local_attr = action_details['attributes'] \
                      if 'attributes' in action_details \
                      else []
@@ -569,7 +574,7 @@ def execute_action(server, action_details, global_attr):
 
 def main():
     #pylint: disable=W0603,R0912,R0915
-    global syslog_manager                   
+    global syslog_manager
     syslog_manager = SyslogManager()
     server = Server(SERVER)
 
@@ -580,7 +585,7 @@ def main():
         if(status != STATUS_OK or
            content != CONTENT_TYPE_JSON):
             log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content), 
+                '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
     except ZtpServerConnectionError:
@@ -597,22 +602,22 @@ def main():
     try:
         node = Node()
     except ZtpBootstrapEapiError:
-        log('Bootstrap process FAILURE - unable to enable eAPI', 
+        log('Bootstrap process FAILURE - unable to enable eAPI',
             error=True)
         exit_bootstrap(2)
 
     # Checking node on server
     try:
         status, content = server.post_nodes(node.details())
-        if(status not in [STATUS_CREATED, 
-                          STATUS_BAD_REQUEST, 
+        if(status not in [STATUS_CREATED,
+                          STATUS_BAD_REQUEST,
                           STATUS_CONFLICT] or
            content != CONTENT_TYPE_HTML):
             log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content), 
+                '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
-        elif status == STATUS_BAD_REQUEST: 
+        elif status == STATUS_BAD_REQUEST:
             log('Bootstrap process failure - node not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(4)
@@ -629,10 +634,10 @@ def main():
                 (status == STATUS_BAD_REQUEST and
                  content == CONTENT_TYPE_HTML)):
             log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content), 
+                '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
-        elif status == STATUS_BAD_REQUEST: 
+        elif status == STATUS_BAD_REQUEST:
             log('Bootstrap process failure - server-side topology check '
                 'failed (status=%s)' % status, error=True)
             exit_bootstrap(5)
@@ -645,7 +650,7 @@ def main():
     definition = definition.json()
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
-    
+
     global_attr = definition['attributes']
     if global_attr is None:
         global_attr = {}
@@ -659,7 +664,7 @@ def main():
     # Check for startup-config
     if not node.has_startup_config():
         log('Startup configuration is missing at the end of the '
-            'bootstrap process', error=True)        
+            'bootstrap process', error=True)
         exit_bootstrap(7)
 
 if __name__ == '__main__':

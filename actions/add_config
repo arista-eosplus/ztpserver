@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,10 +31,11 @@
 
 import os
 import urllib
+from string import Template
 
 TEMP_CONFIG = '/tmp/tmp-config'
 
-def main(attributes): 
+def main(attributes):
     '''Adds startup-config section.
 
     Appends config section to startup config based on the value of the
@@ -52,6 +53,7 @@ def main(attributes):
         0 - success
         1 - missing attribute('url')
         2 - unable to retrieve config from URL
+        3 - requested variable not provided
 
     Raises:
         None
@@ -65,9 +67,16 @@ def main(attributes):
     except:
         return 2
 
-    config = open(TEMP_CONFIG, 'r')
-    lines = config.readlines()
-    config.close()
+    contents = open(TEMP_CONFIG, 'r').read()
+
+    variables = attributes.get('variables') or dict()
+    attributes.get('NODE').log_msg("Using variables: %s" % variables)
+
+    try:
+        lines = Template(contents).substitute(variables)
+        lines = lines.split('\n')
+    except KeyError:
+        return 3
 
     attributes.get('NODE').append_startup_config_lines(lines)
 
