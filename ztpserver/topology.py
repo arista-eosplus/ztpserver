@@ -238,7 +238,7 @@ class Topology(object):
         """ returns a list of possible patterns for a given node """
 
         log.debug("Searching for systemmac %s in patterns" % node.systemmac)
-        log.debug("Available patterns: %s" % self.patterns['nodes'].keys())
+        log.debug("Available node patterns: %s" % self.patterns['nodes'].keys())
 
         if node.systemmac in self.patterns['nodes'].keys():
             pattern = self.patterns['nodes'].get(node.systemmac)
@@ -493,6 +493,7 @@ def load(filename=None, content_type=CONTENT_TYPE_YAML):
         filename = default_filename()
     fobj = open(filename)
     loads(open(filename).read(), content_type)
+
 
 
 

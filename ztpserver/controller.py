@@ -42,9 +42,9 @@ import webob.static
 
 import ztpserver.wsgiapp
 import ztpserver.config
+import ztpserver.topology
 
 from ztpserver.repository import create_file_store, FileStoreError
-from ztpserver.topology import neighbordb
 from ztpserver.constants import *
 
 FILESTORES = {
@@ -70,17 +70,17 @@ class StoreController(ztpserver.wsgiapp.Controller):
 
     def __init__(self, name, **kwargs):
         path_prefix = kwargs.get('path_prefix')
-        self.create_filestore(name, path_prefix=path_prefix)
+        self.store = self.create_filestore(name, path_prefix=path_prefix)
         super(StoreController, self).__init__()
 
     def create_filestore(self, name, path_prefix=None):
-
         try:
-            self.store = create_file_store(name, basepath=path_prefix)
+            store = create_file_store(name, basepath=path_prefix)
 
         except ztpserver.repository.FileStoreError:
             log.warn('could not create FileStore due to invalid path')
-            self.store = None
+            store = None
+        return store
 
     def get_file(self, filename):
         return self.store.get_file(filename)
@@ -117,6 +117,7 @@ class ActionsController(StoreController):
 
     def show(self, request, id, **kwargs):
         log.debug("Requesting action: %s" % id)
+
         if not self.store.exists(id):
             log.debug("Requested action not found")
             return dict(status=HTTP_STATUS_NOT_FOUND)
@@ -187,7 +188,7 @@ class NodeController(StoreController):
                 nodeattrs['neighbors'] = neighbors or dict()
                 node = ztpserver.topology.create_node(nodeattrs)
 
-                if not self.match_pattern(pattern, node):
+                if not pattern.match_node(node):
                     log.debug("node %s failed to match existing pattern" % id)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
@@ -218,10 +219,10 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in request.json:
-            if neighbordb is None:
+            if ztpserver.topology.neighbordb is None:
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            matches = neighbordb.match_node(node)
+            matches = ztpserver.topology.neighbordb.match_node(node)
             log.debug("Found %d pattern matches" % len(matches))
             log.debug("Matched patterns: %s" % [x.name for x in matches])
 
@@ -264,6 +265,7 @@ class NodeController(StoreController):
                                           CONTENT_TYPE_YAML)
 
             definition.setdefault('attributes', dict())
+            definition.setdefault('name', 'Generated from %s' % definiton.name)
 
             filename = '%s/definition' % node.systemmac
             contents = self.serialize(definition)
@@ -287,11 +289,11 @@ class NodeController(StoreController):
         action = dict(name='install config',
                       description='install static startup configuration',
                       action='replace_config',
-                      attributes=[])
+                      attributes={'url': url})
 
         definition = dict(name='install startup-config',
                           actions=[action],
-                          attributes={'replace_config-url': url})
+                          attributes={})
 
         return dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
