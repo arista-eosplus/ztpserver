@@ -52,6 +52,28 @@ class FailureTest(ActionFailureTest):
                         attributes={'url' : 
                                     random_string()})
 
+    def test_missing_variable(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, config)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action'}],
+            attributes={'url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+        contents = '%s$my_missing_variable%s' % (random_string(), 
+                                                 random_string())
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.action_failure())
+            msg = [x for x in bootstrap.output.split('\n') if x][-1]
+            self.failUnless('return code 3' in msg)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
 class SuccessTest(unittest.TestCase):
 

@@ -29,18 +29,14 @@
 
 #pylint: disable=R0904,F0401,W0232,E1101
 
-import os
-import os.path
 import unittest
-import shutil
 import sys
 
 sys.path.append('test/client')
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import file_log, get_action, random_string
-from client_test_lib import startup_config_action, remove_file
+from client_test_lib import ActionFailureTest
+from client_test_lib import random_string
 
 class FailureTest(ActionFailureTest):
 
