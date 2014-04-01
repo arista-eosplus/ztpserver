@@ -75,8 +75,7 @@ def main(attributes):
     try:
         lines = Template(contents).substitute(variables)
         lines = lines.split('\n')
-    except KeyError as e:
-        print e
+    except KeyError:
         return 3
 
     attributes.get('NODE').append_startup_config_lines(lines)
