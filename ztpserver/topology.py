@@ -82,7 +82,7 @@ class DataFileMixin(object):
     def loads(self, data, content_type=CONTENT_TYPE_OTHER):
         raise NotImplementedError
 
-    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
+    def dump(self, fobj, data, content_type=CONTENT_TYPE_OTHER):
         raise NotImplementedError
 
     def dumps(self, data, content_type=CONTENT_TYPE_OTHER):
@@ -171,7 +171,7 @@ class Resources(object):
         try:
             contents = serializer.deserialize(data, content_type)
             return contents
-        except SerializerError as exc:
+        except ztpserver.serializers.SerializerError as exc:
             log.debug(exc)
             raise DataFileError('unable to load data')
 
@@ -188,16 +188,31 @@ class Resources(object):
             raise DataFileError("unable to write file")
 
     def allocate(self, pool, node):
+        match = self.lookup(pool, node)
+        if match:
+            log.debug("Found allocated resources, returning %s" % match)
+            return match
+
         fp = os.path.join(self.workingdir, pool)
         contents = self.load(open(fp))
 
         try:
             key = next(x[0] for x in contents.items() if x[1] is None)
             contents[key] = node.systemmac
-            self.dump(contents, open(fp, 'w'))
-            return key
         except StopIteration:
             raise ResourcesError('no resources available in pool')
+
+        self.dump(contents, open(fp, 'w'))
+        return key
+
+    def lookup(self, pool, node):
+        log.debug("Looking up resource for node %s" % node.systemmac)
+        fp = os.path.join(self.workingdir, pool)
+        contents = self.load(open(fp))
+        matches = filter(lambda (k,v): v == node.systemmac, contents.items())
+        (key, value) = matches[0] if matches else (None, None)
+        return key
+
 
 class Functions(object):
 
@@ -246,7 +261,7 @@ class Topology(object):
         try:
             contents = serializer.deserialize(data, content_type)
             self.deserialize(contents)
-        except SerializerError as exc:
+        except ztpserver.serializers.SerializerError as exc:
             log.debug(exc)
             raise TopologyError('unable to load data')
 
@@ -372,19 +387,22 @@ class Pattern(object):
         for interface in interfaces:
             for key, values in interface.items():
                 args = self._parse_interface(key, values)
+                log.debug("Adding interface to pattern with args %s" % str(args))
                 self.add_interface(*args) #pylint: disable=W0142
 
     def _parse_interface(self, interface, values):
+        log.debug("parse_interface[%s]: %s" % (str(interface), str(values)))
 
+        device = port = tags = None
         if isinstance(values, dict):
             device = values.get('device')
             port = values.get('port')
             tags = values.get('tags')
 
-        elif values == 'any':
+        if values == 'any' or device == 'any':
             device, port, tags = 'any', 'any', None
 
-        elif values == 'none':
+        elif values == 'none' or device == 'none':
             device, port, tags = None, None, None
 
         else:
@@ -411,8 +429,7 @@ class Pattern(object):
 
             # check for device none
             if intfpattern.device is None:
-                log.debug("InterfacePattern failed to match interface[%s]" \
-                    % intfpattern.interface)
+                log.debug("InterfacePattern device is 'none'")
                 return intfpattern.interface not in neighbors
 
             variables.update(self.variables)
@@ -441,7 +458,7 @@ class InterfacePattern(object):
         self.tags = tags or list()
 
     def __repr__(self):
-        return "InterfacePattern(interface=%s, node=%s, port=%s)" % \
+        return "InterfacePattern(interface=%s, device=%s, port=%s)" % \
             (self.interface, self.device, self.port)
 
     def serialize(self):
@@ -547,10 +564,19 @@ def resources(attributes, node):
     _attributes = dict()
     _resources = Resources()
     for key, value in attributes.items():
-        log.debug("Key: %s, Value: %s" % (key, value))
-        if isinstance(value, list) or isinstance(value, dict):
+        if isinstance(value, dict):
             value = resources(value, node)
-        else:
+        elif isinstance(value, list):
+            _value = list()
+            for item in value:
+                match = FUNC_RE.match(item)
+                if match:
+                    method = getattr(_resources, match.group('function'))
+                    _value.append(method(match.group('arg'), node))
+                else:
+                    _value.append(item)
+            value = _value
+        elif isinstance(value, str):
             match = FUNC_RE.match(value)
             if match:
                 method = getattr(_resources, match.group('function'))
