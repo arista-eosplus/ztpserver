@@ -203,6 +203,7 @@ class Config(collections.Mapping):
             self._groups.append(group)
 
     def _transform(self, item, value):
+        # pylint: disable=R0201
         return item['_metadata'].type(value)
 
     def set_value(self, name, value, group=None):
@@ -222,7 +223,7 @@ class Config(collections.Mapping):
 
         item = self._attributes.get((group, name))
 
-        if item['_metadata'].default is None:
+        if item['_metadata'].default is None:   # pylint: disable=W0104
             item['value'] == None
         else:
             item['value'] = self._transform(item, item['_metadata'].default)

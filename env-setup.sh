@@ -11,7 +11,7 @@ if [ ! -d .env ]; then
 
   echo Switching to virtualenv
   source $1/bin/activate
-  
+
   echo Installing Python packages via PIP
   pip install -q -r requirements.txt
 else
@@ -31,6 +31,7 @@ if [ ! -d .env/filestore ]; then
   mkdir -p $1/filestore/definitions
   mkdir -p $1/filestore/packages
   mkdir -p $1/filestore/files
+  mkdir -p $1/filestore/resources
 fi;
 
 echo Setting environment variables
@@ -46,5 +47,5 @@ echo PATH=$PATH
 echo ZTPS_CONFIG=$ZTPS_CONFIG
 
 echo
-echo Done! 
+echo Done!
 echo
