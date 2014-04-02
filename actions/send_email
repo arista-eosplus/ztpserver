@@ -51,7 +51,7 @@ def run_command(command, node):
     command = command.strip()
     output = node.api_enable_cmds([command], text_format=True)
     filename = str(command).replace(' ', '_')
-    open(filename, 'w').write(output)
+    open(filename, 'w').write(' '.join(output))
     return filename
 
 def main(attributes):
@@ -116,6 +116,7 @@ def main(attributes):
     attachments = attributes.get('attachments') or list()
     commands = attributes.get('commands') or list()
 
+    attributes.get('NODE').log_msg("Running commands: %s" % str(commands))
     if commands:
         body += '\nThe output from the following commmands have '\
             'been added as attachments:'
@@ -124,21 +125,25 @@ def main(attributes):
             attachments.append(filename)
             body += '\n\t* %s (%s)' % (command, filename)
 
+    attributes.get('NODE').log_msg("Collecting attachments: %s" % \
+        str(attachments))
     if attachments:
         for filename in attachments:
-            if not os.path.exists(filename):
-                break
-            filename = filename.strip()
-            part = MIMEBase.MIMEBase('application', 'octet-stream')
-            part.set_payload(open(filename,'rb').read())
-            Encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 
-                            'attachment; filename=\'%s\'' %
-              os.path.basename(filename))
-            msg.attach(part)
+            if os.path.exists(filename):
+                filename = filename.strip()
+                part = MIMEBase.MIMEBase('application', 'octet-stream')
+                part.set_payload(open(filename,'rb').read())
+                Encoders.encode_base64(part)
+                part.add_header('Content-Disposition',
+                                'attachment; filename=\'%s\'' %
+                                os.path.basename(filename))
+                attributes.get('NODE').log_msg("Attaching %s" % filename)
+                msg.attach(part)
 
     msg.attach(MIMEText(body))
 
+    attributes.get('NODE').log_msg("Sending email using smarthost %s" % \
+        smarthost)
     send_message(smarthost, sender, receivers, msg)
 
 
