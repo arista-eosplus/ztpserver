@@ -29,9 +29,13 @@
 
 #pylint: disable=R0904
 
+import glob
 import os
 import os.path
 import unittest
+
+from client_test_lib import BOOT_EXTENSIONS, BOOT_EXTENSIONS_FOLDER
+from client_test_lib import RC_EOS, STARTUP_CONFIG
 
 from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap
@@ -41,7 +45,6 @@ from client_test_lib import fail_action, print_action, random_string
 from client_test_lib import print_attributes_action
 from client_test_lib import erroneous_action, missing_main_action
 from client_test_lib import wrong_signature_action, exception_action
-
 
 class ServerNotRunningTest(unittest.TestCase):
     
@@ -289,6 +292,36 @@ class MissingStartupConfigTest(unittest.TestCase):
         try:
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.missing_startup_config_failure())
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
+
+class FactoryDefaultTest(unittest.TestCase):
+
+    def test(self):
+        open(RC_EOS, 'w').write(random_string())
+        open(STARTUP_CONFIG, 'w').write(random_string())
+        open(BOOT_EXTENSIONS, 'w').write(random_string())
+        os.makedirs(BOOT_EXTENSIONS_FOLDER)
+        open('%s/%s' % (BOOT_EXTENSIONS_FOLDER, random_string()), 
+             'w').write(random_string())        
+
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        bootstrap.ztps.set_definition_response()
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.missing_startup_config_failure())
+            self.failIf(open(RC_EOS).read())
+            self.failIf(open(STARTUP_CONFIG).read())
+            self.failIf(open(BOOT_EXTENSIONS).read())
+            self.failIf(glob.glob('%s/.*' % BOOT_EXTENSIONS_FOLDER))
             self.failIf(bootstrap.error)
         except AssertionError:
             raise

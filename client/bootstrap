@@ -38,6 +38,7 @@
 
 
 import datetime
+import glob
 import imp
 import json
 import jsonrpclib
@@ -84,6 +85,9 @@ STATUS_CONFLICT = 409
 
 STARTUP_CONFIG = '/mnt/flash/startup-config'
 RC_EOS = '/mnt/flash/rc.eos'
+BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
+BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'
+
 FLASH = '/mnt/flash'
 
 HTTP_TIMEOUT = 10
@@ -109,6 +113,7 @@ def log(msg, error=False):
         xmpp_client.message(msg)
 
 def exit_bootstrap(code):
+    #pylint: disable=W0702
     if xmpp_client:
         try:
             xmpp_client.abort()
@@ -156,7 +161,7 @@ class Node(object):
         try:
             self.api_enable_cmds([])
         except socket.error:
-            raise ZtpBootstrapEapiError('Unable to create  EAPI client')
+            raise ZtpBootstrapEapiError()
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
@@ -229,7 +234,8 @@ class Node(object):
                     self.neighbors().items())
 
     def has_startup_config(self):
-        return os.path.isfile(STARTUP_CONFIG)
+        return os.path.isfile(STARTUP_CONFIG) and \
+               open(STARTUP_CONFIG).read().strip()
 
     def _has_rc_eos(self):
         return os.path.isfile(RC_EOS)
@@ -571,10 +577,22 @@ def execute_action(server, action_details, global_attr):
             log('ACTION %s:%s' % (action, action_details['onfailure']))
         exit_bootstrap(8)
 
+def restore_factory_default():
+    for filename in [RC_EOS, STARTUP_CONFIG,
+                     BOOT_EXTENSIONS]:
+        open(filename, 'w').close()
+
+    files = glob.glob('%s/*' % BOOT_EXTENSIONS_FOLDER)
+    files += glob.glob('%s/.*' % BOOT_EXTENSIONS_FOLDER)
+    for filename in files:
+        os.remove(filename)
 
 def main():
     #pylint: disable=W0603,R0912,R0915
     global syslog_manager
+
+    restore_factory_default()
+
     syslog_manager = SyslogManager()
     server = Server(SERVER)
 
