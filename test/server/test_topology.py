@@ -145,7 +145,7 @@ class TestInterfacePattern(unittest.TestCase):
 
     def test_create_interface_pattern(self):
         obj = ztpserver.topology.InterfacePattern("Ethernet", "any", "any")
-        reprobj = "InterfacePattern(interface=Ethernet, node=any, port=any)"
+        reprobj = "InterfacePattern(interface=Ethernet, device=any, port=any)"
         self.assertEqual(repr(obj), reprobj)
 
     def test_match_neighbors_valid(self):

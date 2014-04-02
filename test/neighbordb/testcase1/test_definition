@@ -7,8 +7,8 @@ nodes:
       - sample node template 3
 
   - node: d27d.json
-    matches: 1
-    match_includes:
+    matches: 0
+    match_excludes:
       - sample global template 1
 
 
