@@ -569,6 +569,36 @@ class BootstrapSuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
+    def test_duplicate_actions(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action'},
+                     {'action' : 'print_action'}])
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+
+        text = random_string()
+        bootstrap.ztps.set_action_response('print_action',
+                                           print_action(text))
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(bootstrap.output.count('Downloading action '
+                                                   'print_action') == 1)
+            self.failUnless(bootstrap.output.count('Executing action '
+                                                   'print_action') == 2)
+            self.failUnless(bootstrap.output.count(text) == 2)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
     def test_global_attribute(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
