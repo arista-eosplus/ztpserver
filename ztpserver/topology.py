@@ -71,6 +71,9 @@ class OrderedCollection(collections.OrderedDict, collections.Callable):
         #pylint: disable=W0221
         return self.keys() if key is None else self.get(key)
 
+class DataFileError(Exception):
+    pass
+
 class DataFileMixin(object):
 
     def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
@@ -150,6 +153,51 @@ class Node(object):
                 neighbors[interface] = collection
         attrs['neighbors'] = neighbors
 
+class Resources(object):
+
+    def __init__(self):
+        filepath = ztpserver.config.runtime.default.data_root
+        self.workingdir = os.path.join(filepath, "resources")
+
+    def load(self, fobj, content_type=CONTENT_TYPE_YAML):
+        try:
+            contents = self.loads(fobj.read(), content_type)
+        except IOError as exc:
+            log.debug(exc)
+            raise DataFileError('unable to load file')
+        return contents
+
+    def loads(self, data, content_type=CONTENT_TYPE_YAML):
+        try:
+            contents = serializer.deserialize(data, content_type)
+            return contents
+        except SerializerError as exc:
+            log.debug(exc)
+            raise DataFileError('unable to load data')
+
+    def dumps(self, data, pool, content_type=CONTENT_TYPE_YAML):
+        fobj = open(pool)
+        self.dump(data, fobj, content_type)
+
+    def dump(self, data, fobj, content_type=CONTENT_TYPE_YAML):
+        try:
+            contents = serializer.serialize(data, content_type)
+            fobj.write(contents)
+        except IOError as exc:
+            log.debug(exc)
+            raise DataFileError("unable to write file")
+
+    def allocate(self, pool, node):
+        fp = os.path.join(self.workingdir, pool)
+        contents = self.load(open(fp))
+
+        try:
+            key = next(x[0] for x in contents.items() if x[1] is None)
+            contents[key] = node.systemmac
+            self.dump(contents, open(fp, 'w'))
+            return key
+        except StopIteration:
+            raise ResourcesError('no resources available in pool')
 
 class Functions(object):
 
@@ -494,10 +542,22 @@ def load(filename=None, content_type=CONTENT_TYPE_YAML):
     fobj = open(filename)
     loads(open(filename).read(), content_type)
 
-
-
-
-
-
-
+def resources(attributes, node):
+    log.debug("Start processing resources with attributes: %s" % attributes)
+    _attributes = dict()
+    _resources = Resources()
+    for key, value in attributes.items():
+        log.debug("Key: %s, Value: %s" % (key, value))
+        if isinstance(value, list) or isinstance(value, dict):
+            value = resources(value, node)
+        else:
+            match = FUNC_RE.match(value)
+            if match:
+                method = getattr(_resources, match.group('function'))
+                value = method(match.group('arg'), node)
+                log.debug('Allocated value %s for attribute %s from pool %s' % \
+                    (value, key, match.group('arg')))
+        log.debug("Setting %s to %s" % (key, value))
+        _attributes[key] = value
+    return _attributes
 
