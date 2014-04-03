@@ -145,7 +145,7 @@ class Serializer(object):
         }
         return handlers.get(content_type)
 
-    @classmethod    
+    @classmethod
     def convert(cls, data):
         if isinstance(data, basestring):
             return str(data)

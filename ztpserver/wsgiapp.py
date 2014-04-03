@@ -59,16 +59,16 @@ class Controller(object):
     def new(self, request, **kwargs):
         return webob.exc.HTTPNoContent()
 
-    def show(self, request, id, **kwargs):
+    def show(self, request, resource, **kwargs):
         return webob.exc.HTTPNotFound()
 
-    def update(self, request, id, **kwargs):
+    def update(self, request, resource, **kwargs):
         return webob.exc.HTTPNotFound()
 
-    def delete(self, request, id, **kwargs):
+    def delete(self, request, resource, **kwargs):
         return webob.exc.HTTPNotFound()
 
-    def edit(self, request, id, **kwargs):
+    def edit(self, request, resource, **kwargs):
         return webob.exc.HTTPNotFound()
 
     def serialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):

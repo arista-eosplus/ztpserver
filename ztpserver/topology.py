@@ -1,5 +1,5 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0614,C0103,W0142
+# pylint: disable=W0614,C0103,W0142,W1201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -391,7 +391,7 @@ class Pattern(object):
         for interface in interfaces:
             for key, values in interface.items():
                 args = self._parse_interface(key, values)
-                log.debug("Adding interface to pattern with args %s" % 
+                log.debug("Adding interface to pattern with args %s" %
                           str(args))
                 self.add_interface(*args) #pylint: disable=W0142
 

@@ -49,23 +49,6 @@ from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
 from ztpserver.constants import HTTP_STATUS_CREATED
 
 
-FILESTORES = {
-    'packages': {
-        'collection_name': 'packages',
-        'resource_name': 'package',
-        'member_prefix': '/{id}',
-        'collection_actions': [],
-        'member_actions': ['show']
-    },
-    'files': {
-        'collection_name': 'files',
-        'resource_name': 'file',
-        'member_prefix': '/{id:.*}',
-        'collection_actions': [],
-        'member_actions': ['show']
-    }
-}
-
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
 class StoreController(ztpserver.wsgiapp.Controller):
@@ -92,19 +75,23 @@ class StoreController(ztpserver.wsgiapp.Controller):
         return self.get_file(filename).contents
 
 
-class FileStoreController(StoreController):
+class FilesController(StoreController):
+
+    def __init__(self):
+        prefix = ztpserver.config.runtime.files.path_prefix
+        folder = ztpserver.config.runtime.files.folder
+        super(FilesController, self).__init__(folder, path_prefix=prefix)
 
     def __repr__(self):
         return 'FileStoreController'
 
-    def show(self, request, **kwargs):
+    def show(self, request, resource, **kwargs):
         urlvars = request.urlvars
-        filename = urlvars.get('id')
         if urlvars.get('format') is not None:
-            filename += '.%s' % urlvars.get('format')
+            resource += '.%s' % urlvars.get('format')
 
         try:
-            obj = self.get_file(filename)
+            obj = self.get_file(resource)
 
         except ztpserver.repository.FileObjectNotFound:
             return dict(status=HTTP_STATUS_NOT_FOUND)
@@ -118,16 +105,16 @@ class ActionsController(StoreController):
         folder = ztpserver.config.runtime.actions.folder
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
-    def show(self, request, action_id, **kwargs):
-        log.debug('Requesting action: %s' % action_id)
+    def show(self, request, resource, **kwargs):
+        log.debug('Requesting action: %s' % resource)
 
-        if not self.store.exists(action_id):
+        if not self.store.exists(resource):
             log.debug('Requested action not found')
             return dict(status=HTTP_STATUS_NOT_FOUND)
 
         return dict(status=HTTP_STATUS_OK,
                     content_type=CONTENT_TYPE_PYTHON,
-                    body=self.get_file_contents(action_id))
+                    body=self.get_file_contents(resource))
 
 
 
@@ -142,9 +129,9 @@ class NodeController(StoreController):
     def __repr__(self):
         return 'NodeController'
 
-    def get_config(self, node_id):
-        log.debug('Sending startup-config contents to node %s' % node_id)
-        filepath = '%s/startup-config' % node_id
+    def get_config(self, resource):
+        log.debug('Sending startup-config contents to node %s' % resource)
+        filepath = '%s/startup-config' % resource
         if not self.store.exists(filepath):
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
         else:
@@ -152,55 +139,55 @@ class NodeController(StoreController):
                             content_type=CONTENT_TYPE_OTHER)
         return response
 
-    def show(self, request, node_id, **kwargs):
+    def show(self, request, resource, **kwargs):
 
         # check if startup-config exists
-        if self.store.exists('%s/startup-config' % node_id):
-            log.debug('Sending startup-config definition to node %s' % node_id)
+        if self.store.exists('%s/startup-config' % resource):
+            log.debug('Sending startup-config definition to node %s' % resource)
             url = '%s/nodes/%s/startup-config' % \
-                (ztpserver.config.runtime.default.server_url, str(node_id))
+                (ztpserver.config.runtime.default.server_url, str(resource))
             response = self.startup_config_definition(url)
 
         # check if definition exists
-        elif self.store.exists('%s/definition' % node_id):
-            filepath = '%s/definition' % node_id
+        elif self.store.exists('%s/definition' % resource):
+            filepath = '%s/definition' % resource
             definition = self.deserialize(self.get_file_contents(filepath),
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            if self.store.exists('%s/attributes' % node_id):
-                filepath = '%s/attributes' % node_id
+            if self.store.exists('%s/attributes' % resource):
+                filepath = '%s/attributes' % resource
                 attributes = self.deserialize(self.get_file_contents(filepath),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('%s/pattern' % node_id) and \
+            if self.store.exists('%s/pattern' % resource) and \
                 not ztpserver.config.runtime.default.disable_pattern_checks:
 
-                filepath = '%s/pattern' % node_id
+                filepath = '%s/pattern' % resource
                 contents = self.get_file_contents(filepath)
                 attrs = self.deserialize(contents, CONTENT_TYPE_JSON)
                 # pylint: disable=W0142
                 pattern = ztpserver.topology.Pattern(**attrs)
 
-                if self.store.exists('%s/topology' % node_id):
-                    filepath = '%s/topology' % node_id
+                if self.store.exists('%s/topology' % resource):
+                    filepath = '%s/topology' % resource
                     neighbors = self.get_file_contents(filepath)
                     neighbors = self.deserialize(neighbors, CONTENT_TYPE_JSON)
 
-                nodeattrs = dict(systemmac=node_id)
+                nodeattrs = dict(systemmac=resource)
                 nodeattrs['neighbors'] = neighbors or dict()
                 node = ztpserver.topology.create_node(nodeattrs)
 
                 if not pattern.match_node(node):
-                    log.debug('node %s failed to match existing pattern' % 
-                              node_id)
+                    log.debug('node %s failed to match existing pattern' %
+                              resource)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
         else:
-            log.debug('requested node id %s not found' % node_id)
+            log.debug('requested node id %s not found' % resource)
             response = dict(status=HTTP_STATUS_NOT_FOUND)
 
         log.debug('NodeController response: %s' % response)
@@ -311,12 +298,12 @@ class NodeController(StoreController):
         :param url: the url pointing to the startup-config file
         '''
 
-        action = dict(name='install config',
+        action = dict(name='install startup-config',
                       description='install static startup configuration',
                       action='replace_config',
                       attributes={'url': url})
 
-        definition = dict(name='install startup-config',
+        definition = dict(name='install static startup-config',
                           actions=[action],
                           attributes={})
 
@@ -377,15 +364,17 @@ class BootstrapController(StoreController):
                 log.warn('bootstrap script does not exist')
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            # TODO need to capture and log an error if substitution fails
             default_server = ztpserver.config.runtime.default.server_url
-            body = Template(bootstrap).safe_substitute(SERVER=default_server)
-
+            body = Template(bootstrap).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
 
         except ztpserver.repository.FileObjectNotFound as exc:
             log.exception(exc)
             resp = dict(status=HTTP_STATUS_NOT_FOUND)
+
+        except KeyError:
+            log.debug('Expected varialble was not provided')
+            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
 
         return resp
 
@@ -409,23 +398,26 @@ class Router(ztpserver.wsgiapp.Router):
         mapper.collection('nodes', 'node',
                           controller=controller,
                           collection_actions=['create'],
-                          member_actions=['show'])
+                          member_actions=['show'],
+                          member_prefix='/{resource}')
 
         nodeconfig = mapper.submapper(controller=controller)
-        nodeconfig.connect('nodeconfig', '/nodes/{id}/startup-config',
+        nodeconfig.connect('nodeconfig', '/nodes/{resource}/startup-config',
                            action='get_config')
 
         # configure /actions
         mapper.collection('actions', 'action',
                           controller=ActionsController(),
                           collection_actions=[],
-                          member_actions=['show'])
+                          member_actions=['show'],
+                          member_prefix='/{resource}')
 
-        # configure filestores
-        for filestore, kwargs in FILESTORES.items():
-            controller = FileStoreController(filestore)
-            # pylint: disable=W0142            
-            mapper.collection(controller=controller, **kwargs)   
+        # configure /files
+        mapper.collection('files', 'file',
+                          controller=FilesController(),
+                          collection_actions=[],
+                          member_actions=['show'],
+                          member_prefix='/{resource}')
 
         super(Router, self).__init__(mapper)
 
