@@ -364,15 +364,17 @@ class BootstrapController(StoreController):
                 log.warn('bootstrap script does not exist')
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            # TODO need to capture and log an error if substitution fails
             default_server = ztpserver.config.runtime.default.server_url
-            body = Template(bootstrap).safe_substitute(SERVER=default_server)
-
+            body = Template(bootstrap).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
 
         except ztpserver.repository.FileObjectNotFound as exc:
             log.exception(exc)
             resp = dict(status=HTTP_STATUS_NOT_FOUND)
+
+        except KeyError:
+            log.debug('Expected varialble was not provided')
+            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
 
         return resp
 
