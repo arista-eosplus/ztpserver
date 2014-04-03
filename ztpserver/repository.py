@@ -105,9 +105,6 @@ class FileStore(object):
             filepath = os.path.join(self.path, filepath)
         return filepath
 
-    def add_file(self, filepath):
-        raise NotImplementedError
-
     def add_folder(self, folderpath):
         folderpath = self._transform(folderpath)
         if not os.path.exists(folderpath):

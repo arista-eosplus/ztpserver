@@ -1,5 +1,5 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W1201,W0622
+# pylint: disable=W1201,W0622,W0402
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -31,36 +31,38 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import os
 import logging
+import routes
+import webob.static
 
 from string import Template
-
-import routes
-
-import webob.static
 
 import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.topology
 
-from ztpserver.repository import create_file_store, FileStoreError
-from ztpserver.constants import *
+from ztpserver.repository import create_file_store
+from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK
+from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
+from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
+from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
+from ztpserver.constants import HTTP_STATUS_CREATED
+
 
 FILESTORES = {
-    "packages": {
-        "collection_name": "packages",
-        "resource_name": "package",
-        "member_prefix": "/{id}",
-        "collection_actions": [],
-        "member_actions": ['show']
+    'packages': {
+        'collection_name': 'packages',
+        'resource_name': 'package',
+        'member_prefix': '/{id}',
+        'collection_actions': [],
+        'member_actions': ['show']
     },
-    "files": {
-        "collection_name": "files",
-        "resource_name": "file",
-        "member_prefix": "/{id:.*}",
-        "collection_actions": [],
-        "member_actions": ['show']
+    'files': {
+        'collection_name': 'files',
+        'resource_name': 'file',
+        'member_prefix': '/{id:.*}',
+        'collection_actions': [],
+        'member_actions': ['show']
     }
 }
 
@@ -73,7 +75,8 @@ class StoreController(ztpserver.wsgiapp.Controller):
         self.store = self.create_filestore(name, path_prefix=path_prefix)
         super(StoreController, self).__init__()
 
-    def create_filestore(self, name, path_prefix=None):
+    @classmethod
+    def create_filestore(cls, name, path_prefix=None):
         try:
             store = create_file_store(name, basepath=path_prefix)
 
@@ -92,9 +95,9 @@ class StoreController(ztpserver.wsgiapp.Controller):
 class FileStoreController(StoreController):
 
     def __repr__(self):
-        return "FileStoreController"
+        return 'FileStoreController'
 
-    def show(self, request, id, **kwargs):
+    def show(self, request, **kwargs):
         urlvars = request.urlvars
         filename = urlvars.get('id')
         if urlvars.get('format') is not None:
@@ -115,16 +118,16 @@ class ActionsController(StoreController):
         folder = ztpserver.config.runtime.actions.folder
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
-    def show(self, request, id, **kwargs):
-        log.debug("Requesting action: %s" % id)
+    def show(self, request, action_id, **kwargs):
+        log.debug('Requesting action: %s' % action_id)
 
-        if not self.store.exists(id):
-            log.debug("Requested action not found")
+        if not self.store.exists(action_id):
+            log.debug('Requested action not found')
             return dict(status=HTTP_STATUS_NOT_FOUND)
 
         return dict(status=HTTP_STATUS_OK,
                     content_type=CONTENT_TYPE_PYTHON,
-                    body=self.get_file_contents(id))
+                    body=self.get_file_contents(action_id))
 
 
 
@@ -139,9 +142,9 @@ class NodeController(StoreController):
     def __repr__(self):
         return 'NodeController'
 
-    def getconfig(self, request, id, **kwargs):
-        log.debug('Sending startup-config contents to node %s' % id)
-        filepath = '%s/startup-config' % id
+    def get_config(self, node_id):
+        log.debug('Sending startup-config contents to node %s' % node_id)
+        filepath = '%s/startup-config' % node_id
         if not self.store.exists(filepath):
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
         else:
@@ -149,69 +152,71 @@ class NodeController(StoreController):
                             content_type=CONTENT_TYPE_OTHER)
         return response
 
-    def show(self, request, id, **kwargs):
+    def show(self, request, node_id, **kwargs):
 
         # check if startup-config exists
-        if self.store.exists('%s/startup-config' % id):
-            log.debug("Sending startup-config definition to node %s" % id)
+        if self.store.exists('%s/startup-config' % node_id):
+            log.debug('Sending startup-config definition to node %s' % node_id)
             url = '%s/nodes/%s/startup-config' % \
-                (ztpserver.config.runtime.default.server_url, str(id))
+                (ztpserver.config.runtime.default.server_url, str(node_id))
             response = self.startup_config_definition(url)
 
         # check if definition exists
-        elif self.store.exists('%s/definition' % id):
-            filepath = '%s/definition' % id
+        elif self.store.exists('%s/definition' % node_id):
+            filepath = '%s/definition' % node_id
             definition = self.deserialize(self.get_file_contents(filepath),
                                           CONTENT_TYPE_YAML)
 
             # update attributes with node static attributes
-            if self.store.exists('%s/attributes' % id):
-                filepath = '%s/attributes' % id
+            if self.store.exists('%s/attributes' % node_id):
+                filepath = '%s/attributes' % node_id
                 attributes = self.deserialize(self.get_file_contents(filepath),
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('%s/pattern' % id) and \
+            if self.store.exists('%s/pattern' % node_id) and \
                 not ztpserver.config.runtime.default.disable_pattern_checks:
 
-                filepath = '%s/pattern' % id
+                filepath = '%s/pattern' % node_id
                 contents = self.get_file_contents(filepath)
                 attrs = self.deserialize(contents, CONTENT_TYPE_JSON)
+                # pylint: disable=W0142
                 pattern = ztpserver.topology.Pattern(**attrs)
 
-                if self.store.exists('%s/topology' % id):
-                    filepath = '%s/topology' % id
+                if self.store.exists('%s/topology' % node_id):
+                    filepath = '%s/topology' % node_id
                     neighbors = self.get_file_contents(filepath)
                     neighbors = self.deserialize(neighbors, CONTENT_TYPE_JSON)
 
-                nodeattrs = dict(systemmac=id)
+                nodeattrs = dict(systemmac=node_id)
                 nodeattrs['neighbors'] = neighbors or dict()
                 node = ztpserver.topology.create_node(nodeattrs)
 
                 if not pattern.match_node(node):
-                    log.debug("node %s failed to match existing pattern" % id)
+                    log.debug('node %s failed to match existing pattern' % 
+                              node_id)
                     return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
         else:
-            log.debug("requested node id %s not found" % id)
+            log.debug('requested node id %s not found' % node_id)
             response = dict(status=HTTP_STATUS_NOT_FOUND)
 
-        log.debug("NodeController response: %s" % response)
+        log.debug('NodeController response: %s' % response)
         return response
 
     def create(self, request, **kwargs):
 
         if not set(self.REQ_FIELDS).issubset(set(request.json.keys())):
-            log.debug("POST request is missing required fields")
+            log.debug('POST request is missing required fields')
             return dict(status=HTTP_STATUS_BAD_REQUEST)
 
         node = ztpserver.topology.create_node(request.json)
 
         # check if the node exists and return 409 if it does
         if self.store.exists(node.systemmac):
-            log.debug("node already exists")
+            log.debug('node already exists')
             return dict(status=HTTP_STATUS_CONFLICT)
 
         if 'config' in request.json:
@@ -223,16 +228,16 @@ class NodeController(StoreController):
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
             matches = ztpserver.topology.neighbordb.match_node(node)
-            log.debug("Found %d pattern matches" % len(matches))
-            log.debug("Matched patterns: %s" % [x.name for x in matches])
+            log.debug('Found %d pattern matches' % len(matches))
+            log.debug('Matched patterns: %s' % [x.name for x in matches])
 
             if not matches:
-                log.debug("Unable to match any valid pattern")
+                log.debug('Unable to match any valid pattern')
                 response = dict(status=HTTP_STATUS_BAD_REQUEST)
 
             else:
                 # create node resource using first pattern match
-                log.debug("Creating node definition with pattern %s" %
+                log.debug('Creating node definition with pattern %s' %
                     matches[0].name)
                 location = self.add_node(node, request.json, pattern=matches[0])
                 response = dict(status=HTTP_STATUS_CREATED, location=location)
@@ -246,7 +251,7 @@ class NodeController(StoreController):
     def add_node(self, node, request, **kwargs):
 
         if ztpserver.config.runtime.default.disable_node_creation:
-            log.debug("Skipping node creation due to disable_node_creation" \
+            log.debug('Skipping node creation due to disable_node_creation' \
                 % node)
             return '/nodes/%s' % node.systemmac
 
@@ -274,7 +279,8 @@ class NodeController(StoreController):
         return '/nodes/%s' % node.systemmac
 
     def node_definition(self, url, node):
-        log.debug("Creating node definition with url %s" % url)
+        topology = ztpserver.topology
+        log.debug('Creating node definition with url %s' % url)
         definition = self.definitions.get_file(url)
         definition = self.deserialize(definition.contents,
                                       CONTENT_TYPE_YAML)
@@ -282,28 +288,28 @@ class NodeController(StoreController):
         definition.setdefault('name', 'Autogenerated using %s' % url)
 
         attributes = definition.get('attributes') or dict()
-        definition['attributes'] = ztpserver.topology.resources(attributes,
+        definition['attributes'] = topology.resources(attributes,
                                                                 node)
 
         _actions = list()
         for action in definition.get('actions'):
-            log.debug("Processing attributes for action %s" % \
+            log.debug('Processing attributes for action %s' % \
                 action.get('name'))
             log.debug('Attributes: %s' % action.get('attributes'))
             if 'attributes' in action:
-                action['attributes'] = ztpserver.topology.resources(action['attributes'], node)
+                action['attributes'] = \
+                    topology.resources(action['attributes'], node)
             _actions.append(action)
         definition['actions'] = _actions
 
         return self.serialize(definition)
 
-
-    def startup_config_definition(self, url):
-        """ manually build a definition with a single action replace_config
+    @classmethod
+    def startup_config_definition(cls, url):
+        ''' manually build a definition with a single action replace_config
 
         :param url: the url pointing to the startup-config file
-
-        """
+        '''
 
         action = dict(name='install config',
                       description='install static startup configuration',
@@ -320,8 +326,8 @@ class NodeController(StoreController):
 class BootstrapController(StoreController):
 
     DEFAULTCONFIG = {
-        "logging": list(),
-        "xmpp": dict()
+        'logging': list(),
+        'xmpp': dict()
     }
 
     def __init__(self):
@@ -330,10 +336,10 @@ class BootstrapController(StoreController):
         super(BootstrapController, self).__init__(folder, path_prefix=prefix)
 
     def __repr__(self):
-        return "BootstrapController"
+        return 'BootstrapController'
 
     def get_bootstrap(self):
-        """ Returns the bootstrap script """
+        ''' Returns the bootstrap script '''
 
         try:
             filename = ztpserver.config.runtime.bootstrap.filename
@@ -347,21 +353,21 @@ class BootstrapController(StoreController):
         return data
 
     def get_config(self):
-        """ returns the full bootstrap configuration as a dict """
+        ''' returns the full bootstrap configuration as a dict '''
 
         try:
             data = self.get_file_contents('bootstrap.conf')
             contents = self.deserialize(data, CONTENT_TYPE_YAML)
 
         except ztpserver.repository.FileObjectNotFound:
-            log.debug("Bootstrap config file not found...using defaults")
+            log.debug('Bootstrap config file not found...using defaults')
             contents = self.DEFAULTCONFIG
 
         return contents
 
     def config(self, request, **kwargs):
         # pylint: disable=W0613
-        log.debug("requesting bootstrap config")
+        log.debug('requesting bootstrap config')
         return dict(body=self.get_config(), content_type=CONTENT_TYPE_JSON)
 
     def index(self, request, **kwargs):
@@ -386,7 +392,7 @@ class BootstrapController(StoreController):
 
 
 class Router(ztpserver.wsgiapp.Router):
-    """ handles incoming requests by mapping urls to controllers """
+    ''' handles incoming requests by mapping urls to controllers '''
 
     def __init__(self):
         mapper = routes.Mapper()
@@ -407,7 +413,7 @@ class Router(ztpserver.wsgiapp.Router):
 
         nodeconfig = mapper.submapper(controller=controller)
         nodeconfig.connect('nodeconfig', '/nodes/{id}/startup-config',
-                           action='getconfig')
+                           action='get_config')
 
         # configure /actions
         mapper.collection('actions', 'action',
@@ -418,7 +424,8 @@ class Router(ztpserver.wsgiapp.Router):
         # configure filestores
         for filestore, kwargs in FILESTORES.items():
             controller = FileStoreController(filestore)
-            mapper.collection(controller=controller, **kwargs)   # pylint: disable=W0142
+            # pylint: disable=W0142            
+            mapper.collection(controller=controller, **kwargs)   
 
         super(Router, self).__init__(mapper)
 

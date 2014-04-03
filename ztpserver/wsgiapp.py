@@ -41,7 +41,7 @@ import routes
 import routes.middleware
 
 from ztpserver.serializers import Serializer
-from ztpserver.constants import *
+from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK
 
 log = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0614
+# pylint: disable=W0614,C0103,W0142
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -31,22 +31,25 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import os
-import re
+
 import collections
 import logging
+import os
+import re
 
 import ztpserver.config
 import ztpserver.serializers
 
-from ztpserver.constants import *
+from ztpserver.constants import CONTENT_TYPE_OTHER
+from ztpserver.constants import CONTENT_TYPE_YAML
 
 DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
 ANYDEVICE_PARSER_RE = re.compile(r":(?=[any])")
-FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"](?P<arg>.+?)[\'|\"]\)")
+FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"]"
+                     r"(?P<arg>.+?)[\'|\"]\)")
 
 log = logging.getLogger(__name__)
-serializer = ztpserver.serializers.Serializer() # pylint: disable=C0103
+serializer = ztpserver.serializers.Serializer()
 
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
@@ -64,6 +67,12 @@ class Collection(collections.Mapping, collections.Callable):
 
     def __len__(self):
         return len(self.data)
+
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
 
 
 class OrderedCollection(collections.OrderedDict, collections.Callable):
@@ -102,7 +111,7 @@ class Node(object):
     Neighbor = collections.namedtuple("Neighbor", ['device', 'port'])
 
     def __init__(self, **kwargs):
-        kwargs = self.convert(kwargs)
+        kwargs = ztpserver.serializers.Serializer.convert(kwargs)
         self.model = kwargs.get('model')
         self.systemmac = kwargs.get('systemmac')
         self.serialnumber = kwargs.get('serialnumber')
@@ -116,16 +125,6 @@ class Node(object):
 
     def __repr__(self):
         return "Node(neighbors=%d)" % len(self.neighbors)
-
-    def convert(self, data):
-        if isinstance(data, basestring):
-            return str(data)
-        elif isinstance(data, collections.Mapping):
-            return dict(map(self.convert, data.iteritems()))
-        elif isinstance(data, collections.Iterable):
-            return type(data)(map(self.convert, data))
-        else:
-            return data
 
     def add_neighbors(self, neighbors):
         for interface, neighbor_list in neighbors.items():
@@ -153,6 +152,9 @@ class Node(object):
                 neighbors[interface] = collection
         attrs['neighbors'] = neighbors
 
+class ResourcesError(Exception):
+    pass
+
 class Resources(object):
 
     def __init__(self):
@@ -167,7 +169,8 @@ class Resources(object):
             raise DataFileError('unable to load file')
         return contents
 
-    def loads(self, data, content_type=CONTENT_TYPE_YAML):
+    @classmethod
+    def loads(cls, data, content_type=CONTENT_TYPE_YAML):
         try:
             contents = serializer.deserialize(data, content_type)
             return contents
@@ -179,7 +182,8 @@ class Resources(object):
         fobj = open(pool)
         self.dump(data, fobj, content_type)
 
-    def dump(self, data, fobj, content_type=CONTENT_TYPE_YAML):
+    @classmethod
+    def dump(cls, data, fobj, content_type=CONTENT_TYPE_YAML):
         try:
             contents = serializer.serialize(data, content_type)
             fobj.write(contents)
@@ -193,8 +197,8 @@ class Resources(object):
             log.debug("Found allocated resources, returning %s" % match)
             return match
 
-        fp = os.path.join(self.workingdir, pool)
-        contents = self.load(open(fp))
+        file_path = os.path.join(self.workingdir, pool)
+        contents = self.load(open(file_path))
 
         try:
             key = next(x[0] for x in contents.items() if x[1] is None)
@@ -202,15 +206,15 @@ class Resources(object):
         except StopIteration:
             raise ResourcesError('no resources available in pool')
 
-        self.dump(contents, open(fp, 'w'))
+        self.dump(contents, open(file_path, 'w'))
         return key
 
     def lookup(self, pool, node):
         log.debug("Looking up resource for node %s" % node.systemmac)
-        fp = os.path.join(self.workingdir, pool)
-        contents = self.load(open(fp))
-        matches = filter(lambda (k,v): v == node.systemmac, contents.items())
-        (key, value) = matches[0] if matches else (None, None)
+        file_path = os.path.join(self.workingdir, pool)
+        contents = self.load(open(file_path))
+        matches = [x[0] for x in contents.items() if x[1] == node.systemmac]
+        key = matches[0] if matches else None
         return key
 
 
@@ -387,7 +391,8 @@ class Pattern(object):
         for interface in interfaces:
             for key, values in interface.items():
                 args = self._parse_interface(key, values)
-                log.debug("Adding interface to pattern with args %s" % str(args))
+                log.debug("Adding interface to pattern with args %s" % 
+                          str(args))
                 self.add_interface(*args) #pylint: disable=W0142
 
     def _parse_interface(self, interface, values):
@@ -418,25 +423,26 @@ class Pattern(object):
 
         return (interface, device, port, tags)
 
-    def match_node(self, node, variables={}):
+    def match_node(self, node, variables=None):
+        if variables is None:
+            variables = {}
 
         neighbors = node.neighbors.copy()
-        result = dict()
 
-        for intfpattern in self.interfaces:
-            log.debug('Attempting to match %r' % intfpattern)
+        for intf_pattern in self.interfaces:
+            log.debug('Attempting to match %r' % intf_pattern)
             log.debug('Available neighbors: %s' % neighbors.keys())
 
             # check for device none
-            if intfpattern.device is None:
+            if intf_pattern.device is None:
                 log.debug("InterfacePattern device is 'none'")
-                return intfpattern.interface not in neighbors
+                return intf_pattern.interface not in neighbors
 
             variables.update(self.variables)
-            matches = intfpattern.match_neighbors(neighbors, variables)
+            matches = intf_pattern.match_neighbors(neighbors, variables)
             if not matches:
                 log.debug("InterfacePattern failed to match interface[%s]" \
-                    % intfpattern.interface)
+                    % intf_pattern.interface)
                 return False
 
             log.debug("InterfacePattern matched interfaces %s" % matches)
@@ -472,7 +478,8 @@ class InterfacePattern(object):
             obj['tags'] = self.tags
         return obj
 
-    def range(self, interface_range):
+    @classmethod
+    def range(cls, interface_range):
         if interface_range is None:
             return list()
         elif not interface_range.startswith('Ethernet'):
@@ -508,7 +515,9 @@ class InterfacePattern(object):
             matches = list()
         return matches[0:1]
 
-    def match_device(self, device, variables={}):
+    def match_device(self, device, variables=None):
+        if variables is None:
+            variables = {}
         if self.device is None:
             return False
         elif self.device == 'any':
@@ -539,7 +548,7 @@ def create_node(nodeattrs):
 neighbordb = Topology()
 
 def clear():
-    global neighbordb
+    global neighbordb       # pylint: disable=W0603
     neighbordb = Topology()
 
 def default_filename():
@@ -549,14 +558,12 @@ def default_filename():
 
 def loads(data, content_type=CONTENT_TYPE_YAML):
     clear()
-    global neighbordb
     neighbordb.loads(data, content_type)
     log.debug("Loaded neighbordb [%r]" % neighbordb)
 
 def load(filename=None, content_type=CONTENT_TYPE_YAML):
     if filename is None:
         filename = default_filename()
-    fobj = open(filename)
     loads(open(filename).read(), content_type)
 
 def resources(attributes, node):
