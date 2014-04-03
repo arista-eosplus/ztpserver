@@ -63,7 +63,7 @@ class Attr(object):
             self.default = self.type(self.default)
 
     def __repr__(self):
-        return 'Attr(name=%s, group=%s, default=%s)' %\
+        return 'Attr(name=%s, group=%s, default=%s)' % \
             (self.name, self.group, self.default)
 
 
@@ -125,7 +125,8 @@ class Group(collections.Mapping):
         self.config = config
 
     def __getattr__(self, name):
-        return self.config._get_attribute(name, self.name) # pylint: disable=W0212
+        # pylint: disable=W0212
+        return self.config._get_attribute(name, self.name) 
 
     def __getitem__(self, name):
         return self.__getattr__(name)
@@ -135,6 +136,12 @@ class Group(collections.Mapping):
 
     def __len__(self):
         return len(self._keys())
+
+    def __delitem__(self):
+        pass
+
+    def __setitem__(self):
+        pass
 
     def _keys(self):
         return [key[1] for key in self.config if key[0] == self.name]
@@ -164,6 +171,12 @@ class Config(collections.Mapping):
 
     def __repr__(self):
         return 'Config'
+
+    def __delitem__(self):
+        pass
+
+    def __setitem__(self):
+        pass
 
     def _get_attribute(self, name, group=None):
         if not group and name in self._groups:
@@ -224,7 +237,7 @@ class Config(collections.Mapping):
         item = self._attributes.get((group, name))
 
         if item['_metadata'].default is None:   # pylint: disable=W0104
-            item['value'] == None
+            item['value'] = None
         else:
             item['value'] = self._transform(item, item['_metadata'].default)
 

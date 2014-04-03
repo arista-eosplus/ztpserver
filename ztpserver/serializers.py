@@ -57,20 +57,20 @@ class YAMLSerializer(object):
         else:
             return super(YAMLSerializer, cls).__new__(cls)
 
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         return yaml.load(data)
 
-    def serialize(self, data, safe_dump=False, **kwargs):
+    def serialize(self, data, safe_dump=False):
         if safe_dump:
             return yaml.safe_dump(data, default_flow_style=False)
         return yaml.dump(data, default_flow_style=False)
 
 class JSONSerializer(object):
 
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         return json.loads(data)
 
-    def serialize(self, data, **kwargs):
+    def serialize(self, data):
         return json.dumps(data)
 
 class Serializer(object):
@@ -91,7 +91,7 @@ class Serializer(object):
                              handler to use
 
         """
-
+        #pylint: disable=E1103
         try:
             data = self.convert(data)
             handler = self._serialize_handler(content_type)
@@ -145,12 +145,13 @@ class Serializer(object):
         }
         return handlers.get(content_type)
 
-    def convert(self, data):
+    @classmethod    
+    def convert(cls, data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict(map(self.convert, data.iteritems()))
+            return dict([cls.convert(x) for x in data.iteritems()])
         elif isinstance(data, collections.Iterable):
-            return type(data)(map(self.convert, data))
+            return type(data)([cls.convert(x) for x in data])
         else:
             return data

@@ -29,7 +29,6 @@
 
 #pylint: disable=R0904
 
-import glob
 import os
 import os.path
 import unittest

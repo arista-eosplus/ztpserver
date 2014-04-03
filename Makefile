@@ -86,6 +86,3 @@ install:
 
 sdist: clean
 	$(PYTHON) setup.py sdist -t MANIFEST.in
-
-
-
