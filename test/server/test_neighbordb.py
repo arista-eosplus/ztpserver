@@ -38,26 +38,40 @@ TEST_DIR = 'test/neighbordb'
 class TestDefinition(unittest.TestCase):
     #pylint: disable=R0904
 
-    def __init__(self, node):
+    def __init__(self, name, node, neighbordb):
         super(TestDefinition, self).__init__('run_test')
+        self.name = name
         self.node = node
+        self.neighbordb = neighbordb
         self.neighbordb_node = ztpserver.topology.create_node(node['details'])
+
+    def setUp(self):
+        ztpserver.topology.clear()        
+
+        assert not ztpserver.topology.neighbordb.patterns['globals']
+        assert not ztpserver.topology.neighbordb.patterns['nodes']
+
+        ztpserver.topology.neighbordb.deserialize(self.neighbordb)
+        self.longMessage = True
 
     def run_test(self):
         print 'Checking node: %s' % self.node['node']
         result = ztpserver.topology.neighbordb.match_node(self.neighbordb_node)
-
+        result = [x.name for x in result]
+        print 'Result: %s' % result
+        
         if self.node.get('matches', None):
-            self.assertEqual(len(result), self.node['matches'])
+            self.assertEqual(len(result), self.node['matches'],
+                             self.name)
 
-        if self.node.get('matche_includes', None):
-            matches = [x.name for x in result]
-            self.assertEqual(matches, self.node['match_includes'])
+        if self.node.get('match_includes', None):
+            self.assertEqual(result, self.node['match_includes'],
+                             self.name)
 
-        if self.node.get('matche_excludes', None):
-            matches = [x.name for x in result]
+        if self.node.get('match_excludes', None):
             for match in self.node['match_excludes']:
-                self.assertNotIn(match, matches)
+                self.assertNotIn(match, result,
+                                 self.name)
 
 def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     suite = unittest.TestSuite()
@@ -66,12 +80,10 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
         print 'Starting test %s' % test
 
         definition = yaml.load(open(os.path.join(TEST_DIR, test)))
-        ztpserver.topology.clear()        
-        ztpserver.topology.neighbordb.deserialize(definition['neighbordb'])
 
         for node in definition['nodes']:
             print 'Adding test: %s' % node['node']
-            suite.addTest(TestDefinition(node))
+            suite.addTest(TestDefinition(test, node, definition['neighbordb']))
 
     return suite
 
