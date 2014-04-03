@@ -35,7 +35,7 @@ import os.path
 import unittest
 
 from client_test_lib import BOOT_EXTENSIONS, BOOT_EXTENSIONS_FOLDER
-from client_test_lib import RC_EOS, STARTUP_CONFIG
+from client_test_lib import RC_EOS
 
 from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap
@@ -303,7 +303,6 @@ class FactoryDefaultTest(unittest.TestCase):
 
     def test(self):
         open(RC_EOS, 'w').write(random_string())
-        open(STARTUP_CONFIG, 'w').write(random_string())
         open(BOOT_EXTENSIONS, 'w').write(random_string())
         os.makedirs(BOOT_EXTENSIONS_FOLDER)
         open('%s/%s' % (BOOT_EXTENSIONS_FOLDER, random_string()), 
@@ -318,10 +317,9 @@ class FactoryDefaultTest(unittest.TestCase):
         try:
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.missing_startup_config_failure())
-            self.failIf(open(RC_EOS).read())
-            self.failIf(open(STARTUP_CONFIG).read())
-            self.failIf(open(BOOT_EXTENSIONS).read())
-            self.failIf(glob.glob('%s/.*' % BOOT_EXTENSIONS_FOLDER))
+            self.failIf(os.path.exists(RC_EOS))
+            self.failIf(os.path.exists(BOOT_EXTENSIONS))
+            self.failIf(os.path.exists(BOOT_EXTENSIONS_FOLDER))
             self.failIf(bootstrap.error)
         except AssertionError:
             raise
