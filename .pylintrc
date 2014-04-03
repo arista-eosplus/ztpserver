@@ -19,7 +19,8 @@ disable=RP0101
 # Allow local disables
 # Missing docstring
 # Abstract class not referenced
-disable=I0011,C0111,R0921
+# Similar lines in 2 files
+disable=I0011,C0111,R0921,R0801
 
 [REPORTS]
 # Include message's id in output
