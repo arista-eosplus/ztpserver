@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python 
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,27 +31,34 @@
 
 BACKUP_SUFFIX = '.backup'
 PERSISTENT_DIR = '/mnt/flash/.ztp-files'
-OVERWRITE_VALUES = ['backup', 'replace', 'if-missing']
+PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
+                      '/persist/local/', '/persyst/sys/']
 
 import os
-import urllib
 import shutil
+import urllib
 
-def main(attributes):
+def is_subdir(path, directory):
+    return os.path.realpath(path).startswith(os.path.realpath(directory))
+
+def url_persistent(url):
+    for directory in PERSISTENT_STORAGE:
+        if is_subdir(url, directory):
+            return True
+    return False
+
+def main(attributes): 
     '''Copies file to the switch.
 
-    Copies file based on the values of 'src_url' and
-    'dst_url' attributes.  The 'src_url' attribute should
-    provide the full path to the file to be copied and
-    the 'dst_url' should provide the destination folder
-    to copy the file into.
-
+    Copies file based on the values of 'src_url' and 'dst_url'
+    attributes ('dst_url' should point to the detination folder).
     If 'overwrite' is set to:
        - 'replace': the file is copied to the switch regardless
-         of whether there is already a file with the same name at the
+         of whether there is already a file with the same name at the 
          destination;
        - 'if-missing': the file is copied to the switch only if
-          is not already present in the file system
+         there is not already a file with the same name at the
+         destination; if there is, then the action is a no-op;
        - 'backup': the file is copied to the switch; if there is
          already another file at the destination, that file is renamed
          by appending the '.backup' suffix
@@ -72,7 +79,6 @@ def main(attributes):
         2 - missing attribute('dst_url')
         3 - erroneous 'overwrite' value
         4 - unable to retrieve file from URL
-        5 - unable to create destination folder
 
     Raises:
         None
@@ -86,30 +92,71 @@ def main(attributes):
     if not dst_url:
         return 2
 
+    name = os.path.basename(src_url)
+
     mode = attributes.get('mode')
 
-    name = os.path.basename(src_url)
-    dst_fp = os.path.join(dst_url, name)
+    overwrite = attributes.get('overwrite')
+    if not overwrite:
+        overwrite = 'replace'
 
-    overwrite = attributes.get('overwrite') or 'replace'
-    if overwrite not in OVERWRITE_VALUES:
-        return 3
+    if url_persistent(dst_url):
+        dst_path = os.path.join(dst_url, name)
 
-    if os.path.exists(dst_fp) and overwrite != 'if-missing':
-        if overwrite == 'backup':
-            backup = dst_fp + BACKUP_SUFFIX
-        shutil.copy(dst_fp, backup)
-    elif not os.path.exists(dst_url):
+        if overwrite == 'if-missing':
+            if os.path.exists(dst_path):
+                return
+        elif overwrite == 'backup':
+            if os.path.exists(dst_path):
+                shutil.copy(dst_path, '%s%s' % (dst_path, BACKUP_SUFFIX))
+        elif overwrite == 'replace':
+            pass
+        else:
+            return 3
+
         try:
-            os.mkdirs(dst_url)
+            os.makedirs(dst_url)
         except OSError:
-            return 5
+            # file exists
+            pass
 
-    try:
-        urllib.urlretrieve(src_url, dst_fp)
-        if mode is not None:
-            os.chmod(dst_fp, int(mode, 8))
-    except:
-        return 4
+        try:
+            urllib.urlretrieve(src_url, dst_path)
+            if mode is not None:
+                os.chmod(dst_path, int(mode, 8))
+        except:
+            return 4
+    else:
+        dst_path = os.path.join(PERSISTENT_DIR, name)
+        
+        lines = []
+        if overwrite == 'if-missing':
+            lines = lines + ['[ ! -f %s ] && '
+                             'sudo cp %s %s'  % (dst_url, dst_path, 
+                                                 dst_url)]
+        elif overwrite == 'backup':
+            lines = lines + ['[ -f %s ] && '
+                             'sudo mv %s %s%s' % (dst_url, dst_url, 
+                                                  dst_url, BACKUP_SUFFIX)]
+            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
+        elif overwrite == 'replace':
+            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
+        else:
+            return 3
 
+        if mode:
+            lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
 
+        try:
+            os.makedirs(PERSISTENT_DIR)
+        except OSError:
+            # file exists
+            pass
+
+        try:
+            file_path = '%s/%s' % (PERSISTENT_DIR, name)
+            urllib.urlretrieve(src_url, file_path)
+        except:
+            return 4
+
+        attributes.get('NODE').append_rc_eos_lines(lines)

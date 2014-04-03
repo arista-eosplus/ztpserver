@@ -41,8 +41,7 @@ pyflakes:
 	pyflakes ztpserver/* bin/*
 
 pylint:
-	pylint --rcfile .pylintrc ztpserver
-	pylint --rcfile .pylintrc client/bootstrap
+	find . -name \*.py | xargs pylint --rcfile .pylintrc
 
 clean:
 	@echo "Cleaning up distutils stuff"

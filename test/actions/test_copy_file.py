@@ -32,8 +32,11 @@
 import os
 import os.path
 import random
-import unittest
+import shutil
 import sys
+import unittest
+
+from stat import ST_MODE
 
 sys.path.append('test/client')
 
@@ -43,248 +46,465 @@ from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action, remove_file
 
-# class FailureTest(ActionFailureTest):
 
-#     def test_missing_src_url(self):
-#         self.basic_test('copy_file', 1)
-
-#     def test_missing_dst_url(self):
-#         self.basic_test('copy_file', 2,
-#                         attributes={'src_url' : 
-#                                     random_string()})
-
-#     def test_wrong_overwrite_value(self):
-#         self.basic_test('copy_file', 3,
-#                         attributes={'src_url' : 
-#                                     random_string(),
-#                                     'dst_url' :
-#                                     random_string(),
-#                                     'overwrite' :
-#                                     'bogus'})
-
-#     def test_url_failure(self):
-#         action = get_action('copy_file')
-#         action = action.replace('/mnt/flash/.ztp-files',
-#                                 '/tmp')
-
-#         self.basic_test('copy_file', 4,
-#                         attributes={'src_url' : 
-#                                     random_string(),
-#                                     'dst_url' :
-#                                     random_string()},
-#                         action_value=action)
+def random_permissions():
+    return '7%s%s' % ((random.choice([1, 2, 3, 4, 5, 6, 7]),
+                       random.choice([1,2,3,4,5,6,7])))
 
 
-# class SuccessTest(unittest.TestCase):
+class FailureTest(ActionFailureTest):
 
-#     def test_success(self):
-#         bootstrap = Bootstrap(ztps_default_config=True)
+    def test_missing_src_url(self):
+        self.basic_test('copy_file', 1)
 
-#         source = random_string()
-#         destination_file = random_string()
-#         destination = '/%s/%s' % (random_string(), 
-#                                   destination_file)
+    def test_missing_dst_url(self):
+        self.basic_test('copy_file', 2,
+                        attributes={'src_url' : 
+                                    random_string()})
 
-#         url = 'http://%s/%s' % (bootstrap.server, source)
-#         bootstrap.ztps.set_definition_response(
-#             actions=[{'action' : 'startup_config_action'},
-#                      {'action' : 'test_action'}],
-#             attributes={'src_url' : url,
-#                         'dst_url' : destination})
+    def test_wrong_overwrite_value(self):
+        self.basic_test('copy_file', 3,
+                        attributes={'src_url' : 
+                                    random_string(),
+                                    'dst_url' :
+                                    random_string(),
+                                    'overwrite' :
+                                    'bogus'})
 
-#         bootstrap.ztps.set_action_response(
-#             'startup_config_action', startup_config_action())
+    def test_url_failure(self):
+        action = get_action('copy_file')
+        action = action.replace('/mnt/flash/.ztp-files',
+                                '/tmp')
 
-#         persistent_dir = '/tmp'
-#         action = get_action('copy_file')
-#         action = action.replace('/mnt/flash/.ztp-files',
-#                                 persistent_dir)
-#         bootstrap.ztps.set_action_response('test_action',
-#                                            action)
+        self.basic_test('copy_file', 4,
+                        attributes={'src_url' : 
+                                    random_string(),
+                                    'dst_url' :
+                                    random_string()},
+                        action_value=action)
 
-#         contents = random_string()
-#         bootstrap.ztps.set_file_response(source, contents)
 
-#         bootstrap.start_test()
+class SuccessPersistentTest(unittest.TestCase):
 
-#         destination_path = '%s/%s' % (persistent_dir,
-#                                       destination_file)
+    def test_success(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
 
-#         try:
-#             self.failUnless(os.path.isfile(destination_path))
-#             self.failUnless([contents] == 
-#                             file_log(destination_path))
+        source = random_string()
+        destination = '/tmp/%s' % random_string()
 
-#             self.failUnless(os.path.isfile(RC_EOS))
-#             log = file_log(RC_EOS)
-#             self.failUnless('#!/bin/bash' in log)
-#             self.failUnless('sudo cp %s %s' % 
-#                             (destination_path, destination) in log)
-#             self.failUnless(bootstrap.success())
-#         except AssertionError:
-#             raise
-#         finally:
-#             remove_file(destination_path)
-#             bootstrap.end_test()
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination})
 
-#     def test_replace(self):
-#         bootstrap = Bootstrap(ztps_default_config=True)
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
 
-#         source = random_string()
-#         destination_file = random_string()
-#         destination = '/%s/%s' % (random_string(), 
-#                                   destination_file)
+        action = get_action('copy_file')
 
-#         url = 'http://%s/%s' % (bootstrap.server, source)
-#         attributes = {'src_url' : url,
-#                       'dst_url' : destination}
+        # Make the destinaton persistent
+        action = action.replace('PERSISTENT_STORAGE = [', 
+                                'PERSISTENT_STORAGE = [\'%s\', ' % 
+                                destination)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
 
-#         # 'replace' is the default
-#         if bool(random.getrandbits(1)):
-#             attributes['overwrite'] = 'replace'
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
 
-#         bootstrap.ztps.set_definition_response(
-#             actions=[{'action' : 'startup_config_action'},
-#                      {'action' : 'test_action'}],
-#             attributes=attributes)
+        bootstrap.start_test()
 
-#         bootstrap.ztps.set_action_response(
-#             'startup_config_action', startup_config_action())
+        destination_path = '%s/%s' % (destination, source)
 
-#         persistent_dir = '/tmp'
-#         action = get_action('copy_file')
-#         action = action.replace('/mnt/flash/.ztp-files',
-#                                 persistent_dir)
-#         bootstrap.ztps.set_action_response('test_action',
-#                                            action)
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+            self.failIf(os.path.isfile(RC_EOS))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            shutil.rmtree(destination)
+            bootstrap.end_test()
 
-#         contents = random_string()
-#         bootstrap.ztps.set_file_response(source, contents)
+    def test_replace(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
 
-#         bootstrap.start_test()
+        source = random_string()
+        destination = '/tmp/%s' % random_string()
 
-#         destination_path = '%s/%s' % (persistent_dir,
-#                                       destination_file)
-#         try:
-#             self.failUnless(os.path.isfile(destination_path))
-#             self.failUnless([contents] == 
-#                             file_log(destination_path))
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        attributes = {'src_url' : url,
+                      'dst_url' : destination}
 
-#             self.failUnless(os.path.isfile(RC_EOS))
-#             log = file_log(RC_EOS)
-#             self.failUnless('#!/bin/bash' in log)
-#             self.failUnless('sudo cp %s %s' % 
-#                             (destination_path, destination) in log)
-#             self.failUnless(bootstrap.success())
-#         except AssertionError:
-#             raise
-#         finally:
-#             remove_file(destination_path)
-#             bootstrap.end_test()
+        # 'replace' is the default
+        if bool(random.getrandbits(1)):
+            attributes['overwrite'] = 'replace'
 
-#     def test_keep_original(self):
-#         bootstrap = Bootstrap(ztps_default_config=True)
+        mode = None
+        if True or bool(random.getrandbits(1)):      
+            mode = random_permissions()
+            attributes['mode'] = mode
 
-#         source = random_string()
-#         destination_file = random_string()
-#         destination = '/%s/%s' % (random_string(), 
-#                                   destination_file)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes=attributes)
 
-#         url = 'http://%s/%s' % (bootstrap.server, source)
-#         bootstrap.ztps.set_definition_response(
-#             actions=[{'action' : 'startup_config_action'},
-#                      {'action' : 'test_action'}],
-#             attributes={'src_url' : url,
-#                         'dst_url' : destination,
-#                         'overwrite' : 'keep-original'})
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
 
-#         bootstrap.ztps.set_action_response(
-#             'startup_config_action', startup_config_action())
+        action = get_action('copy_file')
 
-#         persistent_dir = '/tmp'
-#         action = get_action('copy_file')
-#         action = action.replace('/mnt/flash/.ztp-files',
-#                                 persistent_dir)
-#         bootstrap.ztps.set_action_response('test_action',
-#                                            action)
+        # Make the destinaton persistent
+        action = action.replace('PERSISTENT_STORAGE = [', 
+                                'PERSISTENT_STORAGE = [\'%s\', ' % 
+                                destination)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
 
-#         contents = random_string()
-#         bootstrap.ztps.set_file_response(source, contents)
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
 
-#         bootstrap.start_test()
+        destination_path = '%s/%s' % (destination, source)
+        bootstrap.start_test()
 
-#         destination_path = '%s/%s' % (persistent_dir,
-#                                       destination_file)
-#         try:
-#             self.failUnless(os.path.isfile(destination_path))
-#             self.failUnless([contents] == 
-#                             file_log(destination_path))
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+            self.failIf(os.path.isfile(RC_EOS))
+            if mode:
+                self.failUnless(mode == 
+                                oct(os.stat(destination_path)[ST_MODE])[-3:])
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            shutil.rmtree(destination)
+            bootstrap.end_test()
 
-#             self.failUnless(os.path.isfile(RC_EOS))
-#             log = file_log(RC_EOS)
-#             self.failUnless('#!/bin/bash' in log)
-#             self.failUnless('[ ! -f %s ] && sudo cp %s %s' % 
-#                             (destination, destination_path, 
-#                              destination) in log)
-#             self.failUnless(bootstrap.success())
-#         except AssertionError:
-#             raise
-#         finally:
-#             remove_file(destination_path)
-#             bootstrap.end_test()
+    def test_keep_original(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
 
-#     def test_keep_backup(self):
-#         bootstrap = Bootstrap(ztps_default_config=True)
+        source = random_string()
+        destination = '/tmp/%s' % random_string()
 
-#         source = random_string()
-#         destination_file = random_string()
-#         destination = '/%s/%s' % (random_string(), 
-#                                   destination_file)
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'if-missing'})
 
-#         url = 'http://%s/%s' % (bootstrap.server, source)
-#         bootstrap.ztps.set_definition_response(
-#             actions=[{'action' : 'startup_config_action'},
-#                      {'action' : 'test_action'}],
-#             attributes={'src_url' : url,
-#                         'dst_url' : destination,
-#                         'overwrite' : 'backup'})
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
 
-#         bootstrap.ztps.set_action_response(
-#             'startup_config_action', startup_config_action())
+        action = get_action('copy_file')
 
-#         persistent_dir = '/tmp'
-#         action = get_action('copy_file')
-#         action = action.replace('/mnt/flash/.ztp-files',
-#                                 persistent_dir)
-#         bootstrap.ztps.set_action_response('test_action',
-#                                            action)
+        # Make the destinaton persistent
+        action = action.replace('PERSISTENT_STORAGE = [', 
+                                'PERSISTENT_STORAGE = [\'%s\', ' % 
+                                destination)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
 
-#         contents = random_string()
-#         bootstrap.ztps.set_file_response(source, contents)
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
 
-#         bootstrap.start_test()
+        destination_path = '%s/%s' % (destination, source)
+        existing_contents = random_string()
+        os.makedirs(destination)
+        file_descriptor = open(destination_path, 'w') 
+        file_descriptor.write(existing_contents)
+        file_descriptor.close()
 
-#         destination_path = '%s/%s' % (persistent_dir,
-#                                       destination_file)
-#         try:
-#             self.failUnless(os.path.isfile(destination_path))
-#             self.failUnless([contents] == 
-#                             file_log(destination_path))
+        bootstrap.start_test()
 
-#             self.failUnless(os.path.isfile(RC_EOS))
-#             log = file_log(RC_EOS)
-#             self.failUnless('#!/bin/bash' in log)
-#             self.failUnless('sudo cp %s %s' % 
-#                             (destination_path, destination) in log)
-#             self.failUnless('[ -f %s ] && sudo mv %s %s.backup' %
-#                             (destination, destination, 
-#                              destination) in log)
-#             self.failUnless(bootstrap.success())
-#         except AssertionError:
-#             raise
-#         finally:
-#             remove_file(destination_path)
-#             bootstrap.end_test()
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([existing_contents] == 
+                            file_log(destination_path))
+
+            self.failIf(os.path.isfile(RC_EOS))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            shutil.rmtree(destination)
+            bootstrap.end_test()
+
+    def test_keep_backup(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        source = random_string()
+        destination = '/tmp/%s' % random_string()
+
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'backup'})
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        action = get_action('copy_file')
+
+        # Make the destinaton persistent
+        action = action.replace('PERSISTENT_STORAGE = [', 
+                                'PERSISTENT_STORAGE = [\'%s\', ' % 
+                                destination)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
+
+        destination_path = '%s/%s' % (destination, source)
+        backup_contents = random_string()
+        os.makedirs(destination)
+        file_descriptor = open(destination_path, 'w')
+        file_descriptor.write(backup_contents)
+        file_descriptor.close()
+
+        bootstrap.start_test()
+
+        backup_path = '%s.backup' % destination_path
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+
+            self.failUnless(os.path.isfile(backup_path))
+            self.failUnless([backup_contents] == 
+                            file_log(backup_path))
+
+            self.failIf(os.path.isfile(RC_EOS))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            remove_file(backup_path)
+            shutil.rmtree(destination)
+            bootstrap.end_test()
+
+class SuccessNonPersistentTest(unittest.TestCase):
+
+    def test_success(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        source = random_string()
+        destination = random_string()
+
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination})
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        persistent_dir = '/tmp'
+        action = get_action('copy_file')
+        action = action.replace('/mnt/flash/.ztp-files',
+                                persistent_dir)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
+
+        bootstrap.start_test()
+
+        destination_path = '%s/%s' % (persistent_dir, source)
+
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+
+            self.failUnless(os.path.isfile(RC_EOS))
+            log = file_log(RC_EOS)
+            self.failUnless('#!/bin/bash' in log)
+            self.failUnless('sudo cp %s %s' % 
+                            (destination_path, destination) in log)
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            bootstrap.end_test()
+
+    def test_replace(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        source = random_string()
+        destination = random_string()
+
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        attributes = {'src_url' : url,
+                      'dst_url' : destination}
+
+        # 'replace' is the default
+        if bool(random.getrandbits(1)):
+            attributes['overwrite'] = 'replace'
+
+        mode = None
+        if True or bool(random.getrandbits(1)):      
+            mode = random_permissions()
+            attributes['mode'] = mode
+
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes=attributes)
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        persistent_dir = '/tmp'
+        action = get_action('copy_file')
+        action = action.replace('/mnt/flash/.ztp-files',
+                                persistent_dir)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
+
+        destination_path = '%s/%s' % (persistent_dir, source)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+
+            self.failUnless(os.path.isfile(RC_EOS))
+            log = file_log(RC_EOS)
+            self.failUnless('#!/bin/bash' in log)
+            self.failUnless('sudo cp %s %s' % 
+                            (destination_path, destination) in log)
+            if mode:
+                self.failUnless('sudo chmod %s %s' % 
+                                (mode, destination) in log)                
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            bootstrap.end_test()
+
+    def test_keep_original(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        source = random_string()
+        destination = random_string()
+
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'if-missing'})
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        persistent_dir = '/tmp'
+        action = get_action('copy_file')
+        action = action.replace('/mnt/flash/.ztp-files',
+                                persistent_dir)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
+
+        bootstrap.start_test()
+
+        destination_path = '%s/%s' % (persistent_dir, source)
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+
+            self.failUnless(os.path.isfile(RC_EOS))
+            log = file_log(RC_EOS)
+            self.failUnless('#!/bin/bash' in log)
+            self.failUnless('[ ! -f %s ] && sudo cp %s %s' % 
+                            (destination, destination_path, 
+                             destination) in log)
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            bootstrap.end_test()
+
+    def test_keep_backup(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        source = random_string()
+        destination = random_string()
+
+        url = 'http://%s/%s' % (bootstrap.server, source)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'src_url' : url,
+                        'dst_url' : destination,
+                        'overwrite' : 'backup'})
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        persistent_dir = '/tmp'
+        action = get_action('copy_file')
+        action = action.replace('/mnt/flash/.ztp-files',
+                                persistent_dir)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(source, contents)
+
+        bootstrap.start_test()
+
+        destination_path = '%s/%s' % (persistent_dir, source)
+        try:
+            self.failUnless(os.path.isfile(destination_path))
+            self.failUnless([contents] == 
+                            file_log(destination_path))
+
+            self.failUnless(os.path.isfile(RC_EOS))
+            log = file_log(RC_EOS)
+            self.failUnless('#!/bin/bash' in log)
+            self.failUnless('sudo cp %s %s' % 
+                            (destination_path, destination) in log)
+            self.failUnless('[ -f %s ] && sudo mv %s %s.backup' %
+                            (destination, destination, 
+                             destination) in log)
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            remove_file(destination_path)
+            bootstrap.end_test()
 
 if __name__ == '__main__':
     unittest.main()
