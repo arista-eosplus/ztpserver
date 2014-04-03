@@ -53,7 +53,7 @@ clean:
 	find . -type f -regex ".*\.py[co]$$" -delete
 
 test_neighbordb: clean
-	$(PYTHON)  ./test/server/test_neighbordb.py
+	PYTHONPATH=./ $(PYTHON)  ./test/server/test_neighbordb.py
 
 test_client: clean
 ifeq ($(TESTNAME),discover)
