@@ -33,6 +33,8 @@ import yaml
 
 import ztpserver.topology  #pylint: disable=F0401
 
+TEST_DIR = 'test/neighbordb'
+
 class TestDefinition(unittest.TestCase):
     #pylint: disable=R0904
 
@@ -45,25 +47,25 @@ class TestDefinition(unittest.TestCase):
         print 'Checking node: %s' % self.node['node']
         result = ztpserver.topology.neighbordb.match_node(self.neighbordb_node)
 
-        if self.node['matches']:
+        if self.node.get('matches', None):
             self.assertEqual(len(result), self.node['matches'])
 
-        if self.node['match_includes']:
+        if self.node.get('matche_includes', None):
             matches = [x.name for x in result]
             self.assertEqual(matches, self.node['match_includes'])
 
-        if self.node['match_excludes']:
+        if self.node.get('matche_excludes', None):
             matches = [x.name for x in result]
             for match in self.node['match_excludes']:
                 self.assertNotIn(match, matches)
 
-def load_tests(_, _, _):
+def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     suite = unittest.TestSuite()
-    for test in [f for f in os.listdir('test/neighbordb') 
-                 if os.path.join('test/neighbordb', f).endswith('_test')]:
-        print 'Stating test %s' % test
+    for test in [f for f in os.listdir(TEST_DIR) 
+                 if os.path.join(TEST_DIR, f).endswith('_test')]:
+        print 'Starting test %s' % test
 
-        definition = yaml.load(open(os.path.join('test/neighbordb', test)))
+        definition = yaml.load(open(os.path.join(TEST_DIR, test)))
         ztpserver.topology.clear()        
         ztpserver.topology.neighbordb.deserialize(definition['neighbordb'])
 
