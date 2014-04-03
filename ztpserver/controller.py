@@ -298,12 +298,12 @@ class NodeController(StoreController):
         :param url: the url pointing to the startup-config file
         '''
 
-        action = dict(name='install config',
+        action = dict(name='install startup-config',
                       description='install static startup configuration',
                       action='replace_config',
                       attributes={'url': url})
 
-        definition = dict(name='install startup-config',
+        definition = dict(name='install static startup-config',
                           actions=[action],
                           attributes={})
 
