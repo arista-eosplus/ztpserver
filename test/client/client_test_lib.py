@@ -35,6 +35,7 @@ import pdb
 import random
 import subprocess
 import string                        #pylint: disable=W0402
+import shutil
 import time
 import thread
 import unittest
@@ -53,8 +54,11 @@ CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
 STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
+RC_EOS = '/tmp/rc.eos-%s' % os.getpid()
+BOOT_EXTENSIONS = '/tmp/boot-extensions-%s' % os.getpid()
+BOOT_EXTENSIONS_FOLDER = '/tmp/.extensions-%s' % os.getpid()
+
 FLASH = '/tmp'
-RC_EOS = '/tmp/rc.eos'
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -104,6 +108,10 @@ def clear_startup_config():
 
 def clear_rc_eos():
     remove_file(RC_EOS)
+
+def clear_boot_extensions():
+    remove_file(BOOT_EXTENSIONS)
+    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
 
 def clear_logs():
     clear_cli_log()    
@@ -258,6 +266,12 @@ class Bootstrap(object):
                                 "FLASH = '%s'" % FLASH)
             line = line.replace("RC_EOS = '/mnt/flash/rc.eos'", 
                                 "RC_EOS = '%s'" % RC_EOS)
+            line = line.replace(
+                "BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'", 
+                "BOOT_EXTENSIONS = '%s'" % BOOT_EXTENSIONS)
+            line = line.replace(
+                "BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'", 
+                "BOOT_EXTENSIONS_FOLDER = '%s'" % BOOT_EXTENSIONS_FOLDER)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -293,6 +307,7 @@ class Bootstrap(object):
         # Other
         clear_startup_config()
         clear_rc_eos()
+        clear_boot_extensions()
 
     def start_test(self):
         try:
