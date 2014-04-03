@@ -51,6 +51,13 @@ FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"]"
 log = logging.getLogger(__name__)
 serializer = ztpserver.serializers.Serializer()
 
+def log_msg(text, error=False):
+    text = 'NeighborDB: %s' % text
+    if error:
+        text = 'ERROR: %s' % text
+    log.debug(text)
+    print text
+
 class Collection(collections.Mapping, collections.Callable):
     def __init__(self):
         self.data = dict()
@@ -165,8 +172,8 @@ class Resources(object):
         try:
             contents = self.loads(fobj.read(), content_type)
         except IOError as exc:
-            log.debug(exc)
-            raise DataFileError('unable to load file')
+            log_msg(exc, error=True)
+            raise DataFileError('Unable to load file')
         return contents
 
     @classmethod
@@ -175,8 +182,8 @@ class Resources(object):
             contents = serializer.deserialize(data, content_type)
             return contents
         except ztpserver.serializers.SerializerError as exc:
-            log.debug(exc)
-            raise DataFileError('unable to load data')
+            log_msg(exc, error=True)
+            raise DataFileError('Unable to load data')
 
     def dumps(self, data, pool, content_type=CONTENT_TYPE_YAML):
         fobj = open(pool)
@@ -188,13 +195,13 @@ class Resources(object):
             contents = serializer.serialize(data, content_type)
             fobj.write(contents)
         except IOError as exc:
-            log.debug(exc)
-            raise DataFileError("unable to write file")
+            log_msg(exc, error=True)
+            raise DataFileError("Unable to write file")
 
     def allocate(self, pool, node):
         match = self.lookup(pool, node)
         if match:
-            log.debug("Found allocated resources, returning %s" % match)
+            log_msg("Found allocated resources, returning %s" % match)
             return match
 
         file_path = os.path.join(self.workingdir, pool)
@@ -210,7 +217,7 @@ class Resources(object):
         return key
 
     def lookup(self, pool, node):
-        log.debug("Looking up resource for node %s" % node.systemmac)
+        log_msg("Looking up resource for node %s" % node.systemmac)
         file_path = os.path.join(self.workingdir, pool)
         contents = self.load(open(file_path))
         matches = [x[0] for x in contents.items() if x[1] == node.systemmac]
@@ -258,21 +265,22 @@ class Topology(object):
         try:
             self.loads(fobj.read(), content_type)
         except IOError as exc:
-            log.debug(exc)
-            raise TopologyError('unable to load file')
+            log_msg(exc, error=True)
+            raise TopologyError('Unable to load file')
 
     def loads(self, data, content_type=CONTENT_TYPE_YAML):
         try:
-            contents = serializer.deserialize(data, content_type)
-            self.deserialize(contents)
+            data = serializer.deserialize(data, content_type)
         except ztpserver.serializers.SerializerError as exc:
-            log.debug(exc)
-            raise TopologyError('unable to load data')
+            log_msg(exc, error=True)
+            raise TopologyError('Unable to load data')
+        self.deserialize(data)
+
 
     def deserialize(self, contents):
         self.variables = contents.get('variables') or dict()
         if 'any' in self.variables or 'none' in self.variables:
-            log.debug('cannot assign value to reserved word')
+            log_msg('Cannot assign value to reserved word', error=True)
             if 'any' in self.variables:
                 del self.variables['any']
             if 'none' in self.variables:
@@ -292,7 +300,7 @@ class Topology(object):
                         item.device = self.variables[item.device]
 
         except TypeError:
-            log.debug('Unable to parse pattern entry')
+            log_msg('Unable to parse pattern entry', error=True)
             return
 
         if 'node' in pattern:
@@ -304,16 +312,16 @@ class Topology(object):
     def get_patterns(self, node):
         """ returns a list of possible patterns for a given node """
 
-        log.debug("Searching for systemmac %s in patterns" % node.systemmac)
-        log.debug("Available node patterns: %s" % self.patterns['nodes'].keys())
+        log_msg("Searching for systemmac %s in patterns" % node.systemmac)
+        log_msg("Available node patterns: %s" % self.patterns['nodes'].keys())
 
         if node.systemmac in self.patterns['nodes'].keys():
             pattern = self.patterns['nodes'].get(node.systemmac)
-            log.debug("Returning node pattern[%s] for node[%s]" % \
+            log_msg("Returning node pattern[%s] for node[%s]" % \
                 (pattern.name, node.systemmac))
             return [pattern]
         else:
-            log.debug("Returning node pattern[globals] patterns for node[%s]"\
+            log_msg("Returning node pattern[globals] patterns for node[%s]"\
                 % node.systemmac)
             return self.patterns['globals']
 
@@ -324,12 +332,12 @@ class Topology(object):
 
         matches = list()
         for pattern in self.get_patterns(node):
-            log.debug('Attempting to match Pattern [%s]' % pattern.name)
+            log_msg('Attempting to match Pattern [%s]' % pattern.name)
             if pattern.match_node(node, self.variables):
-                log.debug('Match for [%s] was successful' % pattern.name)
+                log_msg('Match for [%s] was successful' % pattern.name)
                 matches.append(pattern)
             else:
-                log.debug("Failed to match [%s]" % pattern.name)
+                log_msg("Failed to match [%s]" % pattern.name)
         return matches
 
 
@@ -352,12 +360,12 @@ class Pattern(object):
 
     def load(self, filename, content_type=CONTENT_TYPE_YAML):
         try:
-            log.debug("Loading pattern from %s" % filename)
+            log_msg("Loading pattern from %s" % filename)
             contents = serializer.deserialize(open(filename).read(),
                                               content_type)
             self.deserialize(contents)
         except IOError as exc:
-            log.debug(exc)
+            log_msg(exc, error=True)
             raise PatternError
 
     def deserialize(self, contents):
@@ -391,12 +399,12 @@ class Pattern(object):
         for interface in interfaces:
             for key, values in interface.items():
                 args = self._parse_interface(key, values)
-                log.debug("Adding interface to pattern with args %s" %
+                log_msg("Adding interface to pattern with args %s" %
                           str(args))
                 self.add_interface(*args) #pylint: disable=W0142
 
     def _parse_interface(self, interface, values):
-        log.debug("parse_interface[%s]: %s" % (str(interface), str(values)))
+        log_msg("parse_interface[%s]: %s" % (str(interface), str(values)))
 
         device = port = tags = None
         if isinstance(values, dict):
@@ -430,24 +438,24 @@ class Pattern(object):
         neighbors = node.neighbors.copy()
 
         for intf_pattern in self.interfaces:
-            log.debug('Attempting to match %r' % intf_pattern)
-            log.debug('Available neighbors: %s' % neighbors.keys())
+            log_msg('Attempting to match %r' % intf_pattern)
+            log_msg('Available neighbors: %s' % neighbors.keys())
 
             # check for device none
             if intf_pattern.device is None:
-                log.debug("InterfacePattern device is 'none'")
+                log_msg("InterfacePattern device is 'none'")
                 return intf_pattern.interface not in neighbors
 
             variables.update(self.variables)
             matches = intf_pattern.match_neighbors(neighbors, variables)
             if not matches:
-                log.debug("InterfacePattern failed to match interface[%s]" \
+                log_msg("InterfacePattern failed to match interface[%s]" \
                     % intf_pattern.interface)
                 return False
 
-            log.debug("InterfacePattern matched interfaces %s" % matches)
+            log_msg("InterfacePattern matched interfaces %s" % matches)
             for match in matches:
-                log.debug("Removing interface %s from available pool" % match)
+                log_msg("Removing interface %s from available pool" % match)
                 del neighbors[match]
 
         return True
@@ -542,7 +550,7 @@ def create_node(nodeattrs):
     node = Node(**nodeattrs)
     if node.systemmac is not None:
         node.systemmac = node.systemmac.replace(':', '')
-    log.debug("Created node object %r" % node)
+    log_msg("Created node object %r" % node)
     return node
 
 neighbordb = Topology()
@@ -559,7 +567,7 @@ def default_filename():
 def loads(data, content_type=CONTENT_TYPE_YAML):
     clear()
     neighbordb.loads(data, content_type)
-    log.debug("Loaded neighbordb [%r]" % neighbordb)
+    log_msg("Loaded neighbordb [%r]" % neighbordb)
 
 def load(filename=None, content_type=CONTENT_TYPE_YAML):
     if filename is None:
@@ -567,7 +575,7 @@ def load(filename=None, content_type=CONTENT_TYPE_YAML):
     loads(open(filename).read(), content_type)
 
 def resources(attributes, node):
-    log.debug("Start processing resources with attributes: %s" % attributes)
+    log_msg("Start processing resources with attributes: %s" % attributes)
     _attributes = dict()
     _resources = Resources()
     for key, value in attributes.items():
@@ -588,9 +596,9 @@ def resources(attributes, node):
             if match:
                 method = getattr(_resources, match.group('function'))
                 value = method(match.group('arg'), node)
-                log.debug('Allocated value %s for attribute %s from pool %s' % \
+                log_msg('Allocated value %s for attribute %s from pool %s' % \
                     (value, key, match.group('arg')))
-        log.debug("Setting %s to %s" % (key, value))
+        log_msg("Setting %s to %s" % (key, value))
         _attributes[key] = value
     return _attributes
 
