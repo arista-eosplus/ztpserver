@@ -126,7 +126,7 @@ class Group(collections.Mapping):
 
     def __getattr__(self, name):
         # pylint: disable=W0212
-        return self.config._get_attribute(name, self.name) 
+        return self.config._get_attribute(name, self.name)
 
     def __getitem__(self, name):
         return self.__getattr__(name)
@@ -307,6 +307,21 @@ runtime.add_attribute(IntAttr(
     minvalue=1,
     maxvalue=65534,
     default=8080
+))
+
+
+# Group: files
+runtime.add_attribute(StrAttr(
+    name='folder',
+    group='files',
+    default='files',
+    environ='ZTPS_FILES_FOLDER'
+))
+
+runtime.add_attribute(StrAttr(
+    name='path_prefix',
+    group='files',
+    environ='ZTPS_FILES_PATH_PREFIX'
 ))
 
 # Group: actions
