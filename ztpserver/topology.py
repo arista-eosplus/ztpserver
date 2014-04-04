@@ -55,7 +55,6 @@ def log_msg(text, error=False):
     if error:
         text = 'ERROR: %s' % text
     log.debug(text)
-    print text
 
 class NodeErrror(Exception):
     ''' base error raised by :py:class:`Node` '''
@@ -218,9 +217,9 @@ class Topology(DeserializableMixin):
         self.clear()
         super(Topology, self).load(fobj, content_type)
 
-    def loads(self, contents):
+    def loads(self, contents, content_type=CONTENT_TYPE_YAML):
         self.clear()
-        super(Topology, self).loads(contents)
+        super(Topology, self).loads(contents, content_type)
 
     def deserialize(self, contents):
         self.variables = contents.get('variables') or dict()

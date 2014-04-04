@@ -34,7 +34,10 @@ import yaml
 import ztpserver.topology  #pylint: disable=F0401
 import ztpserver.neighbordb
 
+from ztpserver.app import enable_handler_console
+
 TEST_DIR = 'test/neighbordb'
+
 
 class TestDefinition(unittest.TestCase):
     #pylint: disable=R0904
@@ -89,4 +92,5 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     return suite
 
 if __name__ == '__main__':
+    enable_handler_console()
     unittest.main()

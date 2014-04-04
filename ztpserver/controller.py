@@ -83,7 +83,7 @@ class FilesController(StoreController):
         super(FilesController, self).__init__(folder, path_prefix=prefix)
 
     def __repr__(self):
-        return 'FileStoreController'
+        return 'FilesController'
 
     def show(self, request, resource, **kwargs):
         urlvars = request.urlvars
