@@ -129,7 +129,8 @@ class NodeController(StoreController):
     def __repr__(self):
         return 'NodeController'
 
-    def get_config(self, resource):
+    def get_config(self, request, resource, **kwargs):
+        # pylint: disable=W0613
         log.debug('Sending startup-config contents to node %s' % resource)
         filepath = '%s/startup-config' % resource
 
