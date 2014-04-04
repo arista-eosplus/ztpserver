@@ -246,7 +246,8 @@ class NodeController(StoreController):
 
         if pattern is not None:
             self.store.write_file('%s/pattern' % node.systemmac,
-                                  pattern.dumps(CONTENT_TYPE_JSON))
+                                  self.serialize(pattern.serialize(),
+                                                 CONTENT_TYPE_JSON))
 
         if 'neighbors' in request:
             self.store.write_file('%s/topology' % node.systemmac,

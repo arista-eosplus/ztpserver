@@ -172,10 +172,6 @@ class DeserializableMixin(object):
             log.debug(exc)
             raise SerializerError('unable to load file')
 
-    def loads(self, contents):
-        ''' objects that use this mixin must provide this method '''
-        self.deserialize(contents)
-
     def deserialize(self, contents):
         ''' objects that use this mixin must provide this method '''
         raise NotImplementedError
@@ -190,20 +186,13 @@ class SerializableMixin(object):
     '''
 
     def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        try:
-            fobj.write(self.dumps(content_type))
-        except IOError as exc:
-            log.debug(exc)
-            raise SerializerError('unable to dump file')
-
-    def dumps(self, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
         try:
             contents = self.serialize()
-            return serializer.serialize(contents, content_type)
-        except SerializerError as exc:
+            fobj.write(serializer.serialize(contents, content_type))
+        except IOError as exc:
             log.debug(exc)
-            raise SerializerError('unable to dump contents')
+            raise SerializerError('unable to dump file')
 
     def serialize(self):
         ''' objects that use this mixin must provide this method '''

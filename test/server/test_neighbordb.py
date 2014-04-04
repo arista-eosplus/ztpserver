@@ -52,7 +52,7 @@ class TestDefinition(unittest.TestCase):
         assert not ztpserver.neighbordb.topology.patterns['globals']
         assert not ztpserver.neighbordb.topology.patterns['nodes']
 
-        ztpserver.neighbordb.loads(self.neighbordb)
+        ztpserver.neighbordb.topology.deserialize(self.neighbordb)
         self.longMessage = True
 
     def run_test(self):

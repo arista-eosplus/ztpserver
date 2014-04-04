@@ -57,10 +57,6 @@ def load(filename=None):
     except OSError:
         log.warn('Neighbordb file [%s] not loaded' % filename)
 
-def loads(contents):
-    topology.loads(contents)
-    log.debug('Loaded neighbordb [%r]' % topology)
-
 def create_node(nodeattrs):
     ''' extracts node attributes from nodeattrs and returns
     an instanct of :py:class:`Node`.  The only required value
