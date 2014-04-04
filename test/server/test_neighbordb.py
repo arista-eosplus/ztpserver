@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -32,6 +32,7 @@ import unittest
 import yaml
 
 import ztpserver.topology  #pylint: disable=F0401
+import ztpserver.neighbordb
 
 TEST_DIR = 'test/neighbordb'
 
@@ -43,23 +44,23 @@ class TestDefinition(unittest.TestCase):
         self.name = name
         self.node = node
         self.neighbordb = neighbordb
-        self.neighbordb_node = ztpserver.topology.create_node(node['details'])
+        self.neighbordb_node = ztpserver.neighbordb.create_node(node['details'])
 
     def setUp(self):
-        ztpserver.topology.clear()        
+        ztpserver.neighbordb.topology.clear()
 
-        assert not ztpserver.topology.neighbordb.patterns['globals']
-        assert not ztpserver.topology.neighbordb.patterns['nodes']
+        assert not ztpserver.neighbordb.topology.patterns['globals']
+        assert not ztpserver.neighbordb.topology.patterns['nodes']
 
-        ztpserver.topology.neighbordb.deserialize(self.neighbordb)
+        ztpserver.neighbordb.loads(self.neighbordb)
         self.longMessage = True
 
     def run_test(self):
         print 'Checking node: %s' % self.node['node']
-        result = ztpserver.topology.neighbordb.match_node(self.neighbordb_node)
+        result = ztpserver.neighbordb.topology.match_node(self.neighbordb_node)
         result = [x.name for x in result]
         print 'Result: %s' % result
-        
+
         if self.node.get('matches', None):
             self.assertEqual(len(result), self.node['matches'],
                              self.name)
@@ -75,7 +76,7 @@ class TestDefinition(unittest.TestCase):
 
 def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     suite = unittest.TestSuite()
-    for test in [f for f in os.listdir(TEST_DIR) 
+    for test in [f for f in os.listdir(TEST_DIR)
                  if os.path.join(TEST_DIR, f).endswith('_test')]:
         print 'Starting test %s' % test
 

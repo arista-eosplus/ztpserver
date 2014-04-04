@@ -39,7 +39,7 @@ from string import Template
 
 import ztpserver.wsgiapp
 import ztpserver.config
-import ztpserver.topology
+import ztpserver.neighbordb
 
 from ztpserver.repository import create_file_store
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK
@@ -132,6 +132,7 @@ class NodeController(StoreController):
     def get_config(self, resource):
         log.debug('Sending startup-config contents to node %s' % resource)
         filepath = '%s/startup-config' % resource
+
         if not self.store.exists(filepath):
             response = dict(status=HTTP_STATUS_BAD_REQUEST)
         else:
@@ -144,9 +145,8 @@ class NodeController(StoreController):
         # check if startup-config exists
         if self.store.exists('%s/startup-config' % resource):
             log.debug('Sending startup-config definition to node %s' % resource)
-            url = '%s/nodes/%s/startup-config' % \
-                (ztpserver.config.runtime.default.server_url, str(resource))
-            response = self.startup_config_definition(url)
+            definition = ztpserver.neighbordb.startup_config(resource)
+            response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
         # check if definition exists
         elif self.store.exists('%s/definition' % resource):
@@ -161,23 +161,19 @@ class NodeController(StoreController):
                                               CONTENT_TYPE_YAML)
                 definition['attributes'].update(attributes)
 
-            if self.store.exists('%s/pattern' % resource) and \
-                not ztpserver.config.runtime.default.disable_pattern_checks:
-
-                filepath = '%s/pattern' % resource
-                contents = self.get_file_contents(filepath)
-                attrs = self.deserialize(contents, CONTENT_TYPE_JSON)
-                # pylint: disable=W0142
-                pattern = ztpserver.topology.Pattern(**attrs)
+            if self.store.exists('%s/pattern' % resource):
+                fobj = self.get_file('%s/pattern' % resource)
+                pattern = ztpserver.neighbordb.load_pattern(fobj.name)
 
                 if self.store.exists('%s/topology' % resource):
                     filepath = '%s/topology' % resource
                     neighbors = self.get_file_contents(filepath)
                     neighbors = self.deserialize(neighbors, CONTENT_TYPE_JSON)
+                    if neighbors is None:
+                        neighbors = dict()
 
-                nodeattrs = dict(systemmac=resource)
-                nodeattrs['neighbors'] = neighbors or dict()
-                node = ztpserver.topology.create_node(nodeattrs)
+                nodeattrs = dict(systemmac=resource, neighbors=neighbors)
+                node = ztpserver.neighbordb.create_node(nodeattrs)
 
                 if not pattern.match_node(node):
                     log.debug('node %s failed to match existing pattern' %
@@ -199,7 +195,7 @@ class NodeController(StoreController):
             log.debug('POST request is missing required fields')
             return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-        node = ztpserver.topology.create_node(request.json)
+        node = ztpserver.neighbordb.create_node(request.json)
 
         # check if the node exists and return 409 if it does
         if self.store.exists(node.systemmac):
@@ -211,10 +207,10 @@ class NodeController(StoreController):
             response = dict(status=HTTP_STATUS_CREATED, location=location)
 
         elif 'neighbors' in request.json:
-            if ztpserver.topology.neighbordb is None:
+            if ztpserver.neighbordb.topology is None:
                 return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-            matches = ztpserver.topology.neighbordb.match_node(node)
+            matches = ztpserver.neighbordb.topology.match_node(node)
             log.debug('Found %d pattern matches' % len(matches))
             log.debug('Matched patterns: %s' % [x.name for x in matches])
 
@@ -235,79 +231,65 @@ class NodeController(StoreController):
 
         return response
 
-    def add_node(self, node, request, **kwargs):
+    def add_node(self, node, request, pattern=None):
 
-        if ztpserver.config.runtime.default.disable_node_creation:
-            log.debug('Skipping node creation due to disable_node_creation' \
-                % node)
-            return '/nodes/%s' % node.systemmac
-
-        self.store.add_folder(node.systemmac)
-
+        # write the static startup-config file
         if 'config' in request:
             filename = '%s/startup-config' % node.systemmac
             contents = request.get('config')
-
-        if 'neighbors' in request and 'pattern' in kwargs:
-            pattern = kwargs.get('pattern')
-
+        else:
             filename = '%s/definition' % node.systemmac
             contents = self.node_definition(pattern.definition, node)
 
-            self.store.write_file('%s/pattern' % node.systemmac,
-                                  self.serialize(kwargs.get('pattern'),
-                                                 CONTENT_TYPE_JSON))
+        self.store.add_folder(node.systemmac)
+        self.store.write_file(filename, contents)
 
+        if pattern is not None:
+            self.store.write_file('%s/pattern' % node.systemmac,
+                                  pattern.dumps(CONTENT_TYPE_JSON))
+
+        if 'neighbors' in request:
             self.store.write_file('%s/topology' % node.systemmac,
                                   self.serialize(request.get('neighbors'),
                                                  CONTENT_TYPE_JSON))
 
-        self.store.write_file(filename, contents)
         return '/nodes/%s' % node.systemmac
 
     def node_definition(self, url, node):
-        topology = ztpserver.topology
+        ''' Creates the node specific definition file based on the
+        definition template found at url.  The node definition file
+        is created in /nodes/{systemmac}/definition.
+        '''
+
+        neighbordb = ztpserver.neighbordb
         log.debug('Creating node definition with url %s' % url)
+
         definition = self.definitions.get_file(url)
         definition = self.deserialize(definition.contents,
                                       CONTENT_TYPE_YAML)
 
         definition.setdefault('name', 'Autogenerated using %s' % url)
 
+        # pass the attributes through the resources function in
+        # order to convert the global attributes from functions
+        # to node specific values
         attributes = definition.get('attributes') or dict()
-        definition['attributes'] = topology.resources(attributes,
-                                                                node)
+        definition['attributes'] = neighbordb.resources(attributes, node)
 
+        # iterate through the list of actions to convert any
+        # action specific attribute functions to node specific
+        # values
         _actions = list()
         for action in definition.get('actions'):
-            log.debug('Processing attributes for action %s' % \
-                action.get('name'))
-            log.debug('Attributes: %s' % action.get('attributes'))
+            log.debug('Processing attributes for action %s' % action['name'])
             if 'attributes' in action:
                 action['attributes'] = \
-                    topology.resources(action['attributes'], node)
+                    neighbordb.resources(action['attributes'], node)
             _actions.append(action)
         definition['actions'] = _actions
 
+        # return the serialized node specific definition
         return self.serialize(definition)
-
-    @classmethod
-    def startup_config_definition(cls, url):
-        ''' manually build a definition with a single action replace_config
-
-        :param url: the url pointing to the startup-config file
-        '''
-
-        action = dict(name='install startup-config',
-                      description='install static startup configuration',
-                      action='replace_config',
-                      attributes={'url': url})
-
-        definition = dict(name='install static startup-config',
-                          actions=[action],
-                          attributes={})
-
-        return dict(body=definition, content_type=CONTENT_TYPE_JSON)
 
 
 class BootstrapController(StoreController):
@@ -417,9 +399,8 @@ class Router(ztpserver.wsgiapp.Router):
                           controller=FilesController(),
                           collection_actions=[],
                           member_actions=['show'],
-                          member_prefix='/{resource}')
+                          member_prefix='/{resource:.*}')
 
         super(Router, self).__init__(mapper)
-
 
 

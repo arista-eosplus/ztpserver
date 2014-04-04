@@ -40,7 +40,7 @@ from wsgiref.simple_server import make_server
 
 import ztpserver.config
 import ztpserver.controller
-import ztpserver.topology
+import ztpserver.neighbordb
 
 DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
 
@@ -87,7 +87,7 @@ def start_wsgiapp(conf=None):
     start_logging()
     log.info('Logging started for ztpserver')
 
-    ztpserver.topology.load()
+    ztpserver.neighbordb.load()
     return ztpserver.controller.Router()
 
 def run_server(conf):

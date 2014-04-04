@@ -38,9 +38,8 @@ import os
 import re
 
 import ztpserver.config
-import ztpserver.serializers
 
-from ztpserver.constants import CONTENT_TYPE_OTHER
+from ztpserver.serializers import SerializableMixin, DeserializableMixin
 from ztpserver.constants import CONTENT_TYPE_YAML
 
 DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
@@ -58,90 +57,68 @@ def log_msg(text, error=False):
     log.debug(text)
     print text
 
-class Collection(collections.Mapping, collections.Callable):
-    def __init__(self):
-        self.data = dict()
-
-    def __call__(self, key=None):
-        #pylint: disable=W0221
-        return self.keys() if key is None else self.get(key)
-
-    def __getitem__(self, key):
-        return self.data[key]
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def __len__(self):
-        return len(self.data)
-
-    def __delitem__(self, key):
-        del self.data[key]
-
-    def __setitem__(self, key, value):
-        self.data[key] = value
-
-
-class OrderedCollection(collections.OrderedDict, collections.Callable):
-    def __call__(self, key=None):
-        #pylint: disable=W0221
-        return self.keys() if key is None else self.get(key)
-
-class DataFileError(Exception):
-    pass
-
-class DataFileMixin(object):
-
-    def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        raise NotImplementedError
-
-    def loads(self, data, content_type=CONTENT_TYPE_OTHER):
-        raise NotImplementedError
-
-    def dump(self, fobj, data, content_type=CONTENT_TYPE_OTHER):
-        raise NotImplementedError
-
-    def dumps(self, data, content_type=CONTENT_TYPE_OTHER):
-        raise NotImplementedError
-
-    def serialize(self):
-        raise NotImplementedError
-
-    def deserialize(self):
-        raise NotImplementedError
-
 class NodeErrror(Exception):
+    ''' base error raised by :py:class:`Node` '''
     pass
 
-class Node(object):
+class ResourcePoolError(Exception):
+    ''' base error raised by :py:class:`Resource` '''
+    pass
+
+class TopologyError(Exception):
+    ''' base error raised by :py:class:`Topology` '''
+    pass
+
+class PatternError(Exception):
+    ''' base error raised by :py:class:`Pattern` '''
+    pass
+
+class OrderedCollection(collections.OrderedDict):
+    ''' base object for using an ordered dictionary '''
+    def __call__(self, key=None):
+        #pylint: disable=W0221
+        return self.keys() if key is None else self.get(key)
+
+
+class Node(DeserializableMixin):
 
     Neighbor = collections.namedtuple("Neighbor", ['device', 'port'])
 
-    def __init__(self, **kwargs):
-        kwargs = ztpserver.serializers.Serializer.convert(kwargs)
-        self.model = kwargs.get('model')
-        self.systemmac = kwargs.get('systemmac')
-        self.serialnumber = kwargs.get('serialnumber')
-        self.version = kwargs.get('version')
+    def __init__(self, systemmac, model=None, serialnumber=None,
+                 version=None, neighbors=None):
 
+        self.systemmac = systemmac
+        self.model = model
+        self.serialnumber = serialnumber
+        self.version = version
         self.neighbors = OrderedCollection()
-        if 'neighbors' in kwargs:
-            self.add_neighbors(kwargs['neighbors'])
 
-        super(Node, self).__init__()
+        if neighbors is not None:
+            self.add_neighbors(neighbors)
 
     def __repr__(self):
         return "Node(neighbors=%d)" % len(self.neighbors)
 
     def add_neighbors(self, neighbors):
+        ''' adds a list of neighbors to the node object
+
+        :param neighbors: an unordered list of neighbors
+        '''
         for interface, neighbor_list in neighbors.items():
             collection = list()
             for neighbor in neighbor_list:
-                collection.append(self.Neighbor(**neighbor))
+                device, port = neighbor.values()
+                collection.append(self.Neighbor(device, port))
             self.neighbors[interface] = collection
 
-    def hasneighbors(self):
-        return len(self.neighbors) > 0
+    def deserialize(self, contents):
+        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
+            if prop in contents:
+                setattr(self, prop, contents[prop])
+
+        self.neighbors = OrderedCollection()
+        if 'neighbors' in contents:
+            self.add_neighbors(contents['neighbors'])
 
     def serialize(self):
         attrs = dict()
@@ -150,7 +127,7 @@ class Node(object):
                 attrs[prop] = getattr(self, prop)
 
         neighbors = dict()
-        if self.hasneighbors():
+        if len(self.neighbors) > 0:
             for interface, neighbors in self.neighbors.items():
                 collection = list()
                 for neighbor in neighbors:
@@ -158,45 +135,20 @@ class Node(object):
                                            port=neighbor.port))
                 neighbors[interface] = collection
         attrs['neighbors'] = neighbors
+        return attrs
 
-class ResourcesError(Exception):
-    pass
-
-class Resources(object):
+class ResourcePool(DeserializableMixin, SerializableMixin):
 
     def __init__(self):
         filepath = ztpserver.config.runtime.default.data_root
-        self.workingdir = os.path.join(filepath, "resources")
+        self.filepath = os.path.join(filepath, "resources")
+        self.data = None
 
-    def load(self, fobj, content_type=CONTENT_TYPE_YAML):
-        try:
-            contents = self.loads(fobj.read(), content_type)
-        except IOError as exc:
-            log_msg(exc, error=True)
-            raise DataFileError('Unable to load file')
-        return contents
+    def serialize(self):
+        return self.data
 
-    @classmethod
-    def loads(cls, data, content_type=CONTENT_TYPE_YAML):
-        try:
-            contents = serializer.deserialize(data, content_type)
-            return contents
-        except ztpserver.serializers.SerializerError as exc:
-            log_msg(exc, error=True)
-            raise DataFileError('Unable to load data')
-
-    def dumps(self, data, pool, content_type=CONTENT_TYPE_YAML):
-        fobj = open(pool)
-        self.dump(data, fobj, content_type)
-
-    @classmethod
-    def dump(cls, data, fobj, content_type=CONTENT_TYPE_YAML):
-        try:
-            contents = serializer.serialize(data, content_type)
-            fobj.write(contents)
-        except IOError as exc:
-            log_msg(exc, error=True)
-            raise DataFileError("Unable to write file")
+    def deserialize(self, contents):
+        self.data = contents
 
     def allocate(self, pool, node):
         match = self.lookup(pool, node)
@@ -204,23 +156,25 @@ class Resources(object):
             log_msg("Found allocated resources, returning %s" % match)
             return match
 
-        file_path = os.path.join(self.workingdir, pool)
-        contents = self.load(open(file_path))
+        filepath = os.path.join(self.filepath, pool)
+        self.load(open(filepath), CONTENT_TYPE_YAML)
 
         try:
-            key = next(x[0] for x in contents.items() if x[1] is None)
-            contents[key] = node.systemmac
+            key = next(x[0] for x in self.data.items() if x[1] is None)
+            self.data[key] = node.systemmac
         except StopIteration:
-            raise ResourcesError('no resources available in pool')
+            raise ResourcePoolError('no resources available in pool')
 
-        self.dump(contents, open(file_path, 'w'))
+        self.dump(open(filepath, 'w'), CONTENT_TYPE_YAML)
         return key
 
     def lookup(self, pool, node):
         log_msg("Looking up resource for node %s" % node.systemmac)
-        file_path = os.path.join(self.workingdir, pool)
-        contents = self.load(open(file_path))
-        matches = [x[0] for x in contents.items() if x[1] == node.systemmac]
+
+        filepath = os.path.join(self.filepath, pool)
+        self.load(open(filepath), CONTENT_TYPE_YAML)
+
+        matches = [x[0] for x in self.data.items() if x[1] == node.systemmac]
         key = matches[0] if matches else None
         return key
 
@@ -244,41 +198,33 @@ class Functions(object):
     def excludes(cls, arg, value):
         return arg not in value
 
+class Topology(DeserializableMixin):
 
-class TopologyError(Exception):
-    pass
+    def __init__(self):
+        self.variables = None
+        self.patterns = None
 
-class Topology(object):
-
-    def __init__(self, contents=None):
-        self.variables = dict()
-        self.patterns = {'globals': list(), 'nodes': dict()}
-
-        if contents is not None:
-            self.deserialize(contents)
+        self.clear()
 
     def __repr__(self):
         return "Topology(globals=%d, nodes=%d)" % \
             (len(self.patterns['globals']), len(self.patterns['nodes']))
 
+    def clear(self):
+        self.variables = dict()
+        self.patterns = {'globals': list(), 'nodes': dict()}
+
     def load(self, fobj, content_type=CONTENT_TYPE_YAML):
-        try:
-            self.loads(fobj.read(), content_type)
-        except IOError as exc:
-            log_msg(exc, error=True)
-            raise TopologyError('Unable to load file')
+        self.clear()
+        super(Topology, self).load(fobj, content_type)
 
-    def loads(self, data, content_type=CONTENT_TYPE_YAML):
-        try:
-            data = serializer.deserialize(data, content_type)
-        except ztpserver.serializers.SerializerError as exc:
-            log_msg(exc, error=True)
-            raise TopologyError('Unable to load data')
-        self.deserialize(data)
-
+    def loads(self, contents):
+        self.clear()
+        super(Topology, self).loads(contents)
 
     def deserialize(self, contents):
         self.variables = contents.get('variables') or dict()
+
         if 'any' in self.variables or 'none' in self.variables:
             log_msg('Cannot assign value to reserved word', error=True)
             if 'any' in self.variables:
@@ -293,6 +239,10 @@ class Topology(object):
         try:
             obj = Pattern(**pattern)
 
+            # we need to do this to copy any global variables to
+            # the pattern if a mores specific variable doesn't exists
+            # otherwise we will not write the node pattern correctly
+            # later
             if self.variables is not None:
                 for item in obj.interfaces:
                     if item.device not in [None, 'any'] and \
@@ -333,40 +283,33 @@ class Topology(object):
         matches = list()
         for pattern in self.get_patterns(node):
             log_msg('Attempting to match Pattern [%s]' % pattern.name)
+
             if pattern.match_node(node, self.variables):
                 log_msg('Match for [%s] was successful' % pattern.name)
                 matches.append(pattern)
             else:
                 log_msg("Failed to match [%s]" % pattern.name)
+
         return matches
 
+class Pattern(DeserializableMixin, SerializableMixin):
 
-class PatternError(Exception):
-    pass
-
-class Pattern(object):
-
-    def __init__(self, name, definition, **kwargs):
+    def __init__(self, name=None, definition=None, node=None,
+                 variables=None, interfaces=None):
 
         self.name = name
         self.definition = definition
 
-        self.node = kwargs.get('node')
-        self.variables = kwargs.get('variables') or dict()
+        self.node = node
+        self.variables = variables or dict()
 
         self.interfaces = list()
-        if 'interfaces' in kwargs:
-            self.add_interfaces(kwargs['interfaces'])
+        if interfaces:
+            self.add_interfaces(interfaces)
 
-    def load(self, filename, content_type=CONTENT_TYPE_YAML):
-        try:
-            log_msg("Loading pattern from %s" % filename)
-            contents = serializer.deserialize(open(filename).read(),
-                                              content_type)
-            self.deserialize(contents)
-        except IOError as exc:
-            log_msg(exc, error=True)
-            raise PatternError
+    def dumps(self, content_type=CONTENT_TYPE_YAML):
+        # pylint: disable=W0221
+        return super(Pattern, self).dumps(content_type)
 
     def deserialize(self, contents):
         self.name = contents.get('name')
@@ -401,7 +344,9 @@ class Pattern(object):
                 args = self._parse_interface(key, values)
                 log_msg("Adding interface to pattern with args %s" %
                           str(args))
-                self.add_interface(*args) #pylint: disable=W0142
+
+                (interface, device, port, tags) = args
+                self.add_interface(interface, device, port, tags)
 
     def _parse_interface(self, interface, values):
         log_msg("parse_interface[%s]: %s" % (str(interface), str(values)))
@@ -412,9 +357,11 @@ class Pattern(object):
             port = values.get('port')
             tags = values.get('tags')
 
+        # handles the case of implicit 'any'
         if values == 'any' or device == 'any':
             device, port, tags = 'any', 'any', None
 
+        # handles the case of implicit 'none'
         elif values == 'none' or device == 'none':
             device, port, tags = None, None, None
 
@@ -466,9 +413,12 @@ class InterfacePattern(object):
 
         self.interface = interface
         self.interfaces = self.range(interface)
+
         self.device = device
+
         self.port = port
         self.ports = self.range(port)
+
         self.tags = tags or list()
 
     def __repr__(self):
@@ -486,8 +436,8 @@ class InterfacePattern(object):
             obj['tags'] = self.tags
         return obj
 
-    @classmethod
-    def range(cls, interface_range):
+    def range(self, interface_range):
+        # pylint: disable=R0201
         if interface_range is None:
             return list()
         elif not interface_range.startswith('Ethernet'):
@@ -545,60 +495,4 @@ class InterfacePattern(object):
             return False
         return port in self.ports
 
-
-def create_node(nodeattrs):
-    node = Node(**nodeattrs)
-    if node.systemmac is not None:
-        node.systemmac = node.systemmac.replace(':', '')
-    log_msg("Created node object %r" % node)
-    return node
-
-neighbordb = Topology()
-
-def clear():
-    global neighbordb       # pylint: disable=W0603
-    neighbordb = Topology()
-
-def default_filename():
-    filepath = ztpserver.config.runtime.default.data_root
-    filename = ztpserver.config.runtime.neighbordb.filename
-    return os.path.join(filepath, filename)
-
-def loads(data, content_type=CONTENT_TYPE_YAML):
-    clear()
-    neighbordb.loads(data, content_type)
-    log_msg("Loaded neighbordb [%r]" % neighbordb)
-
-def load(filename=None, content_type=CONTENT_TYPE_YAML):
-    if filename is None:
-        filename = default_filename()
-    loads(open(filename).read(), content_type)
-
-def resources(attributes, node):
-    log_msg("Start processing resources with attributes: %s" % attributes)
-    _attributes = dict()
-    _resources = Resources()
-    for key, value in attributes.items():
-        if isinstance(value, dict):
-            value = resources(value, node)
-        elif isinstance(value, list):
-            _value = list()
-            for item in value:
-                match = FUNC_RE.match(item)
-                if match:
-                    method = getattr(_resources, match.group('function'))
-                    _value.append(method(match.group('arg'), node))
-                else:
-                    _value.append(item)
-            value = _value
-        elif isinstance(value, str):
-            match = FUNC_RE.match(value)
-            if match:
-                method = getattr(_resources, match.group('function'))
-                value = method(match.group('arg'), node)
-                log_msg('Allocated value %s for attribute %s from pool %s' % \
-                    (value, key, match.group('arg')))
-        log_msg("Setting %s to %s" % (key, value))
-        _attributes[key] = value
-    return _attributes
 

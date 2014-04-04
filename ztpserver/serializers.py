@@ -34,12 +34,17 @@
 import warnings
 import collections
 import json
+import logging
+
+from ztpserver.constants import CONTENT_TYPE_OTHER
 
 try:
     import yaml
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
+
+log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class SerializerError(Exception):
     """ base error raised by serialization functions """
@@ -95,14 +100,12 @@ class Serializer(object):
         try:
             data = self.convert(data)
             handler = self._serialize_handler(content_type)
-            if hasattr(data, 'serialize'):
-                data = data.serialize()
             return handler.serialize(data, **kwargs) if handler else str(data)
 
         except TypeError:
             raise SerializerError('Could not serialize data')
 
-    def deserialize(self, data, content_type, clsobj=None, **kwargs):
+    def deserialize(self, data, content_type, **kwargs):
         """ deserialize the data based on the content_type
 
         If a valid handler does not exist for the requested
@@ -117,14 +120,9 @@ class Serializer(object):
 
         try:
             handler = self._deserialize_handler(content_type)
-            if hasattr(data, 'deserialize'):
-                data = data.deserialize()
             data = handler.deserialize(data, **kwargs) if handler else str(data)
             data = self.convert(data)
-            if clsobj is not None:
-                return clsobj(data)
-            else:
-                return data
+            return data
 
         except Exception:
             raise SerializerError('Could not deserialize data')
@@ -155,3 +153,59 @@ class Serializer(object):
             return type(data)([cls.convert(x) for x in data])
         else:
             return data
+
+class DeserializableMixin(object):
+    ''' The :py:class:`DeserializableMixin` provides a mixin class
+    that addes the ability to load and deserialize an object from
+    a file-like object stored in a format supported by
+    :py:class:`Serializer`.   Class objects using this mixin should
+    define a deserialize method to automatically transform the
+    contents loaded
+    '''
+
+    def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        serializer = Serializer()
+        try:
+            contents = serializer.deserialize(fobj.read(), content_type)
+            self.deserialize(contents)
+        except IOError as exc:
+            log.debug(exc)
+            raise SerializerError('unable to load file')
+
+    def loads(self, contents):
+        ''' objects that use this mixin must provide this method '''
+        self.deserialize(contents)
+
+    def deserialize(self, contents):
+        ''' objects that use this mixin must provide this method '''
+        raise NotImplementedError
+
+class SerializableMixin(object):
+    ''' The :py:class:`SerializableMixin` provides a mixin class
+    that addes the ability to dump and serialize an object from
+    a file-like object stored in a format supported by
+    :py:class:`Serializer`.  Class objects using this mixin should
+    define a serialize method to automatically transform the
+    contents loaded
+    '''
+
+    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        try:
+            fobj.write(self.dumps(content_type))
+        except IOError as exc:
+            log.debug(exc)
+            raise SerializerError('unable to dump file')
+
+    def dumps(self, content_type=CONTENT_TYPE_OTHER):
+        serializer = Serializer()
+        try:
+            contents = self.serialize()
+            return serializer.serialize(contents, content_type)
+        except SerializerError as exc:
+            log.debug(exc)
+            raise SerializerError('unable to dump contents')
+
+    def serialize(self):
+        ''' objects that use this mixin must provide this method '''
+        raise NotImplementedError
+

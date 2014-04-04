@@ -64,7 +64,8 @@ class Functions(unittest.TestCase):
 class TestNode(unittest.TestCase):
 
     def test_node_creation(self):
-        obj = ztpserver.topology.Node()
+        obj = ztpserver.topology.Node('1234567890')
+        self.assertEqual(obj.systemmac, '1234567890')
         self.assertEqual(repr(obj), "Node(neighbors=0)")
 
     def test_node_creation_with_kwargs(self):
@@ -81,54 +82,26 @@ class TestNode(unittest.TestCase):
         self.assertEqual(obj.version, '4.12.0')
 
     def test_node_add_neighbors_valid(self):
-        obj = ztpserver.topology.Node()
+        obj = ztpserver.topology.Node('1234567890')
         obj.add_neighbors({"Ethernet": [{"device": "test", "port": "test"}]})
         self.assertEqual(repr(obj), "Node(neighbors=1)")
         self.assertIsNotNone(obj.neighbors('Ethernet'))
 
-class TestNeighborDb(unittest.TestCase):
-
-    def test_neighbordb_load(self):
-        data = """
-            variables:
-              foo: bar
-            patterns:
-              - name: test pattern 1
-                definition: test
-                node: 001c73aabbcc
-                interfaces:
-                  - Ethernet1: any:any
-                  - Ethernet2: none
-              - name: test pattern 2
-                definition: test
-                interfaces:
-                  - Ethernet1: any:any
-                  - Ethernet2: none
-        """
-
-        ztpserver.topology.loads(data)
-        self.assertEqual(repr(ztpserver.topology.neighbordb),
-                         "Topology(globals=1, nodes=1)")
-
-
-    def test_neighbordb_load_invalid_filename(self):
-        self.assertRaises(IOError,
-                          ztpserver.topology.load,
-                          '/tmp/fake/file')
 
 class TestPattern(unittest.TestCase):
 
-    def test_create_pattern(self):
-        obj = ztpserver.topology.Pattern('test', 'test')
-        self.assertEqual(obj.name, 'test')
-        self.assertEqual(obj.definition, 'test')
+    def test_create_pattern_with_defaults(self):
+        obj = ztpserver.topology.Pattern()
+        self.assertIsInstance(obj, ztpserver.topology.Pattern)
 
     def test_create_pattern_with_kwargs(self):
-        kwargs = dict(node='abc123',
+        kwargs = dict(name='test',
+                      definition='test',
+                      node='abc123',
                       variables={'var': 'test'},
                       interfaces=[{'Ethernet1': 'any'}])
 
-        obj = ztpserver.topology.Pattern('test', 'test', **kwargs)
+        obj = ztpserver.topology.Pattern(**kwargs)
         self.assertEqual(obj.name, 'test')
         self.assertEqual(obj.definition, 'test')
         self.assertEqual(obj.node, 'abc123')
@@ -136,7 +109,7 @@ class TestPattern(unittest.TestCase):
         self.assertEqual(1, len(obj.interfaces))
 
     def test_add_interface(self):
-        obj = ztpserver.topology.Pattern('test', 'test')
+        obj = ztpserver.topology.Pattern()
         obj.add_interface('Ethernet', 'device', 'port')
         self.assertEqual(len(obj.interfaces), 1)
 
@@ -157,7 +130,7 @@ class TestInterfacePattern(unittest.TestCase):
                 'Ethernet2': [{'device': 'test', 'port': 'test'}]
             }
         }
-        node = ztpserver.topology.create_node(attrs)
+        node = ztpserver.topology.Node(**attrs)
         result = obj.match_neighbors(node.neighbors, {})
         self.assertEqual(result, ['Ethernet1'])
 
@@ -171,7 +144,7 @@ class TestInterfacePattern(unittest.TestCase):
                 'Ethernet2': [{'device': 'test', 'port': 'test'}]
             }
         }
-        node = ztpserver.topology.create_node(attrs)
+        node = ztpserver.topology.Node(**attrs)
         result = obj.match_neighbors(node.neighbors, {})
         self.assertEqual(result, list())
 

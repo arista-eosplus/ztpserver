@@ -261,16 +261,6 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
-runtime.add_attribute(BoolAttr(
-    name='disable_pattern_checks',
-    default=False
-))
-
-runtime.add_attribute(BoolAttr(
-    name='disable_node_creation',
-    default=False
-))
-
 runtime.add_attribute(StrAttr(
     name='identifier',
     choices=['systemmac', 'serialnum'],

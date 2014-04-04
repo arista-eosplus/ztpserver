@@ -146,15 +146,14 @@ def create_file_store(name, basepath=None):
     if basepath is None:
         basepath = ztpserver.config.runtime.default.data_root
 
+    log.debug('creating FileStore[%s] with basepath=%s' % (name, basepath))
     name = name[1:] if str(name).startswith('/') else name
     basepath = os.path.join(basepath, name)
-    log.debug("create_file_store: basepath is %s" % basepath)
 
     if not os.path.exists(basepath):
         log.debug('invalid basepath, not creating FileStore instance')
         raise FileStoreError('invalid path %s' % basepath)
 
-    log.debug('creating FileStore[%s] with basepath=%s' % (name, basepath))
     return FileStore(basepath)
 
 
