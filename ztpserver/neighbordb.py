@@ -54,7 +54,7 @@ def load(filename=None):
     try:
         topology.load(open(filename))
         log.debug('Loaded neighbordb [%r]' % topology)
-    except OSError:
+    except IOError:
         log.warn('Neighbordb file [%s] not loaded' % filename)
 
 def create_node(nodeattrs):
