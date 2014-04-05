@@ -232,11 +232,14 @@ class Topology(DeserializableMixin):
                 del self.variables['none']
 
         for pattern in contents.get('patterns'):
-            pattern = self.add_pattern(pattern)
+            pattern = self.add_pattern(**pattern)
 
-    def add_pattern(self, pattern):
+    def add_pattern(self, name, definition, node=None, interfaces=None,
+                    variables=None):
+
         try:
-            obj = Pattern(**pattern)
+            obj = Pattern(name, definition, node=node, interfaces=interfaces,
+                          variables=variables)
 
             # we need to do this to copy any global variables to
             # the pattern if a mores specific variable doesn't exists
@@ -252,7 +255,7 @@ class Topology(DeserializableMixin):
             log_msg('Unable to parse pattern entry', error=True)
             return
 
-        if 'node' in pattern:
+        if node:
             self.patterns['nodes'][obj.node] = obj
         else:
             self.patterns['globals'].append(obj)
@@ -294,7 +297,7 @@ class Topology(DeserializableMixin):
 class Pattern(DeserializableMixin, SerializableMixin):
 
     def __init__(self, name=None, definition=None, node=None,
-                 variables=None, interfaces=None):
+                 interfaces=None, variables=None):
 
         self.name = name
         self.definition = definition
@@ -364,14 +367,14 @@ class Pattern(DeserializableMixin, SerializableMixin):
         elif values == 'none' or device == 'none':
             device, port, tags = None, None, None
 
-        else:
+        elif isinstance(values, str):
             try:
                 device, port = DEVICENAME_PARSER_RE.split(values)
             except ValueError:
                 device, port = ANYDEVICE_PARSER_RE.split(values)
             port, tags = port.split(':') if ':' in port else (port, None)
 
-        #perform variable substitution
+        # perform variable substitution
         if device not in [None, 'any'] and device in self.variables:
             device = self.variables[device]
 
