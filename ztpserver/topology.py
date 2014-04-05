@@ -393,7 +393,9 @@ class Pattern(DeserializableMixin, SerializableMixin):
             # check for device none
             if intf_pattern.device is None:
                 log_msg("InterfacePattern device is 'none'")
-                return intf_pattern.interface not in neighbors
+                if [x for x in intf_pattern.interfaces if x in neighbors()]:
+                    return False
+                return True
 
             variables.update(self.variables)
             matches = intf_pattern.match_neighbors(neighbors, variables)
