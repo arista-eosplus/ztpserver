@@ -25,15 +25,10 @@ class TestDefinition(unittest.TestCase):
         self.longMessage = True
 
     def run_test(self):
-        #print 'Checking node: %s [%s]' % (self.node['node'], self.name)
+        print 'INFO: Checking node: %s [%s]' % (self.node['node'], self.name)
         result = ztpserver.neighbordb.topology.match_node(self.neighbordb_node)
         result = [x.name for x in result]
-        #print 'Result: %s' % result
-
-        if self.node.get('matches', None):
-            self.assertEqual(len(result), self.node['matches'],
-                             'test \'matches\' failed for node %s [%s]' % \
-                                (self.node['node'], self.name))
+        print 'INFO: Matches Result: %s' % result
 
         if self.node.get('match_includes', None):
             self.assertEqual(result, self.node['match_includes'],
@@ -44,5 +39,10 @@ class TestDefinition(unittest.TestCase):
             for match in self.node['match_excludes']:
                 self.assertNotIn(match, result,
                              'test \'match_excludes\' failed for node %s [%s]' % \
+                                (self.node['node'], self.name))
+
+        if self.node.get('matches', None):
+            self.assertEqual(len(result), self.node['matches'],
+                             'test \'matches\' failed for node %s [%s]' % \
                                 (self.node['node'], self.name))
 
