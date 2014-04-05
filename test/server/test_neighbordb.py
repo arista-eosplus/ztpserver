@@ -27,8 +27,10 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import os
 import unittest
+
 import yaml
 
 import ztpserver.topology  #pylint: disable=F0401
@@ -36,46 +38,9 @@ import ztpserver.neighbordb
 
 from ztpserver.app import enable_handler_console
 
+from neighbordb_test_lib import TestDefinition
+
 TEST_DIR = 'test/neighbordb'
-
-
-class TestDefinition(unittest.TestCase):
-    #pylint: disable=R0904
-
-    def __init__(self, name, node, neighbordb):
-        super(TestDefinition, self).__init__('run_test')
-        self.name = name
-        self.node = node
-        self.neighbordb = neighbordb
-        self.neighbordb_node = ztpserver.neighbordb.create_node(node['details'])
-
-    def setUp(self):
-        ztpserver.neighbordb.topology.clear()
-
-        assert not ztpserver.neighbordb.topology.patterns['globals']
-        assert not ztpserver.neighbordb.topology.patterns['nodes']
-
-        ztpserver.neighbordb.topology.deserialize(self.neighbordb)
-        self.longMessage = True
-
-    def run_test(self):
-        print 'Checking node: %s' % self.node['node']
-        result = ztpserver.neighbordb.topology.match_node(self.neighbordb_node)
-        result = [x.name for x in result]
-        print 'Result: %s' % result
-
-        if self.node.get('matches', None):
-            self.assertEqual(len(result), self.node['matches'],
-                             self.name)
-
-        if self.node.get('match_includes', None):
-            self.assertEqual(result, self.node['match_includes'],
-                             self.name)
-
-        if self.node.get('match_excludes', None):
-            for match in self.node['match_excludes']:
-                self.assertNotIn(match, result,
-                                 self.name)
 
 def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     suite = unittest.TestSuite()

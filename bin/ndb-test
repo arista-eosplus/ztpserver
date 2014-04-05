@@ -1,0 +1,109 @@
+#!/usr/bin/env python
+# encoding: utf-8
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+import sys
+import os
+import argparse
+import unittest
+import traceback
+
+import yaml
+
+from ztpserver.app import enable_handler_console
+
+sys.path.append('./test/server')
+from neighbordb_test_lib import TestDefinition
+
+debug = False
+
+class DefinitionResult(unittest.result.TestResult):
+
+    def printErrors(self):
+        print '-'*78
+        print 'Tested %d node(s) (failures=%d)\n' % \
+            (self.testsRun, (len(self.failures) + len(self.errors)))
+
+    def startTest(self, test):
+        super(DefinitionResult, self).startTest(test)
+        print "START: Running tests for node %s" % test.node['node']
+
+    def addFailure(self, test, err):
+        super(DefinitionResult, self).addFailure(test, err)
+
+        (errtype, value, tb) = err
+        formatted_lines = traceback.format_exc().splitlines()
+
+        if debug:
+            print value
+        else:
+            print 'ERROR:', str(formatted_lines[-1]).split(':')[-1].strip()
+
+
+def run(definition):
+
+    definition = yaml.load(open(definition))
+
+    suite = unittest.TestSuite()
+    for node in definition['nodes']:
+        print 'INFO: Adding test node: %s' % node['node']
+        suite.addTest(TestDefinition(definition['name'],
+                                     node,
+                                     definition['neighbordb']))
+
+    runner = unittest.TextTestRunner(stream=open('/dev/null', 'w'),
+                                     verbosity=0,
+                                     resultclass=DefinitionResult)
+    runner.run(suite)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('definition')
+    parser.add_argument('--debug', action='store_true')
+
+    args = parser.parse_args()
+
+    if not os.path.exists(args.definition):
+        sys.exit('definition not found')
+
+    if args.debug:
+        global debug
+        debug = True
+        enable_handler_console()
+
+    run(args.definition)
+
+
+if __name__ == '__main__':
+    main()

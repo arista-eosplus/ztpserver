@@ -1,0 +1,53 @@
+name: simple interface patterns
+
+neighbordb:
+
+  patterns:
+    - name: simple pattern 1
+      definition: test
+      interfaces:
+        - any: any
+
+    - name: simple pattern 2
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    - name: simple pattern 3
+      definition: test
+      interfaces:
+        - Ethernet1:
+            device: localhost
+            port: Ethernet1
+
+    - name: simple pattern 4
+      definition: test
+      interfaces:
+        - Ethernet2:
+            device: localhost
+            port: Ethernet1
+
+    - name: simple pattern 5
+      definition: test
+      interfaces:
+        - Ethernet1-3:
+            device: localhost
+            port: Ethernet1
+
+nodes:
+  - node: 2b3c
+    matches: 3
+    match_includes:
+      - simple pattern 1
+      - simple pattern 2
+      - simple pattern 3
+    match_excludes:
+      - simple pattern 4
+      - simple pattern 5
+    details:
+      systemmac: 00:1c:73:1a:2b:3c
+      neighbors:
+        Ethernet1:
+          - device: localhost
+            port: Ethernet1
+
