@@ -27,14 +27,10 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
 import unittest
 
 import yaml
-
-import ztpserver.topology  #pylint: disable=F0401
-import ztpserver.neighbordb
 
 from ztpserver.app import enable_handler_console
 
