@@ -460,8 +460,18 @@ class InterfacePattern(object):
 
     def match_neighbors(self, neighbors, variables):
         if self.interface == 'any':
+            # the pattern interface is any so we should consider
+            # all neighbor interfaces as potential matches
             interfaces = neighbors()
+        elif len(self.interfaces) > len(neighbors()):
+            # there are not enough neighbor entries to satisfy
+            # the pattern range so no reason to even try to match
+            # just return an empty list
+            return list()
         else:
+            # the pattern interface specifies a range so
+            # we can only consider those interfaces for pattern
+            # matching
             interfaces = [x for x in self.interfaces if x in neighbors()]
 
         matches = list()
@@ -470,10 +480,14 @@ class InterfacePattern(object):
                 if self.match_device(device, variables) and \
                    self.match_port(port):
                     matches.append(interface)
+                    # as soon as a device/port match is found in the
+                    # list of for this interface we don't have to check
+                    # for any more matches because it succeeds
                     break
         if matches != interfaces and self.interface != 'any':
+            # uh oh we didn't match all the interfaces, return an empty list
             matches = list()
-        return matches[0:1]
+        return matches
 
     def match_device(self, device, variables=None):
         if variables is None:
