@@ -38,7 +38,7 @@ from distutils.core import setup
 
 from ztpserver import __version__, __author__
 
-conf_path = '/etc/ztserver'
+conf_path = '/etc/ztpserver'
 install_path = '/usr/share/ztpserver'
 install_requires = open('requirements.txt').readlines()
 
