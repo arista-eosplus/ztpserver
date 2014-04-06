@@ -34,7 +34,11 @@ import os
 import sys
 
 from glob import glob
-from distutils.core import setup
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 from ztpserver import __version__, __author__
 
