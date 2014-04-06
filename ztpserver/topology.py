@@ -127,11 +127,11 @@ class Node(DeserializableMixin):
 
         neighbors = dict()
         if len(self.neighbors) > 0:
-            for interface, neighbors in self.neighbors.items():
+            for interface, attribs in self.neighbors.items():
                 collection = list()
-                for neighbor in neighbors:
-                    collection.append(dict(device=neighbor.device,
-                                           port=neighbor.port))
+                for attrib in attribs:
+                    collection.append(dict(device=attrib.device,
+                                           port=attrib.port))
                 neighbors[interface] = collection
         attrs['neighbors'] = neighbors
         return attrs

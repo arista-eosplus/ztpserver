@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,6 +37,7 @@ PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
 import os
 import shutil
 import urllib
+import urlparse
 
 def is_subdir(path, directory):
     return os.path.realpath(path).startswith(os.path.realpath(directory))
@@ -47,14 +48,14 @@ def url_persistent(url):
             return True
     return False
 
-def main(attributes): 
+def main(attributes):
     '''Copies file to the switch.
 
     Copies file based on the values of 'src_url' and 'dst_url'
     attributes ('dst_url' should point to the detination folder).
     If 'overwrite' is set to:
        - 'replace': the file is copied to the switch regardless
-         of whether there is already a file with the same name at the 
+         of whether there is already a file with the same name at the
          destination;
        - 'if-missing': the file is copied to the switch only if
          there is not already a file with the same name at the
@@ -87,6 +88,8 @@ def main(attributes):
     src_url = attributes.get('src_url')
     if not src_url:
         return 1
+    elif not urlparse.urlsplit(src_url).scheme:
+        src_url = urlparse.urljoin(attributes.get('ztps_server'), src_url)
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
@@ -128,15 +131,15 @@ def main(attributes):
             return 4
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
-        
+
         lines = []
         if overwrite == 'if-missing':
             lines = lines + ['[ ! -f %s ] && '
-                             'sudo cp %s %s'  % (dst_url, dst_path, 
+                             'sudo cp %s %s'  % (dst_url, dst_path,
                                                  dst_url)]
         elif overwrite == 'backup':
             lines = lines + ['[ -f %s ] && '
-                             'sudo mv %s %s%s' % (dst_url, dst_url, 
+                             'sudo mv %s %s%s' % (dst_url, dst_url,
                                                   dst_url, BACKUP_SUFFIX)]
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         elif overwrite == 'replace':
