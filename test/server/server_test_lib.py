@@ -32,13 +32,14 @@
 #
 import os
 import shutil
+import random
+import string
 
 WORKINGDIR = '/tmp/ztpserver'
 FILESTORE = os.path.join(WORKINGDIR, 'filestore')
 ZTPSCONF = os.path.join(WORKINGDIR, 'ztpserver.conf')
 
-FOLDERS = ['bootstrap', 'actions', 'definitions', 'nodes',
-           'packages', 'files']
+FOLDERS = ['bootstrap', 'actions', 'definitions', 'nodes', 'files', 'resources']
 
 NODES = {
     '001c73111111': [ 'definition', 'pattern' , 'topology'],
@@ -148,6 +149,11 @@ class FileStore(object):
         except os.error:
             pass
 
+def random_string():
+    return ''.join(random.choice(
+            string.ascii_uppercase +
+            string.digits) for _ in range(random.randint(3, 20)))
+
 def ztpserver_conf():
     with open(ZTPSCONF, 'w') as conf:
         conf.write('[default]\n')
@@ -155,7 +161,7 @@ def ztpserver_conf():
     return ZTPSCONF
 
 def create_filestore():
-    FileStore.create()
+    return FileStore.create()
 
 def delete_filestore():
     try:

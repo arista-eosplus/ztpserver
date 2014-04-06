@@ -30,79 +30,128 @@
 import unittest
 import os
 
-import ztpserver.repository
+from ztpserver.repository import FileObject, FileStore, FileObjectNotFound
+from ztpserver.repository import create_file_store
 
-class TestNode(unittest.TestCase):
+from server_test_lib import create_filestore, FILESTORE
+from server_test_lib import remove_all, random_string
 
-    def test_create_node(self):
-        headers = {
-            'X-Arista-Softwarereversion': '4.12.0',
-            'X-Arista-Architecture': 'i386',
-            'X-Arista-Modelname': 'vEOS',
-            'X-Arista-Systemmac': '00:0c:29:f5:d2:7d',
-            'X-Arista-Serialnumber': '1234567890'
-        }
+class SuccessFileObjectTests(unittest.TestCase):
 
-        obj = ztpserver.repository.create_node(headers)
-        self.assertEqual(obj.softwarereversion, '4.12.0')
-        self.assertEqual(obj.architecture, 'i386')
-        self.assertEqual(obj.modelname, 'vEOS')
-        self.assertEqual(obj.systemmac, '00:0c:29:f5:d2:7d')
-        self.assertEqual(obj.serialnumber, '1234567890')
+    def setUp(self):
+        self.filestore = create_filestore()
+        assert os.path.exists(FILESTORE)
 
+    def tearDown(self):
+        remove_all()
 
-class TestFileObject(unittest.TestCase):
+    def test_success(self):
+        filename = random_string()
+        contents = random_string()
+        filepath = os.path.join(FILESTORE, filename)
+        self.filestore.write_file(filename, contents)
 
-    def test_create_file_object_with_path(self):
-        path = os.path.join(os.getcwd(), 'test')
-        fn = 'test_repository.py'
-        obj = ztpserver.repository.FileObject(fn, path)
+        obj = FileObject(filename, path=FILESTORE)
+        self.assertTrue(obj.name, filepath)
+        self.assertTrue(obj.exists)
+        self.assertEqual(obj.contents, contents)
 
-        self.assertEqual(repr(obj), 'FileObject(name=%s, type=%s)' %
-            (os.path.join(path, fn), 'text/x-python'))
-
-    def test_create_file_object_without_path(self):
-        path = os.path.join(os.getcwd(), 'test', 'test_repository.py')
-        obj = ztpserver.repository.FileObject(path)
-        self.assertEqual(repr(obj), 'FileObject(name=%s, type=%s)' %
-            (path, 'text/x-python'))
-
-    def test_get_file_contents_valid_file(self):
-        path = os.path.join(os.getcwd(), 'test/server')
-        fn = 'test_repository.py'
-        obj = ztpserver.repository.FileObject(fn, path)
-        fh = open(os.path.join(path, fn)).read()
-        self.assertEqual(obj.contents, fh)
-
-    def test_get_file_contents_invalid_file(self):
-        obj = ztpserver.repository.FileObject('this_is_an_invalid_file')
+    def test_file_missing(self):
+        filename = random_string()
+        obj = FileObject(filename, path=FILESTORE)
+        self.assertFalse(obj.exists)
         self.assertIsNone(obj.contents)
 
-class TestFileStore(unittest.TestCase):
+
+
+class SuccessFileStoreTests(unittest.TestCase):
+
+    def setUp(self):
+        create_filestore()
+        assert os.path.exists(FILESTORE)
+
+        self.filestore = FileStore(FILESTORE)
+
+    def tearDown(self):
+        remove_all()
+
+    def test_success(self):
+        self.assertIsInstance(self.filestore, FileStore)
+        self.assertEqual(repr(self.filestore), 'FileStore(path=%s)' % FILESTORE)
+        self.assertEqual(self.filestore.path, FILESTORE)
+        self.assertEqual(self.filestore._cache, dict())
+
+    def test_add_folder(self):
+        folder = random_string()
+        self.filestore.add_folder(folder)
+        self.assertTrue(os.path.join(FILESTORE, folder))
+
+    def test_add_nested_folder(self):
+        folder = '%s/%s/%s' % \
+            (random_string(), random_string(), random_string())
+        self.filestore.add_folder(folder)
+        self.assertTrue(os.path.join(FILESTORE, folder))
+
+    def test_write_file(self):
+        filename = random_string()
+        contents = random_string()
+        self.filestore.write_file(filename, contents)
+        filepath = os.path.join(FILESTORE, filename)
+        self.assertTrue(filepath)
+        self.assertEqual(open(filepath).read(), contents)
+
+    def test_file_exists(self):
+        filename = random_string()
+        contents = random_string()
+        filepath = os.path.join(FILESTORE, filename)
+        open(filepath, 'w').write(contents)
+        self.filestore.exists(filepath)
+
+        self.filestore.write_file(filename, contents)
+        filepath = os.path.join(FILESTORE, filename)
+        self.assertTrue(filepath)
+        self.assertEqual(open(filepath).read(), contents)
+
+    def test_get_file(self):
+        filename = random_string()
+        contents = random_string()
+        filepath = os.path.join(FILESTORE, filename)
+        open(filepath, 'w').write(contents)
+        obj = self.filestore.get_file(filename)
+        self.assertIsInstance(obj, FileObject)
+        self.assertTrue(obj.exists)
+
+    def test_get_file_missing(self):
+        filename = random_string()
+        assert not os.path.exists(os.path.join(FILESTORE, filename))
+        self.assertRaises(FileObjectNotFound,
+                          self.filestore.get_file,
+                          filename)
+
+    def test_delete_file(self):
+        filename = random_string()
+        contents = random_string()
+        filepath = os.path.join(FILESTORE, filename)
+        open(filepath, 'w').write(contents)
+        assert os.path.exists(filepath)
+        self.filestore.delete_file(filepath)
+        self.assertFalse(os.path.exists(filepath))
+
+    def test_delete_file(self):
+        filename = random_string()
+        filepath = os.path.join(FILESTORE, filename)
+        assert not os.path.exists(filepath)
+        self.filestore.delete_file(filepath)
+        self.assertFalse(os.path.exists(filepath))
 
     def test_create_file_store(self):
-        name = 'test'
-        path = os.path.join(os.getcwd(), name)
+        fsname = random_string()
+        filepath = os.path.join(FILESTORE, fsname)
+        os.makedirs(filepath)
 
-        obj = ztpserver.repository.create_file_store(name, os.getcwd())
-        self.assertEqual(repr(obj), "FileStore(path=%s)" % path)
-
-    def test_get_file_valid(self):
-        filestore = 'test/server'
-        filename = 'test_repository.py'
-        path = os.path.join(os.getcwd(), filestore, filename)
-        fspath = os.path.join(os.getcwd(), filestore)
-
-        obj = ztpserver.repository.create_file_store(filestore, basepath=os.getcwd())
-        fobj = obj.get_file(filename)
-        self.assertEqual(repr(fobj), 'FileObject(name=%s, type=%s)' %
-            (path, 'text/x-python'))
-
-    def test_get_file_invalid(self):
-        obj = ztpserver.repository.create_file_store('test', os.getcwd())
-        self.assertRaises(ztpserver.repository.FileObjectNotFound,
-                          obj.get_file,
-                          'invalid_filename')
+        obj = create_file_store(fsname, basepath=FILESTORE)
+        self.assertIsInstance(obj, FileStore)
+        self.assertTrue(os.path.exists(filepath))
 
 if __name__ == '__main__':
     unittest.main()

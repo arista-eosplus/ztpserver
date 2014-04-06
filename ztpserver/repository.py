@@ -40,17 +40,6 @@ import ztpserver.config
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
-def create_node(headers):
-    """ returns a Node object using HTTP X-Arista headers """
-
-    kwargs = dict()
-    for key, value in headers.items():
-        if str(key).startswith('X-Arista'):
-            key = str(key).replace('X-Arista-', '').lower()
-            kwargs[key] = value
-    Node = collections.namedtuple('Node', kwargs.keys())  #pylint: disable=C0103
-    return Node(**kwargs)    #pylint: disable=C0103,W0142
-
 class FileObjectNotFound(Exception):
     """ raised if url not found in the file store """
     pass
