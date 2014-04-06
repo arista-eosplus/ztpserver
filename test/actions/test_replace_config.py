@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -42,7 +42,7 @@ from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 
 class FailureTest(ActionFailureTest):
-    
+
     def test_missing_url(self):
         self.basic_test('replace_config', 1)
 
@@ -75,6 +75,29 @@ class SuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
+    def test_url_replacement(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        ztps_server = 'http://%s' % bootstrap.server
+
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action'}],
+            attributes={'url' : config,
+                        'ztps_server': ztps_server})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('replace_config'))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
 if __name__ == '__main__':
     unittest.main()

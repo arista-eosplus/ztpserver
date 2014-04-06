@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -51,7 +51,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('install_cli_plugin', 2,
-                        attributes={'url' : 
+                        attributes={'url' :
                                     random_string()})
 
 
@@ -88,10 +88,54 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(os.path.isfile(RC_EOS))
             log = file_log(RC_EOS)
             self.failUnless('#!/bin/bash' in log)
-            self.failUnless('sudo cp %s/%s %s' % 
+            self.failUnless('sudo cp %s/%s %s' %
                             (persistent_dir, plugin, plugin_dir) in log)
 
-            self.failUnless(contents in 
+            self.failUnless(contents in
+                            file_log('%s/%s' % (persistent_dir, plugin)))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            shutil.rmtree(persistent_dir)
+            bootstrap.end_test()
+
+    def test_success(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        plugin = url = random_string()
+        ztps_server = 'http://%s' % bootstrap.server
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action'}],
+            attributes={'url' : url,
+                        'ztps_server': ztps_server})
+
+        bootstrap.ztps.set_action_response(
+            'startup_config_action', startup_config_action())
+
+        plugin_dir = '/tmp'
+        persistent_dir = '/tmp/persistent'
+        action = get_action('install_cli_plugin')
+        action = action.replace('/usr/lib/python2.7/site-packages/CliPlugin',
+                                plugin_dir)
+
+        action = action.replace('/mnt/flash/.ztp-plugins',
+                                persistent_dir)
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        contents = random_string()
+        bootstrap.ztps.set_file_response(plugin, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(RC_EOS))
+            log = file_log(RC_EOS)
+            self.failUnless('#!/bin/bash' in log)
+            self.failUnless('sudo cp %s/%s %s' %
+                            (persistent_dir, plugin, plugin_dir) in log)
+
+            self.failUnless(contents in
                             file_log('%s/%s' % (persistent_dir, plugin)))
             self.failUnless(bootstrap.success())
         except AssertionError:

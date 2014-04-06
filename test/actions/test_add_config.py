@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -50,7 +50,7 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('add_config', 2,
-                        attributes={'url' : 
+                        attributes={'url' :
                                     random_string()})
 
     def test_no_variable(self):
@@ -62,7 +62,7 @@ class FailureTest(ActionFailureTest):
             attributes={'url' : url})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
-        contents = '%s $missing_variable %s' % (random_string(), 
+        contents = '%s $missing_variable %s' % (random_string(),
                                                  random_string())
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
@@ -89,7 +89,7 @@ class FailureTest(ActionFailureTest):
                         'variables' : var_dict})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
-        contents = '%s $missing_variable %s $a' % (random_string(), 
+        contents = '%s $missing_variable %s $a' % (random_string(),
                                                    random_string())
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
@@ -112,6 +112,29 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
             attributes={'url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(bootstrap.success())
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
+    def test_url_replacement(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        ztps_server = 'http://%s' % bootstrap.server
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action'}],
+            attributes={'url' : config,
+                        'ztps_server': ztps_server})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = random_string()
@@ -209,7 +232,7 @@ class SuccessTest(unittest.TestCase):
         try:
             self.failUnless(os.path.isfile(STARTUP_CONFIG))
             contents = Template(contents).substitute(var_dict)
-            self.failUnless([x.strip() for x in contents.split('\n')] == 
+            self.failUnless([x.strip() for x in contents.split('\n')] ==
                             file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
         except AssertionError:
@@ -219,7 +242,7 @@ class SuccessTest(unittest.TestCase):
 
     def test_variable(self):
         var_dict = {'test_variable': 'test_new_variable'}
-        contents = '%s $test_variable %s' % (random_string(), 
+        contents = '%s $test_variable %s' % (random_string(),
                                                  random_string())
         self.variables_test(var_dict, contents)
 
@@ -227,7 +250,7 @@ class SuccessTest(unittest.TestCase):
         var_dict = {'a': 'new_a',
                     'b': 'new_b',
                     'c': 'new_c'}
-        contents = '%s $a\n%s $b %s \n$c %s' % (random_string(), 
+        contents = '%s $a\n%s $b %s \n$c %s' % (random_string(),
                                                 random_string(),
                                                 random_string(),
                                                 random_string())

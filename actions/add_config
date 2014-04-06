@@ -31,6 +31,7 @@
 
 import os
 import urllib
+import urlparse
 from string import Template
 
 TEMP_CONFIG = '/tmp/tmp-config'
@@ -61,6 +62,8 @@ def main(attributes):
     url = attributes.get('url')
     if not url:
         return 1
+    elif not urlparse.urlsplit(url).scheme:
+        url = urlparse.urljoin(attributes.get('ztps_server'), url)
 
     try:
         urllib.urlretrieve(url, TEMP_CONFIG)
