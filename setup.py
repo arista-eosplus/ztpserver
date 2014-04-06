@@ -38,31 +38,29 @@ from distutils.core import setup
 
 from ztpserver import __version__, __author__
 
-confdir = os.environ.get('ZTPSERVER_CONFDIR', '/etc')
-confdir = '/persist/sys/etc' if os.path.exists('/etc/Eos-release') else confdir
+conf_path = '/etc/ztserver'
+install_path = '/usr/share/ztpserver'
+install_requires = open('requirements.txt').readlines()
 
 setup(
     name='ztpserver',
     version=__version__,
     description = 'ZTP Server for EOS',
     author=__author__,
-    author_email='devops@aristanetworks.com',
+    author_email='eosplus@aristanetworks.com',
     url='http://eos.aristanetworks.com/',
     license='BSD-3',
+    install_requires=install_requires,
     packages=['ztpserver'],
     scripts=glob('bin/*'),
     data_files=[
-        ('%s/ztpserver' % confdir, ['conf/ztpserver.conf']),
-        ('bootstrap', glob('repos/default/bootstrap/*')),
-        ('actions', glob('repos/default/actions/*')),
-        ('nodes', []),
-        ('definitions', []),
-        ('configs', []),
-        ('repos/default/images', []),
-        ('repos/default/templates', []),
-        ('repos/default/files', []),
-        ('repos/default/extensions', []),
-        ('repos/default/plugins', [])
+        (conf_path, ['conf/ztpserver.conf']),
+        ('%s/bootstrap' % install_path, glob('client/*')),
+        ('%s/actions' % install_path, glob('actions/*')),
+        ('%s/nodes' % install_path, []),
+        ('%s/definitions' % install_path, []),
+        ('%s/files' % install_path, []),
+        ('%s/resources' % install_path, [])
     ]
 )
 
