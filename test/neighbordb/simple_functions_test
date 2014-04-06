@@ -1,0 +1,64 @@
+name: simple function patterns
+
+neighbordb:
+
+  variables:
+    global_i: includes('localhost')
+    global_e: excludes('localhost')
+    global_r: regex('.*')
+
+  patterns:
+    - name: pattern 1
+      definition: test
+      variables:
+        local: includes('localhost')
+      interfaces:
+        - Ethernet1: includes('localhost'):any
+        - Ethernet2: includes('localhost'):Ethernet1
+        - Ethernet3: local:Ethernet1
+        - Ethernet4: global_i:Ethernet1
+
+    - name: pattern 2
+      definition: test
+      variables:
+        local: excludes('localhost')
+      interfaces:
+        - Ethernet1: excludes('localhost'):any
+        - Ethernet2: excludes('localhost'):Ethernet1
+        - Ethernet3: local:Ethernet1
+        - Ethernet4: global_e:Ethernet1
+
+    - name: pattern 3
+      definition: test
+      variables:
+        local: regex('local*')
+      interfaces:
+        - Ethernet1: regex('localhost'):any
+        - Ethernet2: regex('localhost'):Ethernet1
+        - Ethernet3: local:Ethernet1
+        - Ethernet4: global_r:Ethernet1
+
+
+nodes:
+  - node: 2b3c
+    matches: 2
+    match_includes:
+      - pattern 1
+      - pattern 3
+    match_excludes:
+      - pattern 2
+    details:
+      systemmac: 00:1c:73:1a:2b:3c
+      neighbors:
+        Ethernet1:
+          - device: localhost
+            port: Ethernet1
+        Ethernet2:
+          - device: localhost
+            port: Ethernet1
+        Ethernet3:
+          - device: localhost
+            port: Ethernet1
+        Ethernet4:
+          - device: localhost
+            port: Ethernet1
