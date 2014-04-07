@@ -31,7 +31,6 @@
 
 import unittest
 import sys
-import smtplib
 
 sys.path.append('test/client')
 
