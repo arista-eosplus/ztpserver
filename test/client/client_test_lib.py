@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -40,6 +40,9 @@ import time
 import thread
 import unittest
 
+import smtpd
+import asyncore
+
 import BaseHTTPServer
 
 ZTPS_SERVER = '127.0.0.1'
@@ -47,6 +50,9 @@ ZTPS_PORT = 12345
 
 EAPI_SERVER = '127.0.0.1'
 EAPI_PORT = 1080
+
+SMTP_SERVER = '127.0.0.1'
+SMTP_PORT = 2525
 
 BOOTSTRAP_FILE = 'client/bootstrap'
 
@@ -81,6 +87,14 @@ def start_ztp_server():
         ztps.cleanup()
     return ztps
 
+smtp = None    #pylint: disable=C0103
+def start_smtp_server():
+    global smtp     #pylint: disable=W0603
+    if not smtp:
+        smtp = SmtpServer()
+        smtp.start()
+    return smtp
+
 eapis = None    #pylint: disable=C0103
 def start_eapi_server():
     global eapis    #pylint: disable=W0603
@@ -114,7 +128,7 @@ def clear_boot_extensions():
     shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
 
 def clear_logs():
-    clear_cli_log()    
+    clear_cli_log()
     clear_eapi_log()
 
 def eapi_log():
@@ -126,7 +140,7 @@ def eapi_log():
 
 def cli_log():
     try:
-        return [x.strip().split('-c ')[ -1 ] 
+        return [x.strip().split('-c ')[ -1 ]
                 for x in open(CLI_LOG, 'r').readlines()]
     except IOError:
         return []
@@ -147,7 +161,7 @@ def get_action(action):
 
 def startup_config_action(lines=None):
     if not lines:
-        lines = ['test']        
+        lines = ['test']
 
     user = os.getenv('USER')
     return '''#!/usr/bin/env python
@@ -221,7 +235,7 @@ def main(attributes):
 
 def random_string():
     return ''.join(random.choice(
-            string.ascii_uppercase + 
+            string.ascii_uppercase +
             string.digits) for _ in range(random.randint(3, 20)))
 
 
@@ -243,9 +257,10 @@ class Bootstrap(object):
 
         self.eapi = start_eapi_server()
         self.ztps = start_ztp_server()
+        self.smtp = start_smtp_server()
 
         self.configure()
-        
+
         if ztps_default_config:
             self.ztps.set_config_response()
             self.ztps.set_node_check_response()
@@ -257,31 +272,31 @@ class Bootstrap(object):
 
         for line in infile:
             line = line.replace('$SERVER', 'http://%s' % self.server)
-            line = line.replace("COMMAND_API_SERVER = 'localhost'", 
-                                "COMMAND_API_SERVER = 'localhost:%s'" % 
+            line = line.replace("COMMAND_API_SERVER = 'localhost'",
+                                "COMMAND_API_SERVER = 'localhost:%s'" %
                                 self.eapi_port)
-            line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'", 
+            line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'",
                                 "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
-            line = line.replace("FLASH = '/mnt/flash'", 
+            line = line.replace("FLASH = '/mnt/flash'",
                                 "FLASH = '%s'" % FLASH)
-            line = line.replace("RC_EOS = '/mnt/flash/rc.eos'", 
+            line = line.replace("RC_EOS = '/mnt/flash/rc.eos'",
                                 "RC_EOS = '%s'" % RC_EOS)
             line = line.replace(
-                "BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'", 
+                "BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'",
                 "BOOT_EXTENSIONS = '%s'" % BOOT_EXTENSIONS)
             line = line.replace(
-                "BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'", 
+                "BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'",
                 "BOOT_EXTENSIONS_FOLDER = '%s'" % BOOT_EXTENSIONS_FOLDER)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
                 line = 'HTTP_TIMEOUT = 0.01'
-                
+
             outfile.write(line)
 
         infile.close()
         outfile.close()
-        
+
         os.chmod(self.filename, 0777)
         self.module = imp.load_source('bootstrap', self.filename)
 
@@ -296,11 +311,11 @@ class Bootstrap(object):
         for filename in os.listdir('/tmp'):
             if re.search('^ztps-log-', filename):
                 os.remove(os.path.join('/tmp', filename))
-                
+
         # Clean up bootstrap script
         remove_file(self.filename)
         remove_file('%sc' % self.filename)
-                
+
         # Clean up logs
         clear_logs()
 
@@ -311,9 +326,9 @@ class Bootstrap(object):
 
     def start_test(self):
         try:
-            proc = subprocess.Popen(self.filename, 
-                                    stdin=subprocess.PIPE, 
-                                    stdout=subprocess.PIPE, 
+            proc = subprocess.Popen(self.filename,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             (self.output, self.error) = proc.communicate()
         finally:
@@ -322,22 +337,22 @@ class Bootstrap(object):
         self.return_code = proc.returncode             #pylint: disable=E1101
 
     def node_information_collected(self):
-        cmds = ['show version', 
+        cmds = ['show version',
                 'show lldp neighbors']
         return eapi_log()[:2] == cmds
 
     def eapi_configured(self):
-        cmds = ['configure', 
-                'username ztps secret ztps-password privilege 15', 
-                'management api http-commands', 
-                'no protocol https', 
-                'protocol http', 
+        cmds = ['configure',
+                'username ztps secret ztps-password privilege 15',
+                'management api http-commands',
+                'no protocol https',
+                'protocol http',
                 'no shutdown']
         return cli_log()[:6] == cmds
 
     def eapi_node_information_collected(self):
         return self.eapi_configured() and self.node_information_collected()
-        
+
     def server_connection_failure(self):
         return self.return_code == 1
 
@@ -369,7 +384,7 @@ class Bootstrap(object):
 class EAPIServer(object):
     #pylint: disable=C0103,E0213,W0201
 
-    def __init__(self, mac=SYSTEM_MAC, model='', 
+    def __init__(self, mac=SYSTEM_MAC, model='',
                  serial_number='', version=''):
         self.mac = mac
         self.model = model
@@ -393,7 +408,7 @@ class EAPIServer(object):
                 if cmds:
                     open(EAPI_LOG, 'a+b').write('%s\n' % '\n'.join(cmds))
 
-                print 'EAPIServer: responding to request:%s (%s)' % ( 
+                print 'EAPIServer: responding to request:%s (%s)' % (
                     req.path, ', '.join(cmds))
 
                 req.send_response(STATUS_OK)
@@ -403,13 +418,13 @@ class EAPIServer(object):
                     req.end_headers()
                     if cmds == ['show version']:
                         req.wfile.write(json.dumps(
-                                {'result' : 
+                                {'result' :
                                  [{'modelName' : self.model,
                                    'internalVersion' : self.version,
                                    'serialNumber' : self.serial_number,
                                    'systemMacAddress' : self.mac}]}))
                     elif cmds == ['show lldp neighbors']:
-                        req.wfile.write(json.dumps({'result' : 
+                        req.wfile.write(json.dumps({'result' :
                                                   [{'lldpNeighbors': []}]}))
                     else:
                         req.wfile.write(json.dumps({'result' : []}))
@@ -446,15 +461,15 @@ class ZTPServer(object):
     def set_file_response(self, filename, output,
                             content_type='application/octet-stream',
                             status=STATUS_OK):
-        self.responses['/%s' % filename ] = (content_type, 
-                                             status, 
+        self.responses['/%s' % filename ] = (content_type,
+                                             status,
                                              output)
 
     def set_action_response(self, action, output,
                             content_type='text/x-python',
                             status=STATUS_OK):
-        self.responses['/actions/%s' % action ] = (content_type, 
-                                                   status, 
+        self.responses['/actions/%s' % action ] = (content_type,
+                                                   status,
                                                    output)
 
     def set_config_response(self, logging=None, xmpp=None,
@@ -468,17 +483,17 @@ class ZTPServer(object):
 
         if xmpp:
             response['xmpp'] = xmpp
-            
+
         self.responses['/bootstrap/config'] = (content_type, status,
                                                json.dumps(response))
 
     def set_node_check_response(self, content_type='text/html',
                                 status=None):
         if status is None:
-            status = random.choice([STATUS_CONFLICT, 
+            status = random.choice([STATUS_CONFLICT,
                                     STATUS_CREATED])
 
-        self.responses['/nodes'] = (content_type, status, '')        
+        self.responses['/nodes'] = (content_type, status, '')
 
     def set_definition_response(self, node_id=SYSTEM_MAC,
                                 name='DEFAULT_DEFINITION',
@@ -517,8 +532,8 @@ class ZTPServer(object):
                     req.end_headers()
                     req.wfile.write(response[2])
                     print 'ZTPS: RESPONSE: (ct=%s, status=%s, output=%s...)' % (
-                        response[0], 
-                        response[1], 
+                        response[0],
+                        response[1],
                         response[2][:100])
                 else:
                     print 'ZTPS: No RESPONSE'
@@ -544,10 +559,39 @@ class ZTPServer(object):
             print time.asctime(), 'ZTPS: Server stops - %s:%s' % (
                 ZTPS_SERVER, ZTPS_PORT)
 
+
+class SmtpServer(object):
+
+    def start(self):
+        thread.start_new_thread(self._run, ())
+
+    def _run(self):
+
+        class SMTPServer(smtpd.SMTPServer):
+
+            def __init__(*args, **kwargs):
+                print "SMTP: Running smtp server on port 2525"
+                smtpd.SMTPServer.__init__(*args, **kwargs)
+
+            def process_message(*args, **kwargs):
+                pass
+
+        smtp_server = SMTPServer((SMTP_SERVER, SMTP_PORT), None)
+        print time.asctime(), 'SMTP: Server starts - %s:%s' % (
+            SMTP_SERVER, SMTP_PORT)
+        try:
+            asyncore.loop()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            smtp_server.close()
+            print time.asctime(), 'SMTPS: Server stops - %s:%s' % (
+                SMTP_SERVER, SMTP_PORT)
+
 class ActionFailureTest(unittest.TestCase):
     #pylint: disable=R0904
 
-    def basic_test(self, action, return_code, attributes=None, 
+    def basic_test(self, action, return_code, attributes=None,
                    action_value=None):
         if not attributes:
             attributes = {}
@@ -570,4 +614,4 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError:
             raise
         finally:
-            bootstrap.end_test()        
+            bootstrap.end_test()
