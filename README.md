@@ -4,9 +4,7 @@ This is the README for an implementation of a server to provide ZeroTouch Provis
 This ZTP Server provides a number of configurable features that extend beyond simply loading an initial configuration.   The server provides the ability to define the target network element through the introduction of attributes and actions.   The attributes and actions can also be extended to provide custom actions that are specific to a given implementation.
 
 
-| Branch | Build Status |
-|--------|--------------|
-| develop | [![Build Status](https://travis-ci.org/arista-eosplus/ztpserver.png?branch=develop)](https://travis-ci.org/arista-eosplus/ztpserver)
+[![Build Status](https://travis-ci.org/arista-eosplus/ztpserver.png?branch=develop)](https://travis-ci.org/arista-eosplus/ztpserver)
 
 ## Features
 
@@ -24,7 +22,7 @@ This ZTP Server provides a number of configurable features that extend beyond si
 * [PyYaml 3.0 or later](http://pyyaml.org/)
 
 ### Client
-* Arista EOS 4.12 or later
+* Arista EOS 4.13 or later
 
 ## License
 BSD-3, See LICENSE file
