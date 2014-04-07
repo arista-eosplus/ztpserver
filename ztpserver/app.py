@@ -32,6 +32,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import os
+import sys
 import argparse
 
 import logging
@@ -41,6 +42,8 @@ from wsgiref.simple_server import make_server
 import ztpserver.config
 import ztpserver.controller
 import ztpserver.neighbordb
+
+from ztpserver import __version__ as VERSION
 
 DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
 
@@ -126,12 +129,19 @@ def main():
 
     parser = argparse.ArgumentParser(usage=usage)
 
+    parser.add_argument('--version', '-v',
+                         action='store_true',
+                         help='Displays the version information')
+
     parser.add_argument('--conf', '-c',
                         type=str,
                         default=DEFAULT_CONF,
                         help='Specifies the configuration file to use')
 
     args = parser.parse_args()
+    if args.version:
+         print 'ztps version %s' % VERSION
+         sys.exit()
     return run_server(args.conf)
 
 
