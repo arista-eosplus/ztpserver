@@ -70,9 +70,14 @@ class DefinitionResult(unittest.result.TestResult):
             print 'ERROR:', str(formatted_lines[-1]).split(':')[-1].strip()
 
 
-def run(definition):
+def run(definition, neighbordb=None):
 
     definition = yaml.load(open(definition))
+
+    if neighbordb is not None:
+        'INFO: Overriding neighbordb with %s' % neighbordb
+        ndb = yaml.load(open(neighbordb))
+        definition['neighbordb'] = ndb
 
     suite = unittest.TestSuite()
     for node in definition['nodes']:
@@ -90,6 +95,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('definition')
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--neighbordb', default=None)
 
     args = parser.parse_args()
 
@@ -101,7 +107,11 @@ def main():
         debug = True
         enable_handler_console()
 
-    run(args.definition)
+    kwargs = dict(definition=args.definition)
+    if args.neighbordb:
+        kwargs['neighbordb'] = args.neighbordb
+
+    run(**kwargs)
 
 
 if __name__ == '__main__':

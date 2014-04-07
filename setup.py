@@ -44,7 +44,7 @@ from ztpserver import __version__, __author__
 
 conf_path = '/etc/ztpserver'
 install_path = '/usr/share/ztpserver'
-install_requires = open('requirements.txt').readlines()
+install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='ztpserver',
