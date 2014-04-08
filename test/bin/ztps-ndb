@@ -58,7 +58,7 @@ class DefinitionResult(unittest.result.TestResult):
 
     def startTest(self, test):
         super(DefinitionResult, self).startTest(test)
-        print "START: Running tests for node %s" % test.node['node']
+        print "START: Running tests for node %s" % test.node['name']
 
     def addFailure(self, test, err):
         super(DefinitionResult, self).addFailure(test, err)
@@ -81,7 +81,7 @@ def run(definition, neighbordb=None):
 
     suite = unittest.TestSuite()
     for node in definition['nodes']:
-        print 'INFO: Adding test node: %s' % node['node']
+        print 'INFO: Adding test node: %s' % node['name']
         suite.addTest(TestDefinition(definition['name'],
                                      node,
                                      definition['neighbordb']))
