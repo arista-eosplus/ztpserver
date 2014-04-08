@@ -328,6 +328,12 @@ neighbordb:
         - Ethernet1: 
             device: hostname
 
+    - name: intf connected to port on any device long
+      definition: test
+      interfaces:
+        - Ethernet1: 
+            port: Ethernet1
+
     - name: intf connected to device
       definition: test
       interfaces:
@@ -414,6 +420,7 @@ configured_neighbordb:
     - intf connected to any device/port 2
     - intf connected to any device/port 3
     - intf not connected long
+    - intf connected to port on any device long
     - intf connected to anything long
     - intf connected to any interface on device long
     - intf connected to device long
