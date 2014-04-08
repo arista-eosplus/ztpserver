@@ -240,7 +240,10 @@ class Topology(DeserializableMixin):
                     variables=None):
         log_msg('add_pattern(name=%s, ...)' % name)
         try:
-            if not (name and definition and interfaces):
+            if not (name and (isinstance(name, basestring) or
+                              isinstance(name, (int, long, float, complex))) and 
+                    definition and isinstance(definition, basestring) and 
+                    interfaces and isinstance(interfaces, list)):
                 raise TypeError
 
             obj = Pattern(name, definition, node=node, interfaces=interfaces,
@@ -256,7 +259,7 @@ class Topology(DeserializableMixin):
                         item.device in self.variables:
                         item.device = self.variables[item.device]
 
-        except TypeError:
+        except TypeError, AttributeError:
             log_msg('Unable to parse pattern entry', error=True)
             return
 

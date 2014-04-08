@@ -1,0 +1,163 @@
+# Tests various neighbordb pattern values
+#  - test variuos pattern names
+
+name: neighbourdb values test
+
+neighbordb:
+
+  patterns:
+
+
+    # ---Tests for 'name' attribute---
+
+
+    - name: single_word
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # Single character
+    - name: $
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: 1
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: a
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+
+    # Missing name - will not be provisioned
+    - name:
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: multiple words
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: special chars ~!@^&*()$`'[]\|-_+ ==1234567890
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # List - will not be provisioned
+    - name: 
+        - bla
+      definition: ftp://www.test.com/definition
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # Dict - will not be provisioned
+    - name: 
+        bla: bla
+      definition: ftp://www.test.com/definition
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+
+    # ---Tests for 'definition' attribute---
+
+
+    - name: definition - basic case
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - missing definition
+      definition: 
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # See #26
+    - name: definition - multiple words
+      definition: eos plus
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - relative path
+      definition: a/b/c/d
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - absolute path
+      definition: /a/b/c/d
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - url 1
+      definition: www.test.com/definition
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - url 2
+      definition: http://www.test.com/definition
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: definition - url 3
+      definition: ftp://www.test.com/definition
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # List - will not be provisioned
+    - name: definition - list
+      definition:
+        - bla
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    # Dict - will not be provisioned
+    - name: definition - dict
+      definition:
+        bla: bla
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+
+    # ---Tests for 'interfaces' attribute---
+
+
+    # String - will not be provisioned
+    - name: interfaces dict
+      definition: ftp://www.test.com/definition
+      interfaces: test
+
+    # Dict - will not be provisioned
+    - name: interfaces dict
+      definition: ftp://www.test.com/definition
+      interfaces:
+        Ethernet1: localhost:Ethernet2
+
+
+
+configured_neighbordb:
+  nodes:
+  globals:
+    - single_word
+    - 1
+    - a
+    - $
+    - multiple words
+    - special chars ~!@^&*()$`'[]\|-_+ ==1234567890
+    - realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    - definition - basic case
+    - definition - multiple words    # See #26
+    - definition - relative path
+    - definition - absolute path
+    - definition - url 1
+    - definition - url 2
+    - definition - url 3

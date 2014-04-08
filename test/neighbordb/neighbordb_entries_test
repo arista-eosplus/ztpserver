@@ -5,7 +5,7 @@
 # - wrong system mac
 # - all permutations of variables for a pattern
 
-name: simple interface patterns
+name: neighbourdb entries test
 
 neighbordb:
 
