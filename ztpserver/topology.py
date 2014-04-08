@@ -44,6 +44,7 @@ from ztpserver.constants import CONTENT_TYPE_YAML
 
 DEVICENAME_PARSER_RE = re.compile(r":(?=[Ethernet|\d+(?/)(?\d+)|\*])")
 ANYDEVICE_PARSER_RE = re.compile(r":(?=[any])")
+NONEDEVICE_PARSER_RE = re.compile(r":(?=[none])")
 FUNC_RE = re.compile(r"(?P<function>\w+)(?=\(\S+\))\([\'|\"]"
                      r"(?P<arg>.+?)[\'|\"]\)")
 
@@ -375,33 +376,48 @@ class Pattern(DeserializableMixin, SerializableMixin):
                 (interface, device, port, tags) = args
                 self.add_interface(interface, device, port, tags)
 
-    def _parse_interface(self, interface, values):
-        log_msg("parse_interface[%s]: %s" % (str(interface), str(values)))
+    @classmethod
+    def _parse_interface(cls, interface, peer_info):
+        log_msg("parse_interface[%s]: %s" % (str(interface), str(peer_info)))
 
-        device = port = tags = None
-        if isinstance(values, dict):
-            device = values.get('device')
-            port = values.get('port')
-            tags = values.get('tags')
+        # See #32
+        tags = None
 
-        # handles the case of implicit 'any'
-        if values == 'any' or device == 'any':
-            device, port, tags = 'any', 'any', None
+        if isinstance(peer_info, dict):
+            for key in peer_info:
+                if key not in ['device', 'port']:
+                    raise TypeError
+            device = peer_info.get('device', 'any')
+            port = peer_info.get('port', 'any')
+        elif isinstance(peer_info, basestring):
+            if peer_info == 'any':
+                # handles the case of implicit 'any'
+                device, port = 'any', 'any'
+            elif peer_info == 'none':
+                # handles the case of implicit 'none'
+                device, port = None, None
+            elif ':' not in peer_info:
+                device = peer_info
+                port = 'any'
+            else:
+                try:
+                    device, port = DEVICENAME_PARSER_RE.split(peer_info)
+                except ValueError:
+                    try:
+                        device, port = ANYDEVICE_PARSER_RE.split(peer_info)
+                    except ValueError:
+                        try:
+                            device, port = \
+                                NONEDEVICE_PARSER_RE.split(peer_info)
+                        except ValueError:
+                            raise TypeError
+        else:
+            raise TypeError
 
-        # handles the case of implicit 'none'
-        elif values == 'none' or device == 'none':
-            device, port, tags = None, None, None
-
-        elif isinstance(values, str):
-            try:
-                device, port = DEVICENAME_PARSER_RE.split(values)
-            except ValueError:
-                device, port = ANYDEVICE_PARSER_RE.split(values)
-            port, tags = port.split(':') if ':' in port else (port, None)
-
-        # perform variable substitution
-        if device not in [None, 'any'] and device in self.variables:
-            device = self.variables[device]
+        # See #37. Should we perform variable substitution for 
+        # the port as well?
+        # if device in self.variables:
+        #     device = self.variables[device]
 
         return (interface, device, port, tags)
 
