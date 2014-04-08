@@ -1,0 +1,23 @@
+name: sample pattern test
+
+neighbordb:
+  patterns:
+    - name: test pattern
+      definition: test
+      node: 000c29f5d27d
+
+nodes:
+  - node: 12ab34cd
+    details: 
+      model: vEOS
+      serialnumber: 1234567890
+      systemmac: 00:0c:29:f5:d2:7d
+      version: 4.12.0
+      neighbors:
+        Ethernet1:
+            - 
+              device: pod1-spine1
+              port: Ethernet1
+    matches: 1
+    match_includes:
+      - test pattern

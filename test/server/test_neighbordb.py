@@ -33,7 +33,6 @@ import unittest
 import yaml
 
 from ztpserver.app import enable_handler_console
-
 from neighbordb_test_lib import TestDefinition
 
 TEST_DIR = 'test/neighbordb'
@@ -47,7 +46,7 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
         definition = yaml.load(open(os.path.join(TEST_DIR, test)))
 
         for node in definition['nodes']:
-            print 'Adding test: %s' % node['node']
+            print 'Adding test: %s' % node['name']
             suite.addTest(TestDefinition(test, node, definition['neighbordb']))
 
     return suite

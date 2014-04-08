@@ -29,17 +29,18 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
+#pylint: disable=R0904,C0103
+
 import unittest
 import httplib
-import json
-
 import routes
 
 import webob
 
 import ztpserver.wsgiapp
-from ztpserver.constants import *
+from ztpserver.constants import HTTP_STATUS_NO_CONTENT
+from ztpserver.constants import HTTP_STATUS_NOT_FOUND
 
 class TestWsgiApp(unittest.TestCase):
 

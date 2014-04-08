@@ -29,20 +29,22 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
 import unittest
 
 import ztpserver.neighbordb
 
 class TestDefinition(unittest.TestCase):
-    #pylint: disable=R0904
+    #pylint: disable=R0904,C0103
 
     def __init__(self, name, node, neighbordb):
         super(TestDefinition, self).__init__('run_test')
         self.name = name
         self.node = node
         self.neighbordb = neighbordb
-        self.neighbordb_node = ztpserver.neighbordb.create_node(node['details'])
+        node_details = node['node']
+        node_details['neighbors'] = node['neighbors']
+        self.neighbordb_node = ztpserver.neighbordb.create_node(node_details)
 
     def setUp(self):
         ztpserver.neighbordb.topology.clear()
@@ -55,24 +57,24 @@ class TestDefinition(unittest.TestCase):
         self.longMessage = True     # pylint: disable=C0103
 
     def run_test(self):
-        print 'INFO: Checking node: %s [%s]' % (self.node['node'], self.name)
+        print 'INFO: Checking node: %s [%s]' % (self.node['name'], self.name)
         result = ztpserver.neighbordb.topology.match_node(self.neighbordb_node)
         result = [x.name for x in result]
         print 'INFO: Matches Result: %s' % result
 
-        if self.node.get('match_includes', None):
-            self.assertEqual(result, self.node['match_includes'],
-                        'test \'match_includes\' failed for node %s [%s]' % \
-                        (self.node['node'], self.name))
+        expected_result = self.node['matches']
+        if expected_result.get('includes', None):
+            self.assertEqual(result, expected_result['includes'],
+                             'test \'includes\' failed for node %s [%s]' % \
+                                 (self.node['name'], self.name))
 
-        if self.node.get('match_excludes', None):
-            for match in self.node['match_excludes']:
-                self.assertNotIn(match, result,
-                        'test \'match_excludes\' failed for node %s [%s]' % \
-                        (self.node['node'], self.name))
+        if expected_result.get('excludes', None):
+            for entry in expected_result['excludes']:
+                self.assertNotIn(entry, result,
+                                 'test \'excludes\' failed for node %s [%s]' % \
+                                     (self.node['name'], self.name))
 
-        if self.node.get('matches', None):
-            self.assertEqual(len(result), self.node['matches'],
-                             'test \'matches\' failed for node %s [%s]' % \
-                                (self.node['node'], self.name))
-
+        if expected_result.get('count', 0):
+            self.assertEqual(len(result), expected_result['count'],
+                             'test \'count\' failed for node %s [%s]' % \
+                                 (self.node['name'], self.name))

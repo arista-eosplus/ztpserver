@@ -51,18 +51,19 @@ class FileStore(object):
 
     @classmethod
     def create(cls):
-        fs = cls()
-        fs.filestore()
-        fs.neighbordb()
-        fs.actions
-        fs.bootstrap()
-        fs.nodes()
-        fs.definitions()
-        return fs
+        filestore = cls()
+        filestore.filestore()
+        filestore.neighbordb()
+        filestore.actions
+        filestore.bootstrap()
+        filestore.nodes()
+        filestore.definitions()
+        return filestore
 
-    def write_file(self, filename, contents):
-        fp = os.path.join(FILESTORE, filename)
-        open(fp, 'w').write(contents)
+    @classmethod
+    def write_file(cls, filename, contents):
+        filepath = os.path.join(FILESTORE, filename)
+        open(filepath, 'w').write(contents)
 
     def neighbordb(self):
         data = """
@@ -132,15 +133,16 @@ class FileStore(object):
         }
         try:
             for node, files in NODES.items():
-                fp = os.path.join(FILESTORE, 'nodes/%s' % node)
-                os.makedirs(fp)
+                filepath = os.path.join(FILESTORE, 'nodes/%s' % node)
+                os.makedirs(filepath)
                 for item in files:
-                    fp = 'nodes/%s/%s' % (node, item)
-                    self.write_file(fp, contents[item])
+                    filepath = 'nodes/%s/%s' % (node, item)
+                    self.write_file(filepath, contents[item])
         except os.error:
             pass
 
-    def filestore(self, **kwargs):
+    @classmethod
+    def filestore(cls):
         try:
             os.makedirs(FILESTORE)
             for fldr in FOLDERS:
@@ -165,8 +167,8 @@ def create_filestore():
 
 def delete_filestore():
     try:
-        fp = os.path.join(WORKINGDIR, FILESTORE)
-        shutil.rmtree(fp)
+        filepath = os.path.join(WORKINGDIR, FILESTORE)
+        shutil.rmtree(filepath)
     except shutil.Error as exc:
         print exc
 

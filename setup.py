@@ -1,37 +1,34 @@
-#!/usr/bin/env python
-# encoding: utf-8
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-import os
-import sys
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from glob import glob
 
@@ -42,9 +39,9 @@ except ImportError:
 
 from ztpserver import __version__, __author__
 
-conf_path = '/etc/ztpserver'
-install_path = '/usr/share/ztpserver'
-install_requires = open('requirements.txt').read().split('\n')
+CONF_PATH = '/etc/ztpserver'
+INSTALL_PATH = '/usr/share/ztpserver'
+INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 
 setup(
     name='ztpserver',
@@ -54,17 +51,17 @@ setup(
     author_email='eosplus@aristanetworks.com',
     url='http://eos.aristanetworks.com/',
     license='BSD-3',
-    install_requires=install_requires,
+    install_requires=INSTALL_REQUIREMENTS,
     packages=['ztpserver'],
     scripts=glob('bin/*'),
     data_files=[
-        (conf_path, ['conf/ztpserver.conf']),
-        ('%s/bootstrap' % install_path, glob('client/*')),
-        ('%s/actions' % install_path, glob('actions/*')),
-        ('%s/nodes' % install_path, []),
-        ('%s/definitions' % install_path, []),
-        ('%s/files' % install_path, []),
-        ('%s/resources' % install_path, [])
+        (CONF_PATH, ['conf/ztpserver.conf']),
+        ('%s/bootstrap' % INSTALL_PATH, glob('client/*')),
+        ('%s/actions' % INSTALL_PATH, glob('actions/*')),
+        ('%s/nodes' % INSTALL_PATH, []),
+        ('%s/definitions' % INSTALL_PATH, []),
+        ('%s/files' % INSTALL_PATH, []),
+        ('%s/resources' % INSTALL_PATH, [])
     ]
 )
 

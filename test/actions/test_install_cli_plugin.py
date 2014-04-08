@@ -100,7 +100,7 @@ class SuccessTest(unittest.TestCase):
             shutil.rmtree(persistent_dir)
             bootstrap.end_test()
 
-    def test_success(self):
+    def test_ztps_path_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         plugin = url = random_string()
         ztps_server = 'http://%s' % bootstrap.server

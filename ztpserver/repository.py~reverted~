@@ -33,11 +33,23 @@
 #
 import os
 import mimetypes
+import collections
 import logging
 
 import ztpserver.config
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
+
+def create_node(headers):
+    """ returns a Node object using HTTP X-Arista headers """
+
+    kwargs = dict()
+    for key, value in headers.items():
+        if str(key).startswith('X-Arista'):
+            key = str(key).replace('X-Arista-', '').lower()
+            kwargs[key] = value
+    Node = collections.namedtuple('Node', kwargs.keys())  #pylint: disable=C0103
+    return Node(**kwargs)    #pylint: disable=C0103,W0142
 
 class FileObjectNotFound(Exception):
     """ raised if url not found in the file store """
@@ -134,14 +146,15 @@ def create_file_store(name, basepath=None):
     if basepath is None:
         basepath = ztpserver.config.runtime.default.data_root
 
-    log.debug('creating FileStore[%s] with basepath=%s' % (name, basepath))
     name = name[1:] if str(name).startswith('/') else name
     basepath = os.path.join(basepath, name)
+    log.debug("create_file_store: basepath is %s" % basepath)
 
     if not os.path.exists(basepath):
         log.debug('invalid basepath, not creating FileStore instance')
         raise FileStoreError('invalid path %s' % basepath)
 
+    log.debug('creating FileStore[%s] with basepath=%s' % (name, basepath))
     return FileStore(basepath)
 
 

@@ -83,88 +83,90 @@ neighbordb:
         - Ethernet1: none
 
 nodes:
-  - node: 2b3d
-    details: 
+  - name: 2b3d
+    node: 
       model: vEOS
       serialnumber: 1234567890
       systemmac: 00:1c:73:1a:2b:3d
       version: 4.12.0
-      neighbors:
-        Ethernet1:
-            - 
-              device: pod1-spine1
-              port: Ethernet1
-        Ethernet2:
-            - 
-              device: pod1-spine2
-              port: Ethernet1
-        Ethernet6:
-            - 
-              device: spine4
-              port: Ethernet8
-            - 
-              device: spine5
-              port: Ethernet2
-        Ethernet7:
-            - 
-              device: spine4
-              port: Ethernet8
-            - 
-              device: spine5
-              port: Ethernet2
-        Ethernet49:
-            - 
-              device: localhost
-              port: Ethernet49
-        Ethernet50:
-            - 
-              device: localhost
-              port: Ethernet50
-    matches: 0
-    match_excludes:
-      - sample node template 3
+    neighbors:
+      Ethernet1:
+          - 
+            device: pod1-spine1
+            port: Ethernet1
+      Ethernet2:
+          - 
+            device: pod1-spine2
+            port: Ethernet1
+      Ethernet6:
+          - 
+            device: spine4
+            port: Ethernet8
+          - 
+            device: spine5
+            port: Ethernet2
+      Ethernet7:
+          - 
+            device: spine4
+            port: Ethernet8
+          - 
+            device: spine5
+            port: Ethernet2
+      Ethernet49:
+          - 
+            device: localhost
+            port: Ethernet49
+      Ethernet50:
+          - 
+            device: localhost
+            port: Ethernet50
+    matches:
+      count: 0
+      excludes:
+        - sample global template 3
 
-  - node: d27d
-    details:
+  - name: d27d
+    node:
       model: vEOS
       serialnumber: 1234567890
       systemmac: 00:0c:29:f5:d2:7d
       version: 4.12.0
-      neighbors:
-         Ethernet1:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet2:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet3:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet6:
-           - 
-             device: spine4
-             port: Ethernet8
-           - 
-             device: spine5
-             port: Ethernet2
-         Ethernet7:
-           - 
-             device: spine4
-             port: Ethernet8
-           - 
-             device: spine5
-             port: Ethernet2
-         Ethernet49:
-           - 
-             device: localhost
-             port: Ethernet49
-         Ethernet50:
-           - 
-             device: localhost
-             port: Ethernet50
-    matches: 0
-    match_excludes:
-      - sample global template 1
+    neighbors:
+       Ethernet1:
+         - 
+           device: localhost
+           port: Ethernet1
+       Ethernet2:
+         - 
+           device: localhost
+           port: Ethernet1
+       Ethernet3:
+         - 
+           device: localhost
+           port: Ethernet1
+       Ethernet6:
+         - 
+           device: spine4
+           port: Ethernet8
+         - 
+           device: spine5
+           port: Ethernet2
+       Ethernet7:
+         - 
+           device: spine4
+           port: Ethernet8
+         - 
+           device: spine5
+           port: Ethernet2
+       Ethernet49:
+         - 
+           device: localhost
+           port: Ethernet49
+       Ethernet50:
+         - 
+           device: localhost
+           port: Ethernet50
+    matches:
+      count: 0
+      excludes:
+        - sample global template 1
