@@ -32,7 +32,7 @@
 
 import unittest
 
-import ztpserver.neighbordb
+import ztpserver.neighbordb     #pylint: disable=F0401
 
 class TestDefinition(unittest.TestCase):
     #pylint: disable=R0904,C0103
@@ -47,6 +47,7 @@ class TestDefinition(unittest.TestCase):
         self.neighbordb_node = ztpserver.neighbordb.create_node(node_details)
 
     def setUp(self):
+        print '\n---Starting test: %ss---\n' % self.name
         ztpserver.neighbordb.topology.clear()
 
         assert not ztpserver.neighbordb.topology.patterns['globals']
@@ -69,10 +70,12 @@ class TestDefinition(unittest.TestCase):
                                  (self.node['name'], self.name))
 
         if expected_result.get('excludes', None):
-            for entry in expected_result['excludes']:
-                self.assertNotIn(entry, result,
-                                 'test \'excludes\' failed for node %s [%s]' % \
-                                     (self.node['name'], self.name))
+            not_result = sorted([x for x in 
+                                 ztpserver.neighbordb.topology.all_patterns()
+                                 if x not in result])
+            self.assertEqual(not_result, sorted(expected_result['excludes']),
+                             'test \'excludes\' failed for node %s [%s]' % \
+                                 (self.node['name'], self.name))
 
         if expected_result.get('count', 0):
             self.assertEqual(len(result), expected_result['count'],
