@@ -132,7 +132,7 @@ def main(attributes):
             if os.path.exists(filename):
                 filename = filename.strip()
                 part = MIMEBase.MIMEBase('application', 'octet-stream')
-                part.set_payload(open(filename,'rb').read())
+                part.set_payload(open(filename, 'rb').read())
                 Encoders.encode_base64(part)
                 part.add_header('Content-Disposition',
                                 'attachment; filename=\'%s\'' %
@@ -145,8 +145,4 @@ def main(attributes):
     attributes.get('NODE').log_msg("Sending email using smarthost %s" % \
         smarthost)
     send_message(smarthost, sender, receivers, msg)
-
-
-
-
 
