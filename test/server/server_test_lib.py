@@ -33,7 +33,7 @@
 import os
 import shutil
 import random
-import string
+import string        #pylint: disable=W0402
 
 WORKINGDIR = '/tmp/ztpserver'
 FILESTORE = os.path.join(WORKINGDIR, 'filestore')
@@ -54,7 +54,7 @@ class FileStore(object):
         filestore = cls()
         filestore.filestore()
         filestore.neighbordb()
-        filestore.actions
+        filestore.actions()
         filestore.bootstrap()
         filestore.nodes()
         filestore.definitions()
@@ -174,7 +174,3 @@ def delete_filestore():
 
 def remove_all():
     shutil.rmtree(WORKINGDIR)
-
-
-
-

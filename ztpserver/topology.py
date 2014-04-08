@@ -54,6 +54,7 @@ def log_msg(text, error=False):
     text = 'NeighborDB: %s' % text
     if error:
         text = 'ERROR: %s' % text
+    print text
     log.debug(text)
 
 class NodeErrror(Exception):
@@ -234,10 +235,14 @@ class Topology(DeserializableMixin):
         for pattern in contents.get('patterns'):
             pattern = self.add_pattern(**pattern)
 
-    def add_pattern(self, name, definition, node=None, interfaces=None,
+    def add_pattern(self, name=None, definition=None, 
+                    node=None, interfaces=None,
                     variables=None):
-
+        log_msg('add_pattern(name=%s, ...)' % name)
         try:
+            if not (name and definition and interfaces):
+                raise TypeError
+
             obj = Pattern(name, definition, node=node, interfaces=interfaces,
                           variables=variables)
 
@@ -255,6 +260,7 @@ class Topology(DeserializableMixin):
             log_msg('Unable to parse pattern entry', error=True)
             return
 
+        log_msg('Pattern entry parsed successfully', error=True)
         if node:
             self.patterns['nodes'][obj.node] = obj
         else:

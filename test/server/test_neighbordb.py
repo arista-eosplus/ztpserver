@@ -53,13 +53,14 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
 
         definition = yaml.load(open(os.path.join(TEST_DIR, test)))
 
-        for node in definition['nodes']:
+        nodes = definition.get('nodes', [])
+        for node in nodes:
             print 'Adding test: %s' % node['name']
             suite.addTest(NodeTest(test, node, definition['neighbordb']))
 
         if definition.get('configured_neighbordb', None):
-            NeighbordbTest(test, definition['neighbordb'], 
-                           definition['configured_neighbordb'])
+            suite.addTest(NeighbordbTest(test, definition['neighbordb'], 
+                                         definition['configured_neighbordb']))
 
     return suite
 
