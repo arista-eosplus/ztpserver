@@ -2,7 +2,6 @@
 # - missing 'interfaces' (should not be configured)
 # - missing 'definition' (should not be configured)
 # - missing 'name' (should not be configured)
-# - self-loop
 # - wrong system mac
 # - all permutations of variables for a pattern
 
@@ -38,12 +37,6 @@ neighbordb:
 
     # Missing name
     - definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
-    # See #24
-    - name: self loop
-      definition: test
       interfaces:
         - Ethernet1: localhost:Ethernet1
 
@@ -259,7 +252,6 @@ configured_neighbordb:
     - ok nodes order 23
     - ok nodes order 24
   globals:      
-    - self loop                     #24
     - ok global order 1
     - ok global order 2
     - ok global order 3
