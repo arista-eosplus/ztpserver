@@ -260,12 +260,17 @@ class Topology(DeserializableMixin):
         else:
             self.patterns['globals'].append(obj)
 
-
-    def all_patterns(self):
-        result = [x.name for x in self.patterns['globals']]
+    def node_patterns(self):
+        result = []
         for entry in self.patterns['nodes'].itervalues():
             result.append(entry.name)
-        return sorted(result)
+        return sorted(result)        
+
+    def global_patterns(self):
+        return sorted([x.name for x in self.patterns['globals']])
+
+    def all_patterns(self):
+        return sorted(self.node_patterns() + self.global_patterns())
 
     def get_patterns(self, node):
         """ returns a list of possible patterns for a given node """

@@ -34,11 +34,11 @@ import unittest
 
 import ztpserver.neighbordb     #pylint: disable=F0401
 
-class TestDefinition(unittest.TestCase):
+class NodeTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
 
     def __init__(self, name, node, neighbordb):
-        super(TestDefinition, self).__init__('run_test')
+        super(NodeTest, self).__init__('run_test')
         self.name = name
         self.node = node
         self.neighbordb = neighbordb
@@ -58,8 +58,10 @@ class TestDefinition(unittest.TestCase):
         self.longMessage = True     # pylint: disable=C0103
 
     def run_test(self):
+        topology = ztpserver.neighbordb.topology
+
         print 'INFO: Checking node: %s [%s]' % (self.node['name'], self.name)
-        result = ztpserver.neighbordb.topology.match_node(self.neighbordb_node)
+        result = topology.match_node(self.neighbordb_node)
         result = [x.name for x in result]
         print 'INFO: Matches Result: %s' % result
 
@@ -71,7 +73,7 @@ class TestDefinition(unittest.TestCase):
 
         if expected_result.get('excludes', None):
             not_result = sorted([x for x in 
-                                 ztpserver.neighbordb.topology.all_patterns()
+                                 topology.all_patterns()
                                  if x not in result])
             self.assertEqual(not_result, sorted(expected_result['excludes']),
                              'test \'excludes\' failed for node %s [%s]' % \
@@ -81,3 +83,37 @@ class TestDefinition(unittest.TestCase):
             self.assertEqual(len(result), expected_result['count'],
                              'test \'count\' failed for node %s [%s]' % \
                                  (self.node['name'], self.name))
+
+class NeighbordbTest(unittest.TestCase):
+    #pylint: disable=R0904,C0103
+
+    def __init__(self, name, neighbordb, result):
+        super(NeighbordbTest, self).__init__('run_test')
+        self.name = name
+        self.neighbordb = neighbordb
+        self.result = result
+
+    def setUp(self):
+        print '\n---Starting test: %ss---\n' % self.name
+        ztpserver.neighbordb.topology.clear()
+
+        assert not ztpserver.neighbordb.topology.patterns['globals']
+        assert not ztpserver.neighbordb.topology.patterns['nodes']
+
+        ztpserver.neighbordb.topology.deserialize(self.neighbordb)
+        print 'INFO: NeighborDB: %r' % ztpserver.neighbordb.topology
+        self.longMessage = True     # pylint: disable=C0103
+
+    def run_test(self):
+        topology = ztpserver.neighbordb.topology
+        print 'INFO: Checking neighbordb [%s]' % self.name
+
+        if self.result.get('nodes', None):
+            self.assertEqual(sorted(self.result['nodes']), 
+                             topology.node_patterns(),
+                             'failed to match node patterns [%s]' % self.name)
+
+        if self.result.get('globals', None):
+            self.assertEqual(sorted(self.result['globals']), 
+                             topology.global_patterns(),
+                             'failed to match global patterns [%s]' % self.name)
