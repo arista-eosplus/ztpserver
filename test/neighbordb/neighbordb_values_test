@@ -1,5 +1,5 @@
 # Tests various neighbordb pattern values
-#  - test variuos pattern names
+#  - test variuos pattern attribute values
 
 name: neighbourdb values test
 
@@ -15,6 +15,7 @@ neighbordb:
       definition: test
       interfaces:
         - Ethernet1: localhost:Ethernet2
+
 
     # Single character
     - name: $
@@ -132,16 +133,20 @@ neighbordb:
 
 
     # String - will not be provisioned
-    - name: interfaces dict
-      definition: ftp://www.test.com/definition
+    - name: interfaces string
+      definition: test
       interfaces: test
 
     # Dict - will not be provisioned
     - name: interfaces dict
-      definition: ftp://www.test.com/definition
+      definition: test
       interfaces:
         Ethernet1: localhost:Ethernet2
 
+    - name: wrong interface definition
+      definition: test
+      interfaces:
+        - Ethernet1
 
 
 configured_neighbordb:
