@@ -225,7 +225,7 @@ neighbordb:
             port: Ethernet1
             dummy: test
 
-    - name: bogus interface 12
+    - name: bogus interface 12 (list)
       definition: test
       interfaces:
         - Ethernet1:
