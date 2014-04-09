@@ -56,14 +56,14 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
     # List - will not be provisioned
-    - name: 
+    - name:
         - bla
       definition: ftp://www.test.com/definition
       interfaces:
         - Ethernet1: localhost:Ethernet2
 
     # Dict - will not be provisioned
-    - name: 
+    - name:
         bla: bla
       definition: ftp://www.test.com/definition
       interfaces:
@@ -79,7 +79,7 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
     - name: definition - missing definition
-      definition: 
+      definition:
       interfaces:
         - Ethernet1: localhost:Ethernet2
 
@@ -152,27 +152,28 @@ neighbordb:
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 1
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet1/2/3/4
+    - name: bogus interface 1
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet1/2/3/4
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 2
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet1/a/3
+    - name: bogus interface 2
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet1/a/3
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 3
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:test_interface
+    - name: bogus interface 3
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:test_interface
 
     # Not provisioned
     # See #34
+    # Note: this might be valid, need to discuss
     # - name: bogus interface 4
     #   definition: test
     #   interfaces:
@@ -180,24 +181,24 @@ neighbordb:
 
     # Not provisioned
     # See #33
-    # - name: bogus interface 5
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet1/
+    - name: bogus interface 5
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet1/
 
     # Not provisioned
     # See #33
-    # - name: bogus interface 6
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet-1/
+    - name: bogus interface 6
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet-1/
 
     # Not provisioned
     # See #33
-    # - name: bogus interface 7
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet1/-1
+    - name: bogus interface 7
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet1/-1
 
     - name: bogus interface 8
       definition: test
@@ -234,60 +235,60 @@ neighbordb:
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 13
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         hostname: hostname 
-    #         port: hostname
+    - name: bogus interface 13
+      definition: test
+      interfaces:
+        - Ethernet1:
+            hostname: hostname
+            port: hostname
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 14
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         port: Ethernet1/2/3/4
+    - name: bogus interface 14
+      definition: test
+      interfaces:
+        - Ethernet1:
+            port: Ethernet1/2/3/4
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 15
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         port: Ethernet1/a/3
+    - name: bogus interface 15
+      definition: test
+      interfaces:
+        - Ethernet1:
+            port: Ethernet1/a/3
 
     # Not provisioned
     # See #34
     # - name: bogus interface 16
     #   definition: test
     #   interfaces:
-    #     - Ethernet1: 
+    #     - Ethernet1:
     #         port: test_interface
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 17
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         port: Ethernet1/
+    - name: bogus interface 17
+      definition: test
+      interfaces:
+        - Ethernet1:
+            port: Ethernet1/
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 18
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         port: Ethernet-1/
+    - name: bogus interface 18
+      definition: test
+      interfaces:
+        - Ethernet1:
+            port: Ethernet-1/
 
     # Not provisioned
     # See #34
-    # - name: bogus interface 19
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: 
-    #         port: Ethernet1/-1
+    - name: bogus interface 19
+      definition: test
+      interfaces:
+        - Ethernet1:
+            port: Ethernet1/-1
 
     # Not provisioned
     - name: wrong interface definition
@@ -303,7 +304,7 @@ neighbordb:
     - name: intf not connected long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: none
 
     - name: intf connected to anything
@@ -314,7 +315,7 @@ neighbordb:
     - name: intf connected to anything long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: none
 
     - name: intf connected to any interface on device
@@ -325,13 +326,13 @@ neighbordb:
     - name: intf connected to any interface on device long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
 
     - name: intf connected to port on any device long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             port: Ethernet1
 
     - name: intf connected to device
@@ -342,7 +343,7 @@ neighbordb:
     - name: intf connected to device long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
             port: any
 
@@ -354,7 +355,7 @@ neighbordb:
     - name: intf not connected to any device long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
             port: none
 
@@ -366,7 +367,7 @@ neighbordb:
     - name: intf connected to any device/port 1 long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
             port: Ethernet1
 
@@ -378,7 +379,7 @@ neighbordb:
     - name: intf connected to any device/port 2 long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
             port: Ethernet1/2
 
@@ -390,7 +391,7 @@ neighbordb:
     - name: intf connected to any device/port 3 long
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname
             port: Ethernet1/2/3
 
@@ -418,7 +419,7 @@ configured_neighbordb:
     - intf not connected to any device
     - intf connected to any device/port 1
     - intf connected to any device/port 2
-    - intf connected to any device/port 3
+    # - intf connected to any device/port 3
     - intf not connected long
     - intf connected to port on any device long
     - intf connected to anything long
@@ -426,5 +427,7 @@ configured_neighbordb:
     - intf connected to device long
     - intf not connected to any device long
     - intf connected to any device/port 1 long
-    - intf connected to any device/port 2 long 
-    - intf connected to any device/port 3 long
+    - intf connected to any device/port 2 long
+    # - intf connected to any device/port 3 long
+    - bogus interface 3
+

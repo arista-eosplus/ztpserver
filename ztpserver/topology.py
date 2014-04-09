@@ -74,6 +74,10 @@ class PatternError(Exception):
     ''' base error raised by :py:class:`Pattern` '''
     pass
 
+class InterfacePatternError(Exception):
+    ''' base error raised by :py:class:`InterfacePattern` '''
+    pass
+
 class OrderedCollection(collections.OrderedDict):
     ''' base object for using an ordered dictionary '''
     def __call__(self, key=None):
@@ -236,15 +240,15 @@ class Topology(DeserializableMixin):
         for pattern in contents.get('patterns'):
             pattern = self.add_pattern(**pattern)
 
-    def add_pattern(self, name=None, definition=None, 
+    def add_pattern(self, name=None, definition=None,
                     node=None, interfaces=None,
                     variables=None):
         log_msg('add_pattern(name=%s, ...)' % name)
         try:
-            if not (name and 
+            if not (name and
                     (isinstance(name, basestring) or
-                     isinstance(name, (int, long, float, complex))) and 
-                    definition and isinstance(definition, basestring) and 
+                     isinstance(name, (int, long, float, complex))) and
+                    definition and isinstance(definition, basestring) and
                     interfaces and isinstance(interfaces, list)):
                 raise TypeError
 
@@ -256,6 +260,10 @@ class Topology(DeserializableMixin):
             # otherwise we will not write the node pattern correctly
             # later
             if self.variables is not None:
+                for key, value in self.variables.items():
+                    if key not in obj.variables:
+                        obj.variables[key] = value
+
                 for item in obj.interfaces:
                     if item.device not in [None, 'any'] and \
                         item.device in self.variables:
@@ -263,6 +271,9 @@ class Topology(DeserializableMixin):
 
         except TypeError:
             log_msg('Unable to parse pattern entry', error=True)
+            return
+        except PatternError:
+            log_msg('Unable to add pattern due to PatternError', error=True)
             return
 
         log_msg('Pattern entry parsed successfully', error=True)
@@ -275,7 +286,7 @@ class Topology(DeserializableMixin):
         result = []
         for entry in self.patterns['nodes'].itervalues():
             result.append(entry.name)
-        return sorted(result)        
+        return sorted(result)
 
     def global_patterns(self):
         return sorted([x.name for x in self.patterns['globals']])
@@ -360,7 +371,12 @@ class Pattern(DeserializableMixin, SerializableMixin):
         return data
 
     def add_interface(self, interface, device, port, tags=None):
-        self.interfaces.append(InterfacePattern(interface, device, port, tags))
+        try:
+            self.interfaces.append(InterfacePattern(interface, device, port, \
+                                                    tags))
+        except InterfacePatternError:
+            log_msg('Could not add pattern due to invalid interface')
+            raise PatternError
 
     def add_interfaces(self, interfaces):
         for interface in interfaces:
@@ -389,6 +405,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
                     raise TypeError
             device = peer_info.get('device', 'any')
             port = peer_info.get('port', 'any')
+
         elif isinstance(peer_info, basestring):
             if peer_info == 'any':
                 # handles the case of implicit 'any'
@@ -414,7 +431,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
         else:
             raise TypeError
 
-        # See #37. Should we perform variable substitution for 
+        # See #37. Should we perform variable substitution for
         # the port as well?
         # if device in self.variables:
         #     device = self.variables[device]
@@ -489,16 +506,40 @@ class InterfacePattern(object):
             return [interface_range]
 
         indicies = re.split("[a-zA-Z]*", interface_range)[1]
+
+        interface_name = 'Ethernet'
+        if '/' in indicies:
+            if indicies.count('/') > 1:
+                log.debug('Could not parse interface index')
+                raise InterfacePatternError
+            module, indicies = indicies.split('/')
+            try:
+                assert int(module) > 0
+                interface_name += '%s/' % module
+            except (ValueError, AssertionError):
+                log.debug('Could not parse interface module')
+                raise InterfacePatternError
+
         indicies = indicies.split(',')
 
         interfaces = list()
         for index in indicies:
             if '-' in index:
                 start, stop = index.split('-')
-                for index in range(int(start), int(stop)+1):
-                    interfaces.append('Ethernet%s' % index)
+                try:
+                    for index in range(int(start), int(stop)+1):
+                        assert int(index) > 0
+                        interfaces.append('%s%s' % (interface_name, index))
+                except (ValueError, AssertionError):
+                    log.debug('Interface index is invalid')
+                    raise InterfacePatternError
             else:
-                interfaces.append('Ethernet%s' % index)
+                try:
+                    assert int(index) > 0
+                    interfaces.append('%s%s' % (interface_name, index))
+                except (ValueError, AssertionError):
+                    log.debug('Interface index is invalid')
+                    raise InterfacePatternError
         return interfaces
 
     def match_neighbors(self, neighbors, variables):
