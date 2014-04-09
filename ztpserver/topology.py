@@ -580,7 +580,7 @@ class InterfacePattern(object):
         match = FUNC_RE.match(function)
         if not match:
             method = 'exact'
-            arg = 'function'
+            arg = function
         else:
             method = match.group('function')
             method = getattr(Functions, method)
