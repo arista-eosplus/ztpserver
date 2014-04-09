@@ -500,49 +500,60 @@ class InterfacePattern(object):
             obj['tags'] = self.tags
         return obj
 
-    def range(self, interface_range):
+    @classmethod
+    def range(cls, interface_range):
+        # pylint: disable=R0912
 
-        # pylint: disable=R0201
-        if interface_range is None:
-            return list()
-        elif not interface_range.startswith('Ethernet'):
-            return [interface_range]
-
-        indicies = re.split("[a-zA-Z]*", interface_range)[1]
-
-        interface_name = 'Ethernet'
-        if '/' in indicies:
-            if indicies.count('/') > 2:
-                log.debug('Could not parse interface index: %s' % indicies)
+        if(not isinstance(interface_range, basestring) or
+           not interface_range.startswith('Ethernet')):
+            raise TypeError
+        
+        interfaces = []
+        for token in interface_range[8:].split(','):
+            if '-' in token and '/' in token:
+                log.debug('Unable to parse interface range: %s' %
+                          interface_range)
                 raise InterfacePatternError
-            module, indicies = indicies.split('/')
-            try:
-                assert int(module) > 0
-                interface_name += '%s/' % module
-            except (ValueError, AssertionError):
-                log.debug('Could not parse interface module')
-                raise InterfacePatternError
-
-        indicies = indicies.split(',')
-
-        interfaces = list()
-        for index in indicies:
-            if '-' in index:
-                start, stop = index.split('-')
-                try:
-                    for index in range(int(start), int(stop)+1):
-                        assert int(index) > 0
-                        interfaces.append('%s%s' % (interface_name, index))
-                except (ValueError, AssertionError):
-                    log.debug('Interface index is invalid')
+            elif '-' in token:
+                if len(token.split('-')) != 2:
+                    log.debug('Unable to parse interface range: %s' %
+                              interface_range)
                     raise InterfacePatternError
+                start, stop = token.split('-')
+                try:
+                    start = int(start)
+                    stop = int(stop)
+                    if(stop < start or
+                       start < 0 or
+                       stop < 0):
+                        log.debug('Unable to parse interface range: %s' %
+                                  interface_range)
+                        raise InterfacePatternError
+                    for index in range(int(start), int(stop) + 1):
+                        interfaces.append('Ethernet%s' % index)
+                except ValueError:
+                    log.debug('Unable to parse interface range: %s' %
+                              interface_range)
+                    raise InterfacePatternError
+            elif '/' in token:
+                tkns = token.split('/')
+                if len(tkns) > 3:
+                    log.debug('Unable to parse interface range: %s' %
+                              interface_range)
+                    raise InterfacePatternError
+                for tok in tkns:
+                    try:
+                        tok_int = int(tok)
+                        if tok_int < 1:
+                            raise ValueError
+                    except ValueError:
+                        log.debug('Unable to parse interface range: %s' %
+                                  interface_range)
+                        raise InterfacePatternError                    
+                interfaces.append('Ethernet%s' % token)
             else:
-                try:
-                    assert int(index) > 0
-                    interfaces.append('%s%s' % (interface_name, index))
-                except (ValueError, AssertionError):
-                    log.debug('Interface index is invalid')
-                    raise InterfacePatternError
+                interfaces.append('Ethernet%s' % token)
+
         return interfaces
 
     def match_neighbors(self, neighbors):
