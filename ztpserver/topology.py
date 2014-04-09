@@ -588,7 +588,7 @@ class InterfacePattern(object):
         return method(arg, argument)      
 
     def match_device(self, device):
-        f self.device == 'any':
+        if self.device == 'any':
             return True
         elif self.device is None:
             return False
