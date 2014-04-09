@@ -501,6 +501,7 @@ class InterfacePattern(object):
         return obj
 
     def range(self, interface_range):
+
         # pylint: disable=R0201
         if interface_range is None:
             return list()
@@ -587,7 +588,7 @@ class InterfacePattern(object):
         return method(arg, argument)      
 
     def match_device(self, device):
-        elif self.device == 'any':
+        f self.device == 'any':
             return True
         elif self.device is None:
             return False
