@@ -275,7 +275,7 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(BoolAttr(
     name='logging',
-    default=False,
+    default=True,
     environ='ZTPS_DEFAULT_LOGGING'
 ))
 
