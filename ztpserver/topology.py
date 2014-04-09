@@ -582,8 +582,7 @@ class InterfacePattern(object):
             method = 'exact'
             arg = function
         else:
-            method = match.group('function')
-            method = getattr(Functions, method)
+            method = getattr(Functions, match.group('function'))
             arg = match.group('arg')
         return method(arg, argument)      
 
