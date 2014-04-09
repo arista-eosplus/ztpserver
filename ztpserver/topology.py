@@ -588,12 +588,11 @@ class InterfacePattern(object):
         return method(arg, argument)      
 
     def match_device(self, device):
-        if self.device is None:
-            return False
         elif self.device == 'any':
             return True
-
-        if self.device.startswith('$'):
+        elif self.device is None:
+            return False
+        elif self.device.startswith('$'):
             return self.run_function(self.device, device)
         else:
             return self.device == device
