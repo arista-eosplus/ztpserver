@@ -1,5 +1,8 @@
 [FORMAT]
 
+[BASIC]
+method-rgx=[a-z_][a-z0-9_]{2,50}$
+
 [MESSAGES CONTROL]
 # Used when an except catches Exception instances.
 disable=W0703
@@ -47,7 +50,7 @@ max-args=10
 min-public-methods=0
 
 # Maximum number of public methods for a class (see R0904).
-max-public-methods=20
+max-public-methods=600
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=20

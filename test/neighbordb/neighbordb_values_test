@@ -17,405 +17,449 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
 
-    # Single character
-    - name: $
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: 1
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: a
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-
-    # Missing name - will not be provisioned
-    - name:
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: multiple words
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: special chars ~!@^&*()$`'[]\|-_+ ==1234567890
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    # List - will not be provisioned
-    - name:
-        - bla
-      definition: ftp://www.test.com/definition
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    # Dict - will not be provisioned
-    - name:
-        bla: bla
-      definition: ftp://www.test.com/definition
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-
-    # ---Tests for 'definition' attribute---
-
-
-    - name: definition - basic case
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - missing definition
-      definition:
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    # See #26
-    - name: definition - multiple words
-      definition: eos plus
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - relative path
-      definition: a/b/c/d
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - absolute path
-      definition: /a/b/c/d
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - url 1
-      definition: www.test.com/definition
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - url 2
-      definition: http://www.test.com/definition
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    - name: definition - url 3
-      definition: ftp://www.test.com/definition
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    # List - will not be provisioned
-    - name: definition - list
-      definition:
-        - bla
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-    # Dict - will not be provisioned
-    - name: definition - dict
-      definition:
-        bla: bla
-      interfaces:
-        - Ethernet1: localhost:Ethernet2
-
-
-    # ---Tests for 'interfaces' attribute---
-
-
-    # String - will not be provisioned
-    - name: interfaces string
-      definition: test
-      interfaces: test
-
-    # Dict - will not be provisioned
-    - name: interfaces dict
-      definition: test
-      interfaces:
-        Ethernet1: localhost:Ethernet2
-
-    # Not provisioned
-    # See #34
-    # - name: bogus interface 0
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname hostname
-
-    # Not provisioned
-    - name: bogus interface 1
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/2/3/4
-
-    # Not provisioned
-    - name: bogus interface 2
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/a/3
-
-    # Not provisioned
-    - name: bogus interface 3
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:test_interface
-
-    # Not provisioned
-    # See #34
-    # Note: this might be valid, need to discuss
-    # - name: bogus interface 4
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1: hostname:Ethernet1 bla
-
-    # Not provisioned
-    - name: bogus interface 5
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/
-
-    # Not provisioned
-    - name: bogus interface 6
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet-1/
-
-    # Not provisioned
-    - name: bogus interface 7
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/-1
-
-    - name: bogus interface 8
-      definition: test
-      interfaces:
-        - Ethernet1:
-
-    - name: bogus interface 9
-      definition: test
-      interfaces:
-        - Ethernet1:
-            dummy: test
-
-    - name: bogus interface 10
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            dummy: test
-
-    - name: bogus interface 11
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: Ethernet1
-            dummy: test
-
-    - name: bogus interface 12 (list)
-      definition: test
-      interfaces:
-        - Ethernet1:
-            - device: hostname
-            - port: Ethernet1
-
-    # Not provisioned
-    - name: bogus interface 13
-      definition: test
-      interfaces:
-        - Ethernet1:
-            hostname: hostname
-            port: hostname
-
-    # Not provisioned
-    - name: bogus interface 14
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet1/2/3/4
-
-    # Not provisioned
-    - name: bogus interface 15
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet1/a/3
-
-    # Not provisioned
-    # See #34
-    # - name: bogus interface 16
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1:
-    #         port: test_interface
-
-    # Not provisioned
-    - name: bogus interface 17
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet1/
-
-    # Not provisioned
-    - name: bogus interface 18
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet-1/
-
-    # Not provisioned
-    - name: bogus interface 19
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet1/-1
-
-    # Not provisioned
-    - name: wrong interface definition
-      definition: test
-      interfaces:
-        - Ethernet1
-
-    - name: intf not connected
-      definition: test
-      interfaces:
-        - Ethernet1: none
-
-    - name: intf not connected long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: none
-
-    - name: intf connected to anything
-      definition: test
-      interfaces:
-        - Ethernet1: any
-
-    - name: intf connected to anything long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: none
-
-    - name: intf connected to any interface on device
-      definition: test
-      interfaces:
-        - Ethernet1: hostname
-
-    - name: intf connected to any interface on device long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-
-    - name: intf connected to port on any device long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            port: Ethernet1
-
-    - name: intf connected to device
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:any
-
-    - name: intf connected to device long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: any
-
-    - name: intf not connected to any device
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:none
-
-    - name: intf not connected to any device long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: none
-
-    - name: intf connected to any device/port 1
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1
-
-    - name: intf connected to any device/port 1 long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: Ethernet1
-
-    - name: intf connected to any device/port 2
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/2
-
-    - name: intf connected to any device/port 2 long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: Ethernet1/2
-
-    - name: intf connected to any device/port 3
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet1/2/3
-
-    - name: intf connected to any device/port 3 long
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: Ethernet1/2/3
+#     # Single character
+#     - name: $
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: 1
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: a
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+
+#     # Missing name - will not be provisioned
+#     - name:
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: multiple words
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: special chars ~!@^&*()$`'[]\|-_+ ==1234567890
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     # List - will not be provisioned
+#     - name:
+#         - bla
+#       definition: ftp://www.test.com/definition
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     # Dict - will not be provisioned
+#     - name:
+#         bla: bla
+#       definition: ftp://www.test.com/definition
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+
+#     # ---Tests for 'definition' attribute---
+
+
+#     - name: definition - basic case
+#       definition: test
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - missing definition
+#       definition:
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     # See #26
+#     - name: definition - multiple words
+#       definition: eos plus
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - relative path
+#       definition: a/b/c/d
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - absolute path
+#       definition: /a/b/c/d
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - url 1
+#       definition: www.test.com/definition
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - url 2
+#       definition: http://www.test.com/definition
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     - name: definition - url 3
+#       definition: ftp://www.test.com/definition
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     # List - will not be provisioned
+#     - name: definition - list
+#       definition:
+#         - bla
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+#     # Dict - will not be provisioned
+#     - name: definition - dict
+#       definition:
+#         bla: bla
+#       interfaces:
+#         - Ethernet1: localhost:Ethernet2
+
+
+#     # ---Tests for 'interfaces' attribute---
+
+
+#     # String - will not be provisioned
+#     - name: interfaces string
+#       definition: test
+#       interfaces: test
+
+#     # Dict - will not be provisioned
+#     - name: interfaces dict
+#       definition: test
+#       interfaces:
+#         Ethernet1: localhost:Ethernet2
+
+#     # Not provisioned
+#     # See #34
+#     # - name: bogus interface 0
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1: hostname hostname
+
+#     # Not provisioned
+#     - name: bogus interface 1
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/2/3/4
+
+#     # Not provisioned
+#     - name: bogus interface 2
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/a/3
+
+#     # Not provisioned
+#     - name: bogus interface 3
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:test_interface
+
+#     # Not provisioned
+#     # See #34
+#     # Note: this might be valid, need to discuss
+#     # - name: bogus interface 4
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1: hostname:Ethernet1 bla
+
+#     # Not provisioned
+#     - name: bogus interface 5
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/
+
+#     # Not provisioned
+#     - name: bogus interface 6
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet-1/
+
+#     # Not provisioned
+#     - name: bogus interface 7
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/-1
+
+#     - name: bogus interface 8
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+
+#     - name: bogus interface 9
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             dummy: test
+
+#     - name: bogus interface 10
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             dummy: test
+
+#     - name: bogus interface 11
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: Ethernet1
+#             dummy: test
+
+#     - name: bogus interface 12 (list)
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             - device: hostname
+#             - port: Ethernet1
+
+#     # Not provisioned
+#     - name: bogus interface 13
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             hostname: hostname
+#             port: hostname
+
+#     # Not provisioned
+#     - name: bogus interface 14
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet1/2/3/4
+
+#     # Not provisioned
+#     - name: bogus interface 15
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet1/a/3
+
+#     # Not provisioned
+#     # See #34
+#     # - name: bogus interface 16
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1:
+#     #         port: test_interface
+
+#     # Not provisioned
+#     - name: bogus interface 17
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet1/
+
+#     # Not provisioned
+#     - name: bogus interface 18
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet-1/
+
+#     # Not provisioned
+#     - name: bogus interface 19
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet1/-1
+
+#     # Not provisioned
+#     - name: wrong interface definition
+#       definition: test
+#       interfaces:
+#         - Ethernet1
+
+#     - name: intf not connected
+#       definition: test
+#       interfaces:
+#         - Ethernet1: none
+
+#     - name: intf not connected long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: none
+
+#     - name: intf connected to anything
+#       definition: test
+#       interfaces:
+#         - Ethernet1: any
+
+#     - name: intf connected to anything long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: none
+
+#     - name: intf connected to any interface on device
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname
+
+#     - name: intf connected to any interface on device long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+
+#     - name: intf connected to port on any device long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             port: Ethernet1
+
+#     - name: intf connected to device
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:any
+
+#     - name: intf connected to device long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: any
+
+#     - name: intf not connected to any device
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:none
+
+#     - name: intf not connected to any device long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: none
+
+#     - name: intf connected to any device/port 1
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1
+
+#     - name: intf connected to any device/port 1 long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: Ethernet1
+
+#     - name: intf connected to any device/port 2
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/2
+
+#     - name: intf connected to any device/port 2 long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: Ethernet1/2
+
+#     - name: intf connected to any device/port 3
+#       definition: test
+#       interfaces:
+#         - Ethernet1: hostname:Ethernet1/2/3
+
+#     - name: intf connected to any device/port 3 long
+#       definition: test
+#       interfaces:
+#         - Ethernet1:
+#             device: hostname
+#             port: Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 1
+#     #   definition: test
+#     #   interfaces:
+#     #     - test: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 2
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1/2/3/4: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 3
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1/a: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 4
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1/: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 5
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet-1: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 6
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1/-1: hostname:Ethernet1/2/3
+
+#     # # Not provisioned
+#     # - name: erroneous intf range 6
+#     #   definition: test
+#     #   interfaces:
+#     #     - Ethernet1: hostname:Ethernet1/2/3
+
+
 
 configured_neighbordb:
   nodes:
   globals:
     - single_word
-    - 1
-    - a
-    - $
-    - multiple words
-    - special chars ~!@^&*()$`'[]\|-_+ ==1234567890
-    - realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    - definition - basic case
-    - definition - multiple words    # See #26
-    - definition - relative path
-    - definition - absolute path
-    - definition - url 1
-    - definition - url 2
-    - definition - url 3
-    - intf not connected
-    - intf connected to anything
-    - intf connected to any interface on device
-    - intf connected to device
-    - intf not connected to any device
-    - intf connected to any device/port 1
-    - intf connected to any device/port 2
-    # - intf connected to any device/port 3
-    - intf not connected long
-    - intf connected to port on any device long
-    - intf connected to anything long
-    - intf connected to any interface on device long
-    - intf connected to device long
-    - intf not connected to any device long
-    - intf connected to any device/port 1 long
-    - intf connected to any device/port 2 long
-    # - intf connected to any device/port 3 long
-    - bogus interface 3
+#     - 1
+#     - a
+#     - $
+#     - multiple words
+#     - special chars ~!@^&*()$`'[]\|-_+ ==1234567890
+#     - realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#     - definition - basic case
+#     - definition - multiple words    # See #26
+#     - definition - relative path
+#     - definition - absolute path
+#     - definition - url 1
+#     - definition - url 2
+#     - definition - url 3
+#     - intf not connected
+#     - intf connected to anything
+#     - intf connected to any interface on device
+#     - intf connected to device
+#     - intf not connected to any device
+#     - intf connected to any device/port 1
+#     - intf connected to any device/port 2
+#     # - intf connected to any device/port 3
+#     - intf not connected long
+#     - intf connected to port on any device long
+#     - intf connected to anything long
+#     - intf connected to any interface on device long
+#     - intf connected to device long
+#     - intf not connected to any device long
+#     - intf connected to any device/port 1 long
+#     - intf connected to any device/port 2 long
+#     # - intf connected to any device/port 3 long
+#     - bogus interface 3
 

@@ -55,7 +55,6 @@ def log_msg(text, error=False):
     text = 'NeighborDB: %s' % text
     if error:
         text = 'ERROR: %s' % text
-    print text
     log.debug(text)
 
 class NodeErrror(Exception):
@@ -193,7 +192,7 @@ class Functions(object):
     @classmethod
     def regex(cls, arg, value):
         match = re.match(arg, value)
-        return True if match else False
+        return match
 
     @classmethod
     def includes(cls, arg, value):
@@ -277,7 +276,7 @@ class Topology(DeserializableMixin):
             log_msg('Unable to add pattern due to PatternError', error=True)
             return
 
-        log_msg('Pattern entry parsed successfully', error=True)
+        log_msg('Pattern entry parsed successfully')
         if node:
             self.patterns['nodes'][obj.node] = obj
         else:
@@ -376,7 +375,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
             self.interfaces.append(InterfacePattern(interface, device, port, \
                                                     tags, self.variables))
         except InterfacePatternError:
-            log_msg('Could not add pattern due to invalid interface')
+            log_msg('Could not add pattern', error=True)
             raise PatternError
 
     def add_interfaces(self, interfaces):
@@ -504,10 +503,13 @@ class InterfacePattern(object):
     def range(cls, interface_range):
         # pylint: disable=R0912
 
+        if interface_range in ['any','none']:
+            return [interface_range]
+
         if(not isinstance(interface_range, basestring) or
            not interface_range.startswith('Ethernet')):
             raise TypeError
-        
+
         interfaces = []
         for token in interface_range[8:].split(','):
             if '-' in token and '/' in token:
@@ -603,7 +605,7 @@ class InterfacePattern(object):
             return True
         elif self.device is None:
             return False
-        elif self.device.startswith('$'):
+        elif FUNC_RE.match(self.device):
             return self.run_function(self.device, device)
         else:
             return self.device == device
@@ -613,9 +615,7 @@ class InterfacePattern(object):
             return True
         elif self.port is None:
             return False
-        elif self.port.startswith('$'):
+        elif FUNC_RE.match(self.port):
             return self.run_function(self.port, port)            
         else:
             return port == self.port
-
-
