@@ -151,21 +151,18 @@ neighbordb:
     #     - Ethernet1: hostname hostname
 
     # Not provisioned
-    # See #34
     - name: bogus interface 1
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet1/2/3/4
 
     # Not provisioned
-    # See #34
     - name: bogus interface 2
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet1/a/3
 
     # Not provisioned
-    # See #34
     - name: bogus interface 3
       definition: test
       interfaces:
@@ -180,21 +177,18 @@ neighbordb:
     #     - Ethernet1: hostname:Ethernet1 bla
 
     # Not provisioned
-    # See #33
     - name: bogus interface 5
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet1/
 
     # Not provisioned
-    # See #33
     - name: bogus interface 6
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet-1/
 
     # Not provisioned
-    # See #33
     - name: bogus interface 7
       definition: test
       interfaces:
@@ -234,7 +228,6 @@ neighbordb:
             - port: Ethernet1
 
     # Not provisioned
-    # See #34
     - name: bogus interface 13
       definition: test
       interfaces:
@@ -243,7 +236,6 @@ neighbordb:
             port: hostname
 
     # Not provisioned
-    # See #34
     - name: bogus interface 14
       definition: test
       interfaces:
@@ -251,7 +243,6 @@ neighbordb:
             port: Ethernet1/2/3/4
 
     # Not provisioned
-    # See #34
     - name: bogus interface 15
       definition: test
       interfaces:
@@ -267,7 +258,6 @@ neighbordb:
     #         port: test_interface
 
     # Not provisioned
-    # See #34
     - name: bogus interface 17
       definition: test
       interfaces:
@@ -275,7 +265,6 @@ neighbordb:
             port: Ethernet1/
 
     # Not provisioned
-    # See #34
     - name: bogus interface 18
       definition: test
       interfaces:
@@ -283,7 +272,6 @@ neighbordb:
             port: Ethernet-1/
 
     # Not provisioned
-    # See #34
     - name: bogus interface 19
       definition: test
       interfaces:
