@@ -259,15 +259,16 @@ class Topology(DeserializableMixin):
             # the pattern if a mores specific variable doesn't exists
             # otherwise we will not write the node pattern correctly
             # later
-            if self.variables is not None:
-                for key, value in self.variables.items():
-                    if key not in obj.variables:
-                        obj.variables[key] = value
+            if self.variables:
+                for key in [x for x in self.variables
+                            if x not in obj.variables]:
+                    obj.variables[key] = self.variables[key]
 
-                for item in obj.interfaces:
-                    if item.device not in [None, 'any'] and \
-                        item.device in self.variables:
-                        item.device = self.variables[item.device]
+             # TODO - variable substitution
+             # for item in obj.interfaces:
+             #     if item.device not in [None, 'any'] and \
+             #         item.device in self.variables:
+             #         item.device = self.variables[item.device]
 
         except TypeError:
             log_msg('Unable to parse pattern entry', error=True)
@@ -319,7 +320,7 @@ class Topology(DeserializableMixin):
         for pattern in self.get_patterns(node):
             log_msg('Attempting to match Pattern [%s]' % pattern.name)
 
-            if pattern.match_node(node, self.variables):
+            if pattern.match_node(node):
                 log_msg('Match for [%s] was successful' % pattern.name)
                 matches.append(pattern)
             else:
@@ -359,7 +360,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
     def serialize(self):
         data = dict(name=self.name, definition=self.definition)
-        data['variables'] = self.variables or dict()
+        data['variables'] = self.variables
 
         if self.node:
             data['node'] = self.node
@@ -373,7 +374,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
     def add_interface(self, interface, device, port, tags=None):
         try:
             self.interfaces.append(InterfacePattern(interface, device, port, \
-                                                    tags))
+                                                    tags, self.variables))
         except InterfacePatternError:
             log_msg('Could not add pattern due to invalid interface')
             raise PatternError
@@ -438,10 +439,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
         return (interface, device, port, tags)
 
-    def match_node(self, node, variables=None):
-        if variables is None:
-            variables = {}
-
+    def match_node(self, node):
         neighbors = node.neighbors.copy()
 
         for intf_pattern in self.interfaces:
@@ -455,8 +453,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
                     return False
                 return True
 
-            variables.update(self.variables)
-            matches = intf_pattern.match_neighbors(neighbors, variables)
+            matches = intf_pattern.match_neighbors(neighbors)
             if not matches:
                 log_msg("InterfacePattern failed to match interface[%s]" \
                     % intf_pattern.interface)
@@ -471,21 +468,26 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
 class InterfacePattern(object):
 
-    def __init__(self, interface, device, port, tags=None):
+    def __init__(self, interface, device, port, tags=None, variables=None):
 
         self.interface = interface
         self.interfaces = self.range(interface)
 
         self.device = device
 
+        # Used for serialization
+        self.port_init = port
+        
+        # Used for potential variable substitution 
         self.port = port
-        self.ports = self.range(port)
 
         self.tags = tags or list()
 
+        self.variables = variables or dict()
+
     def __repr__(self):
         return "InterfacePattern(interface=%s, device=%s, port=%s)" % \
-            (self.interface, self.device, self.port)
+            (self.interface, self.device, self.port_init)
 
     def serialize(self):
         obj = dict()
@@ -493,7 +495,7 @@ class InterfacePattern(object):
             obj['device'] = 'none'
         else:
             obj['device'] = self.device
-            obj['port'] = self.port
+            obj['port'] = self.port_init
         if self.tags is not None:
             obj['tags'] = self.tags
         return obj
@@ -509,8 +511,8 @@ class InterfacePattern(object):
 
         interface_name = 'Ethernet'
         if '/' in indicies:
-            if indicies.count('/') > 1:
-                log.debug('Could not parse interface index')
+            if indicies.count('/') > 2:
+                log.debug('Could not parse interface index: %s' % indicies)
                 raise InterfacePatternError
             module, indicies = indicies.split('/')
             try:
@@ -542,7 +544,7 @@ class InterfacePattern(object):
                     raise InterfacePatternError
         return interfaces
 
-    def match_neighbors(self, neighbors, variables):
+    def match_neighbors(self, neighbors):
         if self.interface == 'any':
             # the pattern interface is any so we should consider
             # all neighbor interfaces as potential matches
@@ -561,7 +563,7 @@ class InterfacePattern(object):
         matches = list()
         for interface in interfaces:
             for device, port in neighbors(interface):
-                if self.match_device(device, variables) and \
+                if self.match_device(device) and \
                    self.match_port(port):
                     matches.append(interface)
                     # as soon as a device/port match is found in the
@@ -573,26 +575,37 @@ class InterfacePattern(object):
             matches = list()
         return matches
 
-    def match_device(self, device, variables=None):
-        if variables is None:
-            variables = {}
+    @classmethod
+    def run_function(cls, function, argument):
+        match = FUNC_RE.match(function)
+        if not match:
+            method = 'exact'
+            arg = 'function'
+        else:
+            method = match.group('function')
+            method = getattr(Functions, method)
+            arg = match.group('arg')
+        return method(arg, argument)      
+
+    def match_device(self, device):
         if self.device is None:
             return False
         elif self.device == 'any':
             return True
-        pattern = variables.get(self.device) or self.device
-        match = FUNC_RE.match(pattern)
-        method = match.group('function') if match else 'exact'
-        method = getattr(Functions, method)
-        arg = match.group('arg') if match else pattern
-        return method(arg, device)
+
+        if self.device.startswith('$'):
+            return self.run_function(self.device, device)
+        else:
+            return self.device == device
 
     def match_port(self, port):
-        if (self.port is None and self.device == 'any') or \
-           (self.port == 'any'):
+        if self.port == 'any':
             return True
-        elif self.port is None and self.device is None:
+        elif self.port is None:
             return False
-        return port in self.ports
+        elif self.port.startswith('$'):
+            return self.run_function(self.port, port)            
+        else:
+            return port == self.port
 
 

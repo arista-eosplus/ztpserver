@@ -256,7 +256,8 @@ class TestConfig(unittest.TestCase):
             self.config.add_group(grp)
             grp = str(grp) if isinstance(grp, int) else grp
             self.assertIn(grp, self.config._groups)
-            self.assertIsInstance(getattr(self.config, grp), ztpserver.config.Group)
+            self.assertIsInstance(getattr(self.config, grp), 
+                                  ztpserver.config.Group)
 
     def test_config_set_value_attribute(self):
         attr = self.Attr('test', str, None, None)
