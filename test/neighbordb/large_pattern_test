@@ -9,7 +9,7 @@ neighbordb:
   patterns:
     - name: sample node template 1
       definition: test
-      node: 000c29f5d27da
+      node: 000c29f5d27d
       interfaces:
         - Ethernet1: any
         - Ethernet3: localhost:Ethernet1
@@ -176,7 +176,6 @@ nodes:
       count: 0
       excludes:
         - default catch all
-        - sample node template 1
         - sample node template 2
         - sample global template 1
         - sample global template 2

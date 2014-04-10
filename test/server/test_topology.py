@@ -28,10 +28,11 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import unittest
-
 #pylint: disable=F0401,C0103
+
+import unittest
 import ztpserver.topology
+
 
 class Functions(unittest.TestCase):
 
@@ -63,6 +64,7 @@ class Functions(unittest.TestCase):
     def test_functions_regex_false(self):
         self.assertFalse(self.Functions.regex(r'\d+', 'test'))
 
+
 class TestNode(unittest.TestCase):
 
     def test_node_creation(self):
@@ -89,7 +91,7 @@ class TestNode(unittest.TestCase):
         obj.add_neighbors({'Ethernet': [{'device': 'test', 'port': 'test'}]})
         self.assertEqual(repr(obj), 'Node(node=1234567890, '
                          'neighbors=OrderedCollection([(\'Ethernet\', '
-                         '[Neighbor(device=\'device\', port=\'port\')])]), '
+                         '[Neighbor(device=\'test\', port=\'test\')])]), '
                          '...)')
         self.assertIsNotNone(obj.neighbors('Ethernet'))
 
@@ -139,7 +141,6 @@ class TestInterfacePattern(unittest.TestCase):
         except AssertionError:
             if not fail:
                 raise
-
 
     def test_match_device_exact_true(self):
         self.remote_device_test('exact("spine")', 'spine')

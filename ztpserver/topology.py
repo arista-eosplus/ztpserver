@@ -107,8 +107,9 @@ class Node(DeserializableMixin):
         '''
         for interface, neighbor_list in neighbors.iteritems():
             neighbors = []
-            for device, port in neighbor_list:
-                neighbors.append(Neighbor(device, port))
+            for neighbor in neighbor_list:
+                neighbors.append(Neighbor(neighbor['device'], 
+                                          neighbor['port']))
             self.neighbors[interface] = neighbors
 
     def deserialize(self, json):
@@ -265,11 +266,11 @@ class Topology(DeserializableMixin):
                 (not isinstance(node, basestring) or 
                  len(node.translate(''.join(ALL_CHARS),
                                          ''.join(NON_HEX_CHARS))) != 12):
-            log_msg('Failed to parse pattern because of invalid node: '
+            log_msg('Failed to parse pattern because of invalid systemmac: '
                     '%s' % str(node), error=True)
             return
 
-        if variables and not isinstance(interfaces, dict):
+        if variables and not isinstance(variables, dict):
             log_msg('Failed to parse pattern because of '
                     'invalid variables list: %s' % str(variables), error=True)
             return
@@ -430,7 +431,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
                 remote_device, remote_interface = 'any', 'any'
             elif peer_info == 'none':
                 # handles the case of implicit 'none'
-                remote_device, remote_interface = None, None
+                remote_device, remote_interface = 'none', 'none'
             elif ':' not in peer_info:
                 remote_device = peer_info
                 remote_interface = 'any'
@@ -465,23 +466,21 @@ class Pattern(DeserializableMixin, SerializableMixin):
             for index, intf_pattern in enumerate(patterns):
                 # True, False, None
                 result = intf_pattern.match_neighbors(intf, neighbors)
-                match = False
                 if result is True and not match:
                     log_msg('Interface %s matched %s '%
                             (intf, str(intf_pattern)))
                     match = index
                 elif result is False:
-                    log_msg('Failed to match node: neighbor %s does not '
+                    log_msg('Failed to match node: interface %s does not '
                             'comply with %s'  % 
-                            (str(neighbors), str(intf_pattern)))
+                            (intf, str(intf_pattern)))
                     return False
 
             if match is not None:
                 del patterns[match]
             else:
-                log_msg('Failed to match node: neighbor %s does not match '
-                        'any entries'  % str(neighbors))
-                return False
+                log_msg('Failed to match node: %s does not match '
+                        'any pattern'  % intf)
 
         for intf_pattern in patterns:
             if intf_pattern.is_positive_constraint():
@@ -519,6 +518,8 @@ class InterfacePattern(object):
                 return True            
             elif self.remote_device != 'none':
                 return self.remote_interface != 'none'
+        
+        return False
 
     def __repr__(self):
         return 'InterfacePattern(interface=%s, remote_device=%s, '\
@@ -733,4 +734,3 @@ class InterfacePattern(object):
                 if self.remote_interface == neighbor.port:
                     return True
             return False
-

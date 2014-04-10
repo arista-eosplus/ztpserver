@@ -17,7 +17,7 @@ neighbordb:
       definition: test
 
     - name: missing interfaces 2
-      node: 000c29f5d27da
+      node: 000c29f5d27d
       definition: test
 
     - name: missing definition 1
@@ -25,12 +25,12 @@ neighbordb:
         - Ethernet1: localhost:Ethernet1
 
     - name: missing definition 2
-      node: 000c29f5d27da
+      node: 000c29f5d27d
       interfaces:
         - Ethernet1: localhost:Ethernet1
 
     # Missing name
-    - node: 000c29f5d27da
+    - node: 000c29f5d27d
       definition: test
       interfaces:
         - Ethernet1: localhost:Ethernet1
@@ -40,7 +40,6 @@ neighbordb:
       interfaces:
         - Ethernet1: localhost:Ethernet1
 
-    # See #25
     - name: wrong system mac
       node: azzx
       definition: test
@@ -226,7 +225,6 @@ neighbordb:
 
 configured_neighbordb:
   nodes:
-    - wrong system mac              #25
     - ok nodes order 1
     - ok nodes order 2
     - ok nodes order 3
