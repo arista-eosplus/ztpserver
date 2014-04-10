@@ -224,10 +224,6 @@ class Topology(DeserializableMixin):
         self.clear()
         super(Topology, self).load_from_file(fobj, content_type)
 
-    def load_from_python(self, contents, content_type=CONTENT_TYPE_YAML):
-        self.clear()
-        super(Topology, self).load_from_python(contents, content_type)
-
     def deserialize(self, contents):
         self.global_variables = contents.get('variables', {})
 

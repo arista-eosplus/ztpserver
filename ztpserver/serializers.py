@@ -165,12 +165,12 @@ class DeserializableMixin(object):
 
     def load_from_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
-            self.load_from_python(fobj.read(), content_type)
+            self.load(fobj.read(), content_type)
         except IOError as exc:
             log.debug(exc)
             raise SerializerError('unable to load file')
 
-    def load_from_python(self, contents, content_type=CONTENT_TYPE_OTHER):
+    def load(self, contents, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
         contents = serializer.deserialize(contents, content_type)
         self.deserialize(contents)
