@@ -68,7 +68,8 @@ class TestNode(unittest.TestCase):
     def test_node_creation(self):
         obj = ztpserver.topology.Node('1234567890')
         self.assertEqual(obj.systemmac, '1234567890')
-        self.assertEqual(repr(obj), 'Node(neighbors=0)')
+        self.assertEqual(repr(obj), 'Node(node=1234567890, '
+                         'neighbors=OrderedCollection(), ...)')
 
     def test_node_creation_with_kwargs(self):
         obj = ztpserver.topology.Node(model='vEOS',
@@ -76,7 +77,8 @@ class TestNode(unittest.TestCase):
                                       serialnumber='0123456789',
                                       version='4.12.0')
 
-        self.assertEqual(repr(obj), 'Node(neighbors=0)')
+        self.assertEqual(repr(obj), 'Node(node=00:1c:73:aa:11:bb, '
+                         'neighbors=OrderedCollection(), ...)')
         self.assertEqual(obj.model, 'vEOS')
         self.assertEqual(obj.systemmac, '00:1c:73:aa:11:bb')
         self.assertEqual(obj.serialnumber, '0123456789')
@@ -85,14 +87,17 @@ class TestNode(unittest.TestCase):
     def test_node_add_neighbors_valid(self):
         obj = ztpserver.topology.Node('1234567890')
         obj.add_neighbors({'Ethernet': [{'device': 'test', 'port': 'test'}]})
-        self.assertEqual(repr(obj), 'Node(neighbors=1)')
+        self.assertEqual(repr(obj), 'Node(node=1234567890, '
+                         'neighbors=OrderedCollection([(\'Ethernet\', '
+                         '[Neighbor(device=\'device\', port=\'port\')])]), '
+                         '...)')
         self.assertIsNotNone(obj.neighbors('Ethernet'))
 
 
 class TestPattern(unittest.TestCase):
 
     def test_create_pattern_with_defaults(self):
-        obj = ztpserver.topology.Pattern()
+        obj = ztpserver.topology.Pattern(None, None, None)
         self.assertIsInstance(obj, ztpserver.topology.Pattern)
 
     def test_create_pattern_with_kwargs(self):
@@ -108,8 +113,7 @@ class TestPattern(unittest.TestCase):
         self.assertEqual(1, len(obj.interfaces))
 
     def test_add_interface(self):
-        obj = ztpserver.topology.Pattern()
-        obj.add_interface('Ethernet1', 'device', 'port')
+        obj = ztpserver.topology.Pattern(None, None, [{'Ethernet1': 'any'}])
         self.assertEqual(len(obj.interfaces), 1)
 
 
@@ -118,101 +122,76 @@ class TestInterfacePattern(unittest.TestCase):
 
     def test_create_interface_pattern(self):
         obj = ztpserver.topology.InterfacePattern('Ethernet1', 'any', 'any')
-        reprobj = 'InterfacePattern(interface=Ethernet1, device=any, port=any)'
+        reprobj = 'InterfacePattern(interface=Ethernet1, remote_device=any, '\
+            'remote_interface=any)'
         self.assertEqual(repr(obj), reprobj)
 
-    def test_match_neighbors_valid(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 'any', 'any')
-        attrs = {
-            'systemmac': '00:1c:73:00:00:00',
-            'neighbors': {
-                'Ethernet1': [{'device': 'test', 'port': 'test'}],
-                'Ethernet2': [{'device': 'test', 'port': 'test'}]
-            }
-        }
-        node = ztpserver.topology.Node(**attrs)
-        result = obj.match_neighbors(node.neighbors)
-        self.assertEqual(result, ['Ethernet1'])
+    def remote_device_test(self, device_to_match, device, fail=False):
+        obj = ztpserver.topology.InterfacePattern('Ethernet1',
+                                                  device_to_match,
+                                                  'any')
+        neighbors = [ztpserver.topology.Neighbor(device, 'any')]
+        try:
+            self.assertTrue(obj.match_remote_device(neighbors))
+            if fail:
+                self.assertFalse('Erroneously matched %s to %s' %
+                                 (device, obj))
+        except AssertionError:
+            if not fail:
+                raise
 
-    def test_match_neighbors_invalid(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 'any', 'any')
-
-        attrs = {
-            'systemmac': '00:1c:73:00:00:00',
-            'neighbors': {
-                'Ethernet1': [{'device': 'test', 'port': 'test'}],
-                'Ethernet2': [{'device': 'test', 'port': 'test'}]
-            }
-        }
-        node = ztpserver.topology.Node(**attrs)
-        result = obj.match_neighbors(node.neighbors)
-        self.assertEqual(result, ['Ethernet1'])
 
     def test_match_device_exact_true(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'exact("spine")', 
-                                                  'any')
-        self.assertTrue(obj.match_device('spine'))
+        self.remote_device_test('exact("spine")', 'spine')
 
     def test_match_device_exact_false(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'exact("spine")', 
-                                                  'any')
-        self.assertFalse(obj.match_device('leaf'))
+        self.remote_device_test('exact("spine")', 'leaf', 
+                                fail=True)
 
     def test_match_device_includes_true(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'includes("spine")', 
-                                                  'any')
-        self.assertTrue(obj.match_device('pod1-spine1'))
+        self.remote_device_test('includes("spine")', 'pod1-spine1')
 
     def test_match_device_includes_false(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'includes("spine")', 
-                                                  'any')
-        self.assertFalse(obj.match_device('pod1-leaf1'))
+        self.remote_device_test('includes("spine")', 'pod1-leaf1', 
+                                fail=True)
 
     def test_match_device_excludes_true(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'excludes("spine")', 
-                                                  'any')
-        self.assertTrue(obj.match_device('pod1-leaf1'))
+        self.remote_device_test('excludes("spine")', 'pod1-leaf1')
 
     def test_match_device_excludes_false(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'excludes("spine")', 
-                                                  'any')
-        self.assertFalse(obj.match_device('pod1-spine1'))
+        self.remote_device_test('excludes("spine")', 'pod1-spine1', 
+                                fail=True)
 
     def test_match_device_regex_true(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  r'regex("pod\d+-spine\d+")',
-                                                  'any')
-        self.assertTrue(obj.match_device('pod1-spine1'))
+        self.remote_device_test(r'regex("pod\d+-spine\d+")',
+                               'pod1-spine1')
 
     def test_match_device_regex_false(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  r'exact("pod\d+-spine\d+")', 
-                                                  'any')
-        self.assertFalse(obj.match_device('pod1-leaf1'))
+        self.remote_device_test(r'exact("pod\d+-spine\d+")',
+                                'pod1-leaf1', fail=True)
+
+    def remote_port_test(self, port_to_match, port, fail=False):
+        obj = ztpserver.topology.InterfacePattern('Ethernet1',
+                                                  'any',
+                                                  port_to_match)
+        neighbors = [ztpserver.topology.Neighbor('any', port)]
+        try:
+            self.assertTrue(obj.match_remote_interface(neighbors))
+            if fail:
+                self.assertFalse('Erroneously matched %s to %s' %
+                                 (port, obj))
+        except AssertionError:
+            if not fail:
+                raise
 
     def test_match_port_true(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'any', 
-                                                  'Ethernet1')
-        self.assertTrue(obj.match_port('Ethernet1'))
+        self.remote_port_test('Ethernet1', 'Ethernet1')
 
     def test_match_port_true_range(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'any', 
-                                                  'regex("Ethernet[1-3]")')
-        self.assertTrue(obj.match_port('Ethernet1'))
+        self.remote_port_test('regex("Ethernet[1-3]")', 'Ethernet1')
 
     def test_match_port_false(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 
-                                                  'any', 
-                                                  'Ethernet1')
-        self.assertFalse(obj.match_port('Ethernet2'))
+        self.remote_port_test('Ethernet1', 'Ethernet2', fail=True)
 
 if __name__ == '__main__':
     unittest.main()

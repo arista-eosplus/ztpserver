@@ -52,7 +52,7 @@ def load(filename=None):
     if filename is None:
         filename = default_filename()
     try:
-        topology.load(open(filename))
+        topology.load_from_file(open(filename))
         log.debug('Loaded neighbordb [%r]' % topology)
     except IOError:
         log.warn('Neighbordb file [%s] not loaded' % filename)
@@ -83,7 +83,7 @@ def create_node(nodeattrs):
 
 def load_pattern(filename, content_type=CONTENT_TYPE_YAML):
     pattern = ztpserver.topology.Pattern()
-    pattern.load(open(filename), content_type)
+    pattern.load_from_file(open(filename), content_type)
     return pattern
 
 def resources(attributes, node):

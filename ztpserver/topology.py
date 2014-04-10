@@ -80,6 +80,7 @@ class OrderedCollection(collections.OrderedDict):
 
 Neighbor = collections.namedtuple('Neighbor', ['device', 'port'])
 
+
 class Node(DeserializableMixin):
 
     def __init__(self, systemmac, 
@@ -96,7 +97,7 @@ class Node(DeserializableMixin):
             self.add_neighbors(neighbors)
 
     def __repr__(self):
-        return 'Node(systemmac=%s, neighbors=%s, ...)' % \
+        return 'Node(node=%s, neighbors=%s, ...)' % \
                (self.systemmac, str(self.neighbors))
 
     def add_neighbors(self, neighbors):
@@ -111,7 +112,7 @@ class Node(DeserializableMixin):
             self.neighbors[interface] = neighbors
 
     def deserialize(self, json):
-        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
+        for prop in ['model', 'node', 'serialnumber', 'version']:
             if prop in json:
                 setattr(self, prop, json[prop])
 
@@ -121,7 +122,7 @@ class Node(DeserializableMixin):
 
     def serialize(self):
         result = {}
-        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
+        for prop in ['model', 'node', 'serialnumber', 'version']:
             if getattr(self, prop):
                 result[prop] = getattr(self, prop)
 
@@ -205,7 +206,7 @@ class Topology(DeserializableMixin):
     def __init__(self):
         self.global_variables = {}
         self.patterns = {'globals': [], 
-                         'nodes': []}
+                         'nodes': {}}
 
     def __repr__(self):
         return 'Topology(variables=%d, globals=%d, nodes=%d)' % \
@@ -216,7 +217,7 @@ class Topology(DeserializableMixin):
     def clear(self):
         self.global_variables.clear()
         self.patterns['globals'] = []
-        self.patterns['nodes'] = []
+        self.patterns['nodes'].clear()
 
     def load_from_file(self, fobj, content_type=CONTENT_TYPE_YAML):
         self.clear()
@@ -240,7 +241,7 @@ class Topology(DeserializableMixin):
             self.add_pattern(**pattern)
 
     def add_pattern(self, name=None, definition=None,
-                    systemmac=None, interfaces=None,
+                    node=None, interfaces=None,
                     variables=None):
         log_msg('Adding pattern: name=%s, ...' % name)
 
@@ -260,12 +261,12 @@ class Topology(DeserializableMixin):
                     '%s' % str(interfaces), error=True)
             return
 
-        if systemmac and \
-                (not isinstance(systemmac, basestring) or 
-                 len(systemmac.translate(''.join(ALL_CHARS),
+        if node and \
+                (not isinstance(node, basestring) or 
+                 len(node.translate(''.join(ALL_CHARS),
                                          ''.join(NON_HEX_CHARS))) != 12):
-            log_msg('Failed to parse pattern because of invalid systemmac: '
-                    '%s' % str(systemmac), error=True)
+            log_msg('Failed to parse pattern because of invalid node: '
+                    '%s' % str(node), error=True)
             return
 
         if variables and not isinstance(interfaces, dict):
@@ -274,7 +275,7 @@ class Topology(DeserializableMixin):
             return
 
         # Compute list of variables
-        pattern_variables = variables
+        pattern_variables = variables or {}
         for key in [x for x in self.global_variables
                     if x not in pattern_variables]:
             pattern_variables[key] = self.global_variables[key]
@@ -282,12 +283,12 @@ class Topology(DeserializableMixin):
         # Create pattern
         try:
             pattern = Pattern(name, definition, interfaces, 
-                              systemmac=systemmac, variables=pattern_variables)
+                              node=node, variables=pattern_variables)
             log_msg('Pattern entry parsed successfully')
 
             # Add pattern to topology
-            if systemmac:
-                self.patterns['nodes'][pattern.systemmac] = pattern
+            if node:
+                self.patterns['nodes'][pattern.node] = pattern
             else:
                 self.patterns['globals'].append(pattern)
         except PatternError as error:
@@ -308,7 +309,7 @@ class Topology(DeserializableMixin):
 
     def find_eligible_patterns(self, node):
         ''' returns a list of possible patterns for a given node '''
-        log_msg('Searching for eligible patterns for node:' % node.name)
+        log_msg('Searching for eligible patterns for node: %s' % node.systemmac)
 
         if node.systemmac in self.patterns['nodes']:
             pattern = self.patterns['nodes'].get(node.systemmac)
@@ -339,12 +340,12 @@ class Topology(DeserializableMixin):
 class Pattern(DeserializableMixin, SerializableMixin):
 
     def __init__(self, name, definition, interfaces, 
-                 systemmac=None, variables=None):
+                 node=None, variables=None):
 
         self.name = name
         self.definition = definition
 
-        self.systemmac = systemmac
+        self.node = node
         self.variables = variables or {}
 
         self.interfaces = []
@@ -353,10 +354,12 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
         # Variable substitution
         for item in self.interfaces:
-            if(item.remote_device.startswith('$') and
+            if(item.remote_device and
+               item.remote_device.startswith('$') and
                item.remote_device[1:] in self.variables):
                 item.remote_device = self.variables[item.remote_device[1:]]
-            if(item.remote_interface.startswith('$') and
+            if(item.remote_interface and
+               item.remote_interface.startswith('$') and
                item.remote_interface[1:] in self.variables):
                 item.remote_interface = self.variables[item.remote_device[1:]]
 
@@ -364,7 +367,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
         self.name = contents.get('name')
         self.definition = contents.get('definition')
 
-        self.systemmac = contents.get('node', None)
+        self.node = contents.get('node', None)
         self.variables = contents.get('variables', {})
 
         self.interfaces = []
@@ -381,8 +384,8 @@ class Pattern(DeserializableMixin, SerializableMixin):
         if self.variables:
             data['variables'] = self.variables
 
-        if self.systemmac:
-            data['node'] = self.systemmac
+        if self.node:
+            data['node'] = self.node
 
         return data
 
@@ -457,25 +460,27 @@ class Pattern(DeserializableMixin, SerializableMixin):
         log_msg('Attempting to match node: %s' % str(node))
 
         patterns = list(self.interfaces)
-        for intf, neighbor in node.neighbors():
-            match = False
-            for intf_pattern in patterns:
+        for intf, neighbors in node.neighbors.iteritems():
+            match = None
+            for index, intf_pattern in enumerate(patterns):
                 # True, False, None
-                result = intf_pattern.match_neighbor(intf, neighbor)
+                result = intf_pattern.match_neighbors(intf, neighbors)
                 match = False
                 if result is True and not match:
-                    match = intf_pattern
+                    log_msg('Interface %s matched %s '%
+                            (intf, str(intf_pattern)))
+                    match = index
                 elif result is False:
                     log_msg('Failed to match node: neighbor %s does not '
                             'comply with %s'  % 
-                            (str(neighbor), str(intf_pattern)))
+                            (str(neighbors), str(intf_pattern)))
                     return False
 
-            if match:
+            if match is not None:
                 del patterns[match]
             else:
                 log_msg('Failed to match node: neighbor %s does not match '
-                        'any entries'  % str(neighbor))
+                        'any entries'  % str(neighbors))
                 return False
 
         for intf_pattern in patterns:
@@ -517,9 +522,9 @@ class InterfacePattern(object):
 
     def __repr__(self):
         return 'InterfacePattern(interface=%s, remote_device=%s, '\
-               'remote_interface=%s)' % (self.interfaces, 
-                                         self.remote_device, 
-                                         self.remote_interface)
+               'remote_interface=%s)' % (self.interfaces_init, 
+                                         self.remote_device_init, 
+                                         self.remote_interface_init)
 
     def serialize(self):
         result = dict()
@@ -578,11 +583,11 @@ class InterfacePattern(object):
 
         return interfaces
 
-    def match_neighbor(self, intf, neighbor):
+    def match_neighbors(self, intf, neighbors):
         # pylint: disable=R0911,R0912
 
         log_msg('Attempting to match %s against %r' % 
-                (neighbor, self))
+                (neighbors, self))
         
         if self.interfaces == 'any':
             if self.remote_device == 'any':
@@ -592,7 +597,7 @@ class InterfacePattern(object):
                     # bogus
                     return False
                 else:
-                    if self.match_remote_interface(neighbor.remote_interface):
+                    if self.match_remote_interface(neighbors):
                         return True
             elif self.remote_device == 'none':
                 if self.remote_interface == 'any':
@@ -605,14 +610,14 @@ class InterfacePattern(object):
                     return False
             else:
                 if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return True
                 elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return False
                 else:
-                    if(self.match_remote_device(neighbor.remote_interface) and
-                       self.match_remote_interface(neighbor.remote_interface)):
+                    if(self.match_remote_device(neighbors) and
+                       self.match_remote_interface(neighbors)):
                         return True
 
         elif self.interfaces == 'none':
@@ -624,7 +629,7 @@ class InterfacePattern(object):
                     # bogus
                     return False
                 else:
-                    if self.match_remote_interface(neighbor.remote_interface):
+                    if self.match_remote_interface(neighbors):
                         return False
             elif self.remote_device == 'none':
                 if self.remote_interface == 'any':
@@ -637,14 +642,14 @@ class InterfacePattern(object):
                     return False
             else:
                 if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return False
                 elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return False
                 else:
-                    if(self.match_remote_device(neighbor.remote_interface) and
-                       self.match_remote_interface(neighbor.remote_interface)):
+                    if(self.match_remote_device(neighbors) and
+                       self.match_remote_interface(neighbors)):
                         return False
         else:
             if self.remote_device == 'any':
@@ -656,7 +661,7 @@ class InterfacePattern(object):
                         return False
                 else:
                     if(intf in self.interfaces and
-                        self.match_remote_interface(neighbor.remote_interface)):
+                        self.match_remote_interface(neighbors)):
                         return True
             elif self.remote_device == 'none':
                 if self.remote_interface == 'any':
@@ -667,19 +672,19 @@ class InterfacePattern(object):
                         return False
                 else:
                     if(intf in self.interfaces and
-                        self.match_remote_interface(neighbor.remote_interface)):
+                        self.match_remote_interface(neighbors)):
                         return False
             else:
                 if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return True
                 elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbor.remote_interface):
+                    if self.match_remote_device(neighbors):
                         return False
                 else:
                     if(intf in self.interfaces and
-                       self.match_remote_device(neighbor.remote_interface) and
-                       self.match_remote_interface(neighbor.remote_interface)):
+                       self.match_remote_device(neighbors) and
+                       self.match_remote_interface(neighbors)):
                         return True
 
         return None
@@ -695,22 +700,37 @@ class InterfacePattern(object):
             arg = match.group('arg')
         return method(arg, argument)      
 
-    def match_remote_device(self, remote_device):
+    def match_remote_device(self, neighbors):
         if self.remote_device == 'any':
             return True
         elif self.remote_device is None:
             return False
         elif FUNC_RE.match(self.remote_device):
-            return self.run_function(self.remote_device, remote_device)
+            for neighbor in neighbors:
+                if self.run_function(self.remote_device, 
+                                     neighbor.device):
+                    return True
+            return False
         else:
-            return self.remote_device == remote_device
+            for neighbor in neighbors:
+                if self.remote_device == neighbor.device:
+                    return True
+            return False
 
-    def match_remote_interface(self, remote_interface):
+    def match_remote_interface(self, neighbors):
         if self.remote_interface == 'any':
             return True
         elif self.remote_interface is None:
             return False
         elif FUNC_RE.match(self.remote_interface):
-            return self.run_function(self.remote_interface, remote_interface)
+            for neighbor in neighbors:
+                if self.run_function(self.remote_interface, 
+                                     neighbor.port):
+                    return True
+            return False
         else:
-            return remote_interface == self.remote_interface
+            for neighbor in neighbors:
+                if self.remote_interface == neighbor.port:
+                    return True
+            return False
+
