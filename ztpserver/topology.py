@@ -59,16 +59,8 @@ def log_msg(text, error=False):
         text = 'ERROR: %s' % text
     log.debug(text)
 
-class NodeErrror(Exception):
-    ''' base error raised by :py:class:`Node` '''
-    pass
-
 class ResourcePoolError(Exception):
     ''' base error raised by :py:class:`Resource` '''
-    pass
-
-class TopologyError(Exception):
-    ''' base error raised by :py:class:`Topology` '''
     pass
 
 class PatternError(Exception):
