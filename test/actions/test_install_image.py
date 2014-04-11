@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -55,9 +55,9 @@ class FailureTest(ActionFailureTest):
 
     def test_url_failure(self):
         self.basic_test('install_image', 3,
-                        attributes={'software_url' : 
+                        attributes={'software_url' :
                                     random_string(),
-                                    'software_version' : 
+                                    'software_version' :
                                     random_string()})
 
 
@@ -135,7 +135,7 @@ class SuccessTest(unittest.TestCase):
         wrong_version = '%s_test' % version
         bootstrap.ztps.set_action_response(
             'startup_config_action',
-            startup_config_action(lines=['! boot system flash:/%s.swi' % 
+            startup_config_action(lines=['! boot system flash:/%s.swi' %
                                          wrong_version]))
 
         boot_file = '/tmp/boot-config'

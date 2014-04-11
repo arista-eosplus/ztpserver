@@ -82,7 +82,8 @@ def create_node(nodeattrs):
     return node
 
 def load_pattern(filename, content_type=CONTENT_TYPE_YAML):
-    pattern = ztpserver.topology.Pattern()
+    # FIXME this needs to be addressed
+    pattern = ztpserver.topology.Pattern(None, None, None)
     pattern.load_from_file(open(filename), content_type)
     return pattern
 

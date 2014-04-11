@@ -459,7 +459,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action' }])
+            actions=[{'action' : 'test_action'}])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201)
         bootstrap.start_test()
@@ -478,7 +478,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action' }])
+            actions=[{'action' : 'test_action'}])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            content_type='test/plain')
         bootstrap.start_test()
@@ -497,7 +497,7 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action' }])
+            actions=[{'action' : 'test_action'}])
         bootstrap.ztps.set_action_response('test_action', print_action(),
                                            status=201,
                                            content_type='test/plain')
@@ -538,7 +538,7 @@ class ActionFailureTest(unittest.TestCase):
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.action_failure())
             self.failIf(bootstrap.error)
-            log  = ''.join(file_log(log))
+            log = ''.join(file_log(log))
             self.failUnless(text_onstart in log)
             self.failUnless(text_onsuccess not in log)
             self.failUnless(text_onfailure in log)
@@ -792,7 +792,7 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.success())
             self.failIf(bootstrap.error)
-            log  = ''.join(file_log(log))
+            log = ''.join(file_log(log))
             self.failUnless(text_onstart in log)
             self.failUnless(text_onsuccess in log)
             self.failUnless(text_onfailure not in log)

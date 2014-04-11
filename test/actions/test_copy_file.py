@@ -49,7 +49,7 @@ from client_test_lib import startup_config_action, remove_file
 
 def random_permissions():
     return '7%s%s' % ((random.choice([1, 2, 3, 4, 5, 6, 7]),
-                       random.choice([1,2,3,4,5,6,7])))
+                       random.choice([1, 2, 3, 4, 5, 6, 7])))
 
 
 class FailureTest(ActionFailureTest):
