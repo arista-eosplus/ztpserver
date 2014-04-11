@@ -393,11 +393,11 @@ class Pattern(DeserializableMixin, SerializableMixin):
                                str(interface_details))
 
         for intf, peer_info in interface_details.iteritems():
-            args = self.parse_interface(intf, peer_info)
-            log_msg('Adding interface to pattern: %s' % str(args))
-            (interface, remote_device, remote_interface) = args
-
             try:
+                args = self.parse_interface(intf, peer_info)
+                log_msg('Adding interface to pattern: %s' % str(args))
+                (interface, remote_device, remote_interface) = args
+
                 self.interfaces.append(InterfacePattern(interface, 
                                                         remote_device, 
                                                         remote_interface))
@@ -417,8 +417,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
         if isinstance(peer_info, dict):
             for key in peer_info:
                 if key not in ['device', 'port']:
-                    raise InterfacePatternError('Unexpected key: %s' % key, 
-                                                error=True)
+                    raise InterfacePatternError('Unexpected key: %s' % key)
             remote_device = peer_info.get('device', 'any')
             remote_interface = peer_info.get('port', 'any')
 
@@ -430,6 +429,9 @@ class Pattern(DeserializableMixin, SerializableMixin):
                 # handles the case of implicit 'none'
                 remote_device, remote_interface = 'none', 'none'
             elif ':' not in peer_info:
+                if len(peer_info.split()) != 1:   
+                    raise InterfacePatternError('Unexpected peer: %s' %
+                                                peer_info)
                 remote_device = peer_info
                 remote_interface = 'any'
             else:
@@ -446,11 +448,9 @@ class Pattern(DeserializableMixin, SerializableMixin):
                                 NONE_DEVICE_PARSER_RE.split(peer_info)
                         except ValueError:
                             raise InterfacePatternError('Unexpected peer: %s' %
-                                                        peer_info,
-                                                        error=True)
+                                                        peer_info)
         else:
-            raise InterfacePatternError('Unexpected peer: %s' % peer_info,
-                                        error=True)
+            raise InterfacePatternError('Unexpected peer: %s' % peer_info)
 
         return (interface, remote_device, remote_interface)
 
