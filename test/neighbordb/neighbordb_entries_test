@@ -40,12 +40,6 @@ neighbordb:
       interfaces:
         - Ethernet1: localhost:Ethernet1
 
-    - name: wrong system mac
-      node: azzx
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
     # ---Succeeding patterns---
 
     # Order of attributes should not matter

@@ -248,7 +248,8 @@ class Topology(DeserializableMixin):
                     '%s' % str(name), error=True)
             return
 
-        if not (definition and isinstance(definition, basestring)):
+        if not (definition and isinstance(definition, basestring) and
+                len(definition.split()) == 1):
             log_msg('Failed to parse pattern because of invalid definition: '
                     '%s' % str(definition), error=True)
             return
