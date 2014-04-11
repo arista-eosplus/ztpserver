@@ -41,7 +41,6 @@ import ztpserver.config
 from ztpserver.serializers import SerializableMixin, DeserializableMixin
 from ztpserver.constants import CONTENT_TYPE_YAML
 
-DEVICENAME_PARSER_RE = re.compile(r':(?=[Ethernet|\d+(?/)(?\d+)|\*])')
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
 FUNC_RE = re.compile(r'(?P<function>\w+)(?=\(\S+\))\([\'|\"]'
@@ -429,28 +428,26 @@ class Pattern(DeserializableMixin, SerializableMixin):
                 # handles the case of implicit 'none'
                 remote_device, remote_interface = 'none', 'none'
             elif ':' not in peer_info:
-                if len(peer_info.split()) != 1:   
-                    raise InterfacePatternError('Unexpected peer: %s' %
-                                                peer_info)
                 remote_device = peer_info
                 remote_interface = 'any'
             else:
-                try:
-                    remote_device, remote_interface = \
-                        DEVICENAME_PARSER_RE.split(peer_info)
-                except ValueError:
-                    try:
-                        remote_device, remote_interface = \
-                            ANY_DEVICE_PARSER_RE.split(peer_info)
-                    except ValueError:
-                        try:
-                            remote_device, remote_interface = \
-                                NONE_DEVICE_PARSER_RE.split(peer_info)
-                        except ValueError:
-                            raise InterfacePatternError('Unexpected peer: %s' %
-                                                        peer_info)
+                tokens = peer_info.split(':')
+                if len(tokens) != 2:
+                    raise InterfacePatternError('Unexpected peer: %s' %
+                                                peer_info)    
+                remote_device = tokens[0]
+                remote_interface = tokens[1]
         else:
             raise InterfacePatternError('Unexpected peer: %s' % peer_info)
+
+        remote_device = remote_device.strip()
+        if len(remote_device.split()) != 1:   
+            raise InterfacePatternError('Unexpected peer: %s' %
+                                        peer_info)
+        remote_interface = remote_interface.strip()
+        if len(remote_interface.split()) != 1:   
+            raise InterfacePatternError('Unexpected peer: %s' %
+                                        peer_info)
 
         return (interface, remote_device, remote_interface)
 
@@ -577,6 +574,12 @@ class InterfacePattern(object):
                         raiseError()                    
                 interfaces.append('Ethernet%s' % token)
             else:
+                try:
+                    tok_int = int(token)
+                    if tok_int < 1:
+                        raise ValueError
+                except ValueError:
+                    raiseError()                                    
                 interfaces.append('Ethernet%s' % token)
 
         return interfaces
