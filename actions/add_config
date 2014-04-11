@@ -72,8 +72,11 @@ def main(attributes):
 
     contents = open(TEMP_CONFIG, 'r').read()
 
-    variables = attributes.get('variables')
-    if variables:
+    _variables = attributes.get('variables') or dict()
+    variables = attributes.copy()
+    variables.update(_variables)
+
+    if _variables:
         try:
             attributes.get('NODE').log_msg("Using variables: %s" % variables)
             contents = Template(contents).substitute(variables)

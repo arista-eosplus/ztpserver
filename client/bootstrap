@@ -145,6 +145,14 @@ class Attributes(object):
         else:
             return None
 
+    def copy(self):
+        attrs = dict()
+        if self.global_attr:
+            attrs = self.global_attr.copy()
+        if self.local_attr:
+            attrs.update(self.local_attr)
+        return attrs
+
 
 class Node(object):
      #pylint: disable=R0201
