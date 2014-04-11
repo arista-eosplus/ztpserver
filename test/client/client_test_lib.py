@@ -181,8 +181,16 @@ def main(attributes):
 ''' % (user, user, STARTUP_CONFIG, '\n'.join(lines),
        STARTUP_CONFIG, STARTUP_CONFIG)
 
-def print_action(msg='TEST', use_attribute=False):
+def print_action(msg='TEST', use_attribute=False, create_copy=False):
     #pylint: disable=E0602
+    if use_attribute and create_copy:
+        return '''#!/usr/bin/env python
+
+def main(attributes):
+   attrs = attributes.copy()
+   print attrs.get('print_action-attr')
+'''
+
     if use_attribute:
         return '''#!/usr/bin/env python
 

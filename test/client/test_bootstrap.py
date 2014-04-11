@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -46,7 +46,7 @@ from client_test_lib import erroneous_action, missing_main_action
 from client_test_lib import wrong_signature_action, exception_action
 
 class ServerNotRunningTest(unittest.TestCase):
-    
+
     def test(self):
         bootstrap = Bootstrap(server='127.0.0.2')
         bootstrap.start_test()
@@ -304,8 +304,8 @@ class FactoryDefaultTest(unittest.TestCase):
         open(RC_EOS, 'w').write(random_string())
         open(BOOT_EXTENSIONS, 'w').write(random_string())
         os.makedirs(BOOT_EXTENSIONS_FOLDER)
-        open('%s/%s' % (BOOT_EXTENSIONS_FOLDER, random_string()), 
-             'w').write(random_string())        
+        open('%s/%s' % (BOOT_EXTENSIONS_FOLDER, random_string()),
+             'w').write(random_string())
 
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
@@ -333,7 +333,7 @@ class FileLogConfigTest(unittest.TestCase):
             'DEBUG' : '/tmp/ztps-log-%s-debug' % os.getpid(),
             'ERROR' : '/tmp/ztps-log-%s-error' % os.getpid(),
             'INFO' : '/tmp/ztps-log-%s-info' % os.getpid(),
-            'bogus' : '/tmp/ztps-log-%s-bogus' % os.getpid() 
+            'bogus' : '/tmp/ztps-log-%s-bogus' % os.getpid()
             }
 
         logging = []
@@ -376,7 +376,7 @@ class FileLogConfigTest(unittest.TestCase):
             raise
         finally:
             bootstrap.end_test()
- 
+
 
 class XmppConfigTest(unittest.TestCase):
 
@@ -629,6 +629,33 @@ class BootstrapSuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
+    def test_attribute_copy(self):
+        bootstrap = Bootstrap()
+        bootstrap.ztps.set_config_response()
+        bootstrap.ztps.set_node_check_response()
+        text = random_string()
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'print_action'}],
+            attributes={'print_action-attr' : text})
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.ztps.set_action_response('print_action',
+                                           print_action(use_attribute=True,
+                                                        create_copy=True))
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.eapi_node_information_collected())
+            self.failUnless(bootstrap.success())
+            self.failUnless(text in bootstrap.output)
+            self.failIf(bootstrap.error)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
+
+
     def test_global_attribute(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
@@ -716,7 +743,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'print_attributes_action',
-                      'attributes' : {'print_action-attr_local' : 
+                      'attributes' : {'print_action-attr_local' :
                                       local_text}}],
             attributes={'print_action-attr_global' : global_text})
         bootstrap.ztps.set_action_response('startup_config_action',
