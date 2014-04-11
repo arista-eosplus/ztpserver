@@ -59,7 +59,8 @@ class FailureTest(ActionFailureTest):
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
-            attributes={'url' : url})
+            attributes={'url' : url,
+                        'variables': {'random_string': random_string()}})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = '%s $missing_variable %s' % (random_string(),
