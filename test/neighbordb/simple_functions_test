@@ -41,7 +41,6 @@ neighbordb:
 
 nodes:
   - name: 2b3c
-    matches:  
     matches:
       count: 2
       includes:
