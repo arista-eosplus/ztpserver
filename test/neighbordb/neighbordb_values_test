@@ -476,6 +476,56 @@ neighbordb:
       interfaces:
         - EthernetZ: hostname:Ethernet1/2/3
 
+    - name: intf range 1
+      definition: test
+      interfaces:
+        - Ethernet1,2: none:none
+
+    - name: intf range 2
+      definition: test
+      interfaces:
+        - Ethernet1-4: none:none
+
+    - name: intf range 3
+      definition: test
+      interfaces:
+        - Ethernet1-4,2,5-10,11-22,15,99: none:none
+
+    - name: intf range 4
+      definition: test
+      interfaces:
+        - Ethernet4-4: none:none
+
+    # Not provisioned
+    - name: intf range error 1
+      definition: test
+      interfaces:
+        - Ethernet0,2: none:none
+
+    # Not provisioned
+    - name: intf range error 2
+      definition: test
+      interfaces:
+        - Ethernet5-2: none:none
+
+    # Not provisioned
+    - name: intf range error 3
+      definition: test
+      interfaces:
+        - Ethernet5,Ethernet2-7: none:none
+
+    # Not provisioned
+    - name: intf range error 4
+      definition: test
+      interfaces:
+        - Ethernet2,a,3: none:none
+
+    # Not provisioned
+    - name: intf range error 5
+      definition: test
+      interfaces:
+        - Ethernet2-a: none:none
+
 configured_neighbordb:
   nodes:
   globals:
@@ -517,6 +567,10 @@ configured_neighbordb:
     - intf any any long
     - intf none none
     - intf none none long
+    - intf range 1
+    - intf range 2
+    - intf range 3
+    - intf range 4
   nodes:
     - correct system mac 1
     - correct system mac 2
