@@ -85,6 +85,8 @@ class Serializer(object):
     :py:class:`str` object
     """
 
+
+
     def serialize(self, data, content_type, **kwargs):
         """ serialize the data base on the content_type
 
@@ -114,7 +116,6 @@ class Serializer(object):
         :param data: data to be deserialized
         :param content_type: string specifies the deserialize
                              handler to use
-        :param clsobj: class object to return if specified
 
         """
 
@@ -163,17 +164,20 @@ class DeserializableMixin(object):
     contents loaded
     '''
 
-    def load_from_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+    def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
+        serializer = Serializer()
+        contents = serializer.deserialize(contents, content_type)
+        self.deserialize(contents)
+
+    def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
-            self.load(fobj.read(), content_type)
+            self.loads(fobj.read(), content_type)
         except IOError as exc:
             log.debug(exc)
             raise SerializerError('unable to load file')
 
-    def load(self, contents, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        contents = serializer.deserialize(contents, content_type)
-        self.deserialize(contents)
+    def load_from_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        self.load(fobj, content_type)
 
     def deserialize(self, contents):
         ''' objects that use this mixin must provide this method '''
@@ -188,16 +192,26 @@ class SerializableMixin(object):
     contents loaded
     '''
 
-    def dump_to_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+    def dumps(self, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
+        contents = self.serialize()
+        return serializer.serialize(contents, content_type)
+
+    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
-            contents = self.serialize()
+            contents = self.dumps(content_type)
             fobj.write(serializer.serialize(contents, content_type))
         except IOError as exc:
             log.debug(exc)
-            raise SerializerError('unable to dump file')
+            raise SerializerError('unable to dump object')
+
+    def dump_to_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        self.dump(fobj, content_type)
 
     def serialize(self):
         ''' objects that use this mixin must provide this method '''
         raise NotImplementedError
+
+
+
 

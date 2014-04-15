@@ -80,7 +80,7 @@ class OrderedCollection(collections.OrderedDict):
 Neighbor = collections.namedtuple('Neighbor', ['device', 'port'])
 
 
-class Node(DeserializableMixin):
+class Node(SerializableMixin, DeserializableMixin):
 
     def __init__(self, systemmac,
                  model=None, serialnumber=None,
@@ -123,7 +123,7 @@ class Node(DeserializableMixin):
 
     def serialize(self):
         result = {}
-        for prop in ['model', 'node', 'serialnumber', 'version']:
+        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
             if getattr(self, prop):
                 result[prop] = getattr(self, prop)
 
@@ -376,7 +376,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
         interfaces = []
         for entry in self.interfaces:
-            interfaces.append({entry.interface: entry.serialize()})
+            interfaces.append({entry.interfaces_init: entry.serialize()})
         data['interfaces'] = interfaces
 
         if self.variables:
@@ -524,8 +524,8 @@ class InterfacePattern(object):
 
     def serialize(self):
         result = dict()
-        result['remote_device'] = self.remote_device_init or 'none'
-        result['remote_interface'] = self.remote_interface_init or 'none'
+        result['device'] = self.remote_device_init or 'none'
+        result['port'] = self.remote_interface_init or 'none'
         return result
 
     @classmethod

@@ -284,6 +284,11 @@ runtime.add_attribute(BoolAttr(
     default=True
 ))
 
+runtime.add_attribute(BoolAttr(
+    name='disable_topology_validation',
+    default=False
+))
+
 # Group: server
 runtime.add_attribute(StrAttr(
     name='interface',

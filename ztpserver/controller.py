@@ -48,6 +48,11 @@ from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
 from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
 from ztpserver.constants import HTTP_STATUS_CREATED
 
+DEFINITION_FN = 'definition'
+STARTUP_CONFIG_FN = 'startup-config'
+PATTERN_FN = 'pattern'
+NODE_FN = 'node'
+ATTRIBUTES_FN = 'attributes'
 
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
@@ -117,10 +122,7 @@ class ActionsController(StoreController):
                     body=self.get_file_contents(resource))
 
 
-
 class NodeController(StoreController):
-
-    REQ_FIELDS = ['systemmac']
 
     def __init__(self):
         self.definitions = self.create_filestore('definitions')
@@ -129,135 +131,155 @@ class NodeController(StoreController):
     def __repr__(self):
         return 'NodeController'
 
-    def get_config(self, request, resource, **kwargs):
-        # pylint: disable=W0613
-        log.debug('Sending startup-config contents to node %s' % resource)
-        filepath = '%s/startup-config' % resource
-
-        if not self.store.exists(filepath):
-            response = dict(status=HTTP_STATUS_BAD_REQUEST)
-        else:
-            response = dict(body=self.get_file_contents(filepath),
-                            content_type=CONTENT_TYPE_OTHER)
-        return response
+    def create(self, request, **kwargs):
+        node = ztpserver.neighbordb.create_node(request.json)
+        return self.fsm('required_attributes', request=request, node=node)
 
     def show(self, request, resource, **kwargs):
+        nodeattrs = self.get_file_contents('%s/%s' % (resource, NODE_FN))
+        nodeattrs = self.deserialize(nodeattrs, CONTENT_TYPE_JSON)
+        node = ztpserver.neighbordb.create_node(nodeattrs)
 
-        # check if startup-config exists
-        if self.store.exists('%s/startup-config' % resource):
-            log.debug('Sending startup-config definition to node %s' % resource)
-            definition = ztpserver.neighbordb.startup_config(resource)
-            response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
+        return self.fsm('get_startup_config_definition',
+                        resource=resource,
+                        node=node)
 
-        # check if definition exists
-        elif self.store.exists('%s/definition' % resource):
-            filepath = '%s/definition' % resource
-            definition = self.deserialize(self.get_file_contents(filepath),
-                                          CONTENT_TYPE_YAML)
+    def show_config(self, request, resource, **kwargs):
+        return self.fsm('get_startup_config_file', resource=resource)
 
-            # update attributes with node static attributes
-            if self.store.exists('%s/attributes' % resource):
-                filepath = '%s/attributes' % resource
-                attributes = self.deserialize(self.get_file_contents(filepath),
-                                              CONTENT_TYPE_YAML)
-                definition['attributes'].update(attributes)
-
-            if self.store.exists('%s/pattern' % resource):
-                fobj = self.get_file('%s/pattern' % resource)
-                pattern = ztpserver.neighbordb.load_pattern(fobj.name)
-
-                if self.store.exists('%s/topology' % resource):
-                    filepath = '%s/topology' % resource
-                    neighbors = self.get_file_contents(filepath)
-                    neighbors = self.deserialize(neighbors, CONTENT_TYPE_JSON)
-                    if neighbors is None:
-                        neighbors = dict()
-
-                nodeattrs = dict(systemmac=resource, neighbors=neighbors)
-                node = ztpserver.neighbordb.create_node(nodeattrs)
-
-                if not pattern.match_node(node):
-                    log.debug('node %s failed to match existing pattern' %
-                              resource)
-                    return dict(status=HTTP_STATUS_BAD_REQUEST)
-
-            response = dict(body=definition, content_type=CONTENT_TYPE_JSON)
-
-        else:
-            log.debug('requested node id %s not found' % resource)
-            response = dict(status=HTTP_STATUS_NOT_FOUND)
-
-        log.debug('NodeController response: %s' % response)
+    def fsm(self, next_state, **kwargs):
+        log.debug('starting fsm')
+        response = self.response()
+        while next_state != None:
+            log.debug('next_state=%s' % next_state)
+            method = getattr(self, next_state)
+            (response, next_state) = method(response, **kwargs)
+        log.debug('fsm completed')
         return response
 
-    def create(self, request, **kwargs):
+    def get_startup_config_file(self, response, resource, **kwargs):
+        next_state = 'http_bad_request'
+        filepath = '%s/%s' % (resource, STARTUP_CONFIG_FN)
+        if self.store.exists(filepath):
+            response.body = self.get_file_contents(filepath)
+            response.content_type = CONTENT_TYPE_OTHER
+            next_state = None
+        return (response, next_state)
 
-        if not set(self.REQ_FIELDS).issubset(set(request.json.keys())):
-            log.debug('POST request is missing required fields')
-            return dict(status=HTTP_STATUS_BAD_REQUEST)
+    def required_attributes(self, response, request, node):
+        next_state = 'node_exists'
+        REQ_ATTRS = ['systemmac']
+        if not set(REQ_ATTRS).issubset(set(request.json.keys())):
+            next_state = 'http_bad_request'
+        return (response, next_state)
 
-        node = ztpserver.neighbordb.create_node(request.json)
-
-        # check if the node exists and return 409 if it does
+    def node_exists(self, response, request, node):
+        next_state = 'post_config'
         if self.store.exists(node.systemmac):
-            log.debug('node already exists')
-            return dict(status=HTTP_STATUS_CONFLICT)
+            response.status = HTTP_STATUS_CONFLICT
+            next_state = 'dump_node'
+        return (response, next_state)
 
+    def dump_node(self, response, request, node):
+        self.store.write_file('%s/%s' % (node.systemmac, NODE_FN),
+                              node.dumps(CONTENT_TYPE_JSON))
+        return (response, 'set_location')
+
+    def post_config(self, response, request, node):
+        next_state = 'post_node'
         if 'config' in request.json:
-            location = self.add_node(node, request.json)
-            response = dict(status=HTTP_STATUS_CREATED, location=location)
+            data = request.get('config')
+            self.add_node(node.systemmac, [('startup-config', data)])
+            response.status = HTTP_STATUS_CREATED
+            next_state = 'set_location'
+        return (response, next_state)
 
-        elif 'neighbors' in request.json:
-            if ztpserver.neighbordb.topology is None:
-                return dict(status=HTTP_STATUS_BAD_REQUEST)
+    def post_node(self, response, request, node):
+        next_state = 'http_bad_request'
+        ndb = ztpserver.neighbordb
+        if 'neighbors' in request.json:
+            matches = ndb.topology.match_node(node)
+            if matches:
+                files = list()
+                for filename in [DEFINITION_FN, PATTERN_FN]:
+                    if filename == DEFINITION_FN:
+                        url = matches[0].definition
+                        definition = self.definitions.get_file(url)
+                        definition = self.deserialize(definition.contents,
+                                                      CONTENT_TYPE_YAML)
+                        data = ndb.create_node_definition(definition, node)
+                        data = self.serialize(data, CONTENT_TYPE_JSON)
+                    elif filename == PATTERN_FN:
+                        data = matches[0].dumps()
+                    files.append((filename, data))
+                self.add_node(node.systemmac, files)
+                response.status = HTTP_STATUS_CREATED
+                next_state = 'dump_node'
+        return (response, next_state)
 
-            matches = ztpserver.neighbordb.topology.match_node(node)
-            log.debug('Found %d pattern matches' % len(matches))
-            log.debug('Matched patterns: %s' % [x.name for x in matches])
+    def set_location(self, response, request, node):
+        response.location = '/nodes/%s' % node.systemmac
+        return (response, None)
 
-            if not matches:
-                log.debug('Unable to match any valid pattern')
-                response = dict(status=HTTP_STATUS_BAD_REQUEST)
+    def add_node(self, systemmac, files=[]):
+        self.store.add_folder(systemmac)
+        for filename, contents in files:
+            filepath = '%s/%s' % (systemmac, filename)
+            self.store.write_file(filepath, contents)
 
-            else:
-                # create node resource using first pattern match
-                log.debug('Creating node definition with pattern %s' %
-                    matches[0].name)
-                location = self.add_node(node, request.json, pattern=matches[0])
-                response = dict(status=HTTP_STATUS_CREATED, location=location)
+    def get_startup_config_definition(self, response, resource, node):
+        next_state = 'get_definition'
+        if self.store.exists('%s/%s' % (resource, STARTUP_CONFIG_FN)):
+            response.body = ztpserver.neighbordb.startup_config(resource)
+            response.content_type = CONTENT_TYPE_JSON
+            next_state = 'do_validation'
+        return (response, next_state)
 
-        else:
-            log.debug('unable to handle POST')
-            response = dict(status=HTTP_STATUS_BAD_REQUEST)
+    def get_definition(self, response, resource, node):
+        next_state = 'http_bad_request'
+        filepath = '%s/%s' % (resource, DEFINITION_FN)
+        if self.store.exists(filepath):
+            response.body = self.get_file_contents(filepath)
+            response.content_type = CONTENT_TYPE_JSON
+            next_state = 'get_attributes'
+        return (response, next_state)
 
-        return response
+    def get_attributes(self, response, resource, node):
+        filepath = '%s/%s' % (resource, ATTRIBUTES_FN)
+        if self.store.exists(filepath):
+            attributes = self.deserialize(self.get_file_contents(filepath),
+                                          CONTENT_TYPE_JSON)
+            definition = response.json
+            definition['attributes'].update(attributes)
+            response.body = self.serialize(definition, CONTENT_TYPE_JSON)
+        return (response, 'do_validation')
 
-    def add_node(self, node, request, pattern=None):
+    def do_validation(self, response, resource, node):
+        next_state = None
+        config = ztpserver.config.runtime
 
-        # write the static startup-config file
-        if 'config' in request:
-            filename = '%s/startup-config' % node.systemmac
-            contents = request.get('config')
-        else:
-            filename = '%s/definition' % node.systemmac
-            contents = self.node_definition(pattern.definition, node)
+        if not config.default.disable_topology_validation:
+            next_state = 'http_bad_request'
+            fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
+            pattern = ztpserver.neighbordb.load_pattern(fobj.name)
 
-        self.store.add_folder(node.systemmac)
-        self.store.write_file(filename, contents)
+            topology = self.get_file_contents('%s/node' % resource)
+            topology = self.deserialize(topology, CONTENT_TYPE_JSON)
 
-        if pattern is not None:
-            self.store.write_file('%s/pattern' % node.systemmac,
-                                  self.serialize(pattern.serialize(),
-                                                 CONTENT_TYPE_JSON))
+            if pattern.match_node(node):
+                next_state = None
 
-        if 'neighbors' in request:
-            self.store.write_file('%s/topology' % node.systemmac,
-                                  self.serialize(request.get('neighbors'),
-                                                 CONTENT_TYPE_JSON))
+        return (response, next_state)
 
-        return '/nodes/%s' % node.systemmac
+    def http_bad_request(self, response, *args, **kwargs):
+        ''' return HTTP 400 Bad Request '''
 
-    def node_definition(self, url, node):
+        response.body = ''
+        response.content_type = 'text/html'
+        response.status = HTTP_STATUS_BAD_REQUEST
+        return (response, None)
+
+    def create_node_definition(self, url, node):
         ''' Creates the node specific definition file based on the
         definition template found at url.  The node definition file
         is created in /nodes/{systemmac}/definition.
@@ -293,7 +315,7 @@ class NodeController(StoreController):
         definition['actions'] = _actions
 
         # return the serialized node specific definition
-        return self.serialize(definition)
+        return self.serialize(definition, CONTENT_TYPE_JSON)
 
 
 class BootstrapController(StoreController):
