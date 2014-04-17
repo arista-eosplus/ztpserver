@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,23 +29,13 @@
 
 import unittest
 
-from server_test_lib import create_filestore, delete_filestore
-from server_test_lib import ztpserver_conf
-
 import ztpserver.app
 
 class TestApp(unittest.TestCase):
     #pylint: disable=R0904,C0103
 
-    def setUp(self):
-        create_filestore()
-
-    def tearDown(self):
-        delete_filestore()
-
     def test_application_defaults(self):
-        conf = ztpserver_conf()
-        obj = ztpserver.app.start_wsgiapp(conf=conf)
+        obj = ztpserver.app.start_wsgiapp()
         self.assertIsInstance(obj, ztpserver.controller.Router)
 
 

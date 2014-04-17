@@ -41,7 +41,8 @@ import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.neighbordb
 
-from ztpserver.repository import create_file_store
+from ztpserver.serializers import SerializerError
+from ztpserver.repository import create_file_store, FileObjectNotFound
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
@@ -99,6 +100,7 @@ class FilesController(StoreController):
             obj = self.get_file(resource)
 
         except ztpserver.repository.FileObjectNotFound:
+            log.debug('Requested file was not found')
             return dict(status=HTTP_STATUS_NOT_FOUND)
 
         return webob.static.FileApp(obj.name)
@@ -203,10 +205,14 @@ class NodeController(StoreController):
                 files = list()
                 for filename in [DEFINITION_FN, PATTERN_FN]:
                     if filename == DEFINITION_FN:
-                        url = matches[0].definition
-                        definition = self.definitions.get_file(url)
-                        definition = self.deserialize(definition.contents,
-                                                      CONTENT_TYPE_YAML)
+                        try:
+                            url = matches[0].definition
+                            definition = self.definitions.get_file(url)
+                            definition = self.deserialize(definition.contents,
+                                                          CONTENT_TYPE_YAML)
+                        except FileObjectNotFound:
+                            log.debug("definition template does not exist")
+                            return (response, 'http_bad_request')
                         data = ndb.create_node_definition(definition, node)
                         data = self.serialize(data, CONTENT_TYPE_JSON)
                     elif filename == PATTERN_FN:
@@ -230,7 +236,9 @@ class NodeController(StoreController):
     def get_startup_config_definition(self, response, resource, node):
         next_state = 'get_definition'
         if self.store.exists('%s/%s' % (resource, STARTUP_CONFIG_FN)):
-            response.body = ztpserver.neighbordb.startup_config(resource)
+            cfg = ztpserver.neighbordb.startup_config(resource)
+            cfg = self.serialize(cfg, CONTENT_TYPE_JSON)
+            response.body = cfg
             response.content_type = CONTENT_TYPE_JSON
             next_state = 'do_validation'
         return (response, next_state)
@@ -352,10 +360,10 @@ class BootstrapController(StoreController):
 
         try:
             data = self.get_file_contents('bootstrap.conf')
-            contents = self.deserialize(data, CONTENT_TYPE_YAML)
+            contents = self.deserialize(data, CONTENT_TYPE_JSON)
 
-        except ztpserver.repository.FileObjectNotFound:
-            log.debug('Bootstrap config file not found...using defaults')
+        except (FileObjectNotFound, SerializerError) as exc:
+            log.debug(exc)
             contents = self.DEFAULTCONFIG
 
         return contents
@@ -396,10 +404,10 @@ class Router(ztpserver.wsgiapp.Router):
 
         # configure /bootstrap
         bootstrap = mapper.submapper(controller=BootstrapController())
-        bootstrap.connect('bootstrap', '/bootstrap', action='index')
-        bootstrap.connect('bootstrap_config',
-                          '/bootstrap/config',
-                          action='config')
+        bootstrap.connect('bootstrap', '/bootstrap',
+                          action='index', conditions=dict(method=['GET']))
+        bootstrap.connect('bootstrap_config', '/bootstrap/config',
+                          action='config', conditions=dict(method=['GET']))
 
         # configure /nodes
         controller = NodeController()

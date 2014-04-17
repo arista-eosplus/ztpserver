@@ -34,143 +34,52 @@ import os
 import shutil
 import random
 import string        #pylint: disable=W0402
+import unittest
 
 WORKINGDIR = '/tmp/ztpserver'
-FILESTORE = os.path.join(WORKINGDIR, 'filestore')
-ZTPSCONF = os.path.join(WORKINGDIR, 'ztpserver.conf')
-
-FOLDERS = ['bootstrap', 'actions', 'definitions', 'nodes', 'files', 'resources']
-
-NODES = {
-    '001c73111111': [ 'definition', 'pattern' , 'topology'],
-    '001c73222222': [ 'startup-config' ],
-    '001c73333333': [ 'definition', 'startup-config' ]
-}
-
-class FileStore(object):
-
-    @classmethod
-    def create(cls):
-        filestore = cls()
-        filestore.filestore()
-        filestore.neighbordb()
-        filestore.actions()
-        filestore.bootstrap()
-        filestore.nodes()
-        filestore.definitions()
-        return filestore
-
-    @classmethod
-    def write_file(cls, filename, contents):
-        filepath = os.path.join(FILESTORE, filename)
-        open(filepath, 'w').write(contents)
-
-    def neighbordb(self):
-        data = """
-            variables:
-              foo: bar
-            patterns:
-              - name: test pattern 1
-                definition: test
-                node: 001c73aabbcc
-                interfaces:
-                  - Ethernet1: any:any
-                  - Ethernet2: none
-              - name: test pattern 2
-                definition: test
-                interfaces:
-                  - Ethernet1: any:any
-                  - Ethernet2: none
-        """
-        self.write_file('neighbordb', data)
-
-    def bootstrap(self):
-        data = """
-            #!/usr/bin/python
-            print "Hello World!"
-        """
-        self.write_file('bootstrap/default', data)
-
-    def actions(self):
-        data = """
-            #!/usr/bin/python
-            print "Hello World!"
-        """
-        self.write_file('actions/test', data)
-
-    def definitions(self):
-        data = """
-            actions:
-              - name: test action
-                action: test_action
-        """
-        self.write_file('definitions/test', data)
-
-    def nodes(self):
-        contents = {
-            "startup-config": """
-                ! startup-config
-                hostname test
-            """,
-            "definition": """
-                actions:
-                  - name: test action
-                    action: test_action
-            """,
-            "pattern": """
-                "name": "test pattern",
-                "definition": "test",
-                "variables": { "foo": "bar" },
-                "interfaces": [
-                    { "Ethernet1": "any" },
-                    { "Ethernet2": "none" }
-                ]
-            """,
-            "topology": """
-                {"Ethernet1": [{ "device": "test", "port": "test"}],
-                 "Ethernet2": [{ "device": "test", "port": "test"}]}
-            """
-        }
-        try:
-            for node, files in NODES.items():
-                filepath = os.path.join(FILESTORE, 'nodes/%s' % node)
-                os.makedirs(filepath)
-                for item in files:
-                    filepath = 'nodes/%s/%s' % (node, item)
-                    self.write_file(filepath, contents[item])
-        except os.error:
-            pass
-
-    @classmethod
-    def filestore(cls):
-        try:
-            os.makedirs(FILESTORE)
-            for fldr in FOLDERS:
-                fldr = os.path.join(FILESTORE, fldr)
-                os.makedirs(fldr)
-        except os.error:
-            pass
 
 def random_string():
     return ''.join(random.choice(
             string.ascii_uppercase +
             string.digits) for _ in range(random.randint(3, 20)))
 
-def ztpserver_conf():
-    with open(ZTPSCONF, 'w') as conf:
-        conf.write('[default]\n')
-        conf.write('data_root = %s\n' % FILESTORE)
-    return ZTPSCONF
-
-def create_filestore():
-    return FileStore.create()
-
-def delete_filestore():
-    try:
-        filepath = os.path.join(WORKINGDIR, FILESTORE)
-        shutil.rmtree(filepath)
-    except shutil.Error as exc:
-        print exc
+def random_json(keys=None):
+    data = dict()
+    if keys:
+        for key in keys:
+            data[key] = random_string()
+    else:
+        for i in range(0, 5):
+            data[random_string()] = random_string()
+    return json.dumps(data)
 
 def remove_all():
-    shutil.rmtree(WORKINGDIR)
+    if os.path.exists(WORKINGDIR):
+        shutil.rmtree(WORKINGDIR)
+
+def add_folder(name=None):
+    if not name:
+        name = random_string()
+    filepath = os.path.join(WORKINGDIR, name)
+    if os.path.exists(filepath):
+        shutil.rmtree(filepath)
+    os.makedirs(filepath)
+    return filepath
+
+def write_file(contents, filename=None, mode='w'):
+    if not filename:
+        filename = random_string()
+    if not os.path.exists(WORKINGDIR):
+        os.makedirs(WORKINGDIR)
+    filepath = os.path.join(WORKINGDIR, filename)
+    open(filepath, mode).write(contents)
+    return filepath
+
+def ztp_headers():
+    return {
+        'X-Arista-Systemmac': random_string(),
+        'X-Arista-Serialnum': random_string(),
+        'X-Arista-Architecture': random_string(),
+        'X-Arista-Modelname': random_string(),
+        'X-Arista-Softwareversion': random_string()
+    }

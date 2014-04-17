@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,14 +35,10 @@ import os
 from ztpserver.repository import FileObject, FileStore, FileObjectNotFound
 from ztpserver.repository import create_file_store
 
-from server_test_lib import create_filestore, FILESTORE
-from server_test_lib import remove_all, random_string
+from server_test_lib import random_string, remove_all
+from server_test_lib import add_folder, write_file
 
-class SuccessFileObjectTests(unittest.TestCase):
-
-    def setUp(self):
-        self.filestore = create_filestore()
-        assert os.path.exists(FILESTORE)
+class FileObjectTests(unittest.TestCase):
 
     def tearDown(self):
         remove_all()
@@ -50,82 +46,93 @@ class SuccessFileObjectTests(unittest.TestCase):
     def test_success(self):
         filename = random_string()
         contents = random_string()
-        filepath = os.path.join(FILESTORE, filename)
-        self.filestore.write_file(filename, contents)
+        filepath = write_file(contents, filename)
+        path = os.path.dirname(filepath)
+        assert os.path.exists(filepath)
 
-        obj = FileObject(filename, path=FILESTORE)
+        obj = FileObject(filename, path=path)
+
         self.assertTrue(obj.name, filepath)
         self.assertTrue(obj.exists)
         self.assertEqual(obj.contents, contents)
 
     def test_file_missing(self):
         filename = random_string()
-        obj = FileObject(filename, path=FILESTORE)
+        obj = FileObject(filename)
+
         self.assertFalse(obj.exists)
         self.assertIsNone(obj.contents)
 
-
-
-class SuccessFileStoreTests(unittest.TestCase):
+class FileStoreTests(unittest.TestCase):
 
     def setUp(self):
-        create_filestore()
-        assert os.path.exists(FILESTORE)
+        self.filepath = add_folder('filestore')
+        assert os.path.exists(self.filepath)
 
-        self.filestore = FileStore(FILESTORE)
+        self.filestore = FileStore(self.filepath)
 
     def tearDown(self):
         remove_all()
 
     def test_success(self):
         self.assertIsInstance(self.filestore, FileStore)
-        self.assertEqual(repr(self.filestore), 'FileStore(path=%s)' % FILESTORE)
-        self.assertEqual(self.filestore.path, FILESTORE)
-        self.assertEqual(self.filestore._cache, dict())
+        self.assertEqual(repr(self.filestore), 'FileStore(path=%s)' % \
+            self.filepath)
 
     def test_add_folder(self):
         folder = random_string()
         self.filestore.add_folder(folder)
-        self.assertTrue(os.path.join(FILESTORE, folder))
+
+        filepath = os.path.join(self.filepath, folder)
+        self.assertTrue(os.path.exists(filepath))
 
     def test_add_nested_folder(self):
         folder = '%s/%s/%s' % \
             (random_string(), random_string(), random_string())
         self.filestore.add_folder(folder)
-        self.assertTrue(os.path.join(FILESTORE, folder))
+
+        filepath = os.path.join(self.filepath, folder)
+        self.assertTrue(os.path.exists(filepath))
 
     def test_write_file(self):
         filename = random_string()
         contents = random_string()
         self.filestore.write_file(filename, contents)
-        filepath = os.path.join(FILESTORE, filename)
-        self.assertTrue(filepath)
+
+        filepath = os.path.join(self.filepath, filename)
+        self.assertTrue(os.path.exists(filepath))
         self.assertEqual(open(filepath).read(), contents)
 
     def test_file_exists(self):
         filename = random_string()
         contents = random_string()
-        filepath = os.path.join(FILESTORE, filename)
-        open(filepath, 'w').write(contents)
-        self.filestore.exists(filepath)
+        filepath = os.path.join(self.filepath, filename)
+        write_file(contents, filepath)
+        assert os.path.exists(filepath)
 
-        self.filestore.write_file(filename, contents)
-        filepath = os.path.join(FILESTORE, filename)
-        self.assertTrue(filepath)
-        self.assertEqual(open(filepath).read(), contents)
+        self.assertTrue(self.filestore.exists(filename))
+
+    def test_file_exists_failure(self):
+        filename = random_string()
+        assert not os.path.exists(os.path.join(self.filepath, filename))
+
+        self.assertFalse(self.filestore.exists(filename))
 
     def test_get_file(self):
         filename = random_string()
         contents = random_string()
-        filepath = os.path.join(FILESTORE, filename)
-        open(filepath, 'w').write(contents)
+        filepath = os.path.join(self.filepath, filename)
+        write_file(contents, filename=filepath)
+
         obj = self.filestore.get_file(filename)
         self.assertIsInstance(obj, FileObject)
         self.assertTrue(obj.exists)
+        self.assertEqual(filepath, obj.name)
 
     def test_get_file_missing(self):
         filename = random_string()
-        assert not os.path.exists(os.path.join(FILESTORE, filename))
+        assert not os.path.exists(os.path.join(self.filepath, filename))
+
         self.assertRaises(FileObjectNotFound,
                           self.filestore.get_file,
                           filename)
@@ -133,25 +140,28 @@ class SuccessFileStoreTests(unittest.TestCase):
     def test_delete_file(self):
         filename = random_string()
         contents = random_string()
-        filepath = os.path.join(FILESTORE, filename)
-        open(filepath, 'w').write(contents)
+        filepath = os.path.join(self.filepath, filename)
+        write_file(contents, filepath)
         assert os.path.exists(filepath)
-        self.filestore.delete_file(filepath)
-        self.assertFalse(os.path.exists(filepath))
+
+        self.filestore.delete_file(filename)
+        self.assertFalse(os.path.exists(filename))
 
     def test_delete_missing_file(self):
         filename = random_string()
-        filepath = os.path.join(FILESTORE, filename)
+        filepath = os.path.join(self.filepath, filename)
         assert not os.path.exists(filepath)
+
         self.filestore.delete_file(filepath)
         self.assertFalse(os.path.exists(filepath))
 
     def test_create_file_store(self):
         fsname = random_string()
-        filepath = os.path.join(FILESTORE, fsname)
+        filepath = os.path.join(self.filepath, fsname)
         os.makedirs(filepath)
+        assert os.path.exists(filepath)
 
-        obj = create_file_store(fsname, basepath=FILESTORE)
+        obj = create_file_store(fsname, basepath=self.filepath)
         self.assertIsInstance(obj, FileStore)
         self.assertTrue(os.path.exists(filepath))
 
