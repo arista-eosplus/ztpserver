@@ -73,9 +73,15 @@ class YAMLSerializer(object):
 class JSONSerializer(object):
 
     def deserialize(self, data):
+        ''' deserialize a JSON object and return a dict '''
+
+        assert isinstance(data, basestring)
         return json.loads(data)
 
     def serialize(self, data):
+        ''' serialize a dict object and return JSON '''
+
+        assert isinstance(data, dict)
         return json.dumps(data)
 
 class Serializer(object):

@@ -124,14 +124,14 @@ class ActionsController(StoreController):
                     body=self.get_file_contents(resource))
 
 
-class NodeController(StoreController):
+class NodesController(StoreController):
 
     def __init__(self):
         self.definitions = self.create_filestore('definitions')
-        super(NodeController, self).__init__('nodes')
+        super(NodesController, self).__init__('nodes')
 
     def __repr__(self):
-        return 'NodeController'
+        return 'NodesController'
 
     def create(self, request, **kwargs):
         node = ztpserver.neighbordb.create_node(request.json)
@@ -153,10 +153,11 @@ class NodeController(StoreController):
         log.debug('starting fsm')
         response = self.response()
         while next_state != None:
-            log.debug('next_state=%s' % next_state)
+            log.debug('next_state=%s, current_status=%d' % \
+                (next_state, response.status_code))
             method = getattr(self, next_state)
             (response, next_state) = method(response, **kwargs)
-        log.debug('fsm completed')
+        log.debug('fsm completed, final_status=%d' % response.status_code)
         return response
 
     def get_startup_config_file(self, response, resource, **kwargs):
@@ -190,7 +191,7 @@ class NodeController(StoreController):
     def post_config(self, response, request, node):
         next_state = 'post_node'
         if 'config' in request.json:
-            data = request.get('config')
+            data = request.json.get('config')
             self.add_node(node.systemmac, [('startup-config', data)])
             response.status = HTTP_STATUS_CREATED
             next_state = 'set_location'
@@ -211,7 +212,7 @@ class NodeController(StoreController):
                             definition = self.deserialize(definition.contents,
                                                           CONTENT_TYPE_YAML)
                         except FileObjectNotFound:
-                            log.debug("definition template does not exist")
+                            log.debug('definition template does not exist')
                             return (response, 'http_bad_request')
                         data = ndb.create_node_definition(definition, node)
                         data = self.serialize(data, CONTENT_TYPE_JSON)
@@ -221,6 +222,8 @@ class NodeController(StoreController):
                 self.add_node(node.systemmac, files)
                 response.status = HTTP_STATUS_CREATED
                 next_state = 'dump_node'
+            else:
+                log.debug('No pattern match found for node')
         return (response, next_state)
 
     def set_location(self, response, request, node):
@@ -410,7 +413,7 @@ class Router(ztpserver.wsgiapp.Router):
                           action='config', conditions=dict(method=['GET']))
 
         # configure /nodes
-        controller = NodeController()
+        controller = NodesController()
         mapper.collection('nodes', 'node',
                           controller=controller,
                           collection_actions=['create'],

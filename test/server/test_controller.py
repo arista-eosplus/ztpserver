@@ -35,14 +35,15 @@ import os
 import unittest
 import json
 
-import webob
+from webob import Request
 
-import mock
+from mock import Mock, PropertyMock
 
-import ztpserver.config
-import ztpserver.controller
 import ztpserver.neighbordb
+import ztpserver.topology
+import ztpserver.controller
 import ztpserver.repository
+import ztpserver.config
 from ztpserver.app import enable_handler_console
 
 from server_test_lib import remove_all, random_string, random_json
@@ -52,7 +53,7 @@ class RouterTests(unittest.TestCase):
 
     def match_routes(self, url, valid, invalid):
 
-        request = webob.Request.blank(url)
+        request = Request.blank(url)
         router = ztpserver.controller.Router()
 
         if valid:
@@ -108,34 +109,33 @@ class RouterTests(unittest.TestCase):
 class BootstrapControllerTests(unittest.TestCase):
 
     def setUp(self):
-        self.mock_fileobj = mock.Mock(spec=ztpserver.repository.FileObject)
-        self.mock_store = mock.Mock(spec=ztpserver.repository.FileStore)
-        self.mock_store.get_file.return_value = self.mock_fileobj
-        self.mock_store.exists.return_value = True
-
-        ztpserver.controller.create_file_store = \
-            mock.Mock(return_value=self.mock_store)
-
-        self.router = ztpserver.controller.Router()
         self.longMessage = True
 
     def test_get_bootstrap(self):
+
         contents = random_string()
 
-        request = webob.Request.blank('/bootstrap', headers=ztp_headers())
-        resp = request.get_response(self.router)
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
+        filestore.return_value.get_file.return_value = Mock(contents=contents)
+
+        request = Request.blank('/bootstrap', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
+        self.assertEqual(resp.body, contents)
 
-    def test_get_boostrap_config_defaults(self):
+    def test_get_bootstrap_config_defaults(self):
 
-        self.mock_store.exists.return_value = False
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
+        exc = Mock(side_effect=\
+            ztpserver.repository.FileObjectNotFound('FileObjectNotFound'))
+        filestore.return_value.get_file = exc
 
-        request = webob.Request.blank('/bootstrap/config',
-                                      headers=ztp_headers())
-
-        resp = request.get_response(self.router)
+        request = Request.blank('/bootstrap/config', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
 
         defaultconfig = {'logging': list(), 'xmpp': dict()}
 
@@ -143,18 +143,29 @@ class BootstrapControllerTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(resp.json, defaultconfig)
 
+    def test_get_bootstrap_config(self):
+
+        logging = [dict(destination=random_string(), level=random_string())]
+        xmpp = dict(username=random_string(), domain=random_string(),
+                    password=random_string(), rooms=[random_string()])
+        conf = dict(logging=logging, xmpp=xmpp)
+        conf = json.dumps(conf)
+
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
+        filestore.return_value.get_file.return_value.contents = conf
+
+        request = Request.blank('/bootstrap/config', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.body, conf)
+
+
 class FilesControllerTests(unittest.TestCase):
 
     def setUp(self):
-        self.mock_fileobj = mock.Mock(spec=ztpserver.repository.FileObject)
-        self.mock_store = mock.Mock(spec=ztpserver.repository.FileStore)
-        self.mock_store.get_file.return_value = self.mock_fileobj
-        self.mock_store.exists.return_value = True
-
-        ztpserver.controller.create_file_store = \
-            mock.Mock(return_value=self.mock_store)
-
-        self.router = ztpserver.controller.Router()
         self.longMessage = True
 
     def tearDown(self):
@@ -162,89 +173,224 @@ class FilesControllerTests(unittest.TestCase):
 
     def test_get_file(self):
 
-        filename = random_string()
-        filepath = write_file(random_string(), filename)
-
-        self.mock_fileobj.name = filepath
-        self.mock_fileobj.contents = filepath
-
         enable_handler_console()
+        contents = random_string()
+        filepath = write_file(contents)
 
+        filestore = Mock()
+        filestore.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        fileobj = Mock()
+        fileobj.exists = True
+        fileobj.name=filepath
+        filestore.return_value.get_file = Mock(return_value=fileobj)
+
+        filename = os.path.basename(filepath)
         url = '/files/%s' % filename
-        request = webob.Request.blank(url)
-        resp = request.get_response(self.router)
 
+        request = Request.blank(url)
+        resp = request.get_response(ztpserver.controller.Router())
+
+        filestore.return_value.get_file.assert_called_with(filename)
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.body, contents)
+
 
     def test_get_missing_file(self):
 
-        exc = mock.PropertyMock(side_effect=\
-            ztpserver.repository.FileObjectNotFound)
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
 
-        self.mock_store.get_file = exc
+        exc = Mock(side_effect=\
+            ztpserver.repository.FileObjectNotFound('FileObjectNotFound'))
+        filestore.return_value.get_file = exc
 
-        url = '/files/%s' % random_string()
+        filename = random_string()
+        url = '/files/%s' % filename
 
-        request = webob.Request.blank(url)
-        resp = request.get_response(self.router)
+        request = Request.blank(url)
+        resp = request.get_response(ztpserver.controller.Router())
 
+        exc.assert_called_with(filename)
         self.assertEqual(resp.status_code, 404)
 
 class ActionsControllerTests(unittest.TestCase):
 
     def setUp(self):
-        self.mock_fileobj = mock.Mock(spec=ztpserver.repository.FileObject)
-        self.mock_store = mock.Mock(spec=ztpserver.repository.FileStore)
-        self.mock_store.get_file.return_value = self.mock_fileobj
-        self.mock_store.exists.return_value = True
-
-        ztpserver.controller.create_file_store = \
-            mock.Mock(return_value=self.mock_store)
-
-        self.router = ztpserver.controller.Router()
         self.longMessage = True
-
-    def tearDown(self):
-        remove_all()
 
     def test_get_action(self):
 
+        contents = random_string()
         filename = random_string()
-        filepath = write_file(random_string(), filename)
 
-        self.mock_fileobj.name = filename
-        self.mock_fileobj.contents = filepath
+        filestore = Mock()
+        filestore.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        fileobj = Mock(exists=True, name=filename, contents=contents)
+        filestore.return_value.get_file = Mock(return_value=fileobj)
 
         url = '/actions/%s' % filename
-        request = webob.Request.blank(url)
-        resp = request.get_response(self.router)
+        request = Request.blank(url)
+        resp = request.get_response(ztpserver.controller.Router())
 
+        filestore.return_value.get_file.assert_called_with(filename)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
+        self.assertEqual(resp.body, contents)
 
     def test_get_missing_action(self):
 
-        self.mock_store.exists.return_value = False
-        url = '/actions/%s' % random_string()
+        filestore = Mock()
+        filestore.return_value.exists = Mock(return_value=False)
+        ztpserver.controller.create_file_store = filestore
 
-        request = webob.Request.blank(url)
-        resp = request.get_response(self.router)
+        filename = random_string()
+        url = '/actions/%s' % filename
 
+        request = Request.blank(url)
+        resp = request.get_response(ztpserver.controller.Router())
+
+        filestore.return_value.exists.assert_called_with(filename)
         self.assertEqual(resp.status_code, 404)
 
-class NodesControllerTests(unittest.TestCase):
+class NodesControllerPostFsmTests(unittest.TestCase):
 
     def setUp(self):
-        self.mock_fileobj = mock.Mock(spec=ztpserver.repository.FileObject)
-        self.mock_store = mock.Mock(spec=ztpserver.repository.FileStore)
-        self.mock_store.get_file.return_value = self.mock_fileobj
-        self.mock_store.exists.return_value = True
-
-        ztpserver.controller.create_file_store = \
-            mock.Mock(return_value=self.mock_store)
-
-        self.router = ztpserver.controller.Router()
         self.longMessage = True
+
+    def test_missing_required_attributes(self):
+        url = '/nodes'
+        body = json.dumps(dict())
+
+        ztpserver.controller.create_file_store = Mock()
+
+        request = Request.blank(url, body=body, method='POST',
+                                headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+        self.assertEqual(resp.status_code, 400)
+
+    def test_node_exists(self):
+        url = '/nodes'
+        systemmac = random_string()
+        body = json.dumps(dict(systemmac=systemmac))
+
+        filestore = Mock()
+        filestore.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        request = Request.blank(url, body=body, method='POST',
+                                      headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        location = 'http://localhost/nodes/%s' % systemmac
+        filename = '%s/node' % systemmac
+
+        self.assertTrue(filestore.return_value.write_file.called)
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(resp.location, location)
+
+    def test_post_config(self):
+        url = '/nodes'
+        systemmac = random_string()
+        config = random_string()
+        body = json.dumps(dict(systemmac=systemmac, config=config))
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = False
+        ztpserver.controller.create_file_store = filestore
+
+        request = Request.blank(url, body=body, method='POST',
+                                      headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        location = 'http://localhost/nodes/%s' % systemmac
+        filename = '%s/startup-config' % systemmac
+
+        filestore.return_value.add_folder.assert_called_with(systemmac)
+        filestore.return_value.write_file.assert_called_with(filename, config)
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.location, location)
+
+    def test_post_node_success(self):
+        url = '/nodes'
+        systemmac = random_string()
+        neighbors = {'Ethernet1': [{'device': 'localhost',
+                                     'port': 'Ethernet1'}]}
+
+        body = json.dumps(dict(systemmac=systemmac, neighbors=neighbors))
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = False
+        filestore.return_value.get_file = Mock()
+        filestore.return_value.get_file.return_value.contents = """
+            actions:
+            - name: mock definition
+              action: test_action
+        """
+
+        ztpserver.controller.create_file_store = filestore
+
+        ztpserver.neighbordb.topology.match_node = Mock(return_value=[Mock()])
+        ztpserver.neighbordb.create_node_definition.return_value = dict()
+
+        request = Request.blank(url, body=body, method='POST',
+                                headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        location = 'http://localhost/nodes/%s' % systemmac
+
+        filestore.return_value.add_folder.assert_called_with(systemmac)
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.location, location)
+
+    def test_post_node_definition_missing(self):
+        url = '/nodes'
+        systemmac = random_string()
+        neighbors = {'Ethernet1': [{'device': 'localhost',
+                                     'port': 'Ethernet1'}]}
+
+        body = json.dumps(dict(systemmac=systemmac, neighbors=neighbors))
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = False
+
+        exc = Mock(side_effect=\
+            ztpserver.repository.FileObjectNotFound('FileObjectNotFound'))
+        filestore.return_value.get_file = exc
+
+        ztpserver.controller.create_file_store = filestore
+        ztpserver.neighbordb.topology.match_node = Mock(return_value=[Mock()])
+
+        request = Request.blank(url, body=body, method='POST',
+                                headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_node_pattern_lookup_failure(self):
+        url = '/nodes'
+        systemmac = random_string()
+        neighbors = {'Ethernet1': [{'device': 'localhost',
+                                     'port': 'Ethernet1'}]}
+
+        body = json.dumps(dict(systemmac=systemmac, neighbors=neighbors))
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = False
+
+        ztpserver.controller.create_file_store = filestore
+        ztpserver.neighbordb.topology.match_node = Mock(return_value=list())
+
+        request = Request.blank(url, body=body, method='POST',
+                                headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+        self.assertEqual(resp.status_code, 400)
+
+class NodesControllerGetFsmTests(unittest.TestCase):
+    pass
+
 
 if __name__ == '__main__':
     unittest.main()
