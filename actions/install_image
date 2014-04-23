@@ -70,7 +70,7 @@ def main(attributes):
     
     node = attributes.get('NODE')
     current_version = \
-        node.api_enable_cmds(['show version'])[0]['internalVersion']
+        node.api_enable_cmds(['show version'])[0]['version']
     if current_version == software_version:
         return
 
