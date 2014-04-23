@@ -376,6 +376,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
+        log('Server response to GET config: %s' % result)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -386,6 +387,7 @@ class Server(object):
                                     method='post',
                                     headers=headers,
                                     payload=node)
+        log('Server response to POST nodes: %s' % result)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0])
 
@@ -394,6 +396,7 @@ class Server(object):
         mac = ''.join(node['systemmac'].split(':'))
         result = self._http_request('nodes/%s' % mac,
                                     headers=headers)
+        log('Server response to GET definition: %s' % result)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -402,6 +405,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('actions/%s' % action,
                                     headers=headers)
+        log('Server response to GET action: %s' % result)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
