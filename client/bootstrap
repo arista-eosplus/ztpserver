@@ -131,6 +131,12 @@ def exit_bootstrap(code):
             xmpp_client.abort()
         except:
             pass
+        
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    #pylint: disable=W0212
+    # Need to close background sleekxmpp threads as well
     os._exit(code)
 
 class ZtpBootstrapEapiError(Exception):
@@ -392,15 +398,6 @@ class Server(object):
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
-
-        headers = {'content-type': CONTENT_TYPE_JSON}
-        result = self._http_request('nodes',
-                                    method='post',
-                                    headers=headers,
-                                    payload=node)
-        log('Server response to POST nodes: %s' % result)
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0])
 
     def post_nodes(self, node):
         headers = {'content-type': CONTENT_TYPE_JSON}

@@ -334,7 +334,7 @@ class Bootstrap(object):
 
     def start_test(self):
         try:
-            proc = subprocess.Popen(self.filename,
+            proc = subprocess.Popen([self.filename],
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
