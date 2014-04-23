@@ -63,7 +63,14 @@ class YAMLSerializer(object):
             return super(YAMLSerializer, cls).__new__(cls)
 
     def deserialize(self, data):
-        return yaml.load(data)
+        try:
+            contents = yaml.safe_load(data)
+
+        except yaml.YAMLError as exc:
+            log.debug(exc)
+            contents = None
+
+        return contents
 
     def serialize(self, data, safe_dump=False):
         if safe_dump:
@@ -110,7 +117,7 @@ class Serializer(object):
             handler = self._serialize_handler(content_type)
             return handler.serialize(data, **kwargs) if handler else str(data)
 
-        except TypeError:
+        except Exception:
             raise SerializerError('Could not serialize data')
 
     def deserialize(self, data, content_type, **kwargs):
