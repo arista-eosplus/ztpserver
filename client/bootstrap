@@ -376,7 +376,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
-        log('Server response to GET config: %s' % result)
+        log('Server response to GET config: %s' % result.json())
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -417,10 +417,16 @@ class XmppClient(sleekxmpp.ClientXMPP):
     def __init__(self, user, domain, password, rooms,
                  nick, server, port):
 
-        sleekxmpp.ClientXMPP.__init__(self, '%s@%s' % (user, domain),
-                                      password)
         self.xmpp_jid = '%s@%s' % (user, domain)
+        self.connected = False
 
+        try:
+            sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid,
+                                          password)
+        except sleekxmpp.jid.InvalidJID:
+            log('Unable to connect XMPP client because of invalid jid: %s' % 
+                self.xmpp_jid)
+            return
 
         self.xmpp_nick =  nick
         self.xmpp_rooms = rooms
@@ -441,8 +447,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0199')
         # Service Discovery
         self.register_plugin('xep_0030')
-
-        self.connected = False
 
         log('XmppClient connecting to server...')
         if server != None:
