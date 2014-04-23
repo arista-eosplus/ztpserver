@@ -95,7 +95,15 @@ HTTP_TIMEOUT = 10
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
-def log(msg, error=False):
+
+#---------------------------------XMPP------------------------
+# Uncomment this section in order to enable XMPP debug logging
+# logging.basicConfig(level=logging.DEBUG,
+#                     format='%(levelname)-8s %(message)s')
+#---------------------------------XMPP------------------------
+
+
+def log(msg, error=False, xmpp=True):
     print msg
 
     if syslog_manager:
@@ -109,7 +117,7 @@ def log(msg, error=False):
                                        'ERROR: ' if error else '',
                                        msg)
 
-    if xmpp_client and xmpp_client.connected:
+    if xmpp and xmpp_client and xmpp_client.connected:
         xmpp_client.message(msg)
 
 def exit_bootstrap(code):
@@ -390,6 +398,16 @@ class Server(object):
         return (result.status_code,
                 result.headers['content-type'].split(';')[0])
 
+    def post_nodes(self, node):
+        headers = {'content-type': CONTENT_TYPE_JSON}
+        result = self._http_request('nodes',
+                                    method='post',
+                                    headers=headers,
+                                    payload=node)
+        log('Server response to POST nodes: %s' % result)
+        return (result.status_code,
+                result.headers['content-type'].split(';')[0])
+
     def get_definition(self, node):
         headers = {'content-type': CONTENT_TYPE_HTML}
         mac = ''.join(node['systemmac'].split(':'))
@@ -416,10 +434,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
     def __init__(self, user, domain, password, rooms,
                  nick, server, port):
 
-        # Enable debug logging
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(levelname)-8s %(message)s')
-
         self.xmpp_jid = '%s@%s' % (user, domain)
         self.connected = False
 
@@ -441,8 +455,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.add_event_handler('session_start', self._session_connected)
         self.add_event_handler('connect', self._session_connected)
         self.add_event_handler('disconnected', self._session_disconnected)
-        self.add_event_handler("message", self._session_message)
-        self.add_event_handler("groupchat_message", self._session_muc_message)
 
         # Multi-User Chat
         self.register_plugin('xep_0045')
@@ -451,11 +463,13 @@ class XmppClient(sleekxmpp.ClientXMPP):
         # Service Discovery
         self.register_plugin('xep_0030')
 
-        log('XmppClient connecting to server...')
+        log('XmppClient connecting to server...', xmpp=False)
         if server != None:
             self.connect((server, port), reattempt=False)
         else:
             self.connect(reattempt=False)
+
+        self.process(block=False)
 
         retries = 3
         while not self.connected and retries:
@@ -464,7 +478,8 @@ class XmppClient(sleekxmpp.ClientXMPP):
             retries -= 1
 
     def _session_connected(self, event):
-        log('XmppClient: Session connected (%s)' % self.xmpp_jid)
+        log('XmppClient: Session connected (%s)' % self.xmpp_jid,
+            xmpp=False)
         self.send_presence()
         self.get_roster()
 
@@ -476,22 +491,17 @@ class XmppClient(sleekxmpp.ClientXMPP):
                                             self.xmpp_nick,
                                             wait=True)
             log('XmppClient: Joined room %s as %s' %
-                (room, self.xmpp_nick))
-
-    def _session_message(self, msg):
-        log('XmppClient: Received message from %s: \n%s\n' %
-            (msg['from'], msg['body']))
-
-    def _session_muc_message(self, msg):
-        log('XmppClient: Received message from room %s: \n%s\n' %
-            (msg['from'], msg['body']))
+                (room, self.xmpp_nick),
+                xmpp=False)
 
     def _session_disconnected(self, event):
-        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid)
+        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid,
+            xmpp=False)
         self.connected = False
 
     def message(self, message):
-        log('XmppClient: %s says %s' % (self.xmpp_jid, message))
+        log('XmppClient: %s says %s' % (self.xmpp_jid, message),
+            xmpp=False)
         for room in self.xmpp_rooms:
             self.send_message(mto=room,
                               mbody=message,
@@ -698,4 +708,9 @@ def main():
         exit_bootstrap(7)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        if xmpp_client and xmpp_client.connected:
+            xmpp_client.abort()
+
