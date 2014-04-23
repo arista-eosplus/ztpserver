@@ -32,7 +32,8 @@
 import unittest
 import os
 
-from ztpserver.repository import FileObject, FileStore, FileObjectNotFound
+from ztpserver.repository import FileObject, FileStore
+from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.repository import create_file_store
 
 from server_test_lib import random_string, remove_all
@@ -61,7 +62,17 @@ class FileObjectTests(unittest.TestCase):
         obj = FileObject(filename)
 
         self.assertFalse(obj.exists)
-        self.assertIsNone(obj.contents)
+        with self.assertRaises(FileObjectError):
+            obj.contents
+
+    def test_file_no_access(self):
+        filename = random_string()
+        obj = FileObject(filename)
+
+        assert not os.path.exists(filename)
+        with self.assertRaises(FileObjectError):
+            obj.contents
+
 
 class FileStoreTests(unittest.TestCase):
 

@@ -47,6 +47,10 @@ class FileStoreError(Exception):
     """ base exception class for FileStore objects """
     pass
 
+class FileObjectError(Exception):
+    ''' base exception class for FileObject '''
+    pass
+
 class FileObject(object):
     """ represents a file object from the file store """
 
@@ -64,6 +68,8 @@ class FileObject(object):
 
     @property
     def contents(self):
+        if not os.access(self.name, os.R_OK):
+            raise FileObjectError('could not access file %s' % self.name)
         if self._contents is None and self.exists:
             self._contents = open(self.name).read()
         return self._contents

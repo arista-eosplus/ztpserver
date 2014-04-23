@@ -127,14 +127,14 @@ class BootstrapControllerTests(unittest.TestCase):
         self.assertEqual(resp.body, contents)
 
     def test_get_bootstrap_config_defaults(self):
-
+        enable_handler_console()
         filestore = Mock()
         ztpserver.controller.create_file_store = filestore
         exc = Mock(side_effect=\
             ztpserver.repository.FileObjectNotFound('FileObjectNotFound'))
         filestore.return_value.get_file = exc
 
-        request = Request.blank('/bootstrap/config', headers=ztp_headers())
+        request = Request.blank('/bootstrap/config')
         resp = request.get_response(ztpserver.controller.Router())
 
         defaultconfig = {'logging': list(), 'xmpp': dict()}
