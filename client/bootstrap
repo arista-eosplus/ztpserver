@@ -235,7 +235,7 @@ class Node(object):
         info = self.api_enable_cmds(['show version'])[0]
 
         result['model'] = info['modelName']
-        result['version'] = info['internalVersion']
+        result['version'] = info['version']
         result['systemmac'] = info['systemMacAddress']
         result['serialnumber'] = info['serialNumber']
 

@@ -428,7 +428,7 @@ class EAPIServer(object):
                         req.wfile.write(json.dumps(
                                 {'result' :
                                  [{'modelName' : self.model,
-                                   'internalVersion' : self.version,
+                                   'version' : self.version,
                                    'serialNumber' : self.serial_number,
                                    'systemMacAddress' : self.mac}]}))
                     elif cmds == ['show lldp neighbors']:
