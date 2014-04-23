@@ -381,7 +381,6 @@ class Server(object):
                 result.headers['content-type'].split(';')[0],
                 result)
 
-    def post_nodes(self, node):
         headers = {'content-type': CONTENT_TYPE_JSON}
         result = self._http_request('nodes',
                                     method='post',
@@ -416,6 +415,10 @@ class XmppClient(sleekxmpp.ClientXMPP):
 
     def __init__(self, user, domain, password, rooms,
                  nick, server, port):
+
+        # Enable debug logging
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(levelname)-8s %(message)s')
 
         self.xmpp_jid = '%s@%s' % (user, domain)
         self.connected = False
@@ -459,10 +462,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
             # Wait to connect
             time.sleep(1)
             retries -= 1
-
-        # Enable for DEBUG logging
-        # logging.basicConfig(level=logging.DEBUG,
-        #                     format='%(levelname)-8s %(message)s')
 
     def _session_connected(self, event):
         log('XmppClient: Session connected (%s)' % self.xmpp_jid)
