@@ -122,6 +122,10 @@ def log(msg, error=False, xmpp=True):
 
 def exit_bootstrap(code):
     #pylint: disable=W0702
+
+    # Wait for XMPP messages to drain
+    time.sleep(3)
+
     if xmpp_client:
         try:
             xmpp_client.abort()
@@ -706,6 +710,8 @@ def main():
         log('Startup configuration is missing at the end of the '
             'bootstrap process', error=True)
         exit_bootstrap(7)
+
+    log('ZTP bootstrap completed successfully!' % definition_name)
 
 if __name__ == '__main__':
     try:
