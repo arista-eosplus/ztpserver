@@ -131,7 +131,7 @@ def exit_bootstrap(code):
             xmpp_client.abort()
         except:
             pass
-    sys.exit(code)
+    os._exit(code)
 
 class ZtpBootstrapEapiError(Exception):
     pass
@@ -712,6 +712,7 @@ def main():
         exit_bootstrap(7)
 
     log('ZTP bootstrap completed successfully!')
+    exit_bootstrap(0)
 
 if __name__ == '__main__':
     try:
