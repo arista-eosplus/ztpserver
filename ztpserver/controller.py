@@ -260,7 +260,9 @@ class NodesController(StoreController):
         next_state = 'http_bad_request'
         filepath = '%s/%s' % (resource, DEFINITION_FN)
         if self.store.exists(filepath):
-            response.body = self.get_file_contents(filepath)
+            contents = self.get_file_contents(filepath)
+            contents = self.deserialize(contents, CONTENT_TYPE_YAML)
+            response.body = self.serialize(contents, CONTENT_TYPE_JSON)
             response.content_type = CONTENT_TYPE_JSON
             next_state = 'get_attributes'
         return (response, next_state)
@@ -270,7 +272,7 @@ class NodesController(StoreController):
         if self.store.exists(filepath):
             attributes = self.deserialize(self.get_file_contents(filepath),
                                           CONTENT_TYPE_JSON)
-            definition = response.json
+            definition = self.deserialize(response.body, CONTENT_TYPE_JSON)
             definition['attributes'].update(attributes)
             response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             log.debug('node attributes loaded')
