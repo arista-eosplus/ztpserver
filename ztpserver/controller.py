@@ -42,7 +42,8 @@ import ztpserver.config
 import ztpserver.neighbordb
 
 from ztpserver.serializers import SerializerError
-from ztpserver.repository import create_file_store, FileObjectNotFound
+from ztpserver.repository import create_file_store
+from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
@@ -78,8 +79,10 @@ class StoreController(ztpserver.wsgiapp.Controller):
         return self.store.get_file(filename)
 
     def get_file_contents(self, filename):
-        return self.get_file(filename).contents
-
+        try:
+            return self.get_file(filename).contents
+        except (FileObjectNotFound, FileObjectError):
+            return None
 
 class FilesController(StoreController):
 
@@ -142,7 +145,7 @@ class NodesController(StoreController):
         state = 'get_startup_config_definition' if node else 'http_bad_request'
         return self.fsm(state, resource=resource, node=node)
 
-    def show_config(self, request, resource, **kwargs):
+    def get_config(self, request, resource, **kwargs):
         return self.fsm('get_startup_config_file', resource=resource)
 
     def fsm(self, next_state, **kwargs):
@@ -335,7 +338,7 @@ class BootstrapController(StoreController):
             data = self.get_file_contents('bootstrap.conf')
             contents = self.deserialize(data, CONTENT_TYPE_JSON)
 
-        except (FileObjectNotFound, SerializerError) as exc:
+        except (FileObjectNotFound, FileObjectError, SerializerError) as exc:
             log.debug(exc)
             contents = self.DEFAULTCONFIG
 
