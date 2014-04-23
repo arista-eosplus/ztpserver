@@ -710,7 +710,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    finally:
-        if xmpp_client and xmpp_client.connected:
-            xmpp_client.abort()
+    except KeyboardInterrupt:
+        exit_bootstrap(0)
 
