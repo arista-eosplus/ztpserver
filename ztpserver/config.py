@@ -257,7 +257,7 @@ runtime = Config() #pylint: disable=C0103
 # Group: default
 runtime.add_attribute(StrAttr(
     name='data_root',
-    default='/var/lib/ztpserver',
+    default='/usr/share/ztpserver',
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
