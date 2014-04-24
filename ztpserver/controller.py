@@ -53,7 +53,7 @@ from ztpserver.constants import HTTP_STATUS_CREATED
 DEFINITION_FN = 'definition'
 STARTUP_CONFIG_FN = 'startup-config'
 PATTERN_FN = 'pattern'
-NODE_FN = 'node'
+NODE_FN = '.node'
 ATTRIBUTES_FN = 'attributes'
 
 log = logging.getLogger(__name__)    # pylint: disable=C0103
@@ -164,7 +164,7 @@ class NodesController(StoreController):
         filepath = '%s/%s' % (resource, NODE_FN)
         if self.store.exists(filepath):
             nodeattrs = self.get_file_contents('%s/%s' % (resource, NODE_FN))
-            nodeattrs = self.deserialize(nodeattrs, CONTENT_TYPE_JSON)
+            nodeattrs = self.deserialize(nodeattrs, CONTENT_TYPE_YAML)
             node = ztpserver.neighbordb.create_node(nodeattrs)
         else:
             log.debug('node attributes file was not found')
@@ -195,7 +195,7 @@ class NodesController(StoreController):
 
     def dump_node(self, response, request, node):
         self.store.write_file('%s/%s' % (node.systemmac, NODE_FN),
-                              node.dumps(CONTENT_TYPE_JSON))
+                              node.dumps(CONTENT_TYPE_YAML))
         return (response, 'set_location')
 
     def post_config(self, response, request, node):
@@ -225,9 +225,9 @@ class NodesController(StoreController):
                             log.debug('definition template does not exist')
                             return (response, 'http_bad_request')
                         data = ndb.create_node_definition(definition, node)
-                        data = self.serialize(data, CONTENT_TYPE_JSON)
+                        data = self.serialize(data, CONTENT_TYPE_YAML)
                     elif filename == PATTERN_FN:
-                        data = matches[0].dumps()
+                        data = matches[0].dumps(CONTENT_TYPE_YAML)
                     files.append((filename, data))
                 self.add_node(node.systemmac, files)
                 response.status = HTTP_STATUS_CREATED
@@ -272,7 +272,7 @@ class NodesController(StoreController):
         if self.store.exists(filepath):
             attributes = self.deserialize(self.get_file_contents(filepath),
                                           CONTENT_TYPE_JSON)
-            definition = self.deserialize(response.body, CONTENT_TYPE_JSON)
+            definition = self.deserialize(response.body, CONTENT_TYPE_YAML)
             definition['attributes'].update(attributes)
             response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             log.debug('node attributes loaded')
@@ -287,8 +287,8 @@ class NodesController(StoreController):
             fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
             pattern = ztpserver.neighbordb.load_pattern(fobj.name)
 
-            topology = self.get_file_contents('%s/node' % resource)
-            topology = self.deserialize(topology, CONTENT_TYPE_JSON)
+            topology = self.get_file_contents('%s/%s' % (resource, NODE_FN))
+            topology = self.deserialize(topology, CONTENT_TYPE_YAML)
 
             if pattern.match_node(node):
                 log.debug('pattern is valid!')
