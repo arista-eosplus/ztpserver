@@ -416,6 +416,7 @@ class Server(object):
         result = self._http_request('nodes/%s' % mac,
                                     headers=headers)
         log('Server response to GET definition: %s' % result)
+        log(result.json())
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
