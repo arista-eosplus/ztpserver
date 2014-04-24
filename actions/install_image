@@ -38,7 +38,7 @@ def main(attributes):
     '''Installs software image on the switch.
 
     If the current software image is the same as the  
-    'software_version' attribute value, then this action
+    'version' attribute value, then this action
     is a no-op.  Otherwise, the action will replace the existing software 
     image.
 
@@ -52,29 +52,29 @@ def main(attributes):
 
     Returns:
         0 - success
-        1 - missing attribute('software_url')
-        2 - missing attribute('software_version')
+        1 - missing attribute('url')
+        2 - missing attribute('version')
         3 - unable to retrieve image file from URL
 
     Raises:
         None
     '''
 
-    url = attributes.get('software_url')
+    url = attributes.get('url')
     if not url:
         return 1
 
-    software_version = attributes.get('software_version')
-    if not software_version:
+    version = attributes.get('version')
+    if not version:
         return 2
     
     node = attributes.get('NODE')
     current_version = \
         node.api_enable_cmds(['show version'])[0]['version']
-    if current_version == software_version:
+    if current_version == version:
         return
 
-    image = '%s.swi' % software_version
+    image = '%s.swi' % version
     try:
         urllib.urlretrieve(url, '%s/%s' % (node.flash(), image))
     except:

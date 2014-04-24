@@ -539,9 +539,9 @@ class ActionFailureTest(unittest.TestCase):
             self.failUnless(bootstrap.action_failure())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless(text_onstart in log)
-            self.failUnless(text_onsuccess not in log)
-            self.failUnless(text_onfailure in log)
+            self.failUnless('test_action:%s' % text_onstart in log)
+            self.failUnless('test_action:%s' % text_onsuccess not in log)
+            self.failUnless('test_action:%s' % text_onfailure in log)
         except AssertionError:
             raise
         finally:
@@ -726,8 +726,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         try:
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.success())
-            self.failUnless(local_text in bootstrap.output)
-            self.failUnless(global_text not in bootstrap.output)
+            self.failUnless('\n%s\n' % local_text in bootstrap.output)
+            self.failUnless('\n%s\n' % global_text not in bootstrap.output)
             self.failIf(bootstrap.error)
         except AssertionError:
             raise
@@ -793,9 +793,9 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.failUnless(bootstrap.success())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless(text_onstart in log)
-            self.failUnless(text_onsuccess in log)
-            self.failUnless(text_onfailure not in log)
+            self.failUnless('startup_config_action:%s' % text_onstart in log)
+            self.failUnless('startup_config_action:%s' % text_onsuccess in log)
+            self.failUnless('startup_config_action:%s' % text_onfailure not in log)
         except AssertionError:
             raise
         finally:

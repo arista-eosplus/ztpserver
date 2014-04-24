@@ -48,16 +48,16 @@ class FailureTest(ActionFailureTest):
     def test_missing_url(self):
         self.basic_test('install_image', 1)
 
-    def test_missing_software_version(self):
+    def test_missing_version(self):
         self.basic_test('install_image', 2,
-                        attributes={'software_url' :
+                        attributes={'url' :
                                         random_string()})
 
     def test_url_failure(self):
         self.basic_test('install_image', 3,
-                        attributes={'software_url' :
+                        attributes={'url' :
                                     random_string(),
-                                    'software_version' :
+                                    'version' :
                                     random_string()})
 
 
@@ -71,8 +71,8 @@ class SuccessTest(unittest.TestCase):
             actions=[{'action' : 'test_action'},
                      {'action' :'startup_config_action'}],
             attributes={
-                'software_url' : random_string(),
-                'software_version' : version})
+                'url' : random_string(),
+                'version' : version})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('install_image'))
         bootstrap.ztps.set_action_response('startup_config_action',
@@ -94,8 +94,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
             attributes={
-                'software_url' : url,
-                'software_version' : version})
+                'url' : url,
+                'version' : version})
 
         boot_file = '/tmp/boot-config'
         action = get_action('install_image')
@@ -130,8 +130,8 @@ class SuccessTest(unittest.TestCase):
             actions=[{'action' : 'startup_config_action'},
                      {'action' : 'test_action'}],
             attributes={
-                'software_url' : url,
-                'software_version' : version})
+                'url' : url,
+                'version' : version})
         wrong_version = '%s_test' % version
         bootstrap.ztps.set_action_response(
             'startup_config_action',
