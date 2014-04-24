@@ -1,63 +1,64 @@
 <!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <title>ZTPserver by arista-eosplus</title>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="ZTPserver : A ZTPServer implementation for bootstrapping Arista EOS nodes" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>ZTPserver</title>
   </head>
 
   <body>
-    <div id="container">
-      <div class="inner">
 
-        <header>
-          <h1>ZTPserver</h1>
-          <h2>A ZTPServer implementation for bootstrapping Arista EOS nodes</h2>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/arista-eosplus/ztpserver">View on GitHub</a>
+
+          <h1 id="project_title">ZTPserver</h1>
+          <h2 id="project_tagline">A ZTPServer implementation for bootstrapping Arista EOS nodes</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/arista-eosplus/ztpserver/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/arista-eosplus/ztpserver/tarball/master">Download this project as a tar.gz file</a>
+            </section>
         </header>
+    </div>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/arista-eosplus/ztpserver/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/arista-eosplus/ztpserver/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/arista-eosplus/ztpserver" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
-
-        <hr>
-
-        <section id="main_content">
-          <h1>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
 <a name="arista-eos-ztpserver" class="anchor" href="#arista-eos-ztpserver"><span class="octicon octicon-link"></span></a>Arista EOS+ ZTPserver</h1>
 
-<p>This is the official Arista EOS+ ZTPServer GitHub page.</p>
+<p><strong>This is the official Arista EOS+ ZTPServer GitHub page.</strong></p>
 
-<p>ZTPServer provides a robust server side solution targeted at providing a comprehensive bootstrap solution for Arista EOS network elements.</p>
+<p>ZTPServer provides a bootstrap environment for Arista EOS based products. It is written mostly in Python and leverages standard protocols like DHCP and DHCP options for boot functions, HTTP for bi-directional transport, and XMPP and syslog for logging. Most of the files that the user interacts with are YAML based. </p>
 
 <h2>
 <a name="ztpserver-highlights" class="anchor" href="#ztpserver-highlights"><span class="octicon octicon-link"></span></a><strong>ZTPServer Highlights</strong>
 </h2>
 
 <ul>
-<li>Lightweight HTTP server implementation for EOS ZTP provisioning</li>
-<li>Extends basic capability of EOS ZTP to allow more robust provisioning activities</li>
+<li>Extends the basic capability of EOS ZTP to allow more robust provisioning activities</li>
 <li>Extensible for easy integration into network operational environment</li>
 <li>Can be run natively in EOS</li>
-<li>Arista-led community open source project</li>
+<li>An Arista EOS+ led community open source project</li>
 </ul><h2>
 <a name="ztpserver-features" class="anchor" href="#ztpserver-features"><span class="octicon octicon-link"></span></a><strong>ZTPServer Features</strong>
 </h2>
 
 <ul>
-<li>Automated configuration generation</li>
-<li>Automated system software deployment</li>
-<li>Topology based provisioning and validation</li>
-<li>ZTR (Zero Touch Replacement)</li>
-<li>XMPP integration for logging and control</li>
+<li>Automated configuration file generation and application</li>
+<li>Image and file system validation and standardization</li>
+<li>Connectivity validation and topology based auto-provisioning</li>
+<li>Config and device templates with resource allocation for dynamic deployments</li>
+<li>Zero touch replacement and upgrade capabilities</li>
+<li>User extensible actions</li>
+<li>Email, XMPP, syslog based logging and accounting of all processes</li>
 </ul><h2>
 <a name="system-requirements" class="anchor" href="#system-requirements"><span class="octicon octicon-link"></span></a><strong>System requirements</strong>
 </h2>
@@ -78,15 +79,18 @@ $ python setup.py install
 <a name="support-and-contact" class="anchor" href="#support-and-contact"><span class="octicon octicon-link"></span></a>Support and Contact</h3>
 
 <p>Check out the documentation at <a href="https://github.com/arista-eosplus/ztpserver/wiki">https://github.com/arista-eosplus/ztpserver/wiki</a> or contact us at <a href="mailto:eosplus@arista.com">eosplus@arista.com</a></p>
-        </section>
-
-        <footer>
-          ZTPserver is maintained by <a href="https://github.com/arista-eosplus">arista-eosplus</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-        
-      </div>
+      </section>
     </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">ZTPserver maintained by <a href="https://github.com/arista-eosplus">arista-eosplus</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
   </body>
 </html>
