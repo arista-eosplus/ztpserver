@@ -492,7 +492,7 @@ class InterfacePattern(object):
 
         # Used for serialization
         self.interfaces_init = interfaces
-        self.remote_device_init = remote_interface
+        self.remote_device_init = remote_device
         self.remote_interface_init = remote_interface
 
         self.interfaces = self.parse_interfaces(interfaces)
