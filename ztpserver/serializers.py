@@ -213,6 +213,7 @@ class SerializableMixin(object):
     def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
             contents = self.dumps(content_type)
+            serializer = Serializer()
             fobj.write(serializer.serialize(contents, content_type))
         except IOError as exc:
             log.debug(exc)
