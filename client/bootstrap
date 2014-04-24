@@ -696,7 +696,7 @@ def main():
         if attr not in definition:
             log('Bootstrap process FAILURE - \'%s\' section missing '
                 'from definition' % attr, error=True)
-        exit_bootstrap(9)
+            exit_bootstrap(9)
 
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
