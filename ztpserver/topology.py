@@ -349,17 +349,27 @@ class Pattern(DeserializableMixin, SerializableMixin):
         self.interfaces = []
         if interfaces:
             self.add_interfaces(interfaces)
+        
+        self.variable_substitution()
 
-        # Variable substitution
+    def variable_substitution(self):
+        substitution = False
         for item in self.interfaces:
             if(item.remote_device and
                item.remote_device.startswith('$') and
                item.remote_device[1:] in self.variables):
                 item.remote_device = self.variables[item.remote_device[1:]]
+                item.remote_device_init = item.remote_device
+                substitution = True                
             if(item.remote_interface and
                item.remote_interface.startswith('$') and
                item.remote_interface[1:] in self.variables):
-                item.remote_interface = self.variables[item.remote_device[1:]]
+                item.remote_interface = self.variables[item.remote_interface[1:]]
+                item.remote_interface_init = item.remote_interfac
+                substitution = True
+            if substitution:
+               log_msg('IneterfacePattern subsitution: %s' % str(item))
+            substitution = False
 
     def deserialize(self, contents):
         self.name = contents.get('name')
@@ -370,6 +380,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
 
         self.interfaces = []
         self.add_interfaces(contents.get('interfaces', []))
+        self.variable_substitution()
 
     def serialize(self):
         data = dict(name=self.name, definition=self.definition)
