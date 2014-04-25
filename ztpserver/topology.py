@@ -354,6 +354,9 @@ class Pattern(DeserializableMixin, SerializableMixin):
         
         self.variable_substitution()
 
+    def __repr__(self):
+        return "Pattern(name=%s)" % self.name
+
     def variable_substitution(self):
         substitution = False
         for item in self.interfaces:

@@ -285,7 +285,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         location = 'http://localhost/nodes/%s' % systemmac
-        filename = '%s/node' % systemmac
+        filename = '%s/.node' % systemmac
 
         self.assertTrue(filestore.return_value.write_file.called)
         self.assertEqual(resp.status_code, 409)
@@ -422,7 +422,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
@@ -448,7 +448,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
@@ -475,7 +475,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
 
         self.assertEqual(resp.status_code, 400)
@@ -536,7 +536,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
@@ -568,7 +568,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 400)
 
@@ -607,7 +607,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/node' % systemmac
+        filepath = '%s/.node' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
