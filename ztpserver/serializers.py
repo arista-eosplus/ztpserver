@@ -179,6 +179,8 @@ class DeserializableMixin(object):
 
     def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
+        log.debug('attempting to deserialize %r with content_type %s' % \
+            (self, content_type))
         contents = serializer.deserialize(contents, content_type)
         self.deserialize(contents)
 
@@ -208,6 +210,8 @@ class SerializableMixin(object):
     def dumps(self, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
         contents = self.serialize()
+        log.debug('attempting to serialize %r with content_type %s' % \
+	        (self, content_type))
         return serializer.serialize(contents, content_type)
 
     def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):

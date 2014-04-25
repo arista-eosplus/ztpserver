@@ -148,9 +148,11 @@ class ResourcePool(DeserializableMixin, SerializableMixin):
         self.data = None
 
     def serialize(self):
+        assert isinstance(self.data, dict)
         return self.data
 
     def deserialize(self, contents):
+        assert isinstance(contents, dict)
         self.data = contents
 
     def allocate(self, pool, node):
