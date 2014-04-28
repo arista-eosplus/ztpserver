@@ -27,14 +27,13 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702
+#pylint: disable=W0702,E1103
 
 EXTENSIONS_DIR = '/mnt/flash/.extensions'
 BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
 
 import ast
 import os
-import urllib
 import urlparse
 
 def main(attributes):
@@ -78,8 +77,9 @@ def main(attributes):
 
     name = url.split('/')[ -1 ]
     try:
-        urllib.urlretrieve(url, '%s/%s' % (EXTENSIONS_DIR,
-                                           name))
+        attributes.get('NODE').retrieve_url(url, 
+                                            '%s/%s' % (EXTENSIONS_DIR,
+                                                       name))
     except:
         return 2
 

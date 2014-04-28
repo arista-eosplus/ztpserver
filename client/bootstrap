@@ -52,6 +52,7 @@ import subprocess
 import sys
 import time
 import traceback
+import urllib2
 
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
@@ -103,8 +104,10 @@ xmpp_client = None        #pylint: disable=C0103
 #                     format='%(levelname)-8s %(message)s')
 #---------------------------------XMPP------------------------
 
-
+SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
+    if SYSTEM_ID:
+        msg = '%s: %s' % (SYSTEM_ID, msg)
     print msg
 
     if syslog_manager:
@@ -143,7 +146,10 @@ def exit_bootstrap(code):
 class ZtpBootstrapEapiError(Exception):
     pass
 
-class ZtpServerConnectionError(Exception):
+class ZtpConnectionError(Exception):
+    pass
+
+class ZtpInvalidDefinitionLocationError(Exception):
     pass
 
 class ZtpActionError(Exception):
@@ -189,6 +195,10 @@ class Node(object):
             self.api_enable_cmds([])
         except socket.error:
             raise ZtpBootstrapEapiError()
+
+        global SYSTEM_ID                    #pylint: disable=W0603
+        SYSTEM_ID = \
+            self.api_enable_cmds(['show version'])[0]['systemMacAddress']
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
@@ -292,6 +302,11 @@ class Node(object):
     def startup_config(self):
         return STARTUP_CONFIG
 
+    def retrieve_url(self, url, path):
+        url = urllib2.urlopen(url)
+        output_file = open(path, 'wb')
+        output_file.write(url.read())
+        output_file.close()
 
 class SyslogManager(object):
 
@@ -356,8 +371,8 @@ class Server(object):
     def __init__(self, url):
         self.url = url
 
-    def _http_request(self, path, method='get', headers=None,
-                      payload=None, files=None):
+    def _http_request(self, path=None, method='get', headers=None,
+                      payload=None, files=None, path_is_local=True):
         if headers is None:
             headers = {}
         if files is None:
@@ -367,7 +382,11 @@ class Server(object):
         for entry in files:
             request_files[entry] = open(entry,'rb')
 
-        full_url = '%s/%s' % (self.url, path)
+        if path_is_local:
+            full_url = '%s/%s' % (self.url, path)
+        else:
+            full_url = path
+
         try:
             if method == 'get':
                 log('Server: GET %s' % full_url)
@@ -387,8 +406,9 @@ class Server(object):
                 log('Server: Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
-            raise ZtpServerConnectionError
-
+            raise ZtpConnectionError
+        except requests.exceptions.MissingSchema:
+            raise ZtpInvalidDefinitionLocationError
         return response
 
     def get_config(self):
@@ -406,15 +426,17 @@ class Server(object):
                                     method='post',
                                     headers=headers,
                                     payload=node)
-        log('Server response to POST nodes: %s' % result)
+        log('Server response to POST nodes: %s - location %s)' % 
+            (result.status_code, result.headers['location']))
         return (result.status_code,
-                result.headers['content-type'].split(';')[0])
+                result.headers['content-type'].split(';')[0],
+                result.headers['location'])
 
-    def get_definition(self, node):
+    def get_definition(self, location):
         headers = {'content-type': CONTENT_TYPE_HTML}
-        mac = ''.join(node['systemmac'].split(':'))
-        result = self._http_request('nodes/%s' % mac,
-                                    headers=headers)
+        result = self._http_request(location,
+                                    headers=headers,
+                                    path_is_local=False)
         log('Server response to GET definition: %s' % result)
         log(result.json())
         return (result.status_code,
@@ -554,7 +576,7 @@ def download_action(server, action):
             log('Bootstrap process failure - action not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(6)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
@@ -631,7 +653,7 @@ def main():
                 '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
@@ -651,7 +673,7 @@ def main():
 
     # Checking node on server
     try:
-        status, content = server.post_nodes(node.details())
+        status, content, location = server.post_nodes(node.details())
         if(status not in [STATUS_CREATED,
                           STATUS_BAD_REQUEST,
                           STATUS_CONFLICT] or
@@ -664,14 +686,14 @@ def main():
             log('Bootstrap process failure - node not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(4)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
 
     # Get definition
     try:
-        status, content, definition = server.get_definition(node.details())
+        status, content, definition = server.get_definition(location)
         if not ((status == STATUS_OK and
                  content == CONTENT_TYPE_JSON) or
                 (status == STATUS_BAD_REQUEST and
@@ -684,10 +706,15 @@ def main():
             log('Bootstrap process failure - server-side topology check '
                 'failed (status=%s)' % status, error=True)
             exit_bootstrap(5)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
+    except ZtpInvalidDefinitionLocationError:
+        log('Bootstrap process FAILURE - invalid definition location '
+            'received from server',
+            error=True)
+        exit_bootstrap(10)
 
     # Execute actions
     definition = definition.json()
@@ -725,8 +752,8 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         exit_bootstrap(0)
-    except Exception, e:
-        log('Bootstrap process FAILURE: %s' % e)
+    except Exception, exception:
+        log('Bootstrap process FAILURE: %s' % exception)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        exit_bootstrap(10)
+        exit_bootstrap(11)

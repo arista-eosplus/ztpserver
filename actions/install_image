@@ -30,7 +30,6 @@
 #pylint: disable=W0702
 
 import re
-import urllib
 
 BOOT_CONFIG = '/mnt/flash/boot-config'
 
@@ -76,7 +75,8 @@ def main(attributes):
 
     image = '%s.swi' % version
     try:
-        urllib.urlretrieve(url, '%s/%s' % (node.flash(), image))
+        attributes.get('NODE').retrieve_url(url, 
+                                            '%s/%s' % (node.flash(), image))
     except:
         return 3
 

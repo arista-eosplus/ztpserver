@@ -37,7 +37,7 @@ import sys
 sys.path.append('test/client')
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import STARTUP_CONFIG
+from client_test_lib import STARTUP_CONFIG, STATUS_NOT_FOUND
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 
@@ -49,6 +49,29 @@ class FailureTest(ActionFailureTest):
     def test_url_failure(self):
         self.basic_test('replace_config', 2,
                         attributes={'url' : random_string()})
+
+    def test_bad_file_status(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, config)
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action'}],
+            attributes={'url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('replace_config'))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents,
+                                         status=STATUS_NOT_FOUND)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(bootstrap.action_failure())
+            msg = [x for x in bootstrap.output.split('\n') if x][-1]
+            self.failUnless('return code 2' in msg)
+        except AssertionError:
+            raise
+        finally:
+            bootstrap.end_test()
 
 
 class SuccessTest(unittest.TestCase):
