@@ -55,6 +55,7 @@ STARTUP_CONFIG_FN = 'startup-config'
 PATTERN_FN = 'pattern'
 NODE_FN = '.node'
 ATTRIBUTES_FN = 'attributes'
+BOOTSTRAP_CONF = 'bootstrap.conf'
 
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
@@ -337,8 +338,8 @@ class BootstrapController(StoreController):
         ''' returns the full bootstrap configuration as a dict '''
 
         try:
-            data = self.get_file_contents('bootstrap.conf')
-            contents = self.deserialize(data, CONTENT_TYPE_JSON)
+            data = self.get_file_contents(BOOTSTRAP_CONF)
+            contents = self.deserialize(data, CONTENT_TYPE_YAML)
 
         except (FileObjectNotFound, FileObjectError, SerializerError) as exc:
             log.debug(exc)
@@ -349,7 +350,8 @@ class BootstrapController(StoreController):
     def config(self, request, **kwargs):
         # pylint: disable=W0613
         log.debug('requesting bootstrap config')
-        return dict(body=self.get_config(), content_type=CONTENT_TYPE_JSON)
+        conf = self.get_config()
+        return dict(body=conf, content_type=CONTENT_TYPE_JSON)
 
     def index(self, request, **kwargs):
         try:
