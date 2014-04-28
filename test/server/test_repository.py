@@ -63,7 +63,7 @@ class FileObjectTests(unittest.TestCase):
 
         self.assertFalse(obj.exists)
         with self.assertRaises(FileObjectError):
-            obj.contents
+            obj.contents()
 
     def test_file_no_access(self):
         filename = random_string()
@@ -71,7 +71,7 @@ class FileObjectTests(unittest.TestCase):
 
         assert not os.path.exists(filename)
         with self.assertRaises(FileObjectError):
-            obj.contents
+            obj.contents()
 
 
 class FileStoreTests(unittest.TestCase):
