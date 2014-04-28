@@ -341,9 +341,13 @@ class BootstrapController(StoreController):
             data = self.get_file_contents(BOOTSTRAP_CONF)
             contents = self.deserialize(data, CONTENT_TYPE_YAML)
 
-        except (FileObjectNotFound, FileObjectError, SerializerError) as exc:
+        except (FileObjectNotFound, FileObjectError) as exc:
             log.debug(exc)
             contents = self.DEFAULTCONFIG
+
+        except SerializerError as exc:
+            log.debug(exc)
+            contents = None
 
         return contents
 
@@ -351,7 +355,11 @@ class BootstrapController(StoreController):
         # pylint: disable=W0613
         log.debug('requesting bootstrap config')
         conf = self.get_config()
-        return dict(body=conf, content_type=CONTENT_TYPE_JSON)
+        if not conf:
+            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
+        else:
+            resp = dict(body=conf, content_type=CONTENT_TYPE_JSON)
+        return resp
 
     def index(self, request, **kwargs):
         try:
