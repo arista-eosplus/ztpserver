@@ -27,6 +27,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import asyncore
 import imp
 import json
 import re
@@ -36,14 +37,19 @@ import random
 import subprocess
 import string                        #pylint: disable=W0402
 import shutil
+import smtpd
 import time
 import thread
 import unittest
 
-import smtpd
-import asyncore
-
 import BaseHTTPServer
+
+from collections import namedtuple
+
+
+#pylint: disable=C0103
+Response = namedtuple('Response', 'content_type status contents headers')
+#pylint: enable=C0103
 
 ZTPS_SERVER = '127.0.0.1'
 ZTPS_PORT = 12345
@@ -345,9 +351,10 @@ class Bootstrap(object):
         self.return_code = proc.returncode             #pylint: disable=E1101
 
     def node_information_collected(self):
-        cmds = ['show version',
+        cmds = ['show version',          # Collect system MAC for logging
+                'show version',
                 'show lldp neighbors']
-        return eapi_log()[:2] == cmds
+        return eapi_log()[:3] == cmds
 
     def eapi_configured(self):
         cmds = ['configure',
@@ -384,6 +391,12 @@ class Bootstrap(object):
 
     def action_failure(self):
         return self.return_code == 8
+
+    def invalid_definition_format(self):
+        return self.return_code == 9
+
+    def invalid_definition_location_failure(self):
+        return self.return_code == 10
 
     def success(self):
         return self.return_code == 0
@@ -444,6 +457,7 @@ class EAPIServer(object):
         httpd = server_class((EAPI_SERVER, EAPI_PORT), EAPIHandler)
         print time.asctime(), 'EAPIServer: Server starts - %s:%s' % (
             EAPI_SERVER, EAPI_PORT)
+
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
@@ -463,22 +477,19 @@ class ZTPServer(object):
     def cleanup(self):
         self.responses = {}
 
-    def set_response(self, url, content_type, status, output):
-        self.responses[url] = (content_type, status, output)
-
     def set_file_response(self, filename, output,
                             content_type='application/octet-stream',
                             status=STATUS_OK):
-        self.responses['/%s' % filename ] = (content_type,
-                                             status,
-                                             output)
+        self.responses['/%s' % filename ] = Response(
+            content_type, status,
+            output, {})
 
     def set_action_response(self, action, output,
                             content_type='text/x-python',
                             status=STATUS_OK):
-        self.responses['/actions/%s' % action ] = (content_type,
-                                                   status,
-                                                   output)
+        self.responses['/actions/%s' % action ] = Response(
+            content_type, status,
+            output, {})
 
     def set_config_response(self, logging=None, xmpp=None,
                             content_type='application/json',
@@ -492,16 +503,28 @@ class ZTPServer(object):
         if xmpp:
             response['xmpp'] = xmpp
 
-        self.responses['/bootstrap/config'] = (content_type, status,
-                                               json.dumps(response))
+        self.responses['/bootstrap/config'] = Response(
+            content_type, status,
+            json.dumps(response), {})
 
     def set_node_check_response(self, content_type='text/html',
-                                status=None):
+                                status=None, location=None):
         if status is None:
             status = random.choice([STATUS_CONFLICT,
                                     STATUS_CREATED])
 
-        self.responses['/nodes'] = (content_type, status, '')
+        headers = {}
+        if location:
+            headers['location'] = location
+
+        self.responses['/nodes'] = Response(
+            content_type, status, 
+            '', headers)
+
+    def set_bogus_definition_response(self):
+        self.responses['/nodes/%s' % SYSTEM_MAC] = Response(
+            'application/json', STATUS_OK,
+            json.dumps({}), {})
 
     def set_definition_response(self, node_id=SYSTEM_MAC,
                                 name='DEFAULT_DEFINITION',
@@ -519,8 +542,9 @@ class ZTPServer(object):
             response['attributes'] = attributes
 
 
-        self.responses['/nodes/%s' % node_id] = (content_type, status,
-                                                 json.dumps(response))
+        self.responses['/nodes/%s' % node_id] = Response(
+            content_type, status,
+            json.dumps(response), {})
 
     def start(self):
         thread.start_new_thread(self._run, ())
@@ -533,12 +557,15 @@ class ZTPServer(object):
             def do_request(cls, req):
                 if req.path in self.responses.keys():
                     response = self.responses[req.path]
-                    req.send_response(response[1])
-                    req.error_content_type = response[0]
+                    req.send_response(response.status)
+                    req.error_content_type = response.content_type
 
-                    req.send_header('Content-type', response[0])
+                    req.send_header('Content-type', response.content_type)
+                    for name, value in response.headers.iteritems():
+                        req.send_header(name, value)
+
                     req.end_headers()
-                    req.wfile.write(response[2])
+                    req.wfile.write(response.contents)
                     print 'ZTPS: RESPONSE: (ct=%s, status=%s, output=%s...)' % (
                         response[0],
                         response[1],
@@ -552,10 +579,21 @@ class ZTPServer(object):
 
             def do_POST(req):
                 print 'ZTPS: responding to POST request:%s' % req.path
+                headers = self.responses['/nodes'].headers
+                if 'location' not in headers:
+                    length = req.headers.getheader('content-length')
+                    node_id = json.loads(req.rfile.read(
+                            int(length)))['systemmac']
+                    location  = 'http://%s:%s/nodes/%s' % (ZTPS_SERVER, 
+                                                           ZTPS_PORT,
+                                                           node_id)
+                    self.responses['/nodes'].headers['location'] = location
+
                 ZTPSHandler.do_request(req)
 
         server_class = BaseHTTPServer.HTTPServer
         httpd = server_class((ZTPS_SERVER, ZTPS_PORT), ZTPSHandler)
+
         print time.asctime(), 'ZTPS: Server starts - %s:%s' % (
             ZTPS_SERVER, ZTPS_PORT)
         try:
@@ -569,11 +607,13 @@ class ZTPServer(object):
 
 
 class SmtpServer(object):
+    #pylint: disable=E0211
 
     def start(self):
         thread.start_new_thread(self._run, ())
 
-    def _run(self):
+    @classmethod
+    def _run(cls):
 
         class SMTPServer(smtpd.SMTPServer):
 
@@ -619,7 +659,9 @@ class ActionFailureTest(unittest.TestCase):
             self.failUnless(bootstrap.action_failure())
             msg = [x for x in bootstrap.output.split('\n') if x][-1]
             self.failUnless('return code %s' % return_code in msg)
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
         finally:
             bootstrap.end_test()
