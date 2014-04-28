@@ -369,11 +369,12 @@ class Pattern(DeserializableMixin, SerializableMixin):
             if(item.remote_interface and
                item.remote_interface.startswith('$') and
                item.remote_interface[1:] in self.variables):
-                item.remote_interface = self.variables[item.remote_interface[1:]]
+                item.remote_interface = \
+                    self.variables[item.remote_interface[1:]]
                 item.remote_interface_init = item.remote_interfac
                 substitution = True
             if substitution:
-               log_msg('IneterfacePattern subsitution: %s' % str(item))
+                log_msg('IneterfacePattern subsitution: %s' % str(item))
             substitution = False
 
     def deserialize(self, contents):

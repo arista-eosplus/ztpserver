@@ -30,11 +30,12 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+import json
 import os
-import shutil
 import random
+import shutil
 import string        #pylint: disable=W0402
-import unittest
 
 WORKINGDIR = '/tmp/ztpserver'
 
@@ -49,7 +50,7 @@ def random_json(keys=None):
         for key in keys:
             data[key] = random_string()
     else:
-        for i in range(0, 5):
+        for _ in range(0, 5):
             data[random_string()] = random_string()
     return json.dumps(data)
 
