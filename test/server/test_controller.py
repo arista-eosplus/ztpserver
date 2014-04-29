@@ -40,6 +40,8 @@ from webob import Request
 from mock import Mock, PropertyMock
 
 import ztpserver.neighbordb
+from ztpserver.neighbordb import topology
+
 import ztpserver.topology
 import ztpserver.controller
 import ztpserver.repository
@@ -332,7 +334,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
 
         ztpserver.controller.create_file_store = filestore
 
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=[Mock()])
+        topology.match_node = Mock(return_value=[Mock()])
         ztpserver.neighbordb.create_node_definition.return_value = dict()
 
         request = Request.blank(url, body=body, method='POST',
@@ -361,7 +363,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         filestore.return_value.get_file = exc
 
         ztpserver.controller.create_file_store = filestore
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=[Mock()])
+        topology.match_node = Mock(return_value=[Mock()])
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
@@ -380,7 +382,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         filestore.return_value.exists.return_value = False
 
         ztpserver.controller.create_file_store = filestore
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=list())
+        topology.match_node = Mock(return_value=list())
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
@@ -448,7 +450,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/.node' % systemmac
+        filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
@@ -475,7 +477,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/.node' % systemmac
+        filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
 
         self.assertEqual(resp.status_code, 400)
@@ -536,7 +538,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/.node' % systemmac
+        filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
@@ -568,7 +570,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/.node' % systemmac
+        filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 400)
 
@@ -607,7 +609,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        filepath = '%s/.node' % systemmac
+        filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
 
