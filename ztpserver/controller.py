@@ -245,6 +245,7 @@ class NodesController(StoreController):
         return (response, None)
 
     def add_node(self, systemmac, files=None):
+        log.debug('Adding node %s to server', systemmac)
         self.store.add_folder(systemmac)
         if files:
             for filename, contents in files:
