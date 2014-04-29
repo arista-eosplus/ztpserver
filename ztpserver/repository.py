@@ -61,18 +61,18 @@ class FileObject(object):
             self.name = os.path.join(path, name)
 
         self.type, self.encoding = mimetypes.guess_type(self.name)
-        self._contents = None
 
     def __repr__(self):
         return "FileObject(name=%s, type=%s)" % (self.name, self.type)
 
     @property
     def contents(self):
+        contents = None
         if not os.access(self.name, os.R_OK):
             raise FileObjectError('could not access file %s' % self.name)
-        if self._contents is None and self.exists:
-            self._contents = open(self.name).read()
-        return self._contents
+        if self.exists:
+            contents = open(self.name).read()
+        return contents
 
     @property
     def exists(self):
