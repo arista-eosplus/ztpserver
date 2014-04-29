@@ -288,10 +288,6 @@ class NodesController(StoreController):
             fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
             if fobj.exists:
                 pattern = ztpserver.neighbordb.load_pattern(fobj.name)
-
-                topology = self.get_file_contents('%s/%s' % (resource, NODE_FN))
-                topology = self.deserialize(topology, CONTENT_TYPE_YAML)
-
                 if pattern.match_node(node):
                     log.debug('pattern is valid!')
                     next_state = None
