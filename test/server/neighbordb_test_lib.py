@@ -33,6 +33,7 @@
 import unittest
 
 import ztpserver.neighbordb     #pylint: disable=F0401
+reload(ztpserver.neighbordb)
 
 class NodeTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
