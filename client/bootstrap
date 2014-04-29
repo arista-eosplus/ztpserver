@@ -116,7 +116,7 @@ def log(msg, error=False, xmpp=True):
         else:
             syslog_manager.log.info(msg)
 
-    timestamp = datetime.datetime.now().strftime( '%Y-%m-%d_%H:%M:%S' )
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     msg = '%s: ztp-bootstrap: %s%s' % (timestamp,
                                        'ERROR: ' if error else '',
                                        msg)
@@ -538,11 +538,11 @@ def apply_config(config):
     global xmpp_client                      #pylint: disable=W0603
 
     log('Configuring syslog')
-    syslog_manager.add_handlers(config['logging'])
+    syslog_manager.add_handlers(config.get('logging', []))
 
 
     log('Configuring XMPP')
-    xmpp_config = config['xmpp']
+    xmpp_config = config.get('xmpp', {})
     if xmpp_config:
         if ('username' in xmpp_config and
             'domain' in xmpp_config and
