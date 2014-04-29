@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W1201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,6 +28,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 import os
 import mimetypes
@@ -140,7 +140,7 @@ def create_file_store(name, basepath=None):
     if basepath is None:
         basepath = ztpserver.config.runtime.default.data_root
 
-    log.debug('creating FileStore[%s] with basepath=%s' % (name, basepath))
+    log.debug('creating FileStore[%s] with basepath=%s', name, basepath)
     name = name[1:] if str(name).startswith('/') else name
     basepath = os.path.join(basepath, name)
 

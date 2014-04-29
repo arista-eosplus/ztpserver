@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -29,6 +28,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 import os
 import collections

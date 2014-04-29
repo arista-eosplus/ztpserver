@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=C0103,W1201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -31,6 +29,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=C0103
+#
 import os
 import logging
 
@@ -53,9 +54,9 @@ def load(filename=None):
         filename = default_filename()
     try:
         topology.load_from_file(open(filename))
-        log.debug('Loaded neighbordb [%r]' % topology)
+        log.debug('Loaded neighbordb [%r]', topology)
     except IOError:
-        log.warn('Neighbordb file [%s] not loaded' % filename)
+        log.warn('Neighbordb file [%s] not loaded', filename)
 
 def create_node(nodeattrs):
     ''' extracts node attributes from nodeattrs and returns
@@ -77,7 +78,7 @@ def create_node(nodeattrs):
     node = ztpserver.topology.Node(systemmac, model, serialnumber,
                                    version, neighbors)
 
-    log.debug("Created node object %r" % node)
+    log.debug('Created node object %r', node)
 
     return node
 
@@ -88,7 +89,7 @@ def load_pattern(filename, content_type=CONTENT_TYPE_YAML):
     return pattern
 
 def resources(attributes, node):
-    log.debug("Start processing resources with attributes: %s" % attributes)
+    log.debug('Start processing resources with attributes: %s', attributes)
 
     _attributes = dict()
     _resources = ztpserver.topology.ResourcePool()
@@ -111,9 +112,9 @@ def resources(attributes, node):
             if match:
                 method = getattr(_resources, match.group('function'))
                 value = method(match.group('arg'), node)
-                log.debug('Allocated value %s for attribute %s from pool %s' % \
-                    (value, key, match.group('arg')))
-        log.debug("Setting %s to %s" % (key, value))
+                log.debug('Allocated value %s for attribute %s from pool %s',
+                          value, key, match.group('arg'))
+        log.debug('Setting %s to %s', key, value)
         _attributes[key] = value
     return _attributes
 
@@ -155,7 +156,7 @@ def create_node_definition(definition, node):
     # values
     _actions = list()
     for action in definition.get('actions'):
-        log.debug('Processing attributes for action %s' % action['name'])
+        log.debug('Processing attributes for action %s', action['name'])
         if 'attributes' in action:
             action['attributes'] = \
                 resources(action['attributes'], node)

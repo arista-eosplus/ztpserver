@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W1201,W0622,W0402
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,6 +28,9 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=W0622,W0402,W0613
 #
 import logging
 import routes
@@ -117,7 +118,7 @@ class ActionsController(StoreController):
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
     def show(self, request, resource, **kwargs):
-        log.debug('Requesting action: %s' % resource)
+        log.debug('Requesting action: %s', resource)
 
         if not self.store.exists(resource):
             log.debug('Requested action not found')
@@ -153,11 +154,11 @@ class NodesController(StoreController):
         log.debug('starting fsm')
         response = self.response()
         while next_state != None:
-            log.debug('next_state=%s, current_status=%d' % \
-                (next_state, response.status_code))
+            log.debug('next_state=%s, current_status=%d',
+                      next_state, response.status_code)
             method = getattr(self, next_state)
             (response, next_state) = method(response, **kwargs)
-        log.debug('fsm completed, final_status=%d' % response.status_code)
+        log.debug('fsm completed, final_status=%d', response.status_code)
         return response
 
     def load_node(self, resource):
@@ -181,9 +182,10 @@ class NodesController(StoreController):
         return (response, next_state)
 
     def required_attributes(self, response, request, node):
+        # pylint: disable=R0201
         next_state = 'node_exists'
-        REQ_ATTRS = ['systemmac']
-        if not set(REQ_ATTRS).issubset(set(request.json.keys())):
+        req_attrs = ['systemmac']
+        if not set(req_attrs).issubset(set(request.json.keys())):
             next_state = 'http_bad_request'
         return (response, next_state)
 
@@ -238,14 +240,16 @@ class NodesController(StoreController):
         return (response, next_state)
 
     def set_location(self, response, request, node):
+        # pylint: disable=R0201
         response.location = '/nodes/%s' % node.systemmac
         return (response, None)
 
-    def add_node(self, systemmac, files=[]):
+    def add_node(self, systemmac, files=None):
         self.store.add_folder(systemmac)
-        for filename, contents in files:
-            filepath = '%s/%s' % (systemmac, filename)
-            self.store.write_file(filepath, contents)
+        if files:
+            for filename, contents in files:
+                filepath = '%s/%s' % (systemmac, filename)
+                self.store.write_file(filepath, contents)
 
     def get_startup_config_definition(self, response, resource, node):
         next_state = 'get_definition'
@@ -300,6 +304,7 @@ class NodesController(StoreController):
         return (response, next_state)
 
     def http_bad_request(self, response, *args, **kwargs):
+        # pylint: disable=R0201
         ''' return HTTP 400 Bad Request '''
 
         response.body = ''

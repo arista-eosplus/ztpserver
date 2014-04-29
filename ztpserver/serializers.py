@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=R0201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,6 +28,9 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=R0201
 #
 import warnings
 import collections
@@ -179,8 +180,8 @@ class DeserializableMixin(object):
 
     def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
-        log.debug('attempting to deserialize %r with content_type %s' % \
-            (self, content_type))
+        log.debug('attempting to deserialize %r with content_type %s',
+                  self, content_type)
         contents = serializer.deserialize(contents, content_type)
         self.deserialize(contents)
 
@@ -210,8 +211,8 @@ class SerializableMixin(object):
     def dumps(self, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
         contents = self.serialize()
-        log.debug('attempting to serialize %r with content_type %s' % \
-	        (self, content_type))
+        log.debug('attempting to serialize %r with content_type %s',
+                  self, content_type)
         return serializer.serialize(contents, content_type)
 
     def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):

@@ -1,4 +1,3 @@
-# pylint: disable=W0614,C0103,W0142,W1201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -29,7 +28,10 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=W0614,C0103,W0142
+#
 import collections
 import logging
 import os
@@ -351,7 +353,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
         self.interfaces = []
         if interfaces:
             self.add_interfaces(interfaces)
-        
+
         self.variable_substitution()
 
     def __repr__(self):
@@ -365,7 +367,7 @@ class Pattern(DeserializableMixin, SerializableMixin):
                item.remote_device[1:] in self.variables):
                 item.remote_device = self.variables[item.remote_device[1:]]
                 item.remote_device_init = item.remote_device
-                substitution = True                
+                substitution = True
             if(item.remote_interface and
                item.remote_interface.startswith('$') and
                item.remote_interface[1:] in self.variables):
