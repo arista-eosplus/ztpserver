@@ -342,11 +342,10 @@ class BootstrapController(StoreController):
 
         try:
             data = self.get_file_contents(BOOTSTRAP_CONF)
-            contents = self.deserialize(data, CONTENT_TYPE_YAML)
-
-        except (FileObjectNotFound, FileObjectError) as exc:
-            log.debug(exc)
-            contents = self.DEFAULTCONFIG
+            if data is None:
+                contents = self.DEFAULTCONFIG
+            else:
+                contents = self.deserialize(data, CONTENT_TYPE_YAML)
 
         except SerializerError as exc:
             log.debug(exc)
