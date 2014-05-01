@@ -366,17 +366,15 @@ class Pattern(DeserializableMixin, SerializableMixin):
                item.remote_device.startswith('$') and
                item.remote_device[1:] in self.variables):
                 item.remote_device = self.variables[item.remote_device[1:]]
-                item.remote_device_init = item.remote_device
                 substitution = True
             if(item.remote_interface and
                item.remote_interface.startswith('$') and
                item.remote_interface[1:] in self.variables):
                 item.remote_interface = \
                     self.variables[item.remote_interface[1:]]
-                item.remote_interface_init = item.remote_interfac
                 substitution = True
             if substitution:
-                log_msg('IneterfacePattern subsitution: %s' % str(item))
+                log_msg('InterfacePattern substitution: %s' % str(item))
             substitution = False
 
     def deserialize(self, contents):
@@ -537,9 +535,12 @@ class InterfacePattern(object):
 
     def __repr__(self):
         return 'InterfacePattern(interface=%s, remote_device=%s, '\
-               'remote_interface=%s)' % (self.interfaces_init,
-                                         self.remote_device_init,
-                                         self.remote_interface_init)
+               'remote_interface=%s, remote_device_init=%s, '\
+               'remote_interface_init=%s)' % (self.interfaces_init,
+                                             self.remote_device,
+                                             self.remote_interface,
+                                             self.remote_device_init,
+                                             self.remote_interface_init)
 
     def serialize(self):
         result = dict()

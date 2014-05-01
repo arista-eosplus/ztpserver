@@ -125,7 +125,8 @@ class TestInterfacePattern(unittest.TestCase):
     def test_create_interface_pattern(self):
         obj = ztpserver.topology.InterfacePattern('Ethernet1', 'any', 'any')
         reprobj = 'InterfacePattern(interface=Ethernet1, remote_device=any, '\
-            'remote_interface=any)'
+            'remote_interface=any, remote_device_init=any, '\
+            'remote_interface_init=any)'
         self.assertEqual(repr(obj), reprobj)
 
     def remote_device_test(self, device_to_match, device, fail=False):
