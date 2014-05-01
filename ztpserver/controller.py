@@ -33,10 +33,13 @@
 # pylint: disable=W0622,W0402,W0613
 #
 import logging
-import routes
-import webob.static
+import urlparse
 
 from string import Template
+
+import routes
+
+import webob.static
 
 import ztpserver.wsgiapp
 import ztpserver.config
@@ -245,6 +248,7 @@ class NodesController(StoreController):
         return (response, None)
 
     def add_node(self, systemmac, files=None):
+        log.debug('Adding node %s to server', systemmac)
         self.store.add_folder(systemmac)
         if files:
             for filename, contents in files:
@@ -289,14 +293,15 @@ class NodesController(StoreController):
 
         if not config.default.disable_topology_validation:
             next_state = 'http_bad_request'
-            fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
-            if fobj.exists:
-                pattern = ztpserver.neighbordb.load_pattern(fobj.name)
-                if pattern.match_node(node):
-                    log.debug('pattern is valid!')
-                    next_state = None
-            else:
-                log.debug("Pattern file excepted but not found")
+            try:
+                fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
+                if fobj.exists:
+                    pattern = ztpserver.neighbordb.load_pattern(fobj.name)
+                    if pattern.match_node(node):
+                        log.debug('pattern is valid!')
+                        next_state = None
+            except FileObjectNotFound as exc:
+                log.debug('Pattern file not found: %s', exc)
         return (response, next_state)
 
     def http_bad_request(self, response, *args, **kwargs):
@@ -393,39 +398,55 @@ class Router(ztpserver.wsgiapp.Router):
     def __init__(self):
         mapper = routes.Mapper()
 
-        # configure /bootstrap
-        bootstrap = mapper.submapper(controller=BootstrapController())
-        bootstrap.connect('bootstrap', '/bootstrap',
-                          action='index', conditions=dict(method=['GET']))
-        bootstrap.connect('bootstrap_config', '/bootstrap/config',
-                          action='config', conditions=dict(method=['GET']))
+        kwargs = dict()
 
-        # configure /nodes
-        controller = NodesController()
-        mapper.collection('nodes', 'node',
-                          controller=controller,
-                          collection_actions=['create'],
-                          member_actions=['show'],
-                          member_prefix='/{resource}')
+        url = ztpserver.config.runtime.default.server_url
+        log.debug('url=%s', url)
+        parts = urlparse.urlsplit(url)
+        if parts.path:
+            path = parts.path[:-1] if parts.path.endswith('/') else parts.path
+            if path:
+                log.debug("path_prefix is %s", path)
+                kwargs['path_prefix'] = path
 
-        nodeconfig = mapper.submapper(controller=controller)
-        nodeconfig.connect('nodeconfig', '/nodes/{resource}/startup-config',
-                           action='get_config')
+        log.debug('Creating submapper with kwargs: %s', kwargs)
+        with mapper.submapper(**kwargs) as m:
 
-        # configure /actions
-        mapper.collection('actions', 'action',
-                          controller=ActionsController(),
-                          collection_actions=[],
-                          member_actions=['show'],
-                          member_prefix='/{resource}')
+            # configure /bootstrap
+            controller = BootstrapController()
+            m.connect('bootstrap', '/bootstrap',
+                    controller=controller,
+                    action='index', conditions=dict(method=['GET']))
+            m.connect('bootstrap_config', '/bootstrap/config',
+                    controller=controller,
+                    action='config', conditions=dict(method=['GET']))
 
-        # configure /files
-        mapper.collection('files', 'file',
-                          controller=FilesController(),
-                          collection_actions=[],
-                          member_actions=['show'],
-                          member_prefix='/{resource:.*}')
+            # configure /nodes
+            controller = NodesController()
+            m.collection('nodes', 'node',
+                        controller=controller,
+                        collection_actions=['create'],
+                        member_actions=['show'],
+                        member_prefix='/{resource}')
+            m.connect('node_config', '/nodes/{resource}/startup-config',
+                      controller=controller, 
+                      action='get_config', conditions=dict(method=['GET']))
+
+            # configure /actions
+            m.collection('actions', 'action',
+                        controller=ActionsController(),
+                        collection_actions=[],
+                        member_actions=['show'],
+                        member_prefix='/{resource}')
+
+            # configure /files
+            m.collection('files', 'file',
+                        controller=FilesController(),
+                        collection_actions=[],
+                        member_actions=['show'],
+                        member_prefix='/{resource:.*}')
 
         super(Router, self).__init__(mapper)
+
 
 
