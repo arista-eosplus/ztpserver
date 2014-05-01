@@ -438,7 +438,10 @@ class Server(object):
                                     headers=headers,
                                     path_is_local=False)
         log('Server response to GET definition: %s' % result)
-        log(result.json())
+        if result.status_code == STATUS_OK:
+            log('Server response to GET definition: %s' % result.json())
+        else:
+            log('Server response to GET definition: %s' % result.status_code)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
