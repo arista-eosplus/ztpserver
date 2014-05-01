@@ -106,6 +106,10 @@ class RouterTests(unittest.TestCase):
         url = '/nodes/%s' % random_string()
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
+    def test_nodes_resource_get_config(self):
+        url = '/nodes/%s/startup-config' % random_string()
+        self.match_routes(url, 'GET', 'POST,PUT,DELETE')
+
 
 class BootstrapControllerTests(unittest.TestCase):
 

@@ -293,14 +293,15 @@ class NodesController(StoreController):
 
         if not config.default.disable_topology_validation:
             next_state = 'http_bad_request'
-            fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
-            if fobj.exists:
-                pattern = ztpserver.neighbordb.load_pattern(fobj.name)
-                if pattern.match_node(node):
-                    log.debug('pattern is valid!')
-                    next_state = None
-            else:
-                log.debug("Pattern file excepted but not found")
+            try:
+                fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
+                if fobj.exists:
+                    pattern = ztpserver.neighbordb.load_pattern(fobj.name)
+                    if pattern.match_node(node):
+                        log.debug('pattern is valid!')
+                        next_state = None
+            except FileObjectNotFound as exc:
+                log.debug('Pattern file not found: %s', exc)
         return (response, next_state)
 
     def http_bad_request(self, response, *args, **kwargs):
