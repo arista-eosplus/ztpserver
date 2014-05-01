@@ -37,7 +37,7 @@ from ztpserver.app import start_wsgiapp
 
 conf = '/etc/ztpserver/ztpserver.conf'
 
-sys.stdout.write('Starting ZTPServer')
-sys.stdout.write('Using config file %s' % conf)
+sys.stdout.write('Starting ZTPServer, ')
+sys.stdout.write('using config file %s' % conf)
 
 application = start_wsgiapp(conf)

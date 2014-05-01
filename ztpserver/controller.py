@@ -408,6 +408,7 @@ class Router(ztpserver.wsgiapp.Router):
                 log.debug("path_prefix is %s", path)
                 kwargs['path_prefix'] = path
 
+        log.debug('Creating submapper with kwargs: %s', kwargs)
         with mapper.submapper(**kwargs) as m:
 
             # configure /bootstrap
@@ -427,7 +428,8 @@ class Router(ztpserver.wsgiapp.Router):
                         member_actions=['show'],
                         member_prefix='/{resource}')
             m.connect('node_config', '/nodes/{resource}/startup-config',
-                    controler=controller, action='get_config')
+                      controller=controller, 
+                      action='get_config', conditions=dict(method=['GET']))
 
             # configure /actions
             m.collection('actions', 'action',
