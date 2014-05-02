@@ -68,11 +68,11 @@ class SuccessTest(unittest.TestCase):
         version = random_string()
         bootstrap.eapi.version = version
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'},
-                     {'action' :'startup_config_action'}],
-            attributes={
-                'url' : random_string(),
-                'version' : version})
+            actions=[{'action' : 'test_action',
+                      'attributes': {
+                        'url' : random_string(),
+                        'version' : version}},
+                     {'action' :'startup_config_action'}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('install_image'))
         bootstrap.ztps.set_action_response('startup_config_action',
@@ -92,10 +92,10 @@ class SuccessTest(unittest.TestCase):
         image = random_string()
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={
-                'url' : url,
-                'version' : version})
+            actions=[{'action' : 'test_action',
+                      'attributes' : {
+                        'url' : url,
+                        'version' : version}}])
 
         boot_file = '/tmp/boot-config'
         action = get_action('install_image')
@@ -128,10 +128,10 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={
-                'url' : url,
-                'version' : version})
+                     {'action' : 'test_action',
+                      'attributes' : {
+                        'url' : url,
+                        'version' : version}}])
         wrong_version = '%s_test' % version
         bootstrap.ztps.set_action_response(
             'startup_config_action',

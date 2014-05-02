@@ -65,11 +65,11 @@ class SuccessTest(unittest.TestCase):
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={
-                'smarthost': smarthost,
-                'sender': 'ztps@localhost',
-                'receivers': ['ztps@localhost']})
+                     {'action' : 'test_action',
+                      'attributes' : {
+                        'smarthost': smarthost,
+                        'sender': 'ztps@localhost',
+                        'receivers': ['ztps@localhost']}}])
 
 
         bootstrap.ztps.set_action_response('startup_config_action',

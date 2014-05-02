@@ -78,8 +78,8 @@ class SuccessTest(unittest.TestCase):
         config = random_string()
         url = config
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = random_string()
@@ -102,8 +102,8 @@ class SuccessTest(unittest.TestCase):
         config = random_string()
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = random_string()
@@ -127,8 +127,8 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'url' : url})
+                     {'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
 
@@ -159,8 +159,8 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'url' : url})
+                     {'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
 
@@ -198,9 +198,9 @@ class SuccessTest(unittest.TestCase):
                      'xxx' : '999',
                      'dummy': 'DUMMY'}
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url,
-                        'variables': var_dict})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url,
+                                     'variables': var_dict}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
         contents = '$a 1234 $b 4  321 $xxx$a'

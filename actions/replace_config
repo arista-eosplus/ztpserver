@@ -57,7 +57,8 @@ def main(attributes):
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('ztps_server'), url)
+        url = urlparse.urljoin(attributes.get('NODE').server_address(), 
+                               url)
 
     try:
         attributes.get('NODE').retrieve_url(

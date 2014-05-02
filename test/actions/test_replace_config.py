@@ -55,8 +55,8 @@ class FailureTest(ActionFailureTest):
         config = random_string()
         url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('replace_config'))
         contents = random_string()
@@ -79,10 +79,10 @@ class SuccessTest(unittest.TestCase):
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
+        url = config
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('replace_config'))
         contents = random_string()
@@ -98,15 +98,13 @@ class SuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
-    def test_url_replacement(self):
+    def test_url_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        ztps_server = 'http://%s' % bootstrap.server
-
+        url = 'http://%s/%s' % (bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : config,
-                        'ztps_server': ztps_server})
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('replace_config'))
         contents = random_string()
@@ -121,6 +119,7 @@ class SuccessTest(unittest.TestCase):
             raise
         finally:
             bootstrap.end_test()
+
 
 if __name__ == '__main__':
     unittest.main()

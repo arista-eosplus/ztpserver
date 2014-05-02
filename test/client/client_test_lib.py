@@ -528,19 +528,14 @@ class ZTPServer(object):
 
     def set_definition_response(self, node_id=SYSTEM_MAC,
                                 name='DEFAULT_DEFINITION',
-                                actions=None, attributes=None,
+                                actions=None,
                                 content_type='application/json',
                                 status=STATUS_OK):
         response = { 'name': name,
                      'actions': [],
-                     'attributes': {}
                      }
         if actions:
             response['actions'] += actions
-
-        if attributes:
-            response['attributes'] = attributes
-
 
         self.responses['/nodes/%s' % node_id] = Response(
             content_type, status,
@@ -652,8 +647,8 @@ class ActionFailureTest(unittest.TestCase):
 
         bootstrap = Bootstrap(ztps_default_config=True)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes=attributes)
+            actions=[{'action' : 'test_action',
+                      'attributes' : attributes}])
         bootstrap.ztps.set_action_response('test_action',
                                            action_value)
 

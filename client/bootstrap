@@ -158,22 +158,22 @@ class ZtpActionError(Exception):
 
 class Attributes(object):
 
-    def __init__(self, local_attr=None, global_attr=None):
+    def __init__(self, local_attr=None, special_attr=None):
         self.local_attr = local_attr if local_attr else []
-        self.global_attr = global_attr if global_attr else []
+        self.special_attr = special_attr if special_attr else []
 
     def get(self, attr):
         if attr in self.local_attr:
             return self.local_attr[attr]
-        elif attr in self.global_attr:
-            return self.global_attr[attr]
+        elif attr in self.special_attr:
+            return self.special_attr[attr]
         else:
             return None
 
     def copy(self):
         attrs = dict()
-        if self.global_attr:
-            attrs = self.global_attr.copy()
+        if self.special_attr:
+            attrs = self.special_attr.copy()
         if self.local_attr:
             attrs.update(self.local_attr)
         return attrs
@@ -599,7 +599,7 @@ def download_action(server, action):
     os.chmod(filename, 0777)
     return filename
 
-def execute_action(server, action_details, global_attr):
+def execute_action(server, action_details, special_attr):
     action = action_details['action']
 
     description = ''
@@ -623,7 +623,7 @@ def execute_action(server, action_details, global_attr):
         local_attr = action_details['attributes'] \
                      if 'attributes' in action_details \
                      else []
-        ret = module.main(Attributes(local_attr, global_attr))
+        ret = module.main(Attributes(local_attr, special_attr))
         if ret:
             raise ZtpActionError('return code %s' % ret)
         log('Action %s executed succesfully' % action)
@@ -736,13 +736,11 @@ def main():
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
 
-    global_attr = definition.get('attributes', None)
-    if global_attr is None:
-        global_attr = {}
-
-    global_attr['NODE'] = node
+    
+    special_attr = {}
+    special_attr['NODE'] = node
     for details in definition['actions']:
-        execute_action(server, details, global_attr)
+        execute_action(server, details, special_attr)
 
     log('Definition %s applied successfully' % definition_name)
 

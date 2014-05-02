@@ -41,7 +41,6 @@ from client_test_lib import Bootstrap
 from client_test_lib import cli_log, file_log, remove_file
 from client_test_lib import startup_config_action
 from client_test_lib import fail_action, print_action, random_string
-from client_test_lib import print_attributes_action
 from client_test_lib import erroneous_action, missing_main_action
 from client_test_lib import wrong_signature_action, exception_action
 
@@ -725,8 +724,8 @@ class BootstrapSuccessTest(unittest.TestCase):
         text = random_string()
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'print_action'}],
-            attributes={'print_action-attr' : text})
+                     {'action' : 'print_action',
+                      'attributes' : {'print_action-attr' : text}}])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.ztps.set_action_response('print_action',
@@ -746,35 +745,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
-
-    def test_global_attribute(self):
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response()
-        bootstrap.ztps.set_node_check_response()
-        text = random_string()
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'print_action'}],
-            attributes={'print_action-attr' : text})
-        bootstrap.ztps.set_action_response('startup_config_action',
-                                           startup_config_action())
-        bootstrap.ztps.set_action_response('print_action',
-                                           print_action(use_attribute=True))
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.success())
-            self.failUnless(text in bootstrap.output)
-            self.failIf(bootstrap.error)
-        except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
-            raise assertion
-        finally:
-            bootstrap.end_test()
-
-    def test_local_attribute(self):
+    def test_attribute(self):
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
@@ -801,70 +772,6 @@ class BootstrapSuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
-    def test_overlapping_attributes(self):
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response()
-        bootstrap.ztps.set_node_check_response()
-        global_text = random_string()
-        local_text = random_string()
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'print_action',
-                      'attributes' : {'print_action-attr' : local_text}}],
-            attributes={'print_action-attr' : global_text})
-        bootstrap.ztps.set_action_response('startup_config_action',
-                                           startup_config_action())
-        bootstrap.ztps.set_action_response('print_action',
-                                           print_action(use_attribute=True))
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.success())
-            self.failUnless('\n%s\n' % local_text in bootstrap.output)
-            self.failUnless('\n%s\n' % global_text not in bootstrap.output)
-            self.failIf(bootstrap.error)
-        except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
-            raise assertion
-        finally:
-            bootstrap.end_test()
-
-    def test_all_attributes(self):
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response()
-        bootstrap.ztps.set_node_check_response()
-        global_text = random_string()
-        local_text = random_string()
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'print_attributes_action',
-                      'attributes' : {'print_action-attr_local' :
-                                      local_text}}],
-            attributes={'print_action-attr_global' : global_text})
-        bootstrap.ztps.set_action_response('startup_config_action',
-                                           startup_config_action())
-        bootstrap.ztps.set_action_response(
-            'print_attributes_action',
-            print_attributes_action(['print_action-attr_global',
-                                     'print_action-attr_local']))
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.success())
-            self.failUnless(local_text in bootstrap.output)
-            self.failUnless(global_text in bootstrap.output)
-            self.failIf(bootstrap.error)
-        except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
-            raise assertion
-        finally:
-            bootstrap.end_test()
-
-
     def test_action_success_log(self):
         log = '/tmp/ztps-log-%s-debug' % os.getpid()
 
@@ -879,10 +786,10 @@ class BootstrapSuccessTest(unittest.TestCase):
         text_onfailure = random_string()
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action',
-                     'onstart' : text_onstart,
-                     'onsuccess' : text_onsuccess,
-                     'onfailure' : text_onfailure,
-                     }])
+                      'onstart' : text_onstart,
+                      'onsuccess' : text_onsuccess,
+                      'onfailure' : text_onfailure,
+                      }])
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
         bootstrap.start_test()

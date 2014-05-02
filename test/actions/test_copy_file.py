@@ -96,10 +96,10 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url'    : url,
-                        'dst_url'    : destination,
-                        'ztps_server': ztps_server})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url'    : url,
+                                      'dst_url'    : destination,
+                                      'ztps_server': ztps_server}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -142,10 +142,10 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url'    : source,
-                        'dst_url'    : destination,
-                        'ztps_server': ztps_server})
+                     {'action' : 'test_action',
+                     'attributes' : {'src_url'    : source,
+                                     'dst_url'    : destination,
+                                     'ztps_server': ztps_server}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -193,9 +193,9 @@ class SuccessPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -250,8 +250,8 @@ class SuccessPersistentTest(unittest.TestCase):
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes=attributes)
+                     {'action' : 'test_action',
+                      'attributes' : attributes}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -296,10 +296,10 @@ class SuccessPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination,
-                        'overwrite' : 'if-missing'})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination,
+                                      'overwrite' : 'if-missing'}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -348,10 +348,10 @@ class SuccessPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination,
-                        'overwrite' : 'backup'})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination,
+                                      'overwrite' : 'backup'}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -408,9 +408,9 @@ class SuccessNonPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -467,8 +467,8 @@ class SuccessNonPersistentTest(unittest.TestCase):
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes=attributes)
+                     {'action' : 'test_action',
+                      'attributes' : attributes}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -515,10 +515,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination,
-                        'overwrite' : 'if-missing'})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination,
+                                      'overwrite' : 'if-missing'}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -563,10 +563,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={'src_url' : url,
-                        'dst_url' : destination,
-                        'overwrite' : 'backup'})
+                     {'action' : 'test_action',
+                      'attributes' : {'src_url' : url,
+                                      'dst_url' : destination,
+                                      'overwrite' : 'backup'}}])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
