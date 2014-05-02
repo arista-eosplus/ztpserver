@@ -53,60 +53,51 @@ class FailureTest(ActionFailureTest):
                         attributes={'url' :
                                     random_string()})
 
-    def test_no_variable(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url,
-                        'variables': {'random_string': random_string()}})
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('add_config'))
-        contents = '%s $missing_variable %s' % (random_string(),
-                                                 random_string())
-        bootstrap.ztps.set_file_response(config, contents)
-        bootstrap.start_test()
+    def test_variables_failure(self):
+        url = random_string()
+        contents = random_string()
+        self.basic_test('add_config', 3,
+                        attributes={'url' : url,
+                                    'variables' : random_string()},
+                        file_responses={url : contents})
 
-        try:
-            self.failUnless(bootstrap.action_failure())
-            msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 3' in msg)
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
+    def test_variable_missing_failure(self):
+        url = random_string()
+        contents = random_string() + ' $missing_var'
+        self.basic_test('add_config', 4,
+                        attributes={'url' : url,
+                                    'variables' : {}},
+                        file_responses={url : contents})
 
-    def test_one_missing_variable(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-
-        var_dict = {'a': 'new_a'}
-
-        config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : url,
-                        'variables' : var_dict})
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('add_config'))
-        contents = '%s $missing_variable %s $a' % (random_string(),
-                                                   random_string())
-        bootstrap.ztps.set_file_response(config, contents)
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.action_failure())
-            msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 3' in msg)
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
 
 class SuccessTest(unittest.TestCase):
 
+
     def test_success(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        url = config
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action'}],
+            attributes={'url' : url})
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+        contents = random_string()
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(bootstrap.success())
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
+        finally:
+            bootstrap.end_test()
+
+    def test_success_url(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
         url = 'http://%s/%s' % (bootstrap.server, config)
@@ -123,31 +114,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(os.path.isfile(STARTUP_CONFIG))
             self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
-        finally:
-            bootstrap.end_test()
-
-    def test_url_replacement(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        config = random_string()
-        ztps_server = 'http://%s' % bootstrap.server
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={'url' : config,
-                        'ztps_server': ztps_server})
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('add_config'))
-        contents = random_string()
-        bootstrap.ztps.set_file_response(config, contents)
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
-            self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
         finally:
             bootstrap.end_test()
 
@@ -176,8 +146,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(contents in log)
             self.failUnless(startup_config_text in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
         finally:
             bootstrap.end_test()
 
@@ -210,52 +182,43 @@ class SuccessTest(unittest.TestCase):
             for line in all_lines:
                 self.failUnless(line in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
         finally:
             bootstrap.end_test()
 
-    def variables_test(self, var_dict, contents):
+    def test_variables(self):
         bootstrap = Bootstrap(ztps_default_config=True)
-
         config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
+        url = config
+        var_dict = { 'a' : 'A',
+                     'b' : 'A',
+                     'xxx' : '999',
+                     'dummy': 'DUMMY'}
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action'}],
             attributes={'url' : url,
-                        'variables':
-                            var_dict})
+                        'variables': var_dict})
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
+        contents = '$a 1234 $b 4  321 $xxx$a'
+        expected_contents = Template(contents).substitute(var_dict)
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         try:
             self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            contents = Template(contents).substitute(var_dict)
-            self.failUnless([x.strip() for x in contents.split('\n')] ==
-                            file_log(STARTUP_CONFIG))
+            self.failUnless([expected_contents] == file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
         finally:
             bootstrap.end_test()
 
-    def test_variable(self):
-        var_dict = {'test_variable': 'test_new_variable'}
-        contents = '%s $test_variable %s' % (random_string(),
-                                                 random_string())
-        self.variables_test(var_dict, contents)
-
-    def test_variables(self):
-        var_dict = {'a': 'new_a',
-                    'b': 'new_b',
-                    'c': 'new_c'}
-        contents = '%s $a\n%s $b %s \n$c %s' % (random_string(),
-                                                random_string(),
-                                                random_string(),
-                                                random_string())
-        self.variables_test(var_dict, contents)
 
 if __name__ == '__main__':
     unittest.main()

@@ -640,9 +640,12 @@ class ActionFailureTest(unittest.TestCase):
     #pylint: disable=R0904
 
     def basic_test(self, action, return_code, attributes=None,
-                   action_value=None):
+                   action_value=None, file_responses=None):
         if not attributes:
             attributes = {}
+
+        if not file_responses:
+            file_responses = {}
 
         if not action_value:
             action_value = get_action(action)
@@ -653,6 +656,10 @@ class ActionFailureTest(unittest.TestCase):
             attributes=attributes)
         bootstrap.ztps.set_action_response('test_action',
                                            action_value)
+
+        for key, value in file_responses.iteritems():
+            bootstrap.ztps.set_file_response(key, value)            
+
         bootstrap.start_test()
 
         try:

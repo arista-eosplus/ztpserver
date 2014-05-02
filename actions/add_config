@@ -52,8 +52,10 @@ def main(attributes):
     Returns:
         0 - success
         1 - missing attribute('url')
+        1 - missing attribute('ztps_server')
         2 - unable to retrieve config from URL
-        3 - requested variable not provided
+        3 - unable to perform variable substitution - invalid variables
+        4 - unable to perform variable substitution - missing variable
 
     Raises:
         None
@@ -62,7 +64,8 @@ def main(attributes):
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('ztps_server'), url)
+        url = urlparse.urljoin(attributes.get('NODE').server_address(), 
+                               url)
 
     try:
         attributes.get('NODE').retrieve_url(url, TEMP_CONFIG)
@@ -71,17 +74,17 @@ def main(attributes):
 
     contents = open(TEMP_CONFIG, 'r').read()
 
-    _variables = attributes.get('variables') or dict()
-    variables = attributes.copy()
-    variables.update(_variables)
+    variables = attributes.get('variables')
+    if not variables:
+        variables = {}
 
-    if _variables:
-        try:
-            attributes.get('NODE').log_msg("Using variables: %s" % variables)
-            contents = Template(contents).substitute(variables)
-        except KeyError:
-            return 3
+    if not isinstance(variables, dict):
+        attributes.get('NODE').log_msg('Invalid variables: %s' % variables)
+        return 3
+    try:
+        contents = Template(contents).substitute(variables)
+    except KeyError:
+        return 4
 
     attributes.get('NODE').append_startup_config_lines(contents.split('\n'))
-
     os.remove(TEMP_CONFIG)

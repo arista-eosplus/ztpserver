@@ -308,6 +308,11 @@ class Node(object):
         output_file.write(url.read())
         output_file.close()
 
+    @classmethod
+    def server_address(cls):
+        return SERVER
+
+
 class SyslogManager(object):
 
     def __init__(self):
