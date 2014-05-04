@@ -132,7 +132,6 @@ class BootstrapControllerTests(unittest.TestCase):
         self.assertEqual(resp.body, contents)
 
     def test_get_bootstrap_config_defaults(self):
-        enable_handler_console()
         filestore = Mock()
         ztpserver.controller.create_file_store = filestore
         exc = Mock(side_effect=\
@@ -321,7 +320,6 @@ class NodesControllerPostFsmTests(unittest.TestCase):
 
     @mock.patch('ztpserver.neighbordb.topology')
     def test_post_node_success(self, *args):
-        enable_handler_console()
         url = '/nodes'
         systemmac = random_string()
         neighbors = {'Ethernet1': [{'device': 'localhost',
@@ -504,9 +502,33 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         filestore.return_value.exists = Mock(side_effect=exists)
         ztpserver.controller.create_file_store = filestore
 
-        fileobj = Mock()
-        fileobj.contents = json.dumps(dict(systemmac=systemmac))
-        filestore.return_value.get_file.return_value = fileobj
+        attributes_file = """
+            variables:
+              foo: bar
+        """
+
+        definitions_file = """
+            attributes:
+              variables:
+                foo: baz
+            actions:
+              - name: test action
+                action: add_config
+                attributes:
+                  url: test
+        """
+
+        def get_file(filepath):
+            fileobj = Mock()
+            if filepath.endswith('node'):
+                fileobj.contents = json.dumps(dict(systemmac=systemmac))
+            elif filepath.endswith('definition'):
+                fileobj.contents = definitions_file
+            elif filepath.endswith('attributes'):
+                fileobj.contents = attributes_file
+            return fileobj
+
+        filestore.return_value.get_file = Mock(side_effect=get_file)
 
         url = '/nodes/%s' % systemmac
         request = Request.blank(url, method='GET')
@@ -532,9 +554,33 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         filestore.return_value.exists = Mock(side_effect=exists)
         ztpserver.controller.create_file_store = filestore
 
-        fileobj = Mock()
-        fileobj.contents = json.dumps(dict(systemmac=systemmac))
-        filestore.return_value.get_file.return_value = fileobj
+        attributes_file = """
+            variables:
+              foo: bar
+        """
+
+        definitions_file = """
+            attributes:
+              variables:
+                foo: baz
+            actions:
+              - name: test action
+                action: add_config
+                attributes:
+                  url: test
+        """
+
+        def get_file(filepath):
+            fileobj = Mock()
+            if filepath.endswith('node'):
+                fileobj.contents = json.dumps(dict(systemmac=systemmac))
+            elif filepath.endswith('definition'):
+                fileobj.contents = definitions_file
+            elif filepath.endswith('attributes'):
+                fileobj.contents = attributes_file
+            return fileobj
+
+        filestore.return_value.get_file = Mock(side_effect=get_file)
 
         ztpserver.neighbordb.load_pattern = Mock()
         cfg = {'return_value.match_node.return_value': True}
@@ -564,9 +610,33 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         filestore.return_value.exists = Mock(side_effect=exists)
         ztpserver.controller.create_file_store = filestore
 
-        fileobj = Mock()
-        fileobj.contents = json.dumps(dict(systemmac=systemmac))
-        filestore.return_value.get_file.return_value = fileobj
+        attributes_file = """
+            variables:
+              foo: bar
+        """
+
+        definitions_file = """
+            attributes:
+              variables:
+                foo: baz
+            actions:
+              - name: test action
+                action: add_config
+                attributes:
+                  url: test
+        """
+
+        def get_file(filepath):
+            fileobj = Mock()
+            if filepath.endswith('node'):
+                fileobj.contents = json.dumps(dict(systemmac=systemmac))
+            elif filepath.endswith('definition'):
+                fileobj.contents = definitions_file
+            elif filepath.endswith('attributes'):
+                fileobj.contents = attributes_file
+            return fileobj
+
+        filestore.return_value.get_file = Mock(side_effect=get_file)
 
         ztpserver.neighbordb.load_pattern = Mock()
         cfg = {'return_value.match_node.return_value': False}
@@ -595,14 +665,30 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         filestore.return_value.exists = Mock(side_effect=exists)
         ztpserver.controller.create_file_store = filestore
 
+        attributes_file = """
+            variables:
+              foo: bar
+        """
+
+        definitions_file = """
+            attributes:
+              variables:
+                foo: baz
+            actions:
+              - name: test action
+                action: add_config
+                attributes:
+                  url: test
+        """
+
         def get_file(filepath):
             fileobj = Mock()
             if filepath.endswith('node'):
                 fileobj.contents = json.dumps(dict(systemmac=systemmac))
             elif filepath.endswith('definition'):
-                fileobj.contents = json.dumps(dict(attributes={}))
+                fileobj.contents = definitions_file
             elif filepath.endswith('attributes'):
-                fileobj.contents = json.dumps(dict())
+                fileobj.contents = attributes_file
             return fileobj
 
         filestore.return_value.get_file = Mock(side_effect=get_file)
@@ -617,7 +703,12 @@ class NodesControllerGetFsmTests(unittest.TestCase):
 
         filepath = '%s/pattern' % systemmac
         filestore.return_value.get_file.assert_called_with(filepath)
+
         self.assertEqual(resp.status_code, 200)
+
+        body = json.loads(resp.body)
+        var_foo = body['actions'][0]['attributes']['variables']['foo']
+        self.assertEqual(var_foo, 'bar')
 
 
 

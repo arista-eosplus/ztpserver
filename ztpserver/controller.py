@@ -269,20 +269,64 @@ class NodesController(StoreController):
         next_state = 'http_bad_request'
         filepath = '%s/%s' % (resource, DEFINITION_FN)
         if self.store.exists(filepath):
-            contents = self.get_file_contents(filepath)
-            contents = self.deserialize(contents, CONTENT_TYPE_YAML)
-            response.body = self.serialize(contents, CONTENT_TYPE_JSON)
+            log.debug('Retrieving node definition from %s', filepath)
+
+            definition = self.deserialize(self.get_file_contents(filepath),
+                                          CONTENT_TYPE_YAML)
+            if 'actions' not in definition:
+                log.error('Definition has no actions')
+                return(response, next_state)
+
+            global_attrs = definition.get('attributes') or dict()
+            global_vars = global_attrs.get('variables') or dict()
+
+            for action in definition.get('actions'):
+                if action['action'] == 'add_config':
+                    log.debug('Updating local attributes for action %s', 
+                              action['name'])
+
+                    action_attrs = action.get('attributes') or dict()
+                    local_vars = action_attrs.get('variables') or dict()
+
+                    global_attrs.update(action_attrs)
+                    global_vars.update(local_vars)
+
+                    action['attributes'] = global_attrs
+                    action['attributes']['variables'] = global_vars
+
+            response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             response.content_type = CONTENT_TYPE_JSON
+
             next_state = 'get_attributes'
         return (response, next_state)
 
     def get_attributes(self, response, resource, node):
+        log.debug('start get_attributes')
         filepath = '%s/%s' % (resource, ATTRIBUTES_FN)
         if self.store.exists(filepath):
+            log.debug('Merging local attributes file %s', filepath)
+
             attributes = self.deserialize(self.get_file_contents(filepath),
-                                          CONTENT_TYPE_JSON)
-            definition = self.deserialize(response.body, CONTENT_TYPE_YAML)
-            definition['attributes'].update(attributes)
+                                          CONTENT_TYPE_YAML)
+            definition = self.deserialize(response.body, CONTENT_TYPE_JSON)
+
+            attr_vars = attributes.get('variables') or dict()
+
+            for action in definition.get('actions'):
+                if action['action'] == 'add_config':
+                    log.debug('Updating add_config action for %s',
+                              action['name'])
+
+                    local_attrs = action.get('attributes') or dict()
+                    local_vars = local_attrs.get('variables') or dict()
+
+                    local_attrs.update(attributes)
+                    local_vars.update(attr_vars)
+
+                    action['attributes'] = local_attrs
+                    action['attributes']['variables'] = local_vars
+
+            log.debug('updated definition: %s', definition)
             response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             log.debug('node attributes loaded')
         return (response, 'do_validation')
@@ -300,6 +344,8 @@ class NodesController(StoreController):
                     if pattern.match_node(node):
                         log.debug('pattern is valid!')
                         next_state = None
+                    else:
+                        log.error('Pattern failed to match node')
             except FileObjectNotFound as exc:
                 log.debug('Pattern file not found: %s', exc)
         return (response, next_state)
