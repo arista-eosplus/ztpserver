@@ -60,15 +60,16 @@ def main(attributes):
     Raises:
         None
     '''
+    node = attributes.get('NODE')
     url = attributes.get('url')
+
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('NODE').server_address(), 
-                               url)
+        url = urlparse.urljoin(node.server_address(), url)
 
     try:
-        attributes.get('NODE').retrieve_url(url, TEMP_CONFIG)
+        node.retrieve_url(url, TEMP_CONFIG)
     except:
         return 2
 
@@ -79,12 +80,12 @@ def main(attributes):
         variables = {}
 
     if not isinstance(variables, dict):
-        attributes.get('NODE').log_msg('Invalid variables: %s' % variables)
+        node.log_msg('Invalid variables: %s' % variables)
         return 3
     try:
         contents = Template(contents).substitute(variables)
     except KeyError:
         return 4
 
-    attributes.get('NODE').append_startup_config_lines(contents.split('\n'))
+    node.append_startup_config_lines(contents.split('\n'))
     os.remove(TEMP_CONFIG)

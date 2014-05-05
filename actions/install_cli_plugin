@@ -57,8 +57,9 @@ def main(attributes):
     Raises:
         None
     '''
-
+    node = attributes.get('NODE')
     url = attributes.get('url')
+
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
@@ -72,9 +73,8 @@ def main(attributes):
 
     name = url.split('/')[ -1 ]
     try:
-        attributes.get('NODE').retrieve_url(url, 
-                                            '%s/%s' % (PERSISTENT_PLUGIN_DIR,
-                                                       name))
+        node.retrieve_url(url, '%s/%s' % 
+                          (PERSISTENT_PLUGIN_DIR, name))
     except:
         return 2
 
@@ -82,4 +82,4 @@ def main(attributes):
                                     name,
                                     CLI_PLUGIN_DIR)]
 
-    attributes.get('NODE').append_rc_eos_lines(lines)
+    node.append_rc_eos_lines(lines)

@@ -53,16 +53,15 @@ def main(attributes):
     Raises:
         None
     '''
+    node = attributes.get('NODE')
     url = attributes.get('url')
+
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('NODE').server_address(), 
-                               url)
+        url = urlparse.urljoin(node.server_address(), url)
 
     try:
-        attributes.get('NODE').retrieve_url(
-            url, 
-            attributes.get('NODE').startup_config())
+        node.retrieve_url(url, node.startup_config())
     except:
         return 2
