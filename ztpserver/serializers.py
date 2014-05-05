@@ -119,7 +119,7 @@ class Serializer(object):
             return handler.serialize(data, **kwargs) if handler else str(data)
 
         except Exception:
-            raise SerializerError('Could not serialize data')
+            raise SerializerError('Could not serialize data %s:' % data)
 
     def deserialize(self, data, content_type, **kwargs):
         """ deserialize the data based on the content_type
@@ -140,7 +140,7 @@ class Serializer(object):
             return data
 
         except Exception:
-            raise SerializerError('Could not deserialize data')
+            raise SerializerError('Could not deserialize data: %s' % data)
 
 
     def _deserialize_handler(self, content_type):

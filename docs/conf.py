@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=C0103
+
 #
 # ZTP Server documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 18 16:40:25 2014.
@@ -43,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ZTP Server'
-copyright = u'2014, Arista Networks'
+copyright = u'2014, Arista Networks'       # pylint: disable=W0622
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

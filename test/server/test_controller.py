@@ -31,6 +31,8 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+#pylint: disable=C0103
+
 import os
 import unittest
 import json
@@ -38,7 +40,7 @@ import json
 from webob import Request
 
 import mock
-from mock import Mock, PropertyMock
+from mock import Mock
 
 import ztpserver.neighbordb
 import ztpserver.topology
@@ -186,7 +188,7 @@ class FilesControllerTests(unittest.TestCase):
 
         fileobj = Mock()
         fileobj.exists = True
-        fileobj.name=filepath
+        fileobj.name = filepath
         filestore.return_value.get_file = Mock(return_value=fileobj)
 
         filename = os.path.basename(filepath)
@@ -289,14 +291,13 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         location = 'http://localhost/nodes/%s' % systemmac
-        filename = '%s/.node' % systemmac
 
         self.assertTrue(filestore.return_value.write_file.called)
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.location, location)
 
     @mock.patch('ztpserver.neighbordb.topology')
-    def test_post_config(self, *args):
+    def test_post_config(self, _):
         url = '/nodes'
         systemmac = random_string()
         config = random_string()
@@ -319,7 +320,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         self.assertEqual(resp.location, location)
 
     @mock.patch('ztpserver.neighbordb.topology')
-    def test_post_node_success(self, *args):
+    def test_post_node_success(self, _):
         url = '/nodes'
         systemmac = random_string()
         neighbors = {'Ethernet1': [{'device': 'localhost',
@@ -352,7 +353,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
     #     url = '/nodes'
     #     systemmac = random_string()
     #     neighbors = {'Ethernet1': [{'device': 'localhost',
-    #                                  'port': 'Ethernet1'}]}
+    #                                 'port': 'Ethernet1'}]}
 
     #     body = json.dumps(dict(systemmac=systemmac, neighbors=neighbors))
 
@@ -709,8 +710,6 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         body = json.loads(resp.body)
         var_foo = body['actions'][0]['attributes']['variables']['foo']
         self.assertEqual(var_foo, 'bar')
-
-
 
 
 if __name__ == '__main__':

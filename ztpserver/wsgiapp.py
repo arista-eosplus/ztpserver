@@ -38,8 +38,6 @@ import webob
 import webob.dec
 import webob.exc
 
-import routes
-import routes.middleware
 from routes.middleware import RoutesMiddleware
 
 from ztpserver.serializers import Serializer

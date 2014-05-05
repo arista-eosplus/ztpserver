@@ -29,9 +29,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
 # pylint: disable=W0622,W0402,W0613
-#
+
 import logging
 import urlparse
 
@@ -442,9 +442,11 @@ class Router(ztpserver.wsgiapp.Router):
     ''' handles incoming requests by mapping urls to controllers '''
 
     def __init__(self):
+        # pylint: disable=E1103
+
         mapper = routes.Mapper()
 
-        kwargs = dict()
+        kwargs = {}
 
         url = ztpserver.config.runtime.default.server_url
         log.debug('url=%s', url)
@@ -452,47 +454,52 @@ class Router(ztpserver.wsgiapp.Router):
         if parts.path:
             path = parts.path[:-1] if parts.path.endswith('/') else parts.path
             if path:
-                log.debug("path_prefix is %s", path)
+                log.debug('path_prefix is %s', path)
                 kwargs['path_prefix'] = path
 
         log.debug('Creating submapper with kwargs: %s', kwargs)
-        with mapper.submapper(**kwargs) as m:
+        with mapper.submapper(**kwargs) as router_mapper:
 
             # configure /bootstrap
             controller = BootstrapController()
-            m.connect('bootstrap', '/bootstrap',
-                    controller=controller,
-                    action='index', conditions=dict(method=['GET']))
-            m.connect('bootstrap_config', '/bootstrap/config',
-                    controller=controller,
-                    action='config', conditions=dict(method=['GET']))
+            router_mapper.connect('bootstrap', 
+                                  '/bootstrap',
+                                  controller=controller,
+                                  action='index', 
+                                  conditions=dict(method=['GET']))
+            router_mapper.connect('bootstrap_config', '/bootstrap/config',
+                                  controller=controller,
+                                  action='config', 
+                                  conditions=dict(method=['GET']))
 
             # configure /nodes
             controller = NodesController()
-            m.collection('nodes', 'node',
-                        controller=controller,
-                        collection_actions=['create'],
-                        member_actions=['show'],
-                        member_prefix='/{resource}')
-            m.connect('node_config', '/nodes/{resource}/startup-config',
-                      controller=controller, 
-                      action='get_config', conditions=dict(method=['GET']))
+            router_mapper.collection('nodes', 
+                                     'node',
+                                     controller=controller,
+                                     collection_actions=['create'],
+                                     member_actions=['show'],
+                                     member_prefix='/{resource}')
+            router_mapper.connect('node_config', 
+                                  '/nodes/{resource}/startup-config',
+                                  controller=controller, 
+                                  action='get_config', 
+                                  conditions=dict(method=['GET']))
 
             # configure /actions
-            m.collection('actions', 'action',
-                        controller=ActionsController(),
-                        collection_actions=[],
-                        member_actions=['show'],
-                        member_prefix='/{resource}')
+            router_mapper.collection('actions', 
+                                     'action',
+                                     controller=ActionsController(),
+                                     collection_actions=[],
+                                     member_actions=['show'],
+                                     member_prefix='/{resource}')
 
             # configure /files
-            m.collection('files', 'file',
-                        controller=FilesController(),
-                        collection_actions=[],
-                        member_actions=['show'],
-                        member_prefix='/{resource:.*}')
+            router_mapper.collection('files', 
+                                     'file',
+                                     controller=FilesController(),
+                                     collection_actions=[],
+                                     member_actions=['show'],
+                                     member_prefix='/{resource:.*}')
 
         super(Router, self).__init__(mapper)
-
-
-
