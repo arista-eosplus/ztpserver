@@ -20,6 +20,9 @@ ZTPServer provides a number of configurable bootstrap operation workflows that e
 ##Docs
 https://github.com/arista-eosplus/ztpserver/wiki
 
+## Contributing
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for additional information.
+
 ## Support
 
 * [Mailing List](https://groups.google.com/forum/#!forum/eosplus)
