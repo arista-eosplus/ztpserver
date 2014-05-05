@@ -91,6 +91,7 @@ def main(attributes):
     Raises:
         None
     '''
+    node = attributes.get('NODE')
 
     smarthost = attributes.get('smarthost')
     if not smarthost:
@@ -111,8 +112,6 @@ def main(attributes):
     msg['Subject'] = attributes.get('subject') or 'ZTP Bootstrap'
 
     body = attributes.get('body')
-    node = attributes.get('NODE')
-
     attachments = attributes.get('attachments') or list()
     commands = attributes.get('commands') or list()
 
@@ -132,7 +131,7 @@ def main(attributes):
             if os.path.exists(filename):
                 filename = filename.strip()
                 part = MIMEBase.MIMEBase('application', 'octet-stream')
-                part.set_payload(open(filename,'rb').read())
+                part.set_payload(open(filename, 'rb').read())
                 Encoders.encode_base64(part)
                 part.add_header('Content-Disposition',
                                 'attachment; filename=\'%s\'' %
@@ -145,8 +144,3 @@ def main(attributes):
     attributes.get('NODE').log_msg("Sending email using smarthost %s" % \
         smarthost)
     send_message(smarthost, sender, receivers, msg)
-
-
-
-
-

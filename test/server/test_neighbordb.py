@@ -32,23 +32,35 @@ import unittest
 
 import yaml
 
+#pylint: disable=F0401
 from ztpserver.app import enable_handler_console
-
-from neighbordb_test_lib import TestDefinition
+from neighbordb_test_lib import NodeTest, NeighbordbTest
 
 TEST_DIR = 'test/neighbordb'
 
 def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     suite = unittest.TestSuite()
-    for test in [f for f in os.listdir(TEST_DIR)
-                 if os.path.join(TEST_DIR, f).endswith('_test')]:
+    test_list = os.environ.get('TESTS', None)
+    if not test_list:
+        test_list = [f for f in os.listdir(TEST_DIR)
+                 if os.path.join(TEST_DIR, f).endswith('_test')]
+    else:
+        test_list = test_list.split(',')
+
+    print test_list
+    for test in test_list:
         print 'Starting test %s' % test
 
         definition = yaml.load(open(os.path.join(TEST_DIR, test)))
 
-        for node in definition['nodes']:
-            print 'Adding test: %s' % node['node']
-            suite.addTest(TestDefinition(test, node, definition['neighbordb']))
+        nodes = definition.get('nodes', [])
+        for node in nodes:
+            print 'Adding test: %s' % node['name']
+            suite.addTest(NodeTest(test, node, definition['neighbordb']))
+
+        if definition.get('configured_neighbordb', None):
+            suite.addTest(NeighbordbTest(test, definition['neighbordb'], 
+                                         definition['configured_neighbordb']))
 
     return suite
 

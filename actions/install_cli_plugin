@@ -27,13 +27,12 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702
+#pylint: disable=W0702,E1103
 
 CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
 PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
 
 import os
-import urllib
 import urlparse
 
 def main(attributes):
@@ -58,8 +57,9 @@ def main(attributes):
     Raises:
         None
     '''
-
+    node = attributes.get('NODE')
     url = attributes.get('url')
+
     if not url:
         return 1
     elif not urlparse.urlsplit(url).scheme:
@@ -73,8 +73,8 @@ def main(attributes):
 
     name = url.split('/')[ -1 ]
     try:
-        urllib.urlretrieve(url, '%s/%s' % (PERSISTENT_PLUGIN_DIR,
-                                           name))
+        node.retrieve_url(url, '%s/%s' % 
+                          (PERSISTENT_PLUGIN_DIR, name))
     except:
         return 2
 
@@ -82,4 +82,4 @@ def main(attributes):
                                     name,
                                     CLI_PLUGIN_DIR)]
 
-    attributes.get('NODE').append_rc_eos_lines(lines)
+    node.append_rc_eos_lines(lines)

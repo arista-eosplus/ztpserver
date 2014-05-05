@@ -9,7 +9,7 @@ neighbordb:
   patterns:
     - name: sample node template 1
       definition: test
-      node: 000c29f5d27da
+      node: 000c29f5d27d
       interfaces:
         - Ethernet1: any
         - Ethernet3: localhost:Ethernet1
@@ -25,7 +25,7 @@ neighbordb:
       interfaces:
         - Ethernet1-8: none
         - Ethernet9,10,11-13: any:Ethernet50
-        - any: regex('pod\d+-spine\d+'):Ethernet1/$
+        - any: regex('pod\d+-spine\d+'):Ethernet1/1
         - any:
             device: regex('pod\d+-spine1')
             port: Ethernet2/3
@@ -56,7 +56,7 @@ neighbordb:
         any_spine: includes('spine')
         not_spine: not any_spine
       interfaces:
-        - Ethernet1: any_spine:Ethernet1/$
+        - Ethernet1: any_spine:Ethernet1/1
         - Ethernet2: any_spine:any
         - Ethernet3: none
         - Ethernet4: any
@@ -72,7 +72,7 @@ neighbordb:
         any_spine: includes('spine')
         not_spine: not any_spine
       interfaces:
-        - Ethernet1-3: any_spine:Ethernet1/$
+        - Ethernet1-3: any_spine:Ethernet1/1
         - Ethernet5,6,7: any_spine:any
         - Ethernet49: not_spine:Ethernet49
         - Ethernet50: not_spine:Ethernet50
@@ -83,88 +83,99 @@ neighbordb:
         - Ethernet1: none
 
 nodes:
-  - node: 2b3d
-    details: 
+  - name: 2b3d
+    node:
       model: vEOS
       serialnumber: 1234567890
       systemmac: 00:1c:73:1a:2b:3d
       version: 4.12.0
-      neighbors:
-        Ethernet1:
-            - 
-              device: pod1-spine1
-              port: Ethernet1
-        Ethernet2:
-            - 
-              device: pod1-spine2
-              port: Ethernet1
-        Ethernet6:
-            - 
-              device: spine4
-              port: Ethernet8
-            - 
-              device: spine5
-              port: Ethernet2
-        Ethernet7:
-            - 
-              device: spine4
-              port: Ethernet8
-            - 
-              device: spine5
-              port: Ethernet2
-        Ethernet49:
-            - 
-              device: localhost
-              port: Ethernet49
-        Ethernet50:
-            - 
-              device: localhost
-              port: Ethernet50
-    matches: 0
-    match_excludes:
-      - sample node template 3
+    neighbors:
+      Ethernet1:
+          -
+            device: pod1-spine1
+            port: Ethernet1
+      Ethernet2:
+          -
+            device: pod1-spine2
+            port: Ethernet1
+      Ethernet6:
+          -
+            device: spine4
+            port: Ethernet8
+          -
+            device: spine5
+            port: Ethernet2
+      Ethernet7:
+          -
+            device: spine4
+            port: Ethernet8
+          -
+            device: spine5
+            port: Ethernet2
+      Ethernet49:
+          -
+            device: localhost
+            port: Ethernet49
+      Ethernet50:
+          -
+            device: localhost
+            port: Ethernet50
+    matches:
+      count: 0
+      excludes:
+        - default catch all
+        - sample node template 1
+        - sample node template 2
+        - sample global template 1
+        - sample global template 2
+        - sample global template 3
 
-  - node: d27d
-    details:
+  - name: d27d
+    node:
       model: vEOS
       serialnumber: 1234567890
       systemmac: 00:0c:29:f5:d2:7d
       version: 4.12.0
-      neighbors:
-         Ethernet1:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet2:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet3:
-           - 
-             device: localhost
-             port: Ethernet1
-         Ethernet6:
-           - 
-             device: spine4
-             port: Ethernet8
-           - 
-             device: spine5
-             port: Ethernet2
-         Ethernet7:
-           - 
-             device: spine4
-             port: Ethernet8
-           - 
-             device: spine5
-             port: Ethernet2
-         Ethernet49:
-           - 
-             device: localhost
-             port: Ethernet49
-         Ethernet50:
-           - 
-             device: localhost
-             port: Ethernet50
-    matches: 0
-    match_excludes:
-      - sample global template 1
+    neighbors:
+       Ethernet1:
+         -
+           device: localhost
+           port: Ethernet1
+       Ethernet2:
+         -
+           device: localhost
+           port: Ethernet1
+       Ethernet3:
+         -
+           device: localhost
+           port: Ethernet1
+       Ethernet6:
+         -
+           device: spine4
+           port: Ethernet8
+         -
+           device: spine5
+           port: Ethernet2
+       Ethernet7:
+         -
+           device: spine4
+           port: Ethernet8
+         -
+           device: spine5
+           port: Ethernet2
+       Ethernet49:
+         -
+           device: localhost
+           port: Ethernet49
+       Ethernet50:
+         -
+           device: localhost
+           port: Ethernet50
+    matches:
+      count: 0
+      excludes:
+        - default catch all
+        - sample node template 2
+        - sample global template 1
+        - sample global template 2
+        - sample global template 3

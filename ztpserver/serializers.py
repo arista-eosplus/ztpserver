@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=R0201
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,6 +28,9 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=R0201
 #
 import warnings
 import collections
@@ -63,7 +64,14 @@ class YAMLSerializer(object):
             return super(YAMLSerializer, cls).__new__(cls)
 
     def deserialize(self, data):
-        return yaml.load(data)
+        try:
+            contents = yaml.safe_load(data)
+
+        except yaml.YAMLError as exc:
+            log.debug(exc)
+            contents = None
+
+        return contents
 
     def serialize(self, data, safe_dump=False):
         if safe_dump:
@@ -73,9 +81,15 @@ class YAMLSerializer(object):
 class JSONSerializer(object):
 
     def deserialize(self, data):
+        ''' deserialize a JSON object and return a dict '''
+
+        assert isinstance(data, basestring)
         return json.loads(data)
 
     def serialize(self, data):
+        ''' serialize a dict object and return JSON '''
+
+        assert isinstance(data, dict)
         return json.dumps(data)
 
 class Serializer(object):
@@ -84,6 +98,8 @@ class Serializer(object):
     the :py:class:`Serializer` will simply return the data as a
     :py:class:`str` object
     """
+
+
 
     def serialize(self, data, content_type, **kwargs):
         """ serialize the data base on the content_type
@@ -102,8 +118,8 @@ class Serializer(object):
             handler = self._serialize_handler(content_type)
             return handler.serialize(data, **kwargs) if handler else str(data)
 
-        except TypeError:
-            raise SerializerError('Could not serialize data')
+        except Exception:
+            raise SerializerError('Could not serialize data %s:' % data)
 
     def deserialize(self, data, content_type, **kwargs):
         """ deserialize the data based on the content_type
@@ -114,7 +130,6 @@ class Serializer(object):
         :param data: data to be deserialized
         :param content_type: string specifies the deserialize
                              handler to use
-        :param clsobj: class object to return if specified
 
         """
 
@@ -125,7 +140,7 @@ class Serializer(object):
             return data
 
         except Exception:
-            raise SerializerError('Could not deserialize data')
+            raise SerializerError('Could not deserialize data: %s' % data)
 
 
     def _deserialize_handler(self, content_type):
@@ -163,6 +178,13 @@ class DeserializableMixin(object):
     contents loaded
     '''
 
+    def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
+        serializer = Serializer()
+        log.debug('attempting to deserialize %r with content_type %s',
+                  self, content_type)
+        contents = serializer.deserialize(contents, content_type)
+        self.deserialize(contents)
+
     def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
             self.loads(fobj.read(), content_type)
@@ -170,10 +192,8 @@ class DeserializableMixin(object):
             log.debug(exc)
             raise SerializerError('unable to load file')
 
-    def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        contents = serializer.deserialize(contents, content_type)
-        self.deserialize(contents)
+    def load_from_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        self.load(fobj, content_type)
 
     def deserialize(self, contents):
         ''' objects that use this mixin must provide this method '''
@@ -188,16 +208,28 @@ class SerializableMixin(object):
     contents loaded
     '''
 
-    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
+    def dumps(self, content_type=CONTENT_TYPE_OTHER):
         serializer = Serializer()
+        contents = self.serialize()
+        log.debug('attempting to serialize %r with content_type %s',
+                  self, content_type)
+        return serializer.serialize(contents, content_type)
+
+    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
-            contents = self.serialize()
-            fobj.write(serializer.serialize(contents, content_type))
+            contents = self.dumps(content_type)
+            fobj.write(contents)
         except IOError as exc:
             log.debug(exc)
-            raise SerializerError('unable to dump file')
+            raise SerializerError('unable to dump object')
+
+    def dump_to_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
+        self.dump(fobj, content_type)
 
     def serialize(self):
         ''' objects that use this mixin must provide this method '''
         raise NotImplementedError
+
+
+
 

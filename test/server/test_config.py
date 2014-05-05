@@ -1,79 +1,79 @@
+#!/usr/bin/env python 
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-#
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
-#
-#   Neither the name of the {organization} nor the names of its
-#   contributors may be used to endorse or promote products derived from
-#   this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-import unittest
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#  - Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#  - Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#  - Neither the name of Arista Networks nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import collections
-import tempfile
 import os
+import tempfile
+import unittest
 
 import ztpserver.config
 
 class TestAttributes(unittest.TestCase):
 
-    def test_create_attr_valid(self):
+    def test_attr_valid(self):
         obj = ztpserver.config.Attr('test')
         self.assertIsInstance(obj, ztpserver.config.Attr)
 
-    def test_create_attr_invalid(self):
+    def test_attr_invalid(self):
         self.assertRaises(TypeError, ztpserver.config.Attr)
 
-    def test_create_strattr_defaults(self):
+    def test_strattr_defaults(self):
         obj = ztpserver.config.StrAttr('test')
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
 
-    def test_create_strattr_with_choices(self):
+    def test_strattr_with_choices(self):
         obj = ztpserver.config.StrAttr('test', choices=['one', 'two'])
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
         self.assertEqual(repr(obj.type), 'String(choices=one,two)')
 
-    def test_create_strattr_with_default(self):
+    def test_strattr_with_default(self):
         obj = ztpserver.config.StrAttr('test', default='test')
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
         self.assertEqual(obj.default, 'test')
 
-    def test_create_strattr_with_group(self):
+    def test_strattr_with_group(self):
         obj = ztpserver.config.StrAttr('test', group='test')
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
         self.assertEqual(obj.group, 'test')
 
-    def test_create_strattr_with_choices_default_valid(self):
+    def test_strattr_with_choices_default_valid(self):
         obj = ztpserver.config.StrAttr('test', choices=['one', 'two'],
             default='one')
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
         self.assertEqual(repr(obj.type), 'String(choices=one,two)')
         self.assertEqual(obj.default, 'one')
 
-    def test_create_strattr_with_choices_default_invalid(self):
+    def test_strattr_with_choices_default_invalid(self):
         self.assertRaises(ValueError, ztpserver.config.StrAttr,
             'test', choices=['one', 'two'], default='three')
 
-    def test_create_strattr_with_choices_default_group(self):
+    def test_strattr_with_choices_default_group(self):
         obj = ztpserver.config.StrAttr('test', choices=['one', 'two'],
             group='test', default='one')
         self.assertIsInstance(obj, ztpserver.config.StrAttr)
@@ -81,47 +81,47 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(obj.default, 'one')
         self.assertEqual(obj.group, 'test')
 
-    def test_create_intattr_defaults(self):
+    def test_intattr_defaults(self):
         obj = ztpserver.config.IntAttr('test')
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
 
-    def test_create_intattr_with_minvalue(self):
+    def test_intattr_with_minvalue(self):
         obj = ztpserver.config.IntAttr('test', minvalue=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=None)")
 
-    def test_create_intattr_with_maxvalue(self):
+    def test_intattr_with_maxvalue(self):
         obj = ztpserver.config.IntAttr('test', maxvalue=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(repr(obj.type), "Integer(minvalue=None, maxvalue=1)")
 
-    def test_create_intattr_with_min_and_max_value(self):
+    def test_intattr_with_min_and_max_value(self):
         obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=1)")
 
-    def test_create_intattr_with_default(self):
+    def test_intattr_with_default(self):
         obj = ztpserver.config.IntAttr('test', default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
-    def test_create_intattr_with_min_valid_default(self):
+    def test_intattr_with_min_valid_default(self):
         obj = ztpserver.config.IntAttr('test', minvalue=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
-    def test_create_intattr_with_max_valid_default(self):
+    def test_intattr_with_max_valid_default(self):
         obj = ztpserver.config.IntAttr('test', maxvalue=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
-    def test_create_intattr_with_range_valid_default(self):
+    def test_intattr_with_range_valid_default(self):
         obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1,
             default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
-    def test_create_intattr_with_min_invalid_default(self):
+    def test_intattr_with_min_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', minvalue=0, default=-1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
@@ -129,7 +129,7 @@ class TestAttributes(unittest.TestCase):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', minvalue=2, default=1)
 
-    def test_create_intattr_with_max_invalid_default(self):
+    def test_intattr_with_max_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', maxvalue=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
@@ -137,7 +137,7 @@ class TestAttributes(unittest.TestCase):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', maxvalue=2, default=3)
 
-    def test_create_intattr_with_range_invalid_default(self):
+    def test_intattr_with_range_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', minvalue=0, maxvalue=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
@@ -156,35 +156,40 @@ class TestAttributes(unittest.TestCase):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
             'test', minvalue=2, maxvalue=3, default=4)
 
-    def test_create_intattr_with_group(self):
+    def test_intattr_with_group(self):
         obj = ztpserver.config.IntAttr('test', group='test')
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.group, 'test')
 
-    def test_create_boolattr_defaults(self):
+    def test_boolattr_defaults(self):
         obj = ztpserver.config.BoolAttr('test')
         self.assertIsInstance(obj, ztpserver.config.BoolAttr)
         self.assertEqual(repr(obj.type), "Boolean")
 
-    def test_create_boolattr_with_default(self):
+    def test_boolattr_with_default(self):
         obj = ztpserver.config.BoolAttr('test', default=True)
         self.assertIsInstance(obj, ztpserver.config.BoolAttr)
         self.assertTrue(obj.default)
 
-    def test_create_boolattr_with_group(self):
+    def test_boolattr_with_group(self):
         obj = ztpserver.config.BoolAttr('test', group='test')
         self.assertIsInstance(obj, ztpserver.config.BoolAttr)
         self.assertEqual(obj.group, 'test')
 
 class TestGroup(unittest.TestCase):
+    #pylint: disable=C0103
 
     class Config(object):
         def __init__(self):
             self.attributes = list()
-        def _get_attribute(self, name, group_name):
+
+        @classmethod
+        def __get_attribute__(cls, name, group_name):
             return (name, group_name)
+
         def add_attribute(self, item, group_name):
             self.attributes.append((item, group_name))
+
         def __repr__(self):
             return 'Config'
 
@@ -194,7 +199,7 @@ class TestGroup(unittest.TestCase):
     def tearDown(self):
         del self.config
 
-    def test_create_group(self):
+    def test_group(self):
         obj = ztpserver.config.Group('test', self.config)
         self.assertIsInstance(obj, ztpserver.config.Group)
         self.assertEqual('test', obj.name)
@@ -212,6 +217,7 @@ class TestGroup(unittest.TestCase):
 
 
 class TestConfig(unittest.TestCase):
+    #pylint: disable=C0103
 
     Attr = collections.namedtuple('Attr', ['name', 'type', 'group', 'default'])
     CONF = """\n[default]\ntest = value\n[group]\ntest = value\n"""
@@ -222,7 +228,7 @@ class TestConfig(unittest.TestCase):
     def tearDown(self):
         del self.config
 
-    def test_create_config(self):
+    def test_config(self):
         self.assertIsInstance(self.config, ztpserver.config.Config)
         self.assertEqual(repr(self.config), 'Config')
 
@@ -230,7 +236,7 @@ class TestConfig(unittest.TestCase):
         attr = self.Attr('test', str, None, None)
         self.config.add_attribute(attr)
         self.assertIsNone(getattr(self.config, 'test'))
-        self.assertIn((None, 'test'), self.config._attributes)
+        self.assertIn((None, 'test'), self.config.attributes)
 
     def test_config_add_attribute_default_value(self):
         attr = self.Attr('test', str, None, 'value')
@@ -255,8 +261,9 @@ class TestConfig(unittest.TestCase):
         for grp in ['test', 100]:
             self.config.add_group(grp)
             grp = str(grp) if isinstance(grp, int) else grp
-            self.assertIn(grp, self.config._groups)
-            self.assertIsInstance(getattr(self.config, grp), ztpserver.config.Group)
+            self.assertIn(grp, self.config.groups)
+            self.assertIsInstance(getattr(self.config, grp), 
+                                  ztpserver.config.Group)
 
     def test_config_set_value_attribute(self):
         attr = self.Attr('test', str, None, None)
@@ -313,19 +320,18 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(obj.default.env)
 
     def test_load_config_file(self):
-        f = tempfile.NamedTemporaryFile(mode='w')
-        f.writelines(self.CONF)
-        f.flush()
+        filename = tempfile.NamedTemporaryFile(mode='w')
+        filename.writelines(self.CONF)
+        filename.flush()
 
         obj = ztpserver.config.runtime
         obj.add_attribute(ztpserver.config.StrAttr(name='test'))
         obj.add_attribute(ztpserver.config.StrAttr(name='test', group='group'))
-        obj.read(f.name)
+        obj.read(filename.name)
 
         self.assertEqual(obj.default.test, 'value')
         self.assertEqual(obj.group.test, 'value')
-        f.close()
-
+        filename.close()
 
 
 if __name__ == '__main__':

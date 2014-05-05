@@ -35,8 +35,9 @@ import sys
 sys.path.append('test/client')
 
 from client_test_lib import debug    #pylint: disable=W0611
-from client_test_lib import ActionFailureTest
-from client_test_lib import random_string
+from client_test_lib import Bootstrap, ActionFailureTest
+from client_test_lib import get_action, random_string
+from client_test_lib import startup_config_action
 
 class FailureTest(ActionFailureTest):
 
@@ -56,7 +57,36 @@ class FailureTest(ActionFailureTest):
 
 
 class SuccessTest(unittest.TestCase):
-    pass
+
+    def test_success(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+
+        smarthost = "%s:2525" % str(bootstrap.server).split(':')[0]
+
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'startup_config_action'},
+                     {'action' : 'test_action',
+                      'attributes' : {
+                        'smarthost': smarthost,
+                        'sender': 'ztps@localhost',
+                        'receivers': ['ztps@localhost']}}])
+
+
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+
+        action = get_action('send_email')
+        bootstrap.ztps.set_action_response('test_action',
+                                           action)
+
+        bootstrap.start_test()
+        try:
+            self.failUnless(bootstrap.success())
+        except Exception:
+            raise
+        finally:
+            bootstrap.end_test()
+
 
 
 if __name__ == '__main__':

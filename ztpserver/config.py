@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -29,6 +28,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 import os
 import collections
@@ -126,7 +127,7 @@ class Group(collections.Mapping):
 
     def __getattr__(self, name):
         # pylint: disable=W0212
-        return self.config._get_attribute(name, self.name)
+        return self.config.__get_attribute__(name, self.name)
 
     def __getitem__(self, name):
         return self.__getattr__(name)
@@ -154,20 +155,20 @@ class Config(collections.Mapping):
     """ The Config class represents the configuration for collection.  """
 
     def __init__(self):
-        self._attributes = dict()
-        self._groups = list()
+        self.attributes = dict()
+        self.groups = list()
 
     def __getattr__(self, name):
-        return self._get_attribute(name)
+        return self.__get_attribute__(name)
 
     def __getitem__(self, name):
-        return self._get_attribute(name)
+        return self.__get_attribute__(name)
 
     def __iter__(self):
-        return iter(self._attributes)
+        return iter(self.attributes)
 
     def __len__(self):
-        return len(self._attributes)
+        return len(self.attributes)
 
     def __repr__(self):
         return 'Config'
@@ -178,15 +179,15 @@ class Config(collections.Mapping):
     def __setitem__(self):
         pass
 
-    def _get_attribute(self, name, group=None):
-        if not group and name in self._groups:
+    def __get_attribute__(self, name, group=None):
+        if not group and name in self.groups:
             return Group(name, self)
 
         key = (group, name)
-        if key not in self._attributes:
+        if key not in self.attributes:
             raise AttributeError('attribute %s does not exist' % str(key))
 
-        item = self._attributes.get(key)
+        item = self.attributes.get(key)
         return item.get('value')
 
     def add_attribute(self, item, group=None):
@@ -198,32 +199,32 @@ class Config(collections.Mapping):
 
         key = (group, item.name)
 
-        if group not in self._groups:
+        if group not in self.groups:
             self.add_group(group)
 
-        if key in self._attributes:
+        if key in self.attributes:
             raise AttributeError('item already exists')
 
-        self._attributes[key] = obj
+        self.attributes[key] = obj
         if item.default is not None:
             obj['value'] = self._transform(obj, item.default)
 
     def add_group(self, group):
         if isinstance(group, Group):
-            self._groups.append(group.name)
+            self.groups.append(group.name)
         else:
             group = str(group)
-            self._groups.append(group)
+            self.groups.append(group)
 
     def _transform(self, item, value):
         # pylint: disable=R0201
         return item['_metadata'].type(value)
 
     def set_value(self, name, value, group=None):
-        if not group and name in self._groups:
+        if not group and name in self.groups:
             raise AttributeError('cannot set a value for a group')
 
-        item = self._attributes.get((group, name))
+        item = self.attributes.get((group, name))
         if item is None:
             raise AttributeError('item does not exist')
         item['value'] = self._transform(item, value)
@@ -231,10 +232,10 @@ class Config(collections.Mapping):
     def clear_value(self, name, group=None):
         """ clears the attributes value and resets it to default """
 
-        if not group and name in self._groups:
+        if not group and name in self.groups:
             raise AttributeError('cannot clear values for a group')
 
-        item = self._attributes.get((group, name))
+        item = self.attributes.get((group, name))
 
         if item['_metadata'].default is None:   # pylint: disable=W0104
             item['value'] = None
@@ -257,7 +258,7 @@ runtime = Config() #pylint: disable=C0103
 # Group: default
 runtime.add_attribute(StrAttr(
     name='data_root',
-    default='/var/lib/ztpserver',
+    default='/usr/share/ztpserver',
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
@@ -275,13 +276,18 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(BoolAttr(
     name='logging',
-    default=False,
+    default=True,
     environ='ZTPS_DEFAULT_LOGGING'
 ))
 
 runtime.add_attribute(BoolAttr(
     name='console_logging',
     default=True
+))
+
+runtime.add_attribute(BoolAttr(
+    name='disable_topology_validation',
+    default=False
 ))
 
 # Group: server
