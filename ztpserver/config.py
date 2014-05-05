@@ -127,7 +127,7 @@ class Group(collections.Mapping):
 
     def __getattr__(self, name):
         # pylint: disable=W0212
-        return self.config.get_attribute(name, self.name)
+        return self.config.__get_attribute__(name, self.name)
 
     def __getitem__(self, name):
         return self.__getattr__(name)
@@ -159,10 +159,10 @@ class Config(collections.Mapping):
         self.groups = list()
 
     def __getattr__(self, name):
-        return self.get_attribute(name)
+        return self.__get_attribute__(name)
 
     def __getitem__(self, name):
-        return self.get_attribute(name)
+        return self.__get_attribute__(name)
 
     def __iter__(self):
         return iter(self.attributes)
@@ -179,7 +179,7 @@ class Config(collections.Mapping):
     def __setitem__(self):
         pass
 
-    def get_attribute(self, name, group=None):
+    def __get_attribute__(self, name, group=None):
         if not group and name in self.groups:
             return Group(name, self)
 

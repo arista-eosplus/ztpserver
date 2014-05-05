@@ -184,7 +184,7 @@ class TestGroup(unittest.TestCase):
             self.attributes = list()
 
         @classmethod
-        def get_attribute(cls, name, group_name):
+        def __get_attribute__(cls, name, group_name):
             return (name, group_name)
 
         def add_attribute(self, item, group_name):
