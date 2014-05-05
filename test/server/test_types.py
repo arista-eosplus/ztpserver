@@ -1,31 +1,35 @@
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=C0103,W1201
 #
-# Copyright (c) 2013, Arista Networks
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
 #
-#   Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
 #
-#   Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
 #
-#   Neither the name of the {organization} nor the names of its
+#   Neither the name of Arista Networks nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import unittest
 
@@ -43,40 +47,35 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(repr(obj), "String(choices=one,two)")
 
     def test_create_string_choices_integers(self):
-        obj = ztpserver.types.String([1,2])
+        obj = ztpserver.types.String([1, 2])
         self.assertIsInstance(obj, ztpserver.types.String)
         self.assertEqual(repr(obj), "String(choices=1,2)")
 
     def test_call_string_using_defaults_and_string(self):
         obj = ztpserver.types.String()
         self.assertIsInstance(obj, ztpserver.types.String)
-        s = obj('hello')
-        self.assertEqual(s, 'hello')
+        self.assertEqual(obj('hello'), 'hello')
 
     def test_call_string_using_defaults_and_int(self):
         obj = ztpserver.types.String()
         self.assertIsInstance(obj, ztpserver.types.String)
-        s = obj(1)
-        self.assertEqual(s, '1')
+        self.assertEqual(obj(1), '1')
 
     def test_call_string_using_defaults_and_bool(self):
         obj = ztpserver.types.String()
         self.assertIsInstance(obj, ztpserver.types.String)
-        s = obj(True)
-        self.assertEqual(s, 'True')
+        self.assertEqual(obj(True), 'True')
 
     def test_call_string_using_defaults_and_list(self):
         obj = ztpserver.types.String()
         self.assertIsInstance(obj, ztpserver.types.String)
-        s = obj(['one'])
-        self.assertEqual(s, "['one']")
+        self.assertEqual(obj(['one']), "['one']")
         
     def test_call_string_with_choices_valid(self):
         obj = ztpserver.types.String(['one', 'two'])
         self.assertIsInstance(obj, ztpserver.types.String)
         self.assertEqual(repr(obj), "String(choices=one,two)")
-        s = obj('one')
-        self.assertEqual(s, 'one')
+        self.assertEqual(obj('one'), 'one')
         
     def test_call_string_with_choices_invalid(self):
         obj = ztpserver.types.String(['one', 'two'])
@@ -129,8 +128,8 @@ class TestTypes(unittest.TestCase):
         obj = ztpserver.types.Integer(minvalue=1, maxvalue=1)
         self.assertEqual(obj.minvalue, 1)
         self.assertEqual(obj.maxvalue, 1)
-        
-    def test_call_integer_defaults_valid(self):
+
+    def test_call_integer_defaults_valid(self): #pylint: disable=R0201
         obj = ztpserver.types.Integer()
         for value in [0, 1.0, 1.1, '65535', True]:
             obj(value)

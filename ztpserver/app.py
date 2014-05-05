@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=C0103
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,6 +28,9 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=C0103
 #
 import os
 import sys
@@ -130,8 +131,8 @@ def main():
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument('--version', '-v',
-                         action='store_true',
-                         help='Displays the version information')
+                        action='store_true',
+                        help='Displays the version information')
 
     parser.add_argument('--conf', '-c',
                         type=str,
@@ -140,8 +141,9 @@ def main():
 
     args = parser.parse_args()
     if args.version:
-         print 'ztps version %s' % VERSION
-         sys.exit()
+        print 'ztps version %s' % VERSION
+        sys.exit()
+
     return run_server(args.conf)
 
 

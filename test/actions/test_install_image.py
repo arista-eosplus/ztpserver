@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -48,16 +48,16 @@ class FailureTest(ActionFailureTest):
     def test_missing_url(self):
         self.basic_test('install_image', 1)
 
-    def test_missing_software_version(self):
+    def test_missing_version(self):
         self.basic_test('install_image', 2,
-                        attributes={'software_url' :
+                        attributes={'url' :
                                         random_string()})
 
     def test_url_failure(self):
         self.basic_test('install_image', 3,
-                        attributes={'software_url' : 
+                        attributes={'url' :
                                     random_string(),
-                                    'software_version' : 
+                                    'version' :
                                     random_string()})
 
 
@@ -68,11 +68,11 @@ class SuccessTest(unittest.TestCase):
         version = random_string()
         bootstrap.eapi.version = version
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'},
-                     {'action' :'startup_config_action'}],
-            attributes={
-                'software_url' : random_string(),
-                'software_version' : version})
+            actions=[{'action' : 'test_action',
+                      'attributes': {
+                        'url' : random_string(),
+                        'version' : version}},
+                     {'action' :'startup_config_action'}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('install_image'))
         bootstrap.ztps.set_action_response('startup_config_action',
@@ -92,10 +92,10 @@ class SuccessTest(unittest.TestCase):
         image = random_string()
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action'}],
-            attributes={
-                'software_url' : url,
-                'software_version' : version})
+            actions=[{'action' : 'test_action',
+                      'attributes' : {
+                        'url' : url,
+                        'version' : version}}])
 
         boot_file = '/tmp/boot-config'
         action = get_action('install_image')
@@ -128,14 +128,14 @@ class SuccessTest(unittest.TestCase):
         url = 'http://%s/%s' % (bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'}],
-            attributes={
-                'software_url' : url,
-                'software_version' : version})
+                     {'action' : 'test_action',
+                      'attributes' : {
+                        'url' : url,
+                        'version' : version}}])
         wrong_version = '%s_test' % version
         bootstrap.ztps.set_action_response(
             'startup_config_action',
-            startup_config_action(lines=['! boot system flash:/%s.swi' % 
+            startup_config_action(lines=['! boot system flash:/%s.swi' %
                                          wrong_version]))
 
         boot_file = '/tmp/boot-config'

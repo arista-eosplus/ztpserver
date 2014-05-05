@@ -1,5 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0613,C0103,R0201,W0622,W0614
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -31,14 +29,16 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=W0613,C0103,R0201,W0622,W0614
+#
 import logging
 
 import webob
 import webob.dec
 import webob.exc
 
-import routes
-import routes.middleware
+from routes.middleware import RoutesMiddleware
 
 from ztpserver.serializers import Serializer
 from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK
@@ -88,8 +88,8 @@ class Controller(object):
             method = getattr(self, action)    #pylint: disable=R0921
             result = method(request, **request.urlvars)
 
-        except Exception as e:
-            log.exception(e)
+        except Exception as exc:
+            log.debug(exc)
             raise webob.exc.HTTPInternalServerError()
 
         if result is None:
@@ -106,7 +106,6 @@ class Controller(object):
 
             result = self.response(**result)   #pylint: disable=W0142
 
-        #FIXME we should only return Response not FileApp
         elif not isinstance(result, webob.Response) and \
              not isinstance(result, webob.static.FileApp):
             result = webob.exc.HTTPInternalServerError()
@@ -117,8 +116,7 @@ class Router(object):
 
     def __init__(self, mapper):
         self.map = mapper
-        self.router = routes.middleware.RoutesMiddleware(self.dispatch,
-                                                         self.map)
+        self.router = RoutesMiddleware(self.dispatch, self.map)
 
     @webob.dec.wsgify
     def __call__(self, request):
@@ -129,6 +127,7 @@ class Router(object):
         try:
             return request.urlvars['controller']
         except KeyError:
+            log.debug('Router: controller not found, returning 404')
             return webob.exc.HTTPNotFound()
 
 

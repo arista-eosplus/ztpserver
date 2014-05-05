@@ -51,6 +51,8 @@ import socket
 import subprocess
 import sys
 import time
+import traceback
+import urllib2
 
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
@@ -95,7 +97,17 @@ HTTP_TIMEOUT = 10
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
-def log(msg, error=False):
+
+#---------------------------------XMPP------------------------
+# Uncomment this section in order to enable XMPP debug logging
+# logging.basicConfig(level=logging.DEBUG,
+#                     format='%(levelname)-8s %(message)s')
+#---------------------------------XMPP------------------------
+
+SYSTEM_ID = None
+def log(msg, error=False, xmpp=True):
+    if SYSTEM_ID:
+        msg = '%s: %s' % (SYSTEM_ID, msg)
     print msg
 
     if syslog_manager:
@@ -104,27 +116,40 @@ def log(msg, error=False):
         else:
             syslog_manager.log.info(msg)
 
-    timestamp = datetime.datetime.now().strftime( '%Y-%m-%d_%H:%M:%S' )
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     msg = '%s: ztp-bootstrap: %s%s' % (timestamp,
                                        'ERROR: ' if error else '',
                                        msg)
 
-    if xmpp_client and xmpp_client.connected:
+    if xmpp and xmpp_client and xmpp_client.connected:
         xmpp_client.message(msg)
 
 def exit_bootstrap(code):
     #pylint: disable=W0702
+
+    # Wait for XMPP messages to drain
+    time.sleep(3)
+
     if xmpp_client:
         try:
             xmpp_client.abort()
         except:
             pass
-    sys.exit(code)
+        
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    #pylint: disable=W0212
+    # Need to close background sleekxmpp threads as well
+    os._exit(code)
 
 class ZtpBootstrapEapiError(Exception):
     pass
 
-class ZtpServerConnectionError(Exception):
+class ZtpConnectionError(Exception):
+    pass
+
+class ZtpInvalidDefinitionLocationError(Exception):
     pass
 
 class ZtpActionError(Exception):
@@ -133,17 +158,25 @@ class ZtpActionError(Exception):
 
 class Attributes(object):
 
-    def __init__(self, local_attr=None, global_attr=None):
+    def __init__(self, local_attr=None, special_attr=None):
         self.local_attr = local_attr if local_attr else []
-        self.global_attr = global_attr if global_attr else []
+        self.special_attr = special_attr if special_attr else []
 
     def get(self, attr):
         if attr in self.local_attr:
             return self.local_attr[attr]
-        elif attr in self.global_attr:
-            return self.global_attr[attr]
+        elif attr in self.special_attr:
+            return self.special_attr[attr]
         else:
             return None
+
+    def copy(self):
+        attrs = dict()
+        if self.special_attr:
+            attrs = self.special_attr.copy()
+        if self.local_attr:
+            attrs.update(self.local_attr)
+        return attrs
 
 
 class Node(object):
@@ -162,6 +195,10 @@ class Node(object):
             self.api_enable_cmds([])
         except socket.error:
             raise ZtpBootstrapEapiError()
+
+        global SYSTEM_ID                    #pylint: disable=W0603
+        SYSTEM_ID = \
+            self.api_enable_cmds(['show version'])[0]['systemMacAddress']
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
@@ -209,7 +246,7 @@ class Node(object):
         info = self.api_enable_cmds(['show version'])[0]
 
         result['model'] = info['modelName']
-        result['version'] = info['internalVersion']
+        result['version'] = info['version']
         result['systemmac'] = info['systemMacAddress']
         result['serialnumber'] = info['serialNumber']
 
@@ -264,6 +301,16 @@ class Node(object):
 
     def startup_config(self):
         return STARTUP_CONFIG
+
+    def retrieve_url(self, url, path):
+        url = urllib2.urlopen(url)
+        output_file = open(path, 'wb')
+        output_file.write(url.read())
+        output_file.close()
+
+    @classmethod
+    def server_address(cls):
+        return SERVER
 
 
 class SyslogManager(object):
@@ -329,8 +376,8 @@ class Server(object):
     def __init__(self, url):
         self.url = url
 
-    def _http_request(self, path, method='get', headers=None,
-                      payload=None, files=None):
+    def _http_request(self, path=None, method='get', headers=None,
+                      payload=None, files=None, path_is_local=True):
         if headers is None:
             headers = {}
         if files is None:
@@ -340,7 +387,11 @@ class Server(object):
         for entry in files:
             request_files[entry] = open(entry,'rb')
 
-        full_url = '%s/%s' % (self.url, path)
+        if path_is_local:
+            full_url = '%s/%s' % (self.url, path)
+        else:
+            full_url = path
+
         try:
             if method == 'get':
                 log('Server: GET %s' % full_url)
@@ -360,14 +411,16 @@ class Server(object):
                 log('Server: Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
-            raise ZtpServerConnectionError
-
+            raise ZtpConnectionError
+        except requests.exceptions.MissingSchema:
+            raise ZtpInvalidDefinitionLocationError
         return response
 
     def get_config(self):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
+        log('Server response to GET config: %s' % result.json())
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -378,14 +431,22 @@ class Server(object):
                                     method='post',
                                     headers=headers,
                                     payload=node)
+        log('Server response to POST nodes: %s - location %s)' % 
+            (result.status_code, result.headers['location']))
         return (result.status_code,
-                result.headers['content-type'].split(';')[0])
+                result.headers['content-type'].split(';')[0],
+                result.headers['location'])
 
-    def get_definition(self, node):
+    def get_definition(self, location):
         headers = {'content-type': CONTENT_TYPE_HTML}
-        mac = ''.join(node['systemmac'].split(':'))
-        result = self._http_request('nodes/%s' % mac,
-                                    headers=headers)
+        result = self._http_request(location,
+                                    headers=headers,
+                                    path_is_local=False)
+        log('Server response to GET definition: %s' % result)
+        if result.status_code == STATUS_OK:
+            log('Server response to GET definition: %s' % result.json())
+        else:
+            log('Server response to GET definition: %s' % result.status_code)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -394,6 +455,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('actions/%s' % action,
                                     headers=headers)
+        log('Server response to GET action: %s' % result)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -405,10 +467,16 @@ class XmppClient(sleekxmpp.ClientXMPP):
     def __init__(self, user, domain, password, rooms,
                  nick, server, port):
 
-        sleekxmpp.ClientXMPP.__init__(self, '%s@%s' % (user, domain),
-                                      password)
         self.xmpp_jid = '%s@%s' % (user, domain)
+        self.connected = False
 
+        try:
+            sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid,
+                                          password)
+        except sleekxmpp.jid.InvalidJID:
+            log('Unable to connect XMPP client because of invalid jid: %s' % 
+                self.xmpp_jid)
+            return
 
         self.xmpp_nick =  nick
         self.xmpp_rooms = rooms
@@ -420,8 +488,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.add_event_handler('session_start', self._session_connected)
         self.add_event_handler('connect', self._session_connected)
         self.add_event_handler('disconnected', self._session_disconnected)
-        self.add_event_handler("message", self._session_message)
-        self.add_event_handler("groupchat_message", self._session_muc_message)
 
         # Multi-User Chat
         self.register_plugin('xep_0045')
@@ -430,13 +496,13 @@ class XmppClient(sleekxmpp.ClientXMPP):
         # Service Discovery
         self.register_plugin('xep_0030')
 
-        self.connected = False
-
-        log('XmppClient connecting to server...')
+        log('XmppClient connecting to server...', xmpp=False)
         if server != None:
             self.connect((server, port), reattempt=False)
         else:
             self.connect(reattempt=False)
+
+        self.process(block=False)
 
         retries = 3
         while not self.connected and retries:
@@ -444,12 +510,9 @@ class XmppClient(sleekxmpp.ClientXMPP):
             time.sleep(1)
             retries -= 1
 
-        # Enable for DEBUG logging
-        # logging.basicConfig(level=logging.DEBUG,
-        #                     format='%(levelname)-8s %(message)s')
-
     def _session_connected(self, event):
-        log('XmppClient: Session connected (%s)' % self.xmpp_jid)
+        log('XmppClient: Session connected (%s)' % self.xmpp_jid,
+            xmpp=False)
         self.send_presence()
         self.get_roster()
 
@@ -461,22 +524,17 @@ class XmppClient(sleekxmpp.ClientXMPP):
                                             self.xmpp_nick,
                                             wait=True)
             log('XmppClient: Joined room %s as %s' %
-                (room, self.xmpp_nick))
-
-    def _session_message(self, msg):
-        log('XmppClient: Received message from %s: \n%s\n' %
-            (msg['from'], msg['body']))
-
-    def _session_muc_message(self, msg):
-        log('XmppClient: Received message from room %s: \n%s\n' %
-            (msg['from'], msg['body']))
+                (room, self.xmpp_nick),
+                xmpp=False)
 
     def _session_disconnected(self, event):
-        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid)
+        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid,
+            xmpp=False)
         self.connected = False
 
     def message(self, message):
-        log('XmppClient: %s says %s' % (self.xmpp_jid, message))
+        log('XmppClient: %s says %s' % (self.xmpp_jid, message),
+            xmpp=False)
         for room in self.xmpp_rooms:
             self.send_message(mto=room,
                               mbody=message,
@@ -488,11 +546,11 @@ def apply_config(config):
     global xmpp_client                      #pylint: disable=W0603
 
     log('Configuring syslog')
-    syslog_manager.add_handlers(config['logging'])
+    syslog_manager.add_handlers(config.get('logging', []))
 
 
     log('Configuring XMPP')
-    xmpp_config = config['xmpp']
+    xmpp_config = config.get('xmpp', {})
     if xmpp_config:
         if ('username' in xmpp_config and
             'domain' in xmpp_config and
@@ -526,7 +584,7 @@ def download_action(server, action):
             log('Bootstrap process failure - action not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(6)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
@@ -541,7 +599,7 @@ def download_action(server, action):
     os.chmod(filename, 0777)
     return filename
 
-def execute_action(server, action_details, global_attr):
+def execute_action(server, action_details, special_attr):
     action = action_details['action']
 
     description = ''
@@ -565,7 +623,7 @@ def execute_action(server, action_details, global_attr):
         local_attr = action_details['attributes'] \
                      if 'attributes' in action_details \
                      else []
-        ret = module.main(Attributes(local_attr, global_attr))
+        ret = module.main(Attributes(local_attr, special_attr))
         if ret:
             raise ZtpActionError('return code %s' % ret)
         log('Action %s executed succesfully' % action)
@@ -603,7 +661,7 @@ def main():
                 '(status=%s; content-type=%s)' % (status, content),
                 error=True)
             exit_bootstrap(3)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
@@ -623,7 +681,7 @@ def main():
 
     # Checking node on server
     try:
-        status, content = server.post_nodes(node.details())
+        status, content, location = server.post_nodes(node.details())
         if(status not in [STATUS_CREATED,
                           STATUS_BAD_REQUEST,
                           STATUS_CONFLICT] or
@@ -636,14 +694,14 @@ def main():
             log('Bootstrap process failure - node not found on server '
                 '(status=%s)' % status, error=True)
             exit_bootstrap(4)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
 
     # Get definition
     try:
-        status, content, definition = server.get_definition(node.details())
+        status, content, definition = server.get_definition(location)
         if not ((status == STATUS_OK and
                  content == CONTENT_TYPE_JSON) or
                 (status == STATUS_BAD_REQUEST and
@@ -656,23 +714,33 @@ def main():
             log('Bootstrap process failure - server-side topology check '
                 'failed (status=%s)' % status, error=True)
             exit_bootstrap(5)
-    except ZtpServerConnectionError:
+    except ZtpConnectionError:
         log('Bootstrap process FAILURE - server connection error',
             error=True)
         exit_bootstrap(1)
+    except ZtpInvalidDefinitionLocationError:
+        log('Bootstrap process FAILURE - invalid definition location '
+            'received from server',
+            error=True)
+        exit_bootstrap(10)
 
     # Execute actions
     definition = definition.json()
+
+    for attr in ['name', 'actions']:
+        if attr not in definition:
+            log('Bootstrap process FAILURE - \'%s\' section missing '
+                'from definition' % attr, error=True)
+            exit_bootstrap(9)
+
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
 
-    global_attr = definition['attributes']
-    if global_attr is None:
-        global_attr = {}
-
-    global_attr['NODE'] = node
+    
+    special_attr = {}
+    special_attr['NODE'] = node
     for details in definition['actions']:
-        execute_action(server, details, global_attr)
+        execute_action(server, details, special_attr)
 
     log('Definition %s applied successfully' % definition_name)
 
@@ -682,5 +750,16 @@ def main():
             'bootstrap process', error=True)
         exit_bootstrap(7)
 
+    log('ZTP bootstrap completed successfully!')
+    exit_bootstrap(0)
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit_bootstrap(0)
+    except Exception, exception:
+        log('Bootstrap process FAILURE: %s' % exception)
+        log(sys.exc_info()[0])
+        log(traceback.format_exc())
+        exit_bootstrap(11)

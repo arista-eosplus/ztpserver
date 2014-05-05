@@ -1,0 +1,252 @@
+# Tests various neighbordb configurations
+# - missing 'interfaces' (should not be configured)
+# - missing 'definition' (should not be configured)
+# - missing 'name' (should not be configured)
+# - wrong system mac
+# - all permutations of variables for a pattern
+
+name: neighbourdb entries test
+
+neighbordb:
+
+  patterns:
+
+    # ---Failing patterns---
+
+    - name: missing interfaces 1
+      definition: test
+
+    - name: missing interfaces 2
+      node: 000c29f5d27d
+      definition: test
+
+    - name: missing definition 1
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    - name: missing definition 2
+      node: 000c29f5d27d
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    # Missing name
+    - node: 000c29f5d27d
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    # Missing name
+    - definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    # ---Succeeding patterns---
+
+    # Order of attributes should not matter
+    - name: ok global order 1
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: ok global order 2
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+
+    - definition: test
+      name: ok global order 3
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok global order 4
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+      name: ok global order 5
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok global order 6
+      definition: test
+
+    - node: 001c73aa0bcc
+      name: ok nodes order 1
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: ok nodes order 2
+      node: 101c73aabbcc
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: ok nodes order 3
+      definition: test
+      node: 201c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: ok nodes order 4
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 301c73aabbcc
+
+    - node: 001c73aabacc
+      name: ok nodes order 5
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+
+    - name: ok nodes order 6
+      node: 401c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+
+    - name: ok nodes order 7
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 501c73aabbcc
+      definition: test
+
+    - name: ok nodes order 8
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+      node: 601c73aabbcc
+
+    - node: 001c73aab3cc
+      definition: test
+      name: ok nodes order 9
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - definition: test
+      node: 701c73aabbcc
+      name: ok nodes order 10
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - definition: test
+      name: ok nodes order 11
+      node: 801c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - definition: test
+      name: ok nodes order 12
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 901c73aabbcc
+
+    - node: 011c73aabbcc
+      definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 13
+
+    - definition: test
+      node: 021c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 14
+
+    - definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 031c73aabbcc
+      name: ok nodes order 15
+
+    - definition: test
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 16
+      node: 041c73aabbcc
+
+    - node: 001c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+      name: ok nodes order 17
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 051c73aabbcc
+      definition: test
+      name: ok nodes order 18
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+      node: 061c73aabbcc
+      name: ok nodes order 19
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      definition: test
+      name: ok nodes order 20
+      node: 071c73aabbcc
+
+    - node: 081c73aabbcc
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 21
+      definition: test
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      node: 091c73aabbcc
+      name: ok nodes order 22
+      definition: test
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 23
+      node: 002c73aabbcc
+      definition: test
+
+    - interfaces:
+        - Ethernet1: localhost:Ethernet2
+      name: ok nodes order 24
+      definition: test
+      node: 003c73aabbcc
+
+configured_neighbordb:
+  nodes:
+    - ok nodes order 1
+    - ok nodes order 2
+    - ok nodes order 3
+    - ok nodes order 4
+    - ok nodes order 5
+    - ok nodes order 6
+    - ok nodes order 7
+    - ok nodes order 8
+    - ok nodes order 9
+    - ok nodes order 10
+    - ok nodes order 11
+    - ok nodes order 12
+    - ok nodes order 13
+    - ok nodes order 14
+    - ok nodes order 15
+    - ok nodes order 16
+    - ok nodes order 17
+    - ok nodes order 18
+    - ok nodes order 19
+    - ok nodes order 20
+    - ok nodes order 21
+    - ok nodes order 22
+    - ok nodes order 23
+    - ok nodes order 24
+  globals:      
+    - ok global order 1
+    - ok global order 2
+    - ok global order 3
+    - ok global order 4
+    - ok global order 5
+    - ok global order 6

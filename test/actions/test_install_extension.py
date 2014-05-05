@@ -59,20 +59,20 @@ class SuccessTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         extension = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, extension)
+        url = extension
 
         extension_force = random_string()
         url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'},
+                     {'action' : 'test_action',
+                      'attributes' : {'url' : url}},
                      {'action' : 'test_action_force',
                       'attributes' :
                       {'url' : url_force,
                        'force' : True}}
-                     ],
-            attributes={'url' : url})
+                     ])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())
@@ -120,23 +120,24 @@ class SuccessTest(unittest.TestCase):
             remove_file(boot_extensions)
             bootstrap.end_test()
 
-    def test_url_replacement(self):
+    def test_url_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
 
-        extension = url = random_string()
-        extension_force = url_force = random_string()
-        ztps_server = 'http://%s' % bootstrap.server
+        extension = random_string()
+        url = 'http://%s/%s' % (bootstrap.server, extension)
+
+        extension_force = random_string()
+        url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action'},
+                     {'action' : 'test_action',
+                      'attributes' : {'url' : url}},
                      {'action' : 'test_action_force',
                       'attributes' :
                       {'url' : url_force,
                        'force' : True}}
-                     ],
-            attributes={'url' : url,
-                        'ztps_server': ztps_server})
+                     ])
 
         bootstrap.ztps.set_action_response(
             'startup_config_action', startup_config_action())

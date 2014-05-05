@@ -1,0 +1,122 @@
+name: simple function patterns
+
+neighbordb:
+
+  patterns:
+
+    - name: bogus pattern 1
+      definition: test
+      interfaces:
+        - any: any:none
+
+    - name: bogus pattern 2
+      definition: test
+      interfaces:
+        - any: none:none
+
+    - name: bogus pattern 3
+      definition: test
+      interfaces:
+        - any: none:any
+
+    - name: bogus pattern 4
+      definition: test
+      interfaces:
+        - any: none:PORT
+
+    - name: bogus pattern 5
+      definition: test
+      interfaces:
+        - none: any:any
+
+    - name: bogus pattern 6
+      definition: test
+      interfaces:
+        - none: any:none
+
+    - name: bogus pattern 7
+      definition: test
+      interfaces:
+        - none: none:any
+
+    - name: bogus pattern 8
+      definition: test
+      interfaces:
+        - none: none:none
+
+    - name: bogus pattern 9
+      definition: test
+      interfaces:
+        - none: none:PORT
+
+    - name: bogus pattern 10
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - any: any:none
+
+    - name: bogus pattern 11
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - any: none:none
+
+    - name: bogus pattern 12
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - any: none:any
+
+    - name: bogus pattern 13
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - any: none:PORT
+
+    - name: bogus pattern 14
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - none: any:any
+
+    - name: bogus pattern 15
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - none: any:none
+
+    - name: bogus pattern 16
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - none: none:any
+
+    - name: bogus pattern 17
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - none: none:none
+
+    - name: bogus pattern 18
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+        - none: none:PORT
+
+    - name: good pattern
+      definition: test
+      interfaces:
+        - Ethernet1: hostname:Ethernet2
+
+nodes:
+  - name: test_node
+    matches:
+      count: 1
+      includes:
+        - good pattern
+    node:
+      systemmac: 00:1c:73:1a:2b:3c
+    neighbors:
+      Ethernet1:
+        - device: hostname
+          port: Ethernet2
