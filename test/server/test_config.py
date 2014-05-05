@@ -177,14 +177,19 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(obj.group, 'test')
 
 class TestGroup(unittest.TestCase):
+    #pylint: disable=C0103
 
     class Config(object):
         def __init__(self):
             self.attributes = list()
-        def _get_attribute(self, name, group_name):
+
+        @classmethod
+        def get_attribute(cls, name, group_name):
             return (name, group_name)
+
         def add_attribute(self, item, group_name):
             self.attributes.append((item, group_name))
+
         def __repr__(self):
             return 'Config'
 
@@ -212,6 +217,7 @@ class TestGroup(unittest.TestCase):
 
 
 class TestConfig(unittest.TestCase):
+    #pylint: disable=C0103
 
     Attr = collections.namedtuple('Attr', ['name', 'type', 'group', 'default'])
     CONF = """\n[default]\ntest = value\n[group]\ntest = value\n"""
@@ -230,7 +236,7 @@ class TestConfig(unittest.TestCase):
         attr = self.Attr('test', str, None, None)
         self.config.add_attribute(attr)
         self.assertIsNone(getattr(self.config, 'test'))
-        self.assertIn((None, 'test'), self.config._attributes)
+        self.assertIn((None, 'test'), self.config.attributes)
 
     def test_config_add_attribute_default_value(self):
         attr = self.Attr('test', str, None, 'value')
@@ -255,7 +261,7 @@ class TestConfig(unittest.TestCase):
         for grp in ['test', 100]:
             self.config.add_group(grp)
             grp = str(grp) if isinstance(grp, int) else grp
-            self.assertIn(grp, self.config._groups)
+            self.assertIn(grp, self.config.groups)
             self.assertIsInstance(getattr(self.config, grp), 
                                   ztpserver.config.Group)
 
@@ -314,19 +320,18 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(obj.default.env)
 
     def test_load_config_file(self):
-        f = tempfile.NamedTemporaryFile(mode='w')
-        f.writelines(self.CONF)
-        f.flush()
+        filename = tempfile.NamedTemporaryFile(mode='w')
+        filename.writelines(self.CONF)
+        filename.flush()
 
         obj = ztpserver.config.runtime
         obj.add_attribute(ztpserver.config.StrAttr(name='test'))
         obj.add_attribute(ztpserver.config.StrAttr(name='test', group='group'))
-        obj.read(f.name)
+        obj.read(filename.name)
 
         self.assertEqual(obj.default.test, 'value')
         self.assertEqual(obj.group.test, 'value')
-        f.close()
-
+        filename.close()
 
 
 if __name__ == '__main__':
