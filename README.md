@@ -17,18 +17,6 @@ ZTPServer provides a number of configurable bootstrap operation workflows that e
 ##Docs
 https://github.com/arista-eosplus/ztpserver/wiki
 
-##ZTPServer Features
-* Automated configuration file generation and application
-* Image and file system validation and standardization
-* Connectivity validation and topology based auto-provisioning
-* Config and device templates with resource allocation for dynamic deployments
-* Zero touch replacement and upgrade capabilities
-* User extensible actions
-* Email, XMPP, syslog based logging and accounting of all processes
-
-##Docs
-https://github.com/arista-eosplus/ztpserver/wiki
-
 ## Contributing
 Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for additional information.
 
