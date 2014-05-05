@@ -145,8 +145,8 @@ class Node(SerializableMixin, DeserializableMixin):
 class ResourcePool(DeserializableMixin, SerializableMixin):
 
     def __init__(self):
-        self.filepath = os.path.join(ztpserver.config.runtime.default.data_root
-                                     , 'resources')
+        self.filepath = os.path.join(ztpserver.config.runtime.default.data_root,
+                                     'resources')
         self.data = None
 
     def serialize(self):
