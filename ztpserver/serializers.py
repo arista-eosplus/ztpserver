@@ -32,6 +32,7 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=R0201
 #
+import os
 import warnings
 import collections
 import json
@@ -192,8 +193,13 @@ class DeserializableMixin(object):
             log.debug(exc)
             raise SerializerError('unable to load file')
 
-    def load_from_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        self.load(fobj, content_type)
+    def load_from_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
+        try:
+            self.load(open(filepath), content_type)
+        except IOError as exc:
+            log.error('Cannot read from file %s (bad permissions?)', filepath)
+            log.exception(exc)
+            raise SerializerError
 
     def deserialize(self, contents):
         ''' objects that use this mixin must provide this method '''
@@ -220,11 +226,18 @@ class SerializableMixin(object):
             contents = self.dumps(content_type)
             fobj.write(contents)
         except IOError as exc:
-            log.debug(exc)
-            raise SerializerError('unable to dump object')
+            log.error(exc)
+            log.exception(exc)
+            raise SerializerError
 
-    def dump_to_file(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        self.dump(fobj, content_type)
+    def dump_to_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
+        log.debug('Writing to file %s', filepath)
+        try:
+            self.dump(open(filepath, 'w'), content_type)
+        except IOError as exc:
+            log.error('Cannot write to file %s (bad permissions?)', filepath)
+            log.exception(exc)
+            raise SerializerError
 
     def serialize(self):
         ''' objects that use this mixin must provide this method '''
