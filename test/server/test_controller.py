@@ -31,7 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-#pylint: disable=C0103
+#pylint: disable=C0103,E1103,W0142
 
 import os
 import unittest
@@ -47,7 +47,7 @@ import ztpserver.topology
 import ztpserver.controller
 import ztpserver.repository
 import ztpserver.config
-from ztpserver.app import enable_handler_console
+# from ztpserver.app import enable_handler_console
 
 from server_test_lib import remove_all, random_string
 from server_test_lib import ztp_headers, write_file
