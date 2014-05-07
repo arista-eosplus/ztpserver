@@ -39,6 +39,7 @@ import ztpserver.config
 import ztpserver.topology
 
 from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.serializers import SerializerError
 
 log = logging.getLogger(__name__)
 
@@ -55,8 +56,10 @@ def load(filename=None):
     try:
         topology.load_from_file(filename)
         log.debug('Loaded neighbordb [%r]', topology)
-    except IOError:
+    except (IOError, SerializerError) as exc:
         log.warn('Neighbordb file [%s] not loaded', filename)
+        log.error(exc)
+        log.exception(exc)
 
 def create_node(nodeattrs):
     ''' extracts node attributes from nodeattrs and returns
