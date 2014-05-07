@@ -32,7 +32,6 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=R0201
 #
-import os
 import warnings
 import collections
 import json

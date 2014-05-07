@@ -279,8 +279,6 @@ class NodesController(StoreController):
                 return(response, next_state)
 
             global_attrs = definition.get('attributes') or dict()
-            global_vars = global_attrs.get('variables') or dict()
-
             for action in definition.get('actions'):
                 if action['action'] == 'add_config':
                     log.debug('Updating local attributes for action %s',
@@ -446,7 +444,7 @@ class Router(ztpserver.wsgiapp.Router):
     ''' handles incoming requests by mapping urls to controllers '''
 
     def __init__(self):
-        # pylint: disable=E1103
+        # pylint: disable=E1103,W0142
 
         mapper = routes.Mapper()
 

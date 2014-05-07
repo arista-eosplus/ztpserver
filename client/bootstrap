@@ -394,21 +394,21 @@ class Server(object):
 
         try:
             if method == 'get':
-                log('Server: GET %s' % full_url)
+                log('GET %s' % full_url)
                 response = requests.get(full_url,
                                         data=json.dumps(payload),
                                         headers=headers,
                                         files=request_files,
                                         timeout=HTTP_TIMEOUT)
             elif method == 'post':
-                log('Server: POST %s' % full_url)
+                log('POST %s' % full_url)
                 response = requests.post(full_url,
                                          data=json.dumps(payload),
                                          headers=headers,
                                          files=request_files,
                                          timeout=HTTP_TIMEOUT)
             else:
-                log('Server: Unknown method %s' % method,
+                log('Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpConnectionError
@@ -420,7 +420,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
-        log('Server response to GET config: %s' % result.json())
+        log('Server response to GET config: contents=%s' % result.json())
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -434,7 +434,7 @@ class Server(object):
         location = result.headers['location'] \
             if 'location' in result.headers \
             else None
-        log('Server response to POST nodes: %s - location %s)' % 
+        log('Server response to POST nodes: status=%s, location=%s' %
             (result.status_code, location))
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
@@ -445,11 +445,13 @@ class Server(object):
         result = self._http_request(location,
                                     headers=headers,
                                     path_is_local=False)
-        log('Server response to GET definition: %s' % result)
+
         if result.status_code == STATUS_OK:
-            log('Server response to GET definition: %s' % result.json())
+            log('Server response to GET definition: status=%s, contents=%s' %
+                (result.status_code, result.json()))
         else:
-            log('Server response to GET definition: %s' % result.status_code)
+            log('Server response to GET definition: status=%s' % 
+                result.status_code)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
@@ -458,7 +460,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('actions/%s' % action,
                                     headers=headers)
-        log('Server response to GET action: %s' % result)
+        log('Server response to GET action: status=%s' % result.status_code)
         return (result.status_code,
                 result.headers['content-type'].split(';')[0],
                 result)
