@@ -34,6 +34,7 @@
 
 import logging
 import urlparse
+import copy
 
 from string import Template
 
@@ -282,17 +283,20 @@ class NodesController(StoreController):
 
             for action in definition.get('actions'):
                 if action['action'] == 'add_config':
-                    log.debug('Updating local attributes for action %s', 
+                    log.debug('Updating local attributes for action %s',
                               action['name'])
 
                     action_attrs = action.get('attributes') or dict()
                     local_vars = action_attrs.get('variables') or dict()
 
-                    global_attrs.update(action_attrs)
-                    global_vars.update(local_vars)
+                    updated_attrs = copy.deepcopy(global_attrs)
+                    updated_attrs.update(action_attrs)
 
-                    action['attributes'] = global_attrs
-                    action['attributes']['variables'] = global_vars
+                    updated_vars = copy.deepcopy(action_attrs)
+                    updated_vars.update(local_vars)
+
+                    action['attributes'] = updated_attrs
+                    action['attributes']['variables'] = updated_vars
 
             response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             response.content_type = CONTENT_TYPE_JSON
@@ -462,32 +466,32 @@ class Router(ztpserver.wsgiapp.Router):
 
             # configure /bootstrap
             controller = BootstrapController()
-            router_mapper.connect('bootstrap', 
+            router_mapper.connect('bootstrap',
                                   '/bootstrap',
                                   controller=controller,
-                                  action='index', 
+                                  action='index',
                                   conditions=dict(method=['GET']))
             router_mapper.connect('bootstrap_config', '/bootstrap/config',
                                   controller=controller,
-                                  action='config', 
+                                  action='config',
                                   conditions=dict(method=['GET']))
 
             # configure /nodes
             controller = NodesController()
-            router_mapper.collection('nodes', 
+            router_mapper.collection('nodes',
                                      'node',
                                      controller=controller,
                                      collection_actions=['create'],
                                      member_actions=['show'],
                                      member_prefix='/{resource}')
-            router_mapper.connect('node_config', 
+            router_mapper.connect('node_config',
                                   '/nodes/{resource}/startup-config',
-                                  controller=controller, 
-                                  action='get_config', 
+                                  controller=controller,
+                                  action='get_config',
                                   conditions=dict(method=['GET']))
 
             # configure /actions
-            router_mapper.collection('actions', 
+            router_mapper.collection('actions',
                                      'action',
                                      controller=ActionsController(),
                                      collection_actions=[],
@@ -495,7 +499,7 @@ class Router(ztpserver.wsgiapp.Router):
                                      member_prefix='/{resource}')
 
             # configure /files
-            router_mapper.collection('files', 
+            router_mapper.collection('files',
                                      'file',
                                      controller=FilesController(),
                                      collection_actions=[],
