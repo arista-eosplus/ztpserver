@@ -164,7 +164,7 @@ class ResourcePool(DeserializableMixin, SerializableMixin):
             return match
 
         filepath = os.path.join(self.filepath, pool)
-        self.load_from_file(open(filepath), CONTENT_TYPE_YAML)
+        self.load_from_file(filepath, CONTENT_TYPE_YAML)
 
         try:
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
@@ -172,14 +172,14 @@ class ResourcePool(DeserializableMixin, SerializableMixin):
         except StopIteration:
             raise ResourcePoolError('no resources available in pool')
 
-        self.dump_to_file(open(filepath, 'w'), CONTENT_TYPE_YAML)
+        self.dump_to_file(filepath, CONTENT_TYPE_YAML)
         return key
 
     def lookup(self, pool, node):
         log_msg('Looking up resource for node %s' % node.systemmac)
 
         filepath = os.path.join(self.filepath, pool)
-        self.load_from_file(open(filepath), CONTENT_TYPE_YAML)
+        self.load_from_file(filepath, CONTENT_TYPE_YAML)
 
         matches = [m[0] for m in self.data.iteritems()
                    if m[1] == node.systemmac]
@@ -224,9 +224,9 @@ class Topology(DeserializableMixin):
         self.patterns['globals'] = []
         self.patterns['nodes'].clear()
 
-    def load_from_file(self, fobj, content_type=CONTENT_TYPE_YAML):
+    def load_from_file(self, filepath, content_type=CONTENT_TYPE_YAML):
         self.clear()
-        super(Topology, self).load_from_file(fobj, content_type)
+        super(Topology, self).load_from_file(filepath, content_type)
 
     def deserialize(self, contents):
         self.global_variables = contents.get('variables', {})
