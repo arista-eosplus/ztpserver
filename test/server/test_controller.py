@@ -287,7 +287,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         ztpserver.controller.create_file_store = filestore
 
         request = Request.blank(url, body=body, method='POST',
-                                      headers=ztp_headers())
+                                headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
 
         location = 'http://localhost/nodes/%s' % systemmac
@@ -308,7 +308,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         ztpserver.controller.create_file_store = filestore
 
         request = Request.blank(url, body=body, method='POST',
-                                      headers=ztp_headers())
+                                headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
 
         location = 'http://localhost/nodes/%s' % systemmac
@@ -324,7 +324,7 @@ class NodesControllerPostFsmTests(unittest.TestCase):
         url = '/nodes'
         systemmac = random_string()
         neighbors = {'Ethernet1': [{'device': 'localhost',
-                                     'port': 'Ethernet1'}]}
+                                    'port': 'Ethernet1'}]}
 
         body = json.dumps(dict(systemmac=systemmac, neighbors=neighbors))
 
@@ -710,6 +710,108 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         body = json.loads(resp.body)
         var_foo = body['actions'][0]['attributes']['variables']['foo']
         self.assertEqual(var_foo, 'bar')
+
+    def test_definition_with_no_global_attributes(self):
+        systemmac = random_string()
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        definitions_file = """
+            actions:
+              - name: test action
+                action: dummy_action
+                attributes:
+                  foo: bar
+        """
+
+        def get_file(filepath):
+            fileobj = Mock()
+            if filepath.endswith('definition'):
+                fileobj.contents = definitions_file
+            return fileobj
+
+        filestore.return_value.get_file = Mock(side_effect=get_file)
+
+        controller = ztpserver.controller.NodesController()
+        resp, state = controller.get_definition(Mock(), systemmac, None)
+        body = json.loads(resp.body)
+
+        filepath = '%s/definition' % systemmac
+        filestore.return_value.get_file.assert_called_with(filepath)
+
+        self.assertTrue(state, 'get_attributes')
+        self.assertTrue(resp.content_type, 'application/json')
+        self.assertTrue(body['actions'][0]['attributes']['foo'], 'bar')
+
+
+
+    def test_definition_with_global_attributes(self):
+        systemmac = random_string()
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        definitions_file = """
+            attributes:
+              foo: bar
+
+            actions:
+              - name: test action
+                action: dummy_action
+                attributes:
+                  foo: $foo
+        """
+
+        filestore.return_value.get_file.return_value = \
+            Mock(contents=definitions_file)
+
+        controller = ztpserver.controller.NodesController()
+        resp, state = controller.get_definition(Mock(), systemmac, None)
+        body = json.loads(resp.body)
+
+        filepath = '%s/definition' % systemmac
+        filestore.return_value.get_file.assert_called_with(filepath)
+
+        self.assertTrue(state, 'get_attributes')
+        self.assertTrue(resp.content_type, 'application/json')
+        self.assertTrue(body['actions'][0]['attributes']['foo'], 'bar')
+
+    def test_definition_with_missing_global_attributes(self):
+        systemmac = random_string()
+
+        filestore = Mock()
+        filestore.return_value.exists.return_value = True
+        ztpserver.controller.create_file_store = filestore
+
+        definitions_file = """
+            attributes:
+              foo: bar
+
+            actions:
+              - name: test action
+                action: dummy_action
+                attributes:
+                  foo: $baz
+        """
+
+        filestore.return_value.get_file.return_value = \
+            Mock(contents=definitions_file)
+
+        controller = ztpserver.controller.NodesController()
+        resp, state = controller.get_definition(Mock(), systemmac, None)
+        body = json.loads(resp.body)
+
+        filepath = '%s/definition' % systemmac
+        filestore.return_value.get_file.assert_called_with(filepath)
+
+        self.assertTrue(state, 'get_attributes')
+        self.assertTrue(resp.content_type, 'application/json')
+        self.assertIsNone(body['actions'][0]['attributes']['foo'])
+
+
 
 
 if __name__ == '__main__':
