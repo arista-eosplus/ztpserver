@@ -266,7 +266,7 @@ class Topology(DeserializableMixin):
         if node and \
                 (not isinstance(node, basestring) or
                  len(node.translate(''.join(ALL_CHARS),
-                                         ''.join(NON_HEX_CHARS))) != 12):
+                                    ''.join(NON_HEX_CHARS))) != 12):
             log_msg('Failed to parse pattern because of invalid systemmac: '
                     '%s' % str(node), error=True)
             return
@@ -537,10 +537,10 @@ class InterfacePattern(object):
         return 'InterfacePattern(interface=%s, remote_device=%s, '\
                'remote_interface=%s, remote_device_init=%s, '\
                'remote_interface_init=%s)' % (self.interfaces_init,
-                                             self.remote_device,
-                                             self.remote_interface,
-                                             self.remote_device_init,
-                                             self.remote_interface_init)
+                                              self.remote_device,
+                                              self.remote_interface,
+                                              self.remote_device_init,
+                                              self.remote_interface_init)
 
     def serialize(self):
         result = dict()
@@ -683,7 +683,7 @@ class InterfacePattern(object):
                         return False
                 else:
                     if(intf in self.interfaces and
-                        self.match_remote_interface(neighbors)):
+                       self.match_remote_interface(neighbors)):
                         return True
             elif self.remote_device == 'none':
                 if self.remote_interface == 'any':
@@ -694,7 +694,7 @@ class InterfacePattern(object):
                         return False
                 else:
                     if(intf in self.interfaces and
-                        self.match_remote_interface(neighbors)):
+                       self.match_remote_interface(neighbors)):
                         return False
             else:
                 if self.remote_interface == 'any':

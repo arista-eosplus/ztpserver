@@ -34,7 +34,6 @@
 
 import logging
 import urlparse
-import copy
 
 from string import Template
 
@@ -271,35 +270,49 @@ class NodesController(StoreController):
         filepath = '%s/%s' % (resource, DEFINITION_FN)
         if self.store.exists(filepath):
             log.debug('Retrieving node definition from %s', filepath)
-
             definition = self.deserialize(self.get_file_contents(filepath),
                                           CONTENT_TYPE_YAML)
+
             if 'actions' not in definition:
                 log.error('Definition has no actions')
                 return(response, next_state)
 
-            global_attrs = definition.get('attributes') or dict()
+            attributes = definition.get('attributes') or dict()
+
             for action in definition.get('actions'):
-                if action['action'] == 'add_config':
-                    log.debug('Updating local attributes for action %s',
-                              action['name'])
+                log.info('Evaluing action: %s', action['name'])
+                _attributes = dict()
 
-                    action_attrs = action.get('attributes') or dict()
-                    local_vars = action_attrs.get('variables') or dict()
+                for key, value in action['attributes'].items():
+                    log.debug('attribute is %s', key)
 
-                    updated_attrs = copy.deepcopy(global_attrs)
-                    updated_attrs.update(action_attrs)
-
-                    updated_vars = copy.deepcopy(action_attrs)
-                    updated_vars.update(local_vars)
-
-                    action['attributes'] = updated_attrs
-                    action['attributes']['variables'] = updated_vars
+                    if isinstance(value, dict):
+                        log.debug('attribute %s is a dict, checking keys', key)
+                        _updates = dict()
+                        for subkey, subvalue in value.items():
+                            if subvalue.startswith('$'):
+                                log.debug('Looking up %s', subvalue)
+                                subvalue = attributes.get(subvalue[1:])
+                            _updates[subkey] = subvalue
+                        _attributes[key] = _updates
+                    elif value.startswith('$'):
+                        log.info('Looking up value for %s', value)
+                        _updates = attributes.get(value[1:])
+                        if _updates is None:
+                            log.warning('Attribute variable %s not found in ' \
+                                        'global attributes', value)
+                        log.debug('Updating attribute %s with value %s', key,
+                                  _updates)
+                        _attributes[key] = _updates
+                    else:
+                        log.debug('Adding attribute %s', key)
+                        _attributes[key] = value
+                action['attributes'] = _attributes
 
             response.body = self.serialize(definition, CONTENT_TYPE_JSON)
             response.content_type = CONTENT_TYPE_JSON
-
             next_state = 'get_attributes'
+
         return (response, next_state)
 
     def get_attributes(self, response, resource, node):
