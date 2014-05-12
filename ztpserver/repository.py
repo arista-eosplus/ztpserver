@@ -63,7 +63,7 @@ class FileObject(object):
         self.type, self.encoding = mimetypes.guess_type(self.name)
 
     def __repr__(self):
-        return "FileObject(name=%s, type=%s)" % (self.name, self.type)
+        return "FileObject(name=%s)" % self.name
 
     @property
     def contents(self):
