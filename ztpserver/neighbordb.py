@@ -125,12 +125,12 @@ def replace_config_action(resource, filename=None):
     ''' manually build a definition with a single action replace_config '''
 
     filename = filename or 'startup-config'
-
     url = '%s/nodes/%s/%s' % (ztpserver.config.runtime.default.server_url,
                               str(resource), filename)
 
     action = dict(name='install static startup-config file',
                   action='replace_config',
+                  always_execute=True,
                   attributes={'url': url})
 
     return action

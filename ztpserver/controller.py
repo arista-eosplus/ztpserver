@@ -196,8 +196,8 @@ class NodesController(StoreController):
         next_state = 'http_bad_request'
         filepath = '%s/%s' % (resource, STARTUP_CONFIG_FN)
         if self.store.exists(filepath):
-            response.body = self.get_file_contents(filepath)
-            response.content_type = CONTENT_TYPE_OTHER
+            response['body'] = self.get_file_contents(filepath)
+            response['content_type'] = CONTENT_TYPE_OTHER
             next_state = None
         return (response, next_state)
 
@@ -341,6 +341,9 @@ class NodesController(StoreController):
                 if always_execute:
                     _actions.append(action)
                     log.debug('adding action %s due to always_execute flag',
+                              str(action.get('name')))
+                else:
+                    log.debug('remvoing action %s due to always_execute flag',
                               str(action.get('name')))
             response['definition']['actions'] = _actions
         except AssertionError:
