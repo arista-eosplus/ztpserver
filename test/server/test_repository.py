@@ -26,11 +26,14 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#pylint: disable=R0904,C0103
-
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=R0904,C0103
+#
 import unittest
 import os
+
+import ztpserver.repository
 
 from ztpserver.repository import FileObject, FileStore
 from ztpserver.repository import FileObjectNotFound, FileObjectError
@@ -47,6 +50,7 @@ class FileObjectTests(unittest.TestCase):
     def test_success(self):
         filename = random_string()
         contents = random_string()
+
         filepath = write_file(contents, filename)
         path = os.path.dirname(filepath)
         assert os.path.exists(filepath)
@@ -61,18 +65,11 @@ class FileObjectTests(unittest.TestCase):
         filename = random_string()
         obj = FileObject(filename)
 
+        def contents(obj):
+            obj.contents
+
+        self.assertRaises(ztpserver.repository.FileObjectError, contents, obj)
         self.assertFalse(obj.exists)
-        with self.assertRaises(FileObjectError):
-            obj.contents()
-
-    def test_file_no_access(self):
-        filename = random_string()
-        obj = FileObject(filename)
-
-        assert not os.path.exists(filename)
-        with self.assertRaises(FileObjectError):
-            obj.contents()
-
 
 class FileStoreTests(unittest.TestCase):
 
@@ -130,13 +127,14 @@ class FileStoreTests(unittest.TestCase):
         self.assertFalse(self.filestore.exists(filename))
 
     def test_get_file(self):
+
         filename = random_string()
         contents = random_string()
         filepath = os.path.join(self.filepath, filename)
         write_file(contents, filename=filepath)
 
         obj = self.filestore.get_file(filename)
-        self.assertIsInstance(obj, FileObject)
+        self.assertIsInstance(obj, ztpserver.repository.FileObject)
         self.assertTrue(obj.exists)
         self.assertEqual(filepath, obj.name)
 
@@ -144,7 +142,7 @@ class FileStoreTests(unittest.TestCase):
         filename = random_string()
         assert not os.path.exists(os.path.join(self.filepath, filename))
 
-        self.assertRaises(FileObjectNotFound,
+        self.assertRaises(ztpserver.repository.FileObjectNotFound,
                           self.filestore.get_file,
                           filename)
 
@@ -173,7 +171,7 @@ class FileStoreTests(unittest.TestCase):
         assert os.path.exists(filepath)
 
         obj = create_file_store(fsname, basepath=self.filepath)
-        self.assertIsInstance(obj, FileStore)
+        self.assertIsInstance(obj, ztpserver.repository.FileStore)
         self.assertTrue(os.path.exists(filepath))
 
 if __name__ == '__main__':
