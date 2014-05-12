@@ -29,8 +29,8 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-# pylint: disable=W0622,W0402,W0613
+# pylint: disable=W0622,W0402,W0613,W0142,R0201
+#
 
 import logging
 import urlparse
@@ -145,34 +145,51 @@ class NodesController(StoreController):
         node = ztpserver.neighbordb.create_node(request.json)
         return self.fsm('required_attributes', request=request, node=node)
 
-    def show(self, request, resource, **kwargs):
-        node = self.load_node(resource)
-        state = 'get_startup_config_definition' if node else 'http_bad_request'
+    def show(self, request, resource, *args, **kwargs):
+        try:
+            node = self.load_node(resource)
+            state = 'get_definition'
+        except Exception:           # pylint: disable=W0703
+            log.error('There was an error trying to load the node definition')
+            response = self.http_bad_request()
+            return self.response(**response)
         return self.fsm(state, resource=resource, node=node)
 
     def get_config(self, request, resource, **kwargs):
         return self.fsm('get_startup_config_file', resource=resource)
 
     def fsm(self, next_state, **kwargs):
-        log.debug('starting fsm')
-        response = self.response()
-        while next_state != None:
-            log.debug('next_state=%s, current_status=%d',
-                      next_state, response.status_code)
-            method = getattr(self, next_state)
-            (response, next_state) = method(response, **kwargs)
-        log.debug('fsm completed, final_status=%d', response.status_code)
-        return response
+        ''' Execute the FSM for the request '''
 
-    def load_node(self, resource):
-        node = None
-        filepath = '%s/%s' % (resource, NODE_FN)
-        if self.store.exists(filepath):
-            nodeattrs = self.get_file_contents('%s/%s' % (resource, NODE_FN))
-            nodeattrs = self.deserialize(nodeattrs, CONTENT_TYPE_YAML)
-            node = ztpserver.neighbordb.create_node(nodeattrs)
-        else:
-            log.debug('node attributes file was not found')
+        log.debug('FSM starting with state %s', next_state)
+        response = dict()
+        try:
+            while next_state != None:
+                log.debug('FSM next_state=%s', next_state)
+                method = getattr(self, next_state)
+                (response, next_state) = method(response, **kwargs)
+            log.debug('FSM completed successfully')
+        except Exception as exc:            # pylint: disable=W0703
+            log.exception(exc)
+            response = self.http_bad_request()
+        finally:
+            log.debug('response: %s', response)
+            return self.response(**response)      # pylint: disable=W0150
+
+    def load_node(self, resource, *args, **kwargs):
+        ''' Returns a :py:class:`ztpserver.topology.Node` instance
+
+        :param resource: system mac in string format of node
+        '''
+        try:
+            filepath = '%s/%s' % (resource, NODE_FN)
+            log.debug('Loading node from %s', filepath)
+            attrs = self.deserialize(self.store.get_file(filepath).contents,
+                                     CONTENT_TYPE_YAML)
+            node = ztpserver.neighbordb.create_node(attrs)
+        except Exception:
+            log.error('Unable to load node object!')
+            raise
         return node
 
     def get_startup_config_file(self, response, resource, **kwargs):
@@ -184,67 +201,88 @@ class NodesController(StoreController):
             next_state = None
         return (response, next_state)
 
-    def required_attributes(self, response, request, node):
+    def required_attributes(self, response, *args, **kwargs):
+        ''' Checks the initial POST to validate that all required
+        values are present
+        '''
+
         # pylint: disable=R0201
         next_state = 'node_exists'
         req_attrs = ['systemmac']
+        request = kwargs.get('request')
         if not set(req_attrs).issubset(set(request.json.keys())):
-            next_state = 'http_bad_request'
+            log.error('Missing required attributes in request')
+            raise AttributeError
         return (response, next_state)
 
-    def node_exists(self, response, request, node):
+    def node_exists(self, response, *args, **kwargs):
         next_state = 'post_config'
+        node = kwargs.get('node')
         if self.store.exists(node.systemmac):
-            response.status = HTTP_STATUS_CONFLICT
+            response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
         return (response, next_state)
 
-    def dump_node(self, response, request, node):
-        self.store.write_file('%s/%s' % (node.systemmac, NODE_FN),
-                              node.dumps(CONTENT_TYPE_YAML))
-        return (response, 'set_location')
+    def dump_node(self, response, *args, **kwargs):
+        try:
+            node = kwargs.get('node')
+            self.store.write_file('%s/%s' % (node.systemmac, NODE_FN),
+                                  node.dumps(CONTENT_TYPE_YAML))
+        except Exception:
+            log.error('Unable to write node metadata')
+            raise
+        else:
+            return (response, 'set_location')
 
-    def post_config(self, response, request, node):
-        next_state = 'post_node'
-        if 'config' in request.json:
-            data = request.json.get('config')
-            self.add_node(node.systemmac, [('startup-config', data)])
-            response.status = HTTP_STATUS_CREATED
+    def post_config(self, response, *args, **kwargs):
+        try:
+            request = kwargs.get('request')
+            config = request.json['config']
+            node = kwargs.get('node')
+            self.add_node(node.systemmac, [('startup-config', config)])
+            response['status'] = HTTP_STATUS_CREATED
             next_state = 'set_location'
+        except KeyError as exc:
+            if exc.message != 'config':
+                raise
+            log.warning('No config attribute specified in request')
+            next_state = 'post_node'
         return (response, next_state)
 
-    def post_node(self, response, request, node):
-        next_state = 'http_bad_request'
+    def post_node(self, response, *args, **kwargs):
         ndb = ztpserver.neighbordb
-        if 'neighbors' in request.json:
+        try:
+            request = kwargs['request']
+            assert 'neighbors' in request.json
+            node = kwargs['node']
             matches = ndb.topology.match_node(node)
-            if matches:
-                files = list()
-                for filename in [DEFINITION_FN, PATTERN_FN]:
-                    if filename == DEFINITION_FN:
-                        try:
-                            url = matches[0].definition
-                            definition = self.definitions.get_file(url)
-                            definition = self.deserialize(definition.contents,
-                                                          CONTENT_TYPE_YAML)
-                        except FileObjectNotFound:
-                            log.debug('definition template does not exist')
-                            return (response, 'http_bad_request')
-                        data = ndb.create_node_definition(definition, node)
-                        data = self.serialize(data, CONTENT_TYPE_YAML)
-                    elif filename == PATTERN_FN:
-                        data = matches[0].dumps(CONTENT_TYPE_YAML)
-                    files.append((filename, data))
-                self.add_node(node.systemmac, files)
-                response.status = HTTP_STATUS_CREATED
-                next_state = 'dump_node'
-            else:
-                log.debug('No pattern match found for node')
+            assert matches
+
+            fileset = list()
+            url = matches[0].definition
+
+            fileset.append((DEFINITION_FN,
+                            self.definitions.get_file(url).contents))
+
+            fileset.append((PATTERN_FN,
+                            matches[0].dumps(CONTENT_TYPE_YAML)))
+
+            self.add_node(node.systemmac, fileset)
+
+            response['status'] = HTTP_STATUS_CREATED
+            next_state = 'dump_node'
+        except Exception:
+            log.error('Unable to create node definition')
+            raise
         return (response, next_state)
 
-    def set_location(self, response, request, node):
-        # pylint: disable=R0201
-        response.location = '/nodes/%s' % node.systemmac
+    def set_location(self, response, *args, **kwargs):
+        try:
+            node = kwargs.get('node')
+            response['location'] = '/nodes/%s' % node.systemmac
+        except Exception:
+            log.error('Unable to set HTTP Location header')
+            raise
         return (response, None)
 
     def add_node(self, systemmac, files=None):
@@ -255,124 +293,171 @@ class NodesController(StoreController):
                 filepath = '%s/%s' % (systemmac, filename)
                 self.store.write_file(filepath, contents)
 
-    def get_startup_config_definition(self, response, resource, node):
-        next_state = 'get_definition'
-        if self.store.exists('%s/%s' % (resource, STARTUP_CONFIG_FN)):
-            cfg = ztpserver.neighbordb.startup_config(resource)
-            cfg = self.serialize(cfg, CONTENT_TYPE_JSON)
-            response.body = cfg
-            response.content_type = CONTENT_TYPE_JSON
-            next_state = 'do_validation'
-        return (response, next_state)
+    def get_definition(self, response, *args, **kwargs):
+        ''' Reads the node specific definition from disk and stores it in the
+        repsonse dict with key `definition`
+        '''
 
-    def get_definition(self, response, resource, node):
-        next_state = 'http_bad_request'
-        filepath = '%s/%s' % (resource, DEFINITION_FN)
-        if self.store.exists(filepath):
-            log.debug('Retrieving node definition from %s', filepath)
-            definition = self.deserialize(self.get_file_contents(filepath),
-                                          CONTENT_TYPE_YAML)
-
-            if 'actions' not in definition:
-                log.error('Definition has no actions')
-                return(response, next_state)
-
-            attributes = definition.get('attributes') or dict()
-
-            for action in definition.get('actions'):
-                log.info('Evaluing action: %s', action['name'])
-                _attributes = dict()
-
-                for key, value in action['attributes'].items():
-                    log.debug('attribute is %s', key)
-
-                    if isinstance(value, dict):
-                        log.debug('attribute %s is a dict, checking keys', key)
-                        _updates = dict()
-                        for subkey, subvalue in value.items():
-                            if subvalue.startswith('$'):
-                                log.debug('Looking up %s', subvalue)
-                                subvalue = attributes.get(subvalue[1:])
-                            _updates[subkey] = subvalue
-                        _attributes[key] = _updates
-                    elif value.startswith('$'):
-                        log.info('Looking up value for %s', value)
-                        _updates = attributes.get(value[1:])
-                        if _updates is None:
-                            log.warning('Attribute variable %s not found in ' \
-                                        'global attributes', value)
-                        log.debug('Updating attribute %s with value %s', key,
-                                  _updates)
-                        _attributes[key] = _updates
-                    else:
-                        log.debug('Adding attribute %s', key)
-                        _attributes[key] = value
-                action['attributes'] = _attributes
-
-            response.body = self.serialize(definition, CONTENT_TYPE_JSON)
-            response.content_type = CONTENT_TYPE_JSON
-            next_state = 'get_attributes'
-
-        return (response, next_state)
-
-    def get_attributes(self, response, resource, node):
-        log.debug('start get_attributes')
-        filepath = '%s/%s' % (resource, ATTRIBUTES_FN)
-        if self.store.exists(filepath):
-            log.debug('Merging local attributes file %s', filepath)
-
-            attributes = self.deserialize(self.get_file_contents(filepath),
-                                          CONTENT_TYPE_YAML)
-            definition = self.deserialize(response.body, CONTENT_TYPE_JSON)
-
-            attr_vars = attributes.get('variables') or dict()
-
-            for action in definition.get('actions'):
-                if action['action'] == 'add_config':
-                    log.debug('Updating add_config action for %s',
-                              action['name'])
-
-                    local_attrs = action.get('attributes') or dict()
-                    local_vars = local_attrs.get('variables') or dict()
-
-                    local_attrs.update(attributes)
-                    local_vars.update(attr_vars)
-
-                    action['attributes'] = local_attrs
-                    action['attributes']['variables'] = local_vars
-
-            log.debug('updated definition: %s', definition)
-            response.body = self.serialize(definition, CONTENT_TYPE_JSON)
-            log.debug('node attributes loaded')
+        try:
+            filepath = '%s/%s' % (kwargs['resource'], DEFINITION_FN)
+            log.debug('defintion filepath is %s', filepath)
+            assert self.store.exists(filepath)
+            fileobj = self.store.get_file(filepath)
+            definition = self.deserialize(fileobj.contents, CONTENT_TYPE_YAML)
+            response['definition'] = definition
+            log.debug('loaded definition from file with %d actions',
+                      len(definition['actions']))
+        except AssertionError:
+            log.warning('Node definition file does not exist')
+        except Exception:
+            log.error('Unable to load definition file')
+            raise
         return (response, 'do_validation')
 
-    def do_validation(self, response, resource, node):
-        next_state = None
+    def get_startup_config(self, response, *args, **kwargs):
+        try:
+            filepath = '%s/%s' % (kwargs['resource'], STARTUP_CONFIG_FN)
+            log.debug('startup-config filepath is %s', filepath)
+            assert self.store.exists(filepath)
+            response['get_startup_config'] = True
+            if 'definition' not in response:
+                response['definition'] = dict(actions=list())
+            response['definition']['actions'].append(\
+                ztpserver.neighbordb.replace_config_action(kwargs['resource'],
+                                                           STARTUP_CONFIG_FN))
+        except AssertionError:
+            log.warning('Node startup-config file does not exist')
+        except Exception:
+            raise
+        return (response, 'do_actions')
+
+    def do_actions(self, response, *args, **kwargs):
+        try:
+            assert 'get_startup_config' in response
+            actions = response['definition']['actions']
+            _actions = list()
+            for action in actions:
+                always_execute = action.get('always_execute', False)
+                if always_execute:
+                    _actions.append(action)
+                    log.debug('adding action %s due to always_execute flag',
+                              str(action.get('name')))
+            response['definition']['actions'] = _actions
+        except AssertionError:
+            log.warning('Static startup-config file not found for node')
+        return (response, 'get_attributes')
+
+    def do_validation(self, response, *args, **kwargs):
         config = ztpserver.config.runtime
+        try:
+            if not config.default.disable_topology_validation:
+                filepath = '%s/%s' % (kwargs['resource'], PATTERN_FN)
+                log.debug('pattern filepath is %s', filepath)
+                fileobj = self.store.get_file(filepath)
+                pattern = ztpserver.neighbordb.load_pattern(fileobj.name)
+                if not pattern.match_node(kwargs['node']):
+                    raise Exception('Node failed pattern validation')
+                log.info('Node pattern is valid')
+            else:
+                log.warning('Topology validation is disabled')
+        except Exception:
+            log.error('Unable to validate node pattern')
+            raise
+        return (response, 'get_startup_config')
 
-        if not config.default.disable_topology_validation:
-            next_state = 'http_bad_request'
-            try:
-                fobj = self.get_file('%s/%s' % (resource, PATTERN_FN))
-                if fobj.exists:
-                    pattern = ztpserver.neighbordb.load_pattern(fobj.name)
-                    if pattern.match_node(node):
-                        log.debug('pattern is valid!')
-                        next_state = None
-                    else:
-                        log.error('Pattern failed to match node')
-            except FileObjectNotFound as exc:
-                log.debug('Pattern file not found: %s', exc)
-        return (response, next_state)
+    def get_attributes(self, response, *args, **kwargs):
+        ''' Reads the resource specific attributes file and stores it in the
+        response dict with key 'attributes'
+        '''
+        try:
+            filepath = '%s/%s' % (kwargs['resource'], ATTRIBUTES_FN)
+            log.debug('attributes filepath is %s', filepath)
+            fileobj = self.store.get_file(filepath)
+            response['attributes'] = self.deserialize(fileobj.contents,
+                                                      CONTENT_TYPE_YAML)
+            log.debug('loaded %d attributes from file', \
+                len(response['attributes']))
+        except FileObjectNotFound:
+            log.warning('Node specific attributes file does not exist')
+            response['attributes'] = dict()
+        return (response, 'do_substitution')
 
-    def http_bad_request(self, response, *args, **kwargs):
-        # pylint: disable=R0201
+    def do_substitution(self, response, *args, **kwargs):
+        # pylint: disable=R0914
+        try:
+            definition = response.get('definition')
+            attrs = definition.get('attributes', dict())
+
+            nodeattrs = response.get('attributes', dict())
+
+            def lookup(name):
+                log.debug('Lookup up value for variable %s', name)
+                return nodeattrs.get(name, attrs.get(name))
+
+            _actions = list()
+            for action in definition['actions']:
+                log.info('Analyzing action: %s', action.get('name'))
+                _attributes = dict()
+                for key, value in action.get('attributes').items():
+                    try:
+                        update = dict()
+                        for _key, _value in value.items():
+                            if _value.startswith('$'):
+                                _value = lookup(_value[1:])
+                            update[_key] = _value
+                    except AttributeError:
+                        if value.startswith('$'):
+                            value = lookup(value[1:])
+                        update = value
+                    finally:
+                        log.debug('%s=%s', key, update)
+                        _attributes[key] = update
+                action['attributes'] = _attributes
+                _actions.append(action)
+            definition['actions'] = _actions
+            response['definition'] = definition
+            log.debug('processed %d actions', len(definition['actions']))
+        except Exception:
+            log.error('Unable to perform substitution')
+            raise
+        return (response, 'do_resources')
+
+    def do_resources(self, response, *args, **kwargs):
+        try:
+            definition = response['definition']
+            node = kwargs.get('node')
+            _actions = list()
+            for action in definition.get('actions'):
+                attrs = action.get('attributes', dict())
+                action['attributes'] = \
+                    ztpserver.neighbordb.resources(attrs, node)
+                _actions.append(action)
+            definition['actions'] = _actions
+            response['definition'] = definition
+            log.debug('processed %d actions', len(definition['actions']))
+        except Exception:
+            log.error('Unable to perform dynamic resource lookups')
+            raise
+        return (response, 'finalize_response')
+
+    def finalize_response(self, response, *args, **kwargs):
+        _response = dict()
+        _response['body'] = self.serialize(response['definition'],
+                                           CONTENT_TYPE_JSON)
+        _response['status'] = response.get('status', 200)
+        _response['content_type'] = response.get('content_type',
+                                                 CONTENT_TYPE_JSON)
+        return (_response, None)
+
+    def http_bad_request(self, *args, **kwargs):
         ''' return HTTP 400 Bad Request '''
 
-        response.body = ''
-        response.content_type = 'text/html'
-        response.status = HTTP_STATUS_BAD_REQUEST
-        return (response, None)
+        log.debug('HTTP_BAD_REQUEST')
+        response = dict()
+        response['body'] = ''
+        response['content_type'] = 'text/html'
+        response['status'] = HTTP_STATUS_BAD_REQUEST
+        return response
 
 
 class BootstrapController(StoreController):
@@ -518,3 +603,4 @@ class Router(ztpserver.wsgiapp.Router):
                                      member_prefix='/{resource:.*}')
 
         super(Router, self).__init__(mapper)
+

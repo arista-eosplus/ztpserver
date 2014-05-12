@@ -86,7 +86,6 @@ class FileStore(object):
         """ creates a FileStore object at the specified root. """
 
         self.path = path
-        self._cache = dict()
 
     def __repr__(self):
         return "FileStore(path=%s)" % self.path
@@ -106,9 +105,13 @@ class FileStore(object):
         return folderpath
 
     def write_file(self, filepath, contents, binary=False):
-        mode = 'wb' if binary else 'w'
-        filepath = self._transform(filepath)
-        open(filepath, mode).writelines(contents)
+        try:
+            mode = 'wb' if binary else 'w'
+            filepath = self._transform(filepath)
+            open(filepath, mode).writelines(contents)
+        except:
+            log.error('Unable to write file %s', filepath)
+            raise
 
     def exists(self, filepath):
         filepath = self._transform(filepath)
@@ -116,17 +119,9 @@ class FileStore(object):
 
     def get_file(self, filepath):
         filepath = self._transform(filepath)
-
         if not self.exists(filepath):
             raise FileObjectNotFound(filepath)
-
-        if filepath in self._cache:
-            return self._cache[filepath]
-
-        obj = FileObject(filepath)
-        self._cache[filepath] = obj
-
-        return obj
+        return FileObject(filepath)
 
     def delete_file(self, filepath):
         filepath = self._transform(filepath)
@@ -149,6 +144,7 @@ def create_file_store(name, basepath=None):
         raise FileStoreError('invalid path %s' % basepath)
 
     return FileStore(basepath)
+
 
 
 

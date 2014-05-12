@@ -37,12 +37,13 @@ import random
 import shutil
 import string        #pylint: disable=W0402
 
+import yaml
+
 WORKINGDIR = '/tmp/ztpserver'
 
 def random_string():
-    return ''.join(random.choice(
-            string.ascii_uppercase +
-            string.digits) for _ in range(random.randint(3, 20)))
+    return ''.join(random.choice(string.ascii_uppercase + string.digits)
+                   for _ in range(random.randint(3, 20)))
 
 def random_json(keys=None):
     data = dict()
@@ -84,3 +85,85 @@ def ztp_headers():
         'X-Arista-Modelname': random_string(),
         'X-Arista-Softwareversion': random_string()
     }
+
+class SerializerMixin(object):
+    def as_dict(self):
+        raise NotImplementedError
+
+    def as_yaml(self):
+        return yaml.dump(self.as_dict())
+
+    def as_json(self):
+        return json.dumps(self.as_dict())
+
+class Definition(SerializerMixin):
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.attributes = kwargs.get('attributes', dict())
+        self.actions = kwargs.get('actions', list())
+
+    def add_attribute(self, key, value):
+        self.attributes[key] = value
+
+    def add_action(self, **kwargs):
+        action = dict()
+        action['name'] = kwargs.get('name', 'test action')
+        action['action'] = kwargs.get('action', 'test_action')
+        action['attributes'] = kwargs.get('attributes', dict())
+        self.actions.append(action)
+
+    def as_dict(self):
+        return dict(name=self.name,
+                    attributes=self.attributes,
+                    actions=self.actions)
+
+def create_definition():
+    return Definition()
+
+class Attributes(SerializerMixin):
+
+    def __init__(self, **kwargs):
+        self.attributes = kwargs.get('attributes', dict())
+
+    def add_attribute(self, key, value):
+        self.attributes[key] = value
+
+    def add_attributes(self, attributes):
+        assert isinstance(attributes, dict)
+        for key, value in attributes.items():
+            self.add_attribute(key, value)
+
+    def as_dict(self):
+        return self.attributes
+
+def create_attributes():
+    return Attributes()
+
+class Node(SerializerMixin):
+
+    def __init__(self, **kwargs):
+        self.serialnumber = kwargs.get('serialnumber', random_string())
+        self.model = kwargs.get('model', random_string())
+        self.version = kwargs.get('version', random_string())
+        self.systemmac = kwargs.get('systemmac', random_string())
+        self.neighbors = kwargs.get('neighbors', dict())
+
+    def add_neighbor(self, key, value):
+        self.neighbors[key] = value
+
+    def add_neighbors(self, neighbors):
+        assert isinstance(neighbors, dict)
+        for key, value in neighbors.items():
+            self.add_neighbor(key, value)
+
+    def as_dict(self):
+        return dict(systemmac=self.systemmac,
+                    serialnumber=self.serialnumber,
+                    model=self.model,
+                    version=self.version,
+                    neighbors=self.neighbors)
+
+def create_node():
+    return Node()
+
