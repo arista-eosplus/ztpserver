@@ -73,7 +73,7 @@ def create_node(nodeattrs):
         log.debug("Unable to create node, missing required attribute(s)")
         return None
 
-    model = str(nodeattrs.get('mode'))
+    model = str(nodeattrs.get('model'))
     serialnumber = str(nodeattrs.get('serialnumber'))
     version = str(nodeattrs.get('version'))
     neighbors = nodeattrs.get('neighbors')
@@ -121,21 +121,19 @@ def resources(attributes, node):
         _attributes[key] = value
     return _attributes
 
-def startup_config(resource):
+def replace_config_action(resource, filename=None):
     ''' manually build a definition with a single action replace_config '''
 
-    url = '%s/nodes/%s/startup-config' % \
-            (ztpserver.config.runtime.default.server_url, str(resource))
+    filename = filename or 'startup-config'
 
-    action = dict(name='install startup-config',
-                  description='install static startup configuration',
+    url = '%s/nodes/%s/%s' % (ztpserver.config.runtime.default.server_url,
+                              str(resource), filename)
+
+    action = dict(name='install static startup-config file',
                   action='replace_config',
                   attributes={'url': url})
 
-    definition = dict(name='install static startup-config',
-                      actions=[action],
-                      attributes={})
-    return definition
+    return action
 
 def create_node_definition(definition, node):
     ''' Creates the node specific definition file based on the
@@ -168,3 +166,4 @@ def create_node_definition(definition, node):
 
     # return the node specific definition
     return definition
+
