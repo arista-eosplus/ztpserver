@@ -125,7 +125,7 @@ class RouterTests(unittest.TestCase):
 
     def test_nodes_resource_get_config(self):
         url = '/nodes/%s/startup-config' % random_string()
-        self.match_routes(url, 'GET', 'POST,PUT,DELETE')
+        self.match_routes(url, 'GET,PUT', 'POST,DELETE')
 
 
 class BootstrapControllerTests(unittest.TestCase):
@@ -641,7 +641,8 @@ class NodesControllerFunctionTests(unittest.TestCase):
         response = dict(definition=definition.as_dict())
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.get_startup_config(response, resource=resource)
+        (resp, state) = controller.get_startup_config(response,
+                                                      resource=resource)
 
         self.assertEqual(state, 'do_actions')
         self.assertIsInstance(resp, dict)
@@ -813,6 +814,48 @@ class NodesControllerFunctionTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, var_foo)
 
+    def test_do_put_config_success(self):
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
+
+        resource = random_string()
+        body = random_string()
+        request = Mock(content_type='text/plain', body=body)
+
+        controller = ztpserver.controller.NodesController()
+        (resp, state) = controller.do_put_config(dict(), resource=resource,
+                                                 request=request)
+
+        filepath = '%s/%s' % (resource, ztpserver.controller.STARTUP_CONFIG_FN)
+        filestore.return_value.write_file.called_with_args(filepath, body)
+        self.assertIsNone(state)
+        self.assertEqual(resp, dict())
+
+
+    def test_do_put_config_invalid_content_type(self):
+        filestore = Mock()
+        ztpserver.controller.create_file_store = filestore
+
+        resource = random_string()
+        body = random_string()
+        request = Mock(content_type='text/html', body=body)
+
+        controller = ztpserver.controller.NodesController()
+        self.assertRaises(AssertionError, controller.do_put_config, dict(),
+                          resource=resource, request=request)
+
+    def test_do_put_config_invalid_resource(self):
+        filestore = Mock()
+        filestore.return_value.write_file = Mock(side_effect=IOError)
+        ztpserver.controller.create_file_store = filestore
+
+        resource = random_string()
+        body = random_string()
+        request = Mock(content_type='text/plain', body=body)
+
+        controller = ztpserver.controller.NodesController()
+        self.assertRaises(IOError, controller.do_put_config, dict(),
+                          resource=resource, request=request)
 
 class NodesControllerPostFsmTests(unittest.TestCase):
 

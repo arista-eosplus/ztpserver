@@ -158,6 +158,9 @@ class NodesController(StoreController):
     def get_config(self, request, resource, **kwargs):
         return self.fsm('get_startup_config_file', resource=resource)
 
+    def put_config(self, request, resource, *args, **kwargs):
+        return self.fsm('do_put_config', request=request, resource=resource)
+
     def fsm(self, next_state, **kwargs):
         ''' Execute the FSM for the request '''
 
@@ -200,6 +203,20 @@ class NodesController(StoreController):
             response['content_type'] = CONTENT_TYPE_OTHER
             next_state = None
         return (response, next_state)
+
+    def do_put_config(self, response, **kwargs):
+        try:
+            request = kwargs['request']
+            assert request.content_type == CONTENT_TYPE_OTHER
+            filepath = '%s/%s' % (kwargs['resource'], STARTUP_CONFIG_FN)
+            self.store.write_file(filepath, request.body)
+        except AssertionError:
+            log.error('Invalid content-type specified for PUT method')
+            raise
+        except Exception:
+            log.error('Unable to write startup-config for node')
+            raise
+        return (response, None)
 
     def required_attributes(self, response, *args, **kwargs):
         ''' Checks the initial POST to validate that all required
@@ -576,6 +593,7 @@ class Router(ztpserver.wsgiapp.Router):
                                   controller=controller,
                                   action='index',
                                   conditions=dict(method=['GET']))
+
             router_mapper.connect('bootstrap_config', '/bootstrap/config',
                                   controller=controller,
                                   action='config',
@@ -589,11 +607,18 @@ class Router(ztpserver.wsgiapp.Router):
                                      collection_actions=['create'],
                                      member_actions=['show'],
                                      member_prefix='/{resource}')
-            router_mapper.connect('node_config',
+
+            router_mapper.connect('get_node_config',
                                   '/nodes/{resource}/startup-config',
                                   controller=controller,
                                   action='get_config',
                                   conditions=dict(method=['GET']))
+
+            router_mapper.connect('put_node_config',
+                                  '/nodes/{resource}/startup-config',
+                                  controller=controller,
+                                  action='put_config',
+                                  conditions=dict(method=['PUT']))
 
             # configure /actions
             router_mapper.collection('actions',
