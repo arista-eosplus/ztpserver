@@ -108,7 +108,7 @@ class FileStore(object):
         try:
             mode = 'wb' if binary else 'w'
             filepath = self._transform(filepath)
-            open(filepath, mode).writelines(contents)
+            open(filepath, mode).write(contents)
         except:
             log.error('Unable to write file %s', filepath)
             raise
