@@ -349,6 +349,59 @@ class NodesControllerFunctionTests(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], 409)
 
+    def test_node_exists_definition_exists(self):
+        filestore = Mock()
+        node = create_node()
+
+        def exists(filepath):
+            if filepath.endswith(ztpserver.controller.DEFINITION_FN):
+                return True
+            return False
+        filestore.return_value.exists = Mock(side_effect=exists)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.NodesController()
+        (resp, state) = controller.node_exists(dict(), node=node)
+
+        self.assertEqual(state, 'dump_node')
+        self.assertEqual(resp['status'], 409)
+
+    def test_node_exists_startup_config_exists(self):
+        filestore = Mock()
+        node = create_node()
+
+        def exists(filepath):
+            if filepath.endswith(ztpserver.controller.STARTUP_CONFIG_FN):
+                return True
+            return False
+        filestore.return_value.exists = Mock(side_effect=exists)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.NodesController()
+        (resp, state) = controller.node_exists(dict(), node=node)
+
+        self.assertEqual(state, 'dump_node')
+        self.assertEqual(resp['status'], 409)
+
+    def test_node_exists_sysmac_folder_exists(self):
+        filestore = Mock()
+
+        node = create_node()
+        def exists(filepath):
+            if filepath.endswith(node.systemmac):
+                return True
+            return False
+        filestore.return_value.exists = Mock(side_effect=exists)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.NodesController()
+        (resp, state) = controller.node_exists(dict(), node=node)
+
+        self.assertEqual(state, 'post_config')
+        self.assertTrue('status' not in resp)
+
+
+
     def test_node_exists_failure(self):
         filestore = Mock()
         filestore.return_value.exists.return_value = False

@@ -218,9 +218,14 @@ class NodesController(StoreController):
     def node_exists(self, response, *args, **kwargs):
         next_state = 'post_config'
         node = kwargs.get('node')
-        if self.store.exists(node.systemmac):
+
+        valid = lambda x: self.store.exists('%s/%s' % (x, DEFINITION_FN)) or \
+                          self.store.exists('%s/%s' % (x, STARTUP_CONFIG_FN))
+
+        if valid(node.systemmac):
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
+
         return (response, next_state)
 
     def dump_node(self, response, *args, **kwargs):
@@ -406,11 +411,11 @@ class NodesController(StoreController):
                     try:
                         update = dict()
                         for _key, _value in value.items():
-                            if _value.startswith('$'):
+                            if str(_value).startswith('$'):
                                 _value = lookup(_value[1:])
                             update[_key] = _value
                     except AttributeError:
-                        if value.startswith('$'):
+                        if str(value).startswith('$'):
                             value = lookup(value[1:])
                         update = value
                     finally:
