@@ -56,6 +56,7 @@ def main(attributes):
         2 - unable to retrieve config from URL
         3 - unable to perform variable substitution - invalid variables
         4 - unable to perform variable substitution - missing variable
+        5 - invalid option specified for substitution_mode attribute
 
     Raises:
         None
@@ -67,6 +68,10 @@ def main(attributes):
         return 1
     elif not urlparse.urlsplit(url).scheme:
         url = urlparse.urljoin(node.server_address(), url)
+
+    substitution_mode = attributes.get('substitution_mode', 'loose')
+    if substitution_mode not in ['loose', 'strict']:
+        return 5
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
@@ -83,7 +88,10 @@ def main(attributes):
         node.log_msg('Invalid variables: %s' % variables)
         return 3
     try:
-        contents = Template(contents).substitute(variables)
+        if substitution_mode == 'strict':
+            contents = Template(contents).substitute(variables)
+        else:
+            contents = Template(contents).safe_substitute(variables)
     except KeyError:
         return 4
 
