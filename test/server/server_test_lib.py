@@ -167,3 +167,17 @@ class Node(SerializerMixin):
 def create_node():
     return Node()
 
+class BootstrapConf(SerializerMixin):
+    def __init__(self, **kwargs):
+        self.logging = kwargs.get('logging', list())
+        self.xmpp = kwargs.get('xmpp', dict())
+
+    def add_logging(self, entry):
+        self.logging.append(entry)
+
+    def as_dict(self):
+        return dict(logging=self.logging, xmpp=self.xmpp)
+
+def create_bootstrap_conf():
+    return BootstrapConf()
+

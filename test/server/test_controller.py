@@ -57,6 +57,7 @@ from ztpserver.serializers import SerializerError
 from server_test_lib import remove_all, random_string
 from server_test_lib import ztp_headers, write_file
 from server_test_lib import create_definition, create_attributes, create_node
+from server_test_lib import create_bootstrap_conf
 
 enable_handler_console(level='DEBUG')
 
@@ -127,6 +128,79 @@ class RouterTests(unittest.TestCase):
         url = '/nodes/%s/startup-config' % random_string()
         self.match_routes(url, 'GET,PUT', 'POST,DELETE')
 
+class BootstrapControllerFunctionTests(unittest.TestCase):
+
+    def setUp(self):
+        reload_mocked_modules()
+
+    def tearDown(self):
+        reload_mocked_modules()
+
+    def test_get_bootstrap_success(self):
+        filestore = Mock()
+        filestore.return_value.get_file.return_value = \
+            Mock(contents=random_string())
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.get_bootstrap()
+
+        contents = filestore.return_value.get_file.return_value.contents
+        self.assertEqual(resp, contents)
+
+    def test_get_bootstrap_failure(self):
+        filestore = Mock()
+        filestore.return_value.get_file = \
+            Mock(side_effect=ztpserver.repository.FileObjectNotFound)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.BootstrapController()
+        self.assertRaises(ztpserver.repository.FileObjectNotFound,
+                          controller.get_bootstrap)
+
+    def test_get_config_success(self):
+        conf_file = create_bootstrap_conf()
+        conf_file.add_logging(dict(destination=random_string(),
+                                   level=random_string()))
+
+        filestore = Mock()
+        filestore.return_value.get_file.return_value = \
+            Mock(contents=conf_file.as_yaml())
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.get_config()
+
+        self.assertEqual(resp, conf_file.as_dict())
+
+    def test_get_config_defaults(self):
+        filestore = Mock()
+        filestore.return_value.get_file = \
+            Mock(side_effect=ztpserver.repository.FileObjectNotFound)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.get_config()
+
+        self.assertEqual(resp, dict(logging=list(), xmpp=dict()))
+
+    def test_get_config_invalid_format(self):
+
+        conf_file = """
+            logging:
+              - destination: null
+              level: null
+        """
+
+        filestore = Mock()
+        filestore.return_value.get_file.return_value = \
+            Mock(contents=conf_file)
+        ztpserver.controller.create_file_store = filestore
+
+        controller = ztpserver.controller.BootstrapController()
+        self.assertRaises(ztpserver.serializers.SerializerError,
+                          controller.get_config)
+
 
 class BootstrapControllerTests(unittest.TestCase):
 
@@ -141,8 +215,8 @@ class BootstrapControllerTests(unittest.TestCase):
         contents = random_string()
 
         filestore = Mock()
-        ztpserver.controller.create_file_store = filestore
         filestore.return_value.get_file.return_value = Mock(contents=contents)
+        ztpserver.controller.create_file_store = filestore
 
         request = Request.blank('/bootstrap', headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
@@ -165,7 +239,7 @@ class BootstrapControllerTests(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json, defaultconfig)
+        self.assertEqual(json.loads(resp.body), json.dumps(defaultconfig))
 
     def test_get_bootstrap_config(self):
 
@@ -184,7 +258,7 @@ class BootstrapControllerTests(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.body, conf)
+        self.assertEqual(json.loads(resp.body), conf)
 
 
 class FilesControllerTests(unittest.TestCase):
@@ -982,8 +1056,9 @@ class NodesControllerGetFsmTests(unittest.TestCase):
             return fileobj
 
         filestore.return_value.get_file = Mock(side_effect=get_file)
-
         ztpserver.controller.create_file_store = filestore
+
+        ztpserver.neighbordb.create_node = Mock()
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -1017,8 +1092,9 @@ class NodesControllerGetFsmTests(unittest.TestCase):
                     ztpserver.repository.FileObjectNotFound)
             return fileobj
         filestore.return_value.get_file = Mock(side_effect=get_file)
-
         ztpserver.controller.create_file_store = filestore
+
+        ztpserver.neighbordb.create_node = Mock()
 
         ztpserver.neighbordb.load_pattern = Mock()
         cfg = {'return_value.match_node.return_value': True}
@@ -1063,6 +1139,8 @@ class NodesControllerGetFsmTests(unittest.TestCase):
         cfg = {'return_value.match_node.return_value': False}
         ztpserver.neighbordb.load_pattern.configure_mock(**cfg)
 
+        ztpserver.neighbordb.create_node = Mock()
+
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
@@ -1095,6 +1173,7 @@ class NodesControllerGetFsmTests(unittest.TestCase):
             return fileobj
 
         filestore.return_value.get_file = Mock(side_effect=get_file)
+        ztpserver.neighbordb.create_node = Mock()
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')

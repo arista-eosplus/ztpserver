@@ -149,8 +149,9 @@ class NodesController(StoreController):
         try:
             node = self.load_node(resource)
             state = 'get_definition'
-        except Exception:           # pylint: disable=W0703
+        except Exception as exc:           # pylint: disable=W0703
             log.error('There was an error trying to load the node definition')
+            log.exception(exc)
             response = self.http_bad_request()
             return self.response(**response)
         return self.fsm(state, resource=resource, node=node)
@@ -324,8 +325,8 @@ class NodesController(StoreController):
             filepath = '%s/%s' % (kwargs['resource'], DEFINITION_FN)
             log.debug('defintion filepath is %s', filepath)
             assert self.store.exists(filepath)
-            fileobj = self.store.get_file(filepath)
-            definition = self.deserialize(fileobj.contents, CONTENT_TYPE_YAML)
+            contents = self.store.get_file(filepath).contents
+            definition = self.deserialize(contents, CONTENT_TYPE_YAML)
             response['definition'] = definition
             log.debug('loaded definition from file with %d actions',
                       len(definition['actions']))
@@ -505,63 +506,59 @@ class BootstrapController(StoreController):
         ''' Returns the bootstrap script '''
 
         try:
-            filename = ztpserver.config.runtime.bootstrap.filename
-            data = self.deserialize(self.get_file_contents(filename),
+            filepath = ztpserver.config.runtime.bootstrap.filename
+            return self.deserialize(self.store.get_file(filepath).contents,
                                     CONTENT_TYPE_PYTHON)
-
-        except ztpserver.repository.FileObjectNotFound as exc:
-            log.debug(exc)
-            data = None
-
-        return data
+        except FileObjectNotFound:
+            log.error('Bootstrap script does not exist')
+            raise
+        except:
+            raise
 
     def get_config(self):
-        ''' returns the full bootstrap configuration as a dict '''
+        ''' Returns the bootstrap configuration as a dict '''
 
         try:
-            data = self.get_file_contents(BOOTSTRAP_CONF)
-            if data is None:
-                contents = self.DEFAULTCONFIG
-            else:
-                contents = self.deserialize(data, CONTENT_TYPE_YAML)
-
-        except SerializerError as exc:
-            log.debug(exc)
-            contents = None
-
+            data = self.store.get_file(BOOTSTRAP_CONF).contents
+            contents = self.deserialize(data, CONTENT_TYPE_YAML)
+        except FileObjectNotFound:
+            log.warning('Bootstrap config file not found, returning defaults')
+            contents = self.DEFAULTCONFIG
+        except:
+            raise
         return contents
 
+
     def config(self, request, **kwargs):
+        ''' Handles GET /bootstrap/config '''
+
         # pylint: disable=W0613
-        log.debug('requesting bootstrap config')
-        conf = self.get_config()
-        if not conf:
-            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
-        else:
+        try:
+            log.debug('Requesting bootstrap.conf')
+            conf = self.serialize(self.get_config(), CONTENT_TYPE_JSON)
             resp = dict(body=conf, content_type=CONTENT_TYPE_JSON)
+        except SerializerError:
+            log.error('Unable to deserialize bootstrap.conf file')
+        except Exception as exc:
+            log.exception(exc)
+            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
         return resp
 
     def index(self, request, **kwargs):
+        ''' Handles GET /bootstrap '''
+
         try:
             bootstrap = self.get_bootstrap()
-            if not bootstrap:
-                log.warn('bootstrap script does not exist')
-                return dict(status=HTTP_STATUS_BAD_REQUEST)
-
             default_server = ztpserver.config.runtime.default.server_url
             body = Template(bootstrap).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
-
-        except ztpserver.repository.FileObjectNotFound as exc:
-            log.exception(exc)
-            resp = dict(status=HTTP_STATUS_NOT_FOUND)
-
         except KeyError:
-            log.debug('Expected varialble was not provided')
+            log.debug('Expected variable was not provided')
             resp = dict(status=HTTP_STATUS_BAD_REQUEST)
-
+        except Exception as exc:
+            log.exception(exc)
+            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
         return resp
-
 
 
 class Router(ztpserver.wsgiapp.Router):

@@ -65,32 +65,38 @@ class YAMLSerializer(object):
 
     def deserialize(self, data):
         try:
-            contents = yaml.safe_load(data)
-
-        except yaml.YAMLError as exc:
-            log.debug(exc)
-            contents = None
-
-        return contents
+            return yaml.safe_load(data)
+        except:
+            log.error('Unable to deserialize YAML data')
+            raise
 
     def serialize(self, data, safe_dump=False):
-        if safe_dump:
-            return yaml.safe_dump(data, default_flow_style=False)
-        return yaml.dump(data, default_flow_style=False)
+        try:
+            if safe_dump:
+                return yaml.safe_dump(data, default_flow_style=False)
+            return yaml.dump(data, default_flow_style=False)
+        except:
+            log.error('Unable to serialize YAML data')
+            raise
 
 class JSONSerializer(object):
 
     def deserialize(self, data):
         ''' deserialize a JSON object and return a dict '''
 
-        assert isinstance(data, basestring)
-        return json.loads(data)
+        try:
+            return json.loads(data)
+        except:
+            log.error('Unable to deserialize JSON data')
+            raise
 
     def serialize(self, data):
         ''' serialize a dict object and return JSON '''
-
-        assert isinstance(data, dict)
-        return json.dumps(data)
+        try:
+            return json.dumps(data)
+        except:
+            log.error('Unable to serialize JSON data')
+            raise
 
 class Serializer(object):
     """ The :py:class:`Serializer` will serialize a data structure
@@ -98,8 +104,6 @@ class Serializer(object):
     the :py:class:`Serializer` will simply return the data as a
     :py:class:`str` object
     """
-
-
 
     def serialize(self, data, content_type, **kwargs):
         """ serialize the data base on the content_type
@@ -118,7 +122,8 @@ class Serializer(object):
             handler = self._serialize_handler(content_type)
             return handler.serialize(data, **kwargs) if handler else str(data)
 
-        except Exception:
+        except Exception as exc:
+            log.exception(exc)
             raise SerializerError('Could not serialize data %s:' % data)
 
     def deserialize(self, data, content_type, **kwargs):
@@ -138,8 +143,8 @@ class Serializer(object):
             data = handler.deserialize(data, **kwargs) if handler else str(data)
             data = self.convert(data)
             return data
-
-        except Exception:
+        except Exception as exc:
+            log.exception(exc)
             raise SerializerError('Could not deserialize data: %s' % data)
 
 
@@ -158,14 +163,14 @@ class Serializer(object):
         }
         return handlers.get(content_type)
 
-    @classmethod
-    def convert(cls, data):
+    @staticmethod
+    def convert(data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([cls.convert(x) for x in data.iteritems()])
+            return dict([Serializer.convert(x) for x in data.iteritems()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([cls.convert(x) for x in data])
+            return type(data)([Serializer.convert(x) for x in data])
         else:
             return data
 

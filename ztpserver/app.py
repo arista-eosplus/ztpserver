@@ -54,7 +54,10 @@ log.addHandler(logging.NullHandler())
 
 def enable_handler_console(level='DEBUG'):
     """ Enables logging to stdout """
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
+
+    logging_fmt = ztpserver.config.runtime.default.console_logging_format
+    formatter = logging.Formatter(logging_fmt)
+
     ch = logging.StreamHandler()
     if level is None:
         level = 'DEBUG'
