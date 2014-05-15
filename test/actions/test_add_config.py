@@ -66,8 +66,14 @@ class FailureTest(ActionFailureTest):
         contents = random_string() + ' $missing_var'
         self.basic_test('add_config', 4,
                         attributes={'url' : url,
+                                    'substitution_mode': 'strict',
                                     'variables' : {}},
                         file_responses={url : contents})
+
+    def test_invalid_substitution_mode(self):
+        self.basic_test('add_config', 5,
+                        attributes={'url': random_string(),
+                                    'substitution_mode': random_string()})
 
 
 class SuccessTest(unittest.TestCase):
@@ -189,7 +195,7 @@ class SuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
-    def test_variables(self):
+    def test_variables_strict(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
         url = config
@@ -200,6 +206,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(
             actions=[{'action' : 'test_action',
                       'attributes': {'url' : url,
+                                     'substitution_mode': 'strict',
                                      'variables': var_dict}}])
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('add_config'))
@@ -219,6 +226,36 @@ class SuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
+    def test_variables_loose(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        config = random_string()
+        url = config
+        var_dict = { 'a' : 'A',
+                     'b' : 'A',
+                     'xxx' : '999',
+                     'dummy': 'DUMMY'}
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action',
+                      'attributes': {'url' : url,
+                                     'substitution_mode': 'loose',
+                                     'variables': var_dict}}])
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('add_config'))
+        contents = '$a 1234 $b 4  321 $xxx$a'
+        expected_contents = Template(contents).safe_substitute(var_dict)
+        bootstrap.ztps.set_file_response(config, contents)
+        bootstrap.start_test()
+
+        try:
+            self.failUnless(os.path.isfile(STARTUP_CONFIG))
+            self.failUnless([expected_contents] == file_log(STARTUP_CONFIG))
+            self.failUnless(bootstrap.success())
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise assertion
+        finally:
+            bootstrap.end_test()
 
 if __name__ == '__main__':
     unittest.main()
