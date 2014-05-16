@@ -70,6 +70,7 @@ def create_node(nodeattrs):
 
     try:
         systemmac = str(nodeattrs.get('systemmac')).replace(':', '')
+        systemmac = str(systemmac).replace('.', '')
         model = str(nodeattrs.get('model'))
         serialnumber = str(nodeattrs.get('serialnumber'))
         version = str(nodeattrs.get('version'))

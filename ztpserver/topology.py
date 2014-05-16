@@ -145,45 +145,56 @@ class Node(SerializableMixin, DeserializableMixin):
 class ResourcePool(DeserializableMixin, SerializableMixin):
 
     def __init__(self):
-        self.filepath = os.path.join(ztpserver.config.runtime.default.data_root,
-                                     'resources')
+        cfg = ztpserver.config.runtime
+        self.filepath = os.path.join(cfg.default.data_root, 'resources')
         self.data = None
 
     def serialize(self):
-        assert isinstance(self.data, dict)
         return self.data
 
     def deserialize(self, contents):
-        assert isinstance(contents, dict)
         self.data = contents
 
     def allocate(self, pool, node):
-        match = self.lookup(pool, node)
-        if match:
-            log_msg('Found allocated resources, returning %s' % match)
-            return match
-
-        filepath = os.path.join(self.filepath, pool)
-        self.load_from_file(filepath, CONTENT_TYPE_YAML)
-
         try:
-            key = next(x[0] for x in self.data.iteritems() if x[1] is None)
-            self.data[key] = node.systemmac
-        except StopIteration:
-            raise ResourcePoolError('no resources available in pool')
+            match = self.lookup(pool, node)
+            if match:
+                log.info('Found allocated resource, returning %s', match)
+                return match
 
-        self.dump_to_file(filepath, CONTENT_TYPE_YAML)
+            filepath = os.path.join(self.filepath, pool)
+            self.load_from_file(filepath, CONTENT_TYPE_YAML)
+
+            key = next(x[0] for x in self.data.items() if x[1] is None)
+
+            log.info('Assigning %s from pool %s to node %s',
+                     key, pool, node.systemmac)
+            self.data[key] = node.systemmac
+            self.dump_to_file(filepath, CONTENT_TYPE_YAML)
+        except StopIteration:
+            log.warning('No resources available in pool %s', pool)
+            raise ResourcePoolError
+        except Exception as exc:
+            log.exception('Unable to allocate resource')
+            raise ResourcePoolError
         return key
 
     def lookup(self, pool, node):
-        log_msg('Looking up resource for node %s' % node.systemmac)
+        ''' Return an existing allocated resource if one exists '''
 
-        filepath = os.path.join(self.filepath, pool)
-        self.load_from_file(filepath, CONTENT_TYPE_YAML)
+        try:
+            log.info('Looking up resource for node %s', node.systemmac)
 
-        matches = [m[0] for m in self.data.iteritems()
-                   if m[1] == node.systemmac]
-        key = matches[0] if matches else None
+            filepath = os.path.join(self.filepath, pool)
+            self.load_from_file(filepath, CONTENT_TYPE_YAML)
+
+            matches = [m[0] for m in self.data.iteritems()
+                       if m[1] == node.systemmac]
+            key = matches[0] if matches else None
+        except Exception as exc:
+            log.exception('An error occurred trying to lookup existing '
+                          'resource for node %s', node.systemmac)
+            raise ResourcePoolError
         return key
 
 

@@ -52,7 +52,7 @@ log = logging.getLogger("ztpserver")
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-def enable_handler_console(level='DEBUG'):
+def enable_handler_console(level=None):
     """ Enables logging to stdout """
 
     logging_fmt = ztpserver.config.runtime.default.console_logging_format
@@ -60,8 +60,7 @@ def enable_handler_console(level='DEBUG'):
 
     ch = logging.StreamHandler()
     ch.tag = 'console'
-    if level is None:
-        level = 'DEBUG'
+    level = level or 'DEBUG'
     level = str(level).upper()
     level = logging.getLevelName(level)
     ch.setLevel(level)
@@ -127,7 +126,6 @@ def run_server(conf):
 
     try:
         httpd.serve_forever()
-
     except KeyboardInterrupt:
         print 'Shutdown'
 
@@ -155,6 +153,7 @@ def main():
     if args.version:
         print 'ztps version %s' % VERSION
         sys.exit()
+
     return run_server(args.conf)
 
 

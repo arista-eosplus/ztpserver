@@ -1,3 +1,4 @@
+#
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
@@ -27,18 +28,87 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#pylint: disable=F0401,C0103
-
+#
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+#
 import unittest
-import ztpserver.topology
+
+from mock import Mock
+
+import ztpserver.serializers
+
+from ztpserver.app import enable_handler_console    # pylint: disable=W0611
+from ztpserver.topology import ResourcePool, ResourcePoolError
+
+from server_test_lib import random_string
+from server_test_lib import create_node
+
+
+class ResourcePoolUnitTests(unittest.TestCase):
+
+    def setUp(self):
+        self.pool = ResourcePool()
+
+        self.pool.load_from_file = Mock()
+        self.pool.dump_to_file = Mock()
+
+        self.pooldata = dict()
+        for i in range(0, 10):      # pylint: disable=W0612
+            self.pooldata[random_string()] = None
+        self.pool.data = self.pooldata
+
+    def test_serialize_success(self):
+        resp = self.pool.serialize()
+        self.assertEqual(resp, self.pool.data)
+
+    def test_deserialize_success(self):
+        pooldata = dict()
+        for i in range(0, 10):      # pylint: disable=W0612
+            pooldata[random_string()] = None
+        self.pool.deserialize(pooldata)
+        self.assertEqual(pooldata, self.pool.data)
+
+    def test_allocate_success(self):
+        node = create_node()
+        resp = self.pool.allocate(random_string(), node)
+        self.assertIsNotNone(resp)
+        self.assertIn(resp, self.pooldata.keys())
+
+    def test_allocate_success_existing(self):
+        node = create_node()
+        key = random_string()
+        self.pool.data[key] = node.systemmac
+        resp = self.pool.allocate(random_string(), node)
+        self.assertIsNotNone(resp)
+        self.assertIn(resp, key)
+
+    def test_allocate_success_no_resource(self):
+        node = create_node()
+        key = random_string()
+        for key in self.pool.data.keys():
+            self.pool.data[key] = random_string()
+
+        self.assertRaises(ResourcePoolError, self.pool.allocate,
+                          random_string(), node)
+
+    def test_lookup_success_found_key(self):
+        node = create_node()
+        key = random_string()
+        self.pool.data[key] = node.systemmac
+        resp = self.pool.lookup(random_string(), node)
+        self.assertEqual(resp, key)
+
+    def test_lookup_success_no_key(self):
+        node = create_node()
+        resp = self.pool.lookup(random_string(), node)
+        self.assertIsNone(resp)
 
 
 class Functions(unittest.TestCase):
 
     def setUp(self):
         self.longMessage = True     # pylint: disable=C0103
-        self.Functions = ztpserver.topology.Functions
+        self.Functions = ztpserver.topology.Functions   #pylint: disable=C0103
 
     def test_functions_exact_true(self):
         self.assertTrue(self.Functions.exact('test', 'test'))

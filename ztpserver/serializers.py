@@ -48,13 +48,10 @@ except ImportError:
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class SerializerError(Exception):
-    """ base error raised by serialization functions """
+    ''' base error raised by serialization functions '''
     pass
 
 class YAMLSerializer(object):
-    """ The :py:class:`YAMLSerializer` class will generate a
-    RuntimeWarning if the PyYaml module is unavialable
-    """
 
     def __new__(cls):
         if not YAML_AVAILABLE:
@@ -64,7 +61,7 @@ class YAMLSerializer(object):
             return super(YAMLSerializer, cls).__new__(cls)
 
     def deserialize(self, data):
-        ''' deserialize a YAML object and return a dict '''
+        ''' Deserialize a YAML object and return a dict '''
 
         try:
             return yaml.safe_load(data)
@@ -104,23 +101,15 @@ class JSONSerializer(object):
             raise
 
 class Serializer(object):
-    """ The :py:class:`Serializer` will serialize a data structure
+    ''' The :py:class:`Serializer` will serialize a data structure
     based on the content-type.   If the content-type is not supported
     the :py:class:`Serializer` will simply return the data as a
     :py:class:`str` object
-    """
+    '''
 
     def serialize(self, data, content_type, **kwargs):
-        """ serialize the data base on the content_type
+        ''' Serialize the data based on the content_type '''
 
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be serialized
-        :param content_type: string specifies the serialize
-                             handler to use
-
-        """
         #pylint: disable=E1103
         try:
             data = self.convert(data)
@@ -131,16 +120,7 @@ class Serializer(object):
             raise SerializerError('Could not serialize data %s:' % data)
 
     def deserialize(self, data, content_type, **kwargs):
-        """ deserialize the data based on the content_type
-
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be deserialized
-        :param content_type: string specifies the deserialize
-                             handler to use
-
-        """
+        ''' Deserialize the data based on the content_type '''
 
         try:
             handler = self._deserialize_handler(content_type)
@@ -188,24 +168,37 @@ class DeserializableMixin(object):
     '''
 
     def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        log.debug('attempting to deserialize %r with content_type %s',
-                  self, content_type)
-        contents = serializer.deserialize(contents, content_type)
-        self.deserialize(contents)
+        try:
+            serializer = Serializer()
+            log.debug('attempting to deserialize %r with content_type %s',
+                        self, content_type)
+            contents = serializer.deserialize(contents, content_type)
+            self.deserialize(contents)
+        except NotImplementedError:
+            log.error('Object must define method \'deserialize\'')
+            raise SerializerError
+        except Exception as exc:
+            log.exception(exc)
+            raise SerializerError
 
     def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
             self.loads(fobj.read(), content_type)
-        except IOError as exc:
-            log.debug(exc)
-            raise SerializerError('unable to load file')
+        except IOError:
+            log.error('Unable to load file %s', fobj.name)
+            raise SerializerError
+        except Exception as exc:
+            log.exception(exc)
+            raise SerializerError
 
     def load_from_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
         try:
+            log.debug('Attempting to read file %s', filepath)
             self.load(open(filepath), content_type)
-        except IOError as exc:
-            log.error('Cannot read from file %s (bad permissions?)', filepath)
+        except IOError:
+            log.error('Cannot read from file %s', filepath)
+            raise SerializerError
+        except Exception as exc:
             log.exception(exc)
             raise SerializerError
 
@@ -223,27 +216,35 @@ class SerializableMixin(object):
     '''
 
     def dumps(self, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        contents = self.serialize()
-        log.debug('attempting to serialize %r with content_type %s',
-                  self, content_type)
-        return serializer.serialize(contents, content_type)
+        try:
+            serializer = Serializer()
+            contents = self.serialize()
+            log.debug('attempting to serialize %r with content_type %s',
+                      self, content_type)
+            return serializer.serialize(contents, content_type)
+        except NotImplementedError:
+            log.error('Object must define method \'serialize\'')
+            raise SerializerError
+        except Exception as exc:
+            log.exception(exc)
+            raise SerializerError
 
     def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
         try:
             contents = self.dumps(content_type)
             fobj.write(contents)
-        except IOError as exc:
-            log.error(exc)
-            log.exception(exc)
+        except IOError:
+            log.error('Unable to load file %s', fobj.name)
             raise SerializerError
 
     def dump_to_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
-        log.debug('Writing to file %s', filepath)
         try:
+            log.debug('Attempting to write to file %s', filepath)
             self.dump(open(filepath, 'w'), content_type)
-        except IOError as exc:
-            log.error('Cannot write to file %s (bad permissions?)', filepath)
+        except IOError:
+            log.error('Cannot write to file %s', filepath)
+            raise SerializerError
+        except Exception as exc:
             log.exception(exc)
             raise SerializerError
 
