@@ -59,6 +59,7 @@ def enable_handler_console(level='DEBUG'):
     formatter = logging.Formatter(logging_fmt)
 
     ch = logging.StreamHandler()
+    ch.tag = 'console'
     if level is None:
         level = 'DEBUG'
     level = str(level).upper()
@@ -66,6 +67,14 @@ def enable_handler_console(level='DEBUG'):
     ch.setLevel(level)
     ch.setFormatter(formatter)
     log.addHandler(ch)
+
+def disable_handler(tag):
+    for handler in list(log.handlers):
+        try:
+            if handler.tag == tag:
+                log.removeHandler(handler)
+        except AttributeError:
+            pass
 
 def start_logging():
     """ reads the runtime config and starts logging if enabled """

@@ -39,20 +39,19 @@ from string import Template
 
 import routes
 
-import webob.static
+from webob.static import FileApp
 
 import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.neighbordb
 
 from ztpserver.serializers import SerializerError
-from ztpserver.repository import create_file_store
-from ztpserver.repository import FileObjectNotFound, FileObjectError
-from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK
+from ztpserver.repository import create_filestore
+from ztpserver.repository import FileObjectNotFound, FileStoreError
+from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
 from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
-from ztpserver.constants import HTTP_STATUS_CREATED
 
 DEFINITION_FN = 'definition'
 STARTUP_CONFIG_FN = 'startup-config'
@@ -63,31 +62,17 @@ BOOTSTRAP_CONF = 'bootstrap.conf'
 
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
+
 class StoreController(ztpserver.wsgiapp.Controller):
 
     def __init__(self, name, **kwargs):
-        path_prefix = kwargs.get('path_prefix')
-        self.store = self.create_filestore(name, path_prefix=path_prefix)
+        try:
+            path_prefix = kwargs.get('path_prefix')
+            self.store = create_filestore(name, basepath=path_prefix)
+        except FileStoreError:
+            self.store = None
         super(StoreController, self).__init__()
 
-    @classmethod
-    def create_filestore(cls, name, path_prefix=None):
-        try:
-            store = create_file_store(name, basepath=path_prefix)
-
-        except ztpserver.repository.FileStoreError:
-            log.warn('could not create FileStore due to invalid path')
-            store = None
-        return store
-
-    def get_file(self, filename):
-        return self.store.get_file(filename)
-
-    def get_file_contents(self, filename):
-        try:
-            return self.get_file(filename).contents
-        except (FileObjectNotFound, FileObjectError):
-            return None
 
 class FilesController(StoreController):
 
@@ -100,18 +85,22 @@ class FilesController(StoreController):
         return 'FilesController'
 
     def show(self, request, resource, **kwargs):
-        urlvars = request.urlvars
-        if urlvars.get('format') is not None:
-            resource += '.%s' % urlvars.get('format')
+        ''' Handles GET /files/{resource} '''
 
         try:
-            obj = self.get_file(resource)
-
-        except ztpserver.repository.FileObjectNotFound:
+            urlvars = request.urlvars
+            if urlvars.get('format') is not None:
+                resource += '.%s' % urlvars.get('format')
+            filename = self.store.get_file(resource).name
+            log.debug('Requesting file %s', filename)
+            return FileApp(filename)
+        except FileObjectNotFound:
             log.debug('Requested file was not found')
             return dict(status=HTTP_STATUS_NOT_FOUND)
+        except Exception as exc:
+            log.exception(exc)
+            return dict(status=HTTP_STATUS_BAD_REQUEST)
 
-        return webob.static.FileApp(obj.name)
 
 class ActionsController(StoreController):
 
@@ -120,22 +109,25 @@ class ActionsController(StoreController):
         folder = ztpserver.config.runtime.actions.folder
         super(ActionsController, self).__init__(folder, path_prefix=prefix)
 
+    def __repr__(self):
+        return 'ActionsController'
+
     def show(self, request, resource, **kwargs):
-        log.debug('Requesting action: %s', resource)
+        ''' Handles GET /actions/{resource} '''
 
-        if not self.store.exists(resource):
-            log.debug('Requested action not found')
+        try:
+            log.debug('Requesting action: %s', resource)
+            body = self.store.get_file(resource).contents
+            return dict(body=body, content_type=CONTENT_TYPE_PYTHON)
+        except Exception:       # pylint: disable=W0703
+            log.exception('Requested action not found')
             return dict(status=HTTP_STATUS_NOT_FOUND)
-
-        return dict(status=HTTP_STATUS_OK,
-                    content_type=CONTENT_TYPE_PYTHON,
-                    body=self.get_file_contents(resource))
 
 
 class NodesController(StoreController):
 
     def __init__(self):
-        self.definitions = self.create_filestore('definitions')
+        self.definitions = create_filestore('definitions')
         super(NodesController, self).__init__('nodes')
 
     def __repr__(self):
@@ -200,7 +192,7 @@ class NodesController(StoreController):
         next_state = 'http_bad_request'
         filepath = '%s/%s' % (resource, STARTUP_CONFIG_FN)
         if self.store.exists(filepath):
-            response['body'] = self.get_file_contents(filepath)
+            response['body'] = self.store.get_file(filepath).contents
             response['content_type'] = CONTENT_TYPE_OTHER
             next_state = None
         return (response, next_state)

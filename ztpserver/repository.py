@@ -59,7 +59,6 @@ class FileObject(object):
         self.name = name
         if path is not None:
             self.name = os.path.join(path, name)
-
         self.type, self.encoding = mimetypes.guess_type(self.name)
 
     def __repr__(self):
@@ -67,12 +66,11 @@ class FileObject(object):
 
     @property
     def contents(self):
-        contents = None
-        if not os.access(self.name, os.R_OK):
-            raise FileObjectError('could not access file %s' % self.name)
-        if self.exists:
-            contents = open(self.name).read()
-        return contents
+        try:
+            return open(self.name).read()
+        except:
+            log.error('Could not access file %s', self.name)
+            raise FileObjectError
 
     @property
     def exists(self):
@@ -129,21 +127,21 @@ class FileStore(object):
             os.remove(filepath)
 
 
-def create_file_store(name, basepath=None):
-    """ creates a new FileStore object """
+def create_filestore(name, basepath=None):
+    """ Creates a new FileStore object """
 
-    if basepath is None:
-        basepath = ztpserver.config.runtime.default.data_root
-
-    log.debug('creating FileStore[%s] with basepath=%s', name, basepath)
-    name = name[1:] if str(name).startswith('/') else name
-    basepath = os.path.join(basepath, name)
-
-    if not os.path.exists(basepath):
-        log.debug('invalid basepath, not creating FileStore instance')
-        raise FileStoreError('invalid path %s' % basepath)
-
-    return FileStore(basepath)
+    try:
+        basepath = basepath or ztpserver.config.runtime.default.data_root
+        log.info('creating FileStore[%s] with basepath=%s', name, basepath)
+        name = name[1:] if str(name).startswith('/') else name
+        basepath = os.path.join(basepath, name)
+        if not os.path.exists(basepath):
+            log.error('Invalid basepath, not creating FileStore instance')
+            raise FileStoreError
+        return FileStore(basepath)
+    except:
+        log.exception('Unable to create FileStore instance')
+        raise FileStoreError
 
 
 

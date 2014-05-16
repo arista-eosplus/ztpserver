@@ -147,21 +147,21 @@ class TestInterfacePattern(unittest.TestCase):
         self.remote_device_test('exact("spine")', 'spine')
 
     def test_match_device_exact_false(self):
-        self.remote_device_test('exact("spine")', 'leaf', 
+        self.remote_device_test('exact("spine")', 'leaf',
                                 fail=True)
 
     def test_match_device_includes_true(self):
         self.remote_device_test('includes("spine")', 'pod1-spine1')
 
     def test_match_device_includes_false(self):
-        self.remote_device_test('includes("spine")', 'pod1-leaf1', 
+        self.remote_device_test('includes("spine")', 'pod1-leaf1',
                                 fail=True)
 
     def test_match_device_excludes_true(self):
         self.remote_device_test('excludes("spine")', 'pod1-leaf1')
 
     def test_match_device_excludes_false(self):
-        self.remote_device_test('excludes("spine")', 'pod1-spine1', 
+        self.remote_device_test('excludes("spine")', 'pod1-spine1',
                                 fail=True)
 
     def test_match_device_regex_true(self):

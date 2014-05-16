@@ -70,60 +70,60 @@ class TestTypes(unittest.TestCase):
         obj = ztpserver.types.String()
         self.assertIsInstance(obj, ztpserver.types.String)
         self.assertEqual(obj(['one']), "['one']")
-        
+
     def test_call_string_with_choices_valid(self):
         obj = ztpserver.types.String(['one', 'two'])
         self.assertIsInstance(obj, ztpserver.types.String)
         self.assertEqual(repr(obj), "String(choices=one,two)")
         self.assertEqual(obj('one'), 'one')
-        
+
     def test_call_string_with_choices_invalid(self):
         obj = ztpserver.types.String(['one', 'two'])
         self.assertIsInstance(obj, ztpserver.types.String)
         self.assertEqual(repr(obj), "String(choices=one,two)")
         self.assertRaises(ValueError, obj, 'three')
-        
+
     def test_create_boolean_defaults(self):
         obj = ztpserver.types.Boolean()
         self.assertIsInstance(obj, ztpserver.types.Boolean)
         self.assertEqual(repr(obj), 'Boolean')
-        
+
     def test_call_boolean_true_values_valid(self):
         obj = ztpserver.types.Boolean()
         self.assertIsInstance(obj, ztpserver.types.Boolean)
         values = obj.TRUEVALUES + ['YES', 'TRUE', True, 1, 'ON']
         for value in values:
             obj(value)
-            
+
     def test_call_boolean_false_values_valid(self):
         obj = ztpserver.types.Boolean()
         self.assertIsInstance(obj, ztpserver.types.Boolean)
         values = obj.FALSEVALUES + ['NO', 'FALSE', False, 0, 'OFF']
         for value in values:
             obj(value)
-            
+
     def test_call_boolean_invalid_values(self):
         obj = ztpserver.types.Boolean()
         self.assertIsInstance(obj, ztpserver.types.Boolean)
         values = ['test', 100, ['one', 'two']]
         for value in values:
             self.assertRaises(ValueError, obj, value)
-            
+
     def test_create_integer_defaults(self):
         obj = ztpserver.types.Integer()
         self.assertIsInstance(obj, ztpserver.types.Integer)
         self.assertEqual(repr(obj), "Integer(minvalue=None, maxvalue=None)")
-        
+
     def test_create_integer_min_value(self):
         obj = ztpserver.types.Integer(minvalue=1)
         self.assertEqual(obj.minvalue, 1)
         self.assertIsNone(obj.maxvalue)
-        
+
     def test_create_integer_max_value(self):
         obj = ztpserver.types.Integer(maxvalue=1)
         self.assertEqual(obj.maxvalue, 1)
         self.assertIsNone(obj.minvalue)
-        
+
     def test_create_integer_range(self):
         obj = ztpserver.types.Integer(minvalue=1, maxvalue=1)
         self.assertEqual(obj.minvalue, 1)
@@ -133,48 +133,48 @@ class TestTypes(unittest.TestCase):
         obj = ztpserver.types.Integer()
         for value in [0, 1.0, 1.1, '65535', True]:
             obj(value)
-            
+
     def test_call_integer_defaults_invalid(self):
         obj = ztpserver.types.Integer()
         self.assertRaises(ValueError, obj, 'string')
         self.assertRaises(TypeError, obj, [1, 2])
-            
+
     def test_call_integer_min_value_valid(self):
         obj = ztpserver.types.Integer(minvalue=1)
         self.assertEqual(obj(1), 1)
         self.assertEqual(obj('1'), 1)
-        
+
     def test_call_integer_min_value_invalid(self):
         obj = ztpserver.types.Integer(minvalue=1)
         self.assertRaises(ValueError, obj, 0)
         self.assertRaises(ValueError, obj, '0')
-        
+
     def test_call_integer_max_value_valid(self):
         obj = ztpserver.types.Integer(maxvalue=1)
         self.assertEqual(obj(1), 1)
         self.assertEqual(obj('1'), 1)
-        
+
     def test_call_integer_max_value_invalid(self):
         obj = ztpserver.types.Integer(maxvalue=1)
         self.assertRaises(ValueError, obj, 2)
         self.assertRaises(ValueError, obj, '2')
-        
+
     def test_call_integer_range_valid(self):
         obj = ztpserver.types.Integer(minvalue=1, maxvalue=2)
         self.assertEqual(obj(1), 1)
-        
+
     def test_call_integer_range_invalid(self):
         obj = ztpserver.types.Integer(minvalue=1, maxvalue=2)
         self.assertRaises(ValueError, obj, 3)
-        
-    def test_create_list_defaults(self): 
+
+    def test_create_list_defaults(self):
         obj = ztpserver.types.List()
         self.assertIsInstance(obj, ztpserver.types.List)
         self.assertEqual(repr(obj), 'List(delimiter=,)')
-        
 
-        
 
-        
+
+
+
 if __name__ == '__main__':
     unittest.main()

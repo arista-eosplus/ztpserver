@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -6,14 +5,17 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#  - Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
-#  - Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#  - Neither the name of Arista Networks nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -37,12 +39,12 @@ import ztpserver.repository
 
 from ztpserver.repository import FileObject, FileStore
 from ztpserver.repository import FileObjectNotFound, FileObjectError
-from ztpserver.repository import create_file_store
+from ztpserver.repository import create_filestore
 
 from server_test_lib import random_string, remove_all
 from server_test_lib import add_folder, write_file
 
-class FileObjectTests(unittest.TestCase):
+class FileObjectUnitTests(unittest.TestCase):
 
     def tearDown(self):
         remove_all()
@@ -66,12 +68,12 @@ class FileObjectTests(unittest.TestCase):
         obj = FileObject(filename)
 
         def contents(obj):
-            obj.contents
+            return obj.contents
 
         self.assertRaises(ztpserver.repository.FileObjectError, contents, obj)
         self.assertFalse(obj.exists)
 
-class FileStoreTests(unittest.TestCase):
+class FileStoreUnitTests(unittest.TestCase):
 
     def setUp(self):
         self.filepath = add_folder('filestore')
@@ -164,13 +166,13 @@ class FileStoreTests(unittest.TestCase):
         self.filestore.delete_file(filepath)
         self.assertFalse(os.path.exists(filepath))
 
-    def test_create_file_store(self):
+    def test_create_filestore(self):
         fsname = random_string()
         filepath = os.path.join(self.filepath, fsname)
         os.makedirs(filepath)
         assert os.path.exists(filepath)
 
-        obj = create_file_store(fsname, basepath=self.filepath)
+        obj = create_filestore(fsname, basepath=self.filepath)
         self.assertIsInstance(obj, ztpserver.repository.FileStore)
         self.assertTrue(os.path.exists(filepath))
 

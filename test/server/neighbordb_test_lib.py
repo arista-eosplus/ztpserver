@@ -33,7 +33,6 @@
 import unittest
 
 import ztpserver.neighbordb     #pylint: disable=F0401
-reload(ztpserver.neighbordb)
 
 class NodeTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
@@ -48,6 +47,8 @@ class NodeTest(unittest.TestCase):
         self.neighbordb_node = ztpserver.neighbordb.create_node(node_details)
 
     def setUp(self):
+        reload(ztpserver.neighbordb)
+
         print '\n---Starting test: %ss---\n' % self.name
         ztpserver.neighbordb.topology.clear()
 
@@ -73,7 +74,7 @@ class NodeTest(unittest.TestCase):
                                  (self.node['name'], self.name))
 
         if expected_result.get('excludes', None):
-            not_result = sorted([x for x in 
+            not_result = sorted([x for x in
                                  topology.all_patterns()
                                  if x not in result])
             self.assertEqual(not_result, sorted(expected_result['excludes']),
@@ -110,11 +111,11 @@ class NeighbordbTest(unittest.TestCase):
         print 'INFO: Checking neighbordb [%s]' % self.name
 
         if self.result.get('nodes', None):
-            self.assertEqual(sorted(self.result['nodes']), 
+            self.assertEqual(sorted(self.result['nodes']),
                              topology.node_patterns(),
                              'failed to match node patterns [%s]' % self.name)
 
         if self.result.get('globals', None):
-            self.assertEqual(sorted(self.result['globals']), 
+            self.assertEqual(sorted(self.result['globals']),
                              topology.global_patterns(),
                              'failed to match global patterns [%s]' % self.name)

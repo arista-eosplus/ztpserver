@@ -64,6 +64,8 @@ class YAMLSerializer(object):
             return super(YAMLSerializer, cls).__new__(cls)
 
     def deserialize(self, data):
+        ''' deserialize a YAML object and return a dict '''
+
         try:
             return yaml.safe_load(data)
         except:
@@ -71,6 +73,8 @@ class YAMLSerializer(object):
             raise
 
     def serialize(self, data, safe_dump=False):
+        ''' Serialize a dict object and return YAML '''
+
         try:
             if safe_dump:
                 return yaml.safe_dump(data, default_flow_style=False)
@@ -82,7 +86,7 @@ class YAMLSerializer(object):
 class JSONSerializer(object):
 
     def deserialize(self, data):
-        ''' deserialize a JSON object and return a dict '''
+        ''' Deserialize a JSON object and return a dict '''
 
         try:
             return json.loads(data)
@@ -91,7 +95,8 @@ class JSONSerializer(object):
             raise
 
     def serialize(self, data):
-        ''' serialize a dict object and return JSON '''
+        ''' Serialize a dict object and return JSON '''
+
         try:
             return json.dumps(data)
         except:
@@ -121,7 +126,6 @@ class Serializer(object):
             data = self.convert(data)
             handler = self._serialize_handler(content_type)
             return handler.serialize(data, **kwargs) if handler else str(data)
-
         except Exception as exc:
             log.exception(exc)
             raise SerializerError('Could not serialize data %s:' % data)

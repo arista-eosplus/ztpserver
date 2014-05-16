@@ -59,7 +59,7 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
             suite.addTest(NodeTest(test, node, definition['neighbordb']))
 
         if definition.get('configured_neighbordb', None):
-            suite.addTest(NeighbordbTest(test, definition['neighbordb'], 
+            suite.addTest(NeighbordbTest(test, definition['neighbordb'],
                                          definition['configured_neighbordb']))
 
     return suite
