@@ -88,7 +88,7 @@ class Repository(object):
         self.path = path
 
     def __repr__(self):
-        return "Respository(path=%s)" % self.path
+        return "Repository(path=%s)" % self.path
 
     def expand(self, filepath):
         if filepath == '/':
