@@ -65,9 +65,9 @@ class FileObject(object):
     def __repr__(self):
         return 'FileObject(name=%s)' % self.name
 
-    def read(self, content_type=None):
+    def read(self, content_type=None, cls=None):
         try:
-            return ztpserver.serializers.load(self.name, content_type)
+            return ztpserver.serializers.load(self.name, content_type, cls)
             self.content_type = content_type
         except ztpserver.serializers.SerializerError:
             log.error('Could not access file %s', self.name)
@@ -90,15 +90,17 @@ class Repository(object):
     def __repr__(self):
         return "Respository(path=%s)" % self.path
 
-    def _transform(self, filepath):
-        if not str(filepath).startswith(self.path):
+    def expand(self, filepath):
+        if filepath == '/':
+            filepath = self.path
+        elif not str(filepath).startswith(self.path):
             filepath = filepath[1:] if filepath[0] == '/' else filepath
             filepath = os.path.join(self.path, filepath)
         return filepath
 
     def add_folder(self, folderpath):
         try:
-            folderpath = self._transform(folderpath)
+            folderpath = self.expand(folderpath)
             os.makedirs(folderpath)
             return folderpath
         except OSError:
@@ -107,7 +109,7 @@ class Repository(object):
 
     def create_file(self, filepath, contents=None, content_type=None):
         try:
-            filepath = self._transform(filepath)
+            filepath = self.expand(filepath)
             obj = FileObject(filepath)
             if contents:
                 obj.write(contents, content_type)
@@ -115,50 +117,24 @@ class Repository(object):
             raise RepositoryError
 
     def exists(self, filepath):
-        filepath = self._transform(filepath)
+        filepath = self.expand(filepath)
         return os.path.exists(filepath)
 
     def get_file(self, filepath):
-        filepath = self._transform(filepath)
+        filepath = self.expand(filepath)
         if not self.exists(filepath):
             raise FileObjectNotFound
         return FileObject(filepath)
 
     def delete_file(self, filepath):
         try:
-            filepath = self._transform(filepath)
+            filepath = self.expand(filepath)
             os.remove(filepath)
         except (OSError, IOError):
             log.exception('Unable to delete file %s', filepath)
             raise RepositoryError
 
-def create_filestore(name, basepath=None):
-    """ Creates a new FileStore object """
 
-    basepath = basepath or ztpserver.config.runtime.default.data_root
-    log.info('Creating file store %s with basepath %s', name, basepath)
-
-    name = name[1:] if str(name).startswith('/') else name
-    basepath = os.path.join(basepath, name)
-
-    if not os.path.exists(basepath):
-        log.error('Invalid basepath, not creating FileStore instance')
-        raise RepositoryError
-
-    return FileStore(basepath)
-
-
-def create_repository(name, path=None):
-    ''' Returns a new repository object '''
-
-    try:
-        path = path or ztpserver.config.runtime.default.data_root
-        path = os.path.join(path, name)
-    except OSError as exc:
-        log.exception('Unable to create repo with path %s', path)
-        raise RepositoryError
-    else:
-        return Repository(path)
 
 
 

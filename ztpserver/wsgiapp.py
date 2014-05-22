@@ -125,7 +125,8 @@ class Router(object):
     @webob.dec.wsgify
     def dispatch(self, request):
         try:
-            return request.urlvars['controller']
+            controller = request.urlvars['controller']
+            return controller()
         except KeyError:
             log.debug('Router: controller not found, returning 404')
             return webob.exc.HTTPNotFound()

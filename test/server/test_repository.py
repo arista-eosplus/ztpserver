@@ -40,8 +40,8 @@ from mock import patch, Mock
 from ztpserver.serializers import SerializerError
 
 from ztpserver.repository import FileObject, FileObjectError
-from ztpserver.repository import Repository, FileObjectNotFound, RepositoryError
-from ztpserver.repository import create_filestore
+from ztpserver.repository import Repository, RepositoryError
+from ztpserver.repository import FileObjectNotFound
 
 from server_test_lib import random_string, enable_console
 
@@ -162,23 +162,6 @@ class RepositoryUnitTests(unittest.TestCase):
         m_remove.side_effect = OSError
         store = Repository(random_string())
         self.assertRaises(RepositoryError, store.delete_file, random_string())
-
-    @patch('os.path.exists')
-    @patch('ztpserver.repository.Repository')
-    def test_create_repository_success(self, m_filestore, m_exists):
-        try:
-            result = create_filestore(random_string())
-            self.assertTrue(m_filestore.called)
-        except Exception as exc:
-            self.fail(exc)
-
-    @patch('os.path.exists')
-    @patch('ztpserver.repository.Repository')
-    def test_create_repository_success(self, m_filestore, m_exists):
-        m_exists.return_value = False
-        self.assertRaises(RepositoryError, create_filestore, random_string())
-
-
 
 
 if __name__ == '__main__':
