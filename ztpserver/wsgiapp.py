@@ -40,7 +40,7 @@ import webob.exc
 
 from routes.middleware import RoutesMiddleware
 
-from ztpserver.serializers import loads, dumps
+from ztpserver.serializers import dumps
 from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK
 
 log = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class WSGIController(object):
             method = getattr(self, action)    #pylint: disable=R0921
             result = method(request, **request.urlvars)
 
-        except Exception as exc:
+        except Exception:
             log.exception('An unrecoverable error was detected')
             raise webob.exc.HTTPInternalServerError()
 
@@ -91,7 +91,6 @@ class WSGIController(object):
             if 'body' in result:
                 content_type = result.get('content_type')
                 result['body'] = dumps(result['body'], content_type)
-                #result['body'] = self.serialize(result['body'], content_type)
 
             result.setdefault('status', HTTP_STATUS_OK)
             result.setdefault('content_type', CONTENT_TYPE_HTML)
@@ -119,7 +118,8 @@ class WSGIRouter(object):
         ''' Routes the incoming request to the appropriate controller '''
 
         try:
-            return request.urlvars['controller']
+            controller = request.urlvars['controller']
+            return controller()
         except KeyError:
             log.debug('WSGIRouter: controller not found, returning 404')
             return webob.exc.HTTPNotFound()

@@ -67,8 +67,8 @@ class FileObject(object):
 
     def read(self, content_type=None, cls=None):
         try:
-            return ztpserver.serializers.load(self.name, content_type, cls)
             self.content_type = content_type
+            return ztpserver.serializers.load(self.name, content_type, cls)
         except ztpserver.serializers.SerializerError:
             log.error('Could not access file %s', self.name)
             raise FileObjectError
@@ -107,7 +107,7 @@ class Repository(object):
             log.error('Unable to add folder %s', folderpath)
             raise RepositoryError
 
-    def create_file(self, filepath, contents=None, content_type=None):
+    def add_file(self, filepath, contents=None, content_type=None):
         try:
             filepath = self.expand(filepath)
             obj = FileObject(filepath)
@@ -136,7 +136,10 @@ class Repository(object):
 
 
 
-
+def create_repository(path):
+    if not os.path.exists(path):
+        raise RepositoryError
+    return Repository(path)
 
 
 

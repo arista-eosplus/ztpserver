@@ -38,23 +38,24 @@ import json
 
 from webob import Request
 
-from mock import Mock, patch
+from mock import MagicMock, Mock, patch
 
 import ztpserver.neighbordb
 import ztpserver.topology
 import ztpserver.controller
 import ztpserver.config
+import ztpserver.repository
+
+from ztpserver.controller import DEFINITION_FN, PATTERN_FN
 
 from ztpserver.app import enable_handler_console
-from ztpserver.repository import FileObjectNotFound
-from ztpserver.serializers import SerializerError
+from ztpserver.repository import FileObjectNotFound, FileObjectError
 
 from server_test_lib import remove_all, random_string
 from server_test_lib import ztp_headers, write_file
 from server_test_lib import create_definition, create_attributes, create_node
 from server_test_lib import create_bootstrap_conf
 
-@patch('ztpserver.controller.create_filestore')
 class RouterUnitTests(unittest.TestCase):
 
     def match_routes(self, url, valid, invalid):
@@ -76,114 +77,128 @@ class RouterUnitTests(unittest.TestCase):
                 self.assertIsNone(router.map.match(environ=request.environ),
                                   msg)
 
-    def test_bootstrap_collection(self, filestore):
+    def test_bootstrap_collection(self):
         url = '/bootstrap'
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
-    def test_bootstrap_resource(self, filestore):
+    def test_bootstrap_resource(self):
         url = '/bootstrap/%s' % random_string()
         self.match_routes(url, None, 'GET,POST,PUT,DELETE')
 
-    def test_files_collection(self, filestore):
+    def test_files_collection(self):
         url = '/files'
         self.match_routes(url, None, 'GET,POST,PUT,DELETE')
 
-    def test_files_resource(self, filestore):
+    def test_files_resource(self):
         url = '/files/%s' % random_string()
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
         url = '/files/%s/%s' % (random_string(), random_string())
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
-    def test_actions_collection(self, filestore):
+    def test_actions_collection(self):
         url = '/actions'
         self.match_routes(url, None, 'GET,POST,PUT,DELETE')
 
-    def test_actions_resource(self, filestore):
+    def test_actions_resource(self):
         url = '/actions/%s' % random_string()
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
-    def test_nodes_collection(self, filestore):
+    def test_nodes_collection(self):
         url = '/nodes'
         self.match_routes(url, 'POST', 'GET,PUT,DELETE')
 
-    def test_nodes_resource(self, filestore):
+    def test_nodes_resource(self):
         url = '/nodes/%s' % random_string()
         self.match_routes(url, 'GET', 'POST,PUT,DELETE')
 
-    def test_nodes_resource_get_config(self, filestore):
+    def test_nodes_resource_get_config(self):
         url = '/nodes/%s/startup-config' % random_string()
         self.match_routes(url, 'GET,PUT', 'POST,DELETE')
 
 
-@patch('ztpserver.controller.create_filestore')
 class BootstrapControllerUnitTests(unittest.TestCase):
 
+    def setUp(self):
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
 
-    def test_get_bootstrap_success(self, filestore):
-        filestore.return_value.get_file.return_value = \
-            Mock(contents=random_string())
-        ztpserver.controller.create_filestore = filestore
-
-        controller = ztpserver.controller.BootstrapController()
-        resp = controller.get_bootstrap()
-
-        contents = filestore.return_value.get_file.return_value.contents
-        self.assertEqual(resp, contents)
-
-    def test_get_bootstrap_failure(self, filestore):
-        filestore.return_value.get_file = Mock(side_effect=FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+    @patch('string.Template.substitute')
+    def test_index_success(self, m_substitute):
+        m_substitute.return_value = random_string()
 
         controller = ztpserver.controller.BootstrapController()
-        self.assertRaises(FileObjectNotFound, controller.get_bootstrap)
+        resp = controller.index(None)
 
-    def test_get_config_success(self, filestore):
-        conf_file = create_bootstrap_conf()
-        conf_file.add_logging(dict(destination=random_string(),
-                                   level=random_string()))
+        self.assertTrue(m_substitute.called)
+        self.assertEqual(resp['content_type'], 'text/x-python')
+        self.assertEqual(resp['body'], m_substitute.return_value)
 
-        filestore.return_value.get_file.return_value = \
-            Mock(contents=conf_file.as_yaml())
-        ztpserver.controller.create_filestore = filestore
-
-        controller = ztpserver.controller.BootstrapController()
-        resp = controller.get_config()
-
-        self.assertEqual(resp, conf_file.as_dict())
-
-    def test_get_config_defaults(self, filestore):
-        filestore.return_value.get_file = \
-            Mock(side_effect=ztpserver.repository.FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+    def test_index_bootstrap_not_found_failure(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectError}
+        self.m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.BootstrapController()
-        resp = controller.get_config()
+        resp = controller.index(None)
 
-        self.assertEqual(resp, dict(logging=list(), xmpp=dict()))
+        self.assertTrue(resp['status'], 400)
+        self.assertEqual(resp['body'], '')
 
-    def test_get_config_invalid_format(self, filestore):
-        conf_file = """
-            logging:
-              - destination: null
-              level: null
-        """
-
-        filestore.return_value.get_file.return_value = Mock(contents=conf_file)
-        ztpserver.controller.create_filestore = filestore
+    def test_index_bootstrap_inaccessible_failure(self):
+        cfg = {'return_value.read.side_effect': FileObjectError}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
 
         controller = ztpserver.controller.BootstrapController()
-        self.assertRaises(SerializerError, controller.get_config)
+        resp = controller.index(None)
+
+        self.assertTrue(resp['status'], 400)
+        self.assertEqual(resp['body'], '')
+
+    def test_config_success(self):
+        config = create_bootstrap_conf()
+        config.add_logging(dict(destination=random_string(),
+                                level=random_string()))
+
+        cfg = {'return_value.read.return_value': config.as_dict()}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.config(None)
+
+        self.assertEqual(resp['body'], config.as_dict())
+        self.assertEqual(resp['content_type'], 'application/json')
+
+    def test_config_defaults(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.config(None)
+
+        self.assertEqual(resp['body'], controller.DEFAULTCONFIG)
+        self.assertEqual(resp['content_type'], 'application/json')
+
+    def test_config_failure(self):
+        cfg = {'return_value.read.side_effect': FileObjectError}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
+
+        controller = ztpserver.controller.BootstrapController()
+        resp = controller.config(None)
+
+        self.assertEqual(resp['body'], '')
+        self.assertEqual(resp['status'], 400)
 
 
-@patch('ztpserver.controller.create_filestore')
 class BootstrapControllerIntegrationTests(unittest.TestCase):
 
-    def test_get_bootstrap(self, filestore):
-        contents = random_string()
+    def setUp(self):
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
 
-        filestore.return_value.get_file.return_value = Mock(contents=contents)
-        ztpserver.controller.create_filestore = filestore
+    @patch('string.Template.substitute')
+    def test_get_bootstrap_success(self, m_substitute):
+        contents = random_string()
+        m_substitute.return_value = contents
 
         request = Request.blank('/bootstrap', headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
@@ -192,10 +207,54 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'text/x-python')
         self.assertEqual(resp.body, contents)
 
-    def test_get_bootstrap_config_defaults(self, filestore):
-        filestore.return_value.get_file = \
-            Mock(side_effect=ztpserver.repository.FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+    def test_get_bootstrap_missing(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
+
+        request = Request.blank('/bootstrap', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_type, 'text/html')
+
+    @patch('string.Template.substitute')
+    def test_get_bootstrap_misconfigured(self, m_substitute):
+        m_substitute.side_effect = KeyError
+
+        request = Request.blank('/bootstrap', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_type, 'text/html')
+
+    def test_get_bootstrap_inaccessible(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectError}
+        self.m_repository.configure_mock(**cfg)
+
+        request = Request.blank('/bootstrap', headers=ztp_headers())
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content_type, 'text/html')
+
+    def test_get_bootstrap_config_success(self):
+        config = create_bootstrap_conf()
+        config.add_logging(dict(destination=random_string(),
+                                level=random_string()))
+
+        cfg = {'return_value.read.return_value': config.as_dict()}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
+
+        request = Request.blank('/bootstrap/config')
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(json.loads(resp.body), config.as_dict())
+
+    def test_get_bootstrap_config_defaults(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
 
         request = Request.blank('/bootstrap/config')
         resp = request.get_response(ztpserver.controller.Router())
@@ -204,52 +263,36 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(json.loads(resp.body), json.dumps(defaultconfig))
+        self.assertEqual(json.loads(resp.body), defaultconfig)
 
-    def test_get_bootstrap_config(self, filestore):
-        logging = [dict(destination=random_string(), level=random_string())]
-        xmpp = dict(username=random_string(), domain=random_string(),
-                    password=random_string(), rooms=[random_string()])
-        conf = dict(logging=logging, xmpp=xmpp)
-        conf = json.dumps(conf)
-
-        filestore.return_value.get_file.return_value.contents = conf
-        ztpserver.controller.create_filestore = filestore
-
-        request = Request.blank('/bootstrap/config', headers=ztp_headers())
-        resp = request.get_response(ztpserver.controller.Router())
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(json.loads(resp.body), conf)
-
-
-@patch('ztpserver.controller.create_filestore')
 class FilesControllerIntegrationTests(unittest.TestCase):
+
+    def setUp(self):
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
 
     def tearDown(self):
         remove_all()
 
-    def test_get_file_success(self, filestore):
+    def test_get_file_success(self):
         contents = random_string()
         filepath = write_file(contents)
 
-        filestore.return_value.get_file.return_value.name = filepath
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.return_value.get_file.return_value.name = filepath
 
         url = '/files/%s' % filepath
         request = Request.blank(url)
         resp = request.get_response(ztpserver.controller.Router())
 
-        filestore.return_value.get_file.assert_called_with(filepath)
+        self.m_repository.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.body, contents)
 
 
-    def test_get_missing_file(self, filestore):
-        filestore.return_value.get_file = Mock(side_effect=\
-            ztpserver.repository.FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+    def test_get_missing_file(self):
+        cfg = {'return_value.get_file.side_effect':
+                    ztpserver.repository.FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
 
         filename = random_string()
         url = '/files/%s' % filename
@@ -257,17 +300,21 @@ class FilesControllerIntegrationTests(unittest.TestCase):
         request = Request.blank(url)
         resp = request.get_response(ztpserver.controller.Router())
 
-        filestore.return_value.get_file.assert_called_with(filename)
+        filepath = 'files/%s' % filename
+        self.m_repository.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, 404)
 
 
-@patch('ztpserver.controller.create_filestore')
 class ActionsControllerIntegrationTests(unittest.TestCase):
 
-    def test_get_action(self, filestore):
-        file_mock = Mock(contents=random_string())
-        filestore.return_value.get_file.return_value = file_mock
-        ztpserver.controller.create_filestore = filestore
+    def setUp(self):
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
+
+    def test_get_action_success(self):
+        contents = random_string()
+        cfg = {'return_value.read.return_value': contents}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
 
         filename = random_string()
         url = '/actions/%s' % filename
@@ -275,14 +322,14 @@ class ActionsControllerIntegrationTests(unittest.TestCase):
         request = Request.blank(url)
         resp = request.get_response(ztpserver.controller.Router())
 
-        filestore.return_value.get_file.assert_called_with(filename)
+        self.m_repository.return_value.get_file.assert_called_with(url[1:])
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'text/x-python')
-        self.assertEqual(resp.body, file_mock.contents)
+        self.assertEqual(resp.body, contents)
 
-    def test_get_missing_action(self, filestore):
-        filestore.return_value.get_file = Mock(side_effect=FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+    def test_get_action_missing(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
 
         filename = random_string()
         url = '/actions/%s' % filename
@@ -293,41 +340,15 @@ class ActionsControllerIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
-@patch('ztpserver.controller.create_filestore')
 class NodesControllerUnitTests(unittest.TestCase):
 
     def setUp(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', False, 'default')
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
 
-    def test_load_node_success(self, filestore):
-        node = create_node()
-
-        filestore.return_value.get_file.return_value.contents = node.as_yaml()
-        ztpserver.controller.create_filestore = filestore
-
-        controller = ztpserver.controller.NodesController()
-        resp = controller.load_node(node.systemmac)
-
-        filepath = '%s/%s' % (node.systemmac, ztpserver.controller.NODE_FN)
-        filestore.return_value.get_file.assert_called_with(filepath)
-
-        self.assertIsInstance(resp, ztpserver.topology.Node)
-        self.assertEqual(resp.serialize(), node.as_dict())
-
-    def test_load_node_serializer_failure(self, filestore):
-        node = """
-            - systemmac: foo
-            serialnumber: bar
-        """
-
-        filestore.return_value.get_file.return_value.contents = node
-        ztpserver.controller.create_filestore = filestore
-
-        controller = ztpserver.controller.NodesController()
-        self.assertRaises(SerializerError, controller.load_node, None)
-
-    def test_required_attributes_success(self, filestore):
+    def test_required_attributes_success(self):
         request = Mock(json={'systemmac': random_string()})
         response = dict()
 
@@ -336,32 +357,34 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         self.assertEqual(resp, (dict(), 'node_exists'))
 
-    def test_required_attributes_missing(self, filestore):
+    def test_required_attributes_missing(self):
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.required_attributes,
                           None, None)
 
-    def test_node_exists_success(self, filestore):
-        filestore.return_value.exists.return_value = True
-        ztpserver.controller.create_filestore = filestore
+    def test_node_exists_success(self):
+        self.m_repository.return_value.exists.return_value = True
+
+        node = Mock(systemmac=random_string())
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.node_exists(dict(), node=Mock())
+        (resp, state) = controller.node_exists(dict(), node=node)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], 409)
 
-    def test_node_exists_definition_exists(self, filestore):
+    def test_node_exists_definition_exists(self):
         node = create_node()
+        cfg = dict()
 
-        def exists(filepath):
-            if filepath.endswith(ztpserver.controller.DEFINITION_FN):
+        def m_exists(arg):
+            if arg.endswith(DEFINITION_FN):
                 return True
             return False
+        cfg['return_value.exists.side_effect'] = m_exists
 
-        filestore.return_value.exists = Mock(side_effect=exists)
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node)
@@ -369,16 +392,17 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'dump_node')
         self.assertEqual(resp['status'], 409)
 
-    def test_node_exists_startup_config_exists(self, filestore):
+    def test_node_exists_startup_config_exists(self):
         node = create_node()
+        cfg = dict()
 
-        def exists(filepath):
-            if filepath.endswith(ztpserver.controller.STARTUP_CONFIG_FN):
+        def m_exists(arg):
+            if arg.endswith(ztpserver.controller.STARTUP_CONFIG_FN):
                 return True
             return False
+        cfg['return_value.exists.side_effect'] = m_exists
 
-        filestore.return_value.exists = Mock(side_effect=exists)
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node)
@@ -386,16 +410,17 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'dump_node')
         self.assertEqual(resp['status'], 409)
 
-    def test_node_exists_sysmac_folder_exists(self, filestore):
+    def test_node_exists_sysmac_folder_exists(self):
         node = create_node()
+        cfg = dict()
 
-        def exists(filepath):
-            if filepath.endswith(node.systemmac):
+        def m_exists(arg):
+            if arg.endswith(node.systemmac):
                 return True
             return False
+        cfg['return_value.exists.side_effect'] = m_exists
 
-        filestore.return_value.exists = Mock(side_effect=exists)
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node)
@@ -403,246 +428,171 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'post_config')
         self.assertTrue('status' not in resp)
 
-    def test_node_exists_failure(self, filestore):
-        filestore.return_value.exists.return_value = False
-        ztpserver.controller.create_filestore = filestore
+    def test_node_exists_failure(self):
+        self.m_repository.return_value.exists.return_value = False
 
+        node = Mock(systemmac=random_string())
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.node_exists(dict(), node=Mock())
+        (resp, state) = controller.node_exists(dict(), node=node)
 
         self.assertEqual(state, 'post_config')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp, dict())
 
-    def test_dump_node_success(self, filestore):
-        ztpserver.controller.create_filestore = filestore
+    def test_dump_node_success(self):
+        node = Mock(systemmac=random_string())
 
-        node = create_node()
-        attrs = "systemmac:\n    %s" % node.systemmac
-
-        node = Mock(systemmac=node.systemmac)
-        node.dumps.return_value = attrs
+        cfg = dict()
+        cfg['return_value.get_file'] = Mock()
+        self.m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.dump_node(dict(), node=node)
 
-        filepath = '%s/%s' % (node.systemmac, ztpserver.controller.NODE_FN)
-        filestore.return_value.write_file.assert_called_with(filepath, attrs)
-
         self.assertEqual(state, 'set_location')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp, dict())
 
-    def test_dump_node_write_file_failure(self, filestore):
-        filestore.return_value.write_file = Mock(side_effect=IOError)
-        ztpserver.controller.create_filestore = filestore
+    def test_dump_node_write_file_failure(self):
 
-        systemmac = random_string()
-        node = Mock(systemmac=systemmac)
+        cfg = {'return_value.get_file.return_value.write.side_effect': \
+               ztpserver.repository.FileObjectError}
+        self.m_repository.configure_mock(**cfg)
+
+        node = Mock(systemmac=random_string())
 
         controller = ztpserver.controller.NodesController()
-        self.assertRaises(IOError, controller.dump_node, dict(), node=node)
+        self.assertRaises(ztpserver.repository.FileObjectError,
+                          controller.dump_node,
+                          dict(),
+                          node=node)
 
-    def test_set_location_success(self, filestore):
+    def test_set_location_success(self):
         node = Mock(systemmac=random_string())
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.set_location(dict(), node=node)
 
-        location = '/nodes/%s' % node.systemmac
+        location = 'nodes/%s' % node.systemmac
         self.assertIsNone(state)
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['location'], location)
 
-    def test_set_location_failure(self, filestore):
+    def test_set_location_failure(self):
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.set_location,
                           dict(), node=None)
 
-    def test_post_config_success(self, filestore):
+    def test_post_config_success(self):
         request = Mock(json=dict(config=random_string()))
+        node = Mock(systemmac=random_string())
+
         controller = ztpserver.controller.NodesController()
-
-        add_node_mock = Mock()
-        controller.add_node = add_node_mock
-
         (resp, state) = controller.post_config(dict(), request=request,
-                                               node=Mock())
+                                               node=node)
 
-        self.assertTrue(add_node_mock.called)
         self.assertEqual(state, 'set_location')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], 201)
 
-    def test_post_config_key_error_failure(self, filestore):
+    def test_post_config_key_error_failure(self):
         request = Mock(json=dict())
+        node = Mock(systemmac=random_string())
+
         controller = ztpserver.controller.NodesController()
-
-        add_node_mock = Mock()
-        controller.add_node = add_node_mock
-
         (resp, state) = controller.post_config(dict(), request=request,
-                                               node=Mock())
+                                               node=node)
 
-        self.assertFalse(add_node_mock.called)
         self.assertEqual(state, 'post_node')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp, dict())
 
-    def test_post_config_failure(self, filestore):
+    def test_post_config_failure(self):
         controller = ztpserver.controller.NodesController()
-        add_node_mock = Mock(side_effect=Exception)
-        controller.add_node = add_node_mock
         self.assertRaises(Exception, controller.post_config, dict())
 
-    def test_post_node_success_single_match(self, filestore):
+    def test_post_node_success_single_match(self):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(systemmac=random_string())
 
-        definitions = Mock()
-        definitions.get_file.return_value.contents = random_string()
-
-        pattern = Mock()
-        pattern.dumps.return_value = random_string()
-
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=[pattern])
+        m_load = Mock()
+        m_load.return_value.match_node.return_value = [Mock()]
+        ztpserver.neighbordb.load = m_load
 
         controller = ztpserver.controller.NodesController()
-        controller.definitions = definitions
-        controller.add_node = Mock()
 
         (resp, state) = controller.post_node(dict(), request=request, node=node)
-
-        assert controller.add_node.called
-        assert controller.add_node.call_count == 1
-        args = controller.add_node.call_args[0]
-
-        self.assertEqual(args[0], node.systemmac)
-
-        fn, value = args[1][0]
-        self.assertEqual(fn, ztpserver.controller.DEFINITION_FN)
-        self.assertEqual(value, definitions.get_file.return_value.contents)
-
-        fn, value = args[1][1]
-        self.assertEqual(fn, ztpserver.controller.PATTERN_FN)
-        self.assertEqual(value, pattern.dumps.return_value)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], 201)
 
-    def test_post_node_success_multiple_matches(self, filestore):
+    def test_post_node_success_multiple_matches(self):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(systemmac=random_string())
 
-        definitions = Mock()
-        definitions.get_file.return_value.contents = random_string()
-
-        pattern = Mock()
-        pattern.dumps.return_value = random_string()
-
-        matches = [pattern, Mock(), Mock()]
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=matches)
+        m_load = Mock()
+        m_load.return_value.match_node.return_value = [Mock(), Mock(), Mock()]
+        ztpserver.neighbordb.load = m_load
 
         controller = ztpserver.controller.NodesController()
-        controller.definitions = definitions
-        controller.add_node = Mock()
-
         (resp, state) = controller.post_node(dict(), request=request, node=node)
-
-        assert controller.add_node.called
-        assert controller.add_node.call_count == 1
-        args = controller.add_node.call_args[0]
-
-        self.assertEqual(args[0], node.systemmac)
-
-        fn, value = args[1][0]
-        self.assertEqual(fn, ztpserver.controller.DEFINITION_FN)
-        self.assertEqual(value, definitions.get_file.return_value.contents)
-
-        fn, value = args[1][1]
-        self.assertEqual(fn, ztpserver.controller.PATTERN_FN)
-        self.assertEqual(value, pattern.dumps.return_value)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], 201)
 
-    def test_post_node_failure_no_neighbors(self, filestore):
-        request = Mock(json=dict())
-        node = Mock(systemmac=random_string())
-
-        controller = ztpserver.controller.NodesController()
-        self.assertRaises(AssertionError, controller.post_node, dict(),
-                          request=request, node=node)
-
-    def test_post_node_failure_no_matches(self, filestore):
+    def test_post_node_failure_no_matches(self):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(systemmac=random_string())
 
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=list())
+        m_load = Mock()
+        m_load.return_value.match_node.return_value = list()
+        ztpserver.neighbordb.load = m_load
 
         controller = ztpserver.controller.NodesController()
-        self.assertRaises(AssertionError, controller.post_node, dict(),
+        self.assertRaises(IndexError, controller.post_node, dict(),
                           request=request, node=node)
 
-    def test_post_node_no_definition_in_pattern(self, filestore):
+    def test_post_node_no_definition_in_pattern(self):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(systemmac=random_string())
 
         pattern = Mock()
         del pattern.definition
 
-        ztpserver.neighbordb.topology.match_node = Mock()
-        ztpserver.neighbordb.topology.match_node.return_value = [pattern]
+        m_load = Mock()
+        m_load.return_value.match_node.return_value = [pattern]
+        ztpserver.neighbordb.load = m_load
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.post_node, dict(),
                           request=request, node=node)
 
-    def test_get_definition_success(self, filestore):
-        node = create_node()
-        definition = create_definition()
-
-        filestore.return_value.get_file.return_value = \
-            Mock(contents=definition.as_yaml())
-        ztpserver.controller.create_filestore = filestore
+    def test_get_definition_success(self):
+        cfg = {'return_value.read.return_value': MagicMock()}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_definition(dict(),
-                                                  resource=node.systemmac)
+                                                  resource=random_string())
 
-        filepath = '%s/%s' % (node.systemmac,
-                              ztpserver.controller.DEFINITION_FN)
-        filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(state, 'do_validation')
         self.assertIsInstance(resp, dict)
-        self.assertEqual(resp['definition'], definition.as_dict())
 
-    def test_get_startup_config_success(self, filestore):
-        resource = random_string()
-        ztpserver.controller.create_filestore = filestore
+    def test_get_startup_config_success(self):
+        ztpserver.neighbordb.replace_config_action = Mock(return_value=dict())
 
-        action_name = random_string()
-        action = {'name': action_name, 'action': 'replace_config'}
-        ztpserver.neighbordb.replace_config_action = Mock(return_value=action)
-
-        definition = create_definition()
-        definition.name = random_string()
-        response = dict(definition=definition.as_dict())
+        response = dict(definition={'actions': list()})
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_startup_config(response,
-                                                      resource=resource)
+                                                      resource=random_string())
 
         self.assertEqual(state, 'do_actions')
         self.assertIsInstance(resp, dict)
-        self.assertTrue(resp['get_startup_config'])
-        self.assertTrue(resp['definition'], definition.name)
-        self.assertEqual(resp['definition']['actions'][0]['name'], action_name)
 
-    def test_get_startup_config_success_no_definition(self, filestore):
+    def test_get_startup_config_success_no_definition(self):
         resource = random_string()
-        ztpserver.controller.create_filestore = filestore
 
         action_name = random_string()
         action = {'name': action_name, 'action': 'replace_config'}
@@ -657,71 +607,48 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertTrue(resp['definition'], 'Autogenerated definition')
         self.assertEqual(resp['definition']['actions'][0]['name'], action_name)
 
-    def test_get_definition_serializer_failure(self, filestore):
-        systemmac = random_string()
-        filestore.return_value.get_file.return_value = Mock(contents=None)
-        ztpserver.controller.create_filestore = filestore
+    def test_do_validation_success(self):
+        ztpserver.neighbordb.load_pattern = Mock()
 
-        controller = ztpserver.controller.NodesController()
-        self.assertRaises(SerializerError, controller.get_definition,
-                          dict(), resource=systemmac)
-
-    def test_do_validation_success(self, filestore):
-        node = create_node()
-        ztpserver.controller.create_filestore = filestore
-
-        ztpserver.neighbordb.load_pattern = Mock(name='load_pattern6')
         cfg = {'return_value.match_node.return_value': True}
         ztpserver.neighbordb.load_pattern.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.do_validation(dict(),
-                                                 resource=node.systemmac,
+                                                 resource=random_string(),
                                                  node=Mock())
-
-        filepath = '%s/%s' % (node.systemmac, ztpserver.controller.PATTERN_FN)
-        filestore.return_value.get_file.assert_called_with(filepath)
 
         self.assertEqual(state, 'get_startup_config')
         self.assertIsInstance(resp, dict)
-        self.assertEqual(resp, dict())
 
-    def test_do_validation_disabled_success(self, filestore):
+    def test_do_validation_disabled_success(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', True, 'default')
-
-        ztpserver.controller.create_filestore = filestore
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.do_validation(dict())
 
         self.assertEqual(state, 'get_startup_config')
         self.assertIsInstance(resp, dict)
-        self.assertEqual(resp, dict())
 
-    def test_get_attributes_success(self, filestore):
-        systemmac = random_string()
-        contents = random_string()
-
-        filestore.return_value.get_file.return_value = Mock(contents=contents)
-        ztpserver.controller.create_filestore = filestore
+    def test_get_attributes_success(self):
+        cfg = {'return_value.read.return_value': random_string()}
+        self.m_repository.return_value.get_file.configure_mock(**cfg)
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.get_attributes(dict(), resource=systemmac)
+        (resp, state) = controller.get_attributes(dict(),
+                                                  resource=random_string())
 
-        filepath = '%s/%s' % (systemmac, ztpserver.controller.ATTRIBUTES_FN)
-        filestore.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(state, 'do_substitution')
         self.assertIsInstance(resp, dict)
-        self.assertEqual(resp['attributes'], contents)
 
-    def test_get_attributes_missing(self, filestore):
+    def test_get_attributes_missing(self):
         node = create_node()
 
-        filestore.return_value.exists.return_value = False
-        filestore.return_value.get_file = \
+        self.m_repository.return_value.exists.return_value = False
+        self.m_repository.return_value.get_file = \
             Mock(side_effect=ztpserver.repository.FileObjectNotFound)
-        ztpserver.controller.create_filestore = filestore
+
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_attributes(dict(),
@@ -731,8 +658,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['attributes'], dict())
 
-    def test_do_substitution_success(self, filestore):
-        ztpserver.controller.create_filestore = filestore
+    def test_do_substitution_success(self):
+
 
         defattrs = dict(foo='$foo')
 
@@ -751,8 +678,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, 'bar')
 
-    def test_do_substitution_with_attributes(self, filestore):
-        ztpserver.controller.create_filestore = filestore
+    def test_do_substitution_with_attributes(self):
+
 
         defattrs = dict(foo='$foo')
 
@@ -776,8 +703,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, g_attr_foo)
 
-    def test_do_resources_success(self, filestore):
-        ztpserver.controller.create_filestore = filestore
+    def test_do_resources_success(self):
+
 
         var_foo = random_string()
         ztpserver.neighbordb.resources = Mock(return_value=dict(foo=var_foo))
@@ -796,8 +723,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, var_foo)
 
-    def test_do_put_config_success(self, filestore):
-        ztpserver.controller.create_filestore = filestore
+    def test_do_put_config_success(self):
+
 
         resource = random_string()
         body = random_string()
@@ -807,47 +734,20 @@ class NodesControllerUnitTests(unittest.TestCase):
         (resp, state) = controller.do_put_config(dict(), resource=resource,
                                                  request=request)
 
-        filepath = '%s/%s' % (resource, ztpserver.controller.STARTUP_CONFIG_FN)
-        filestore.return_value.write_file.called_with_args(filepath, body)
         self.assertIsNone(state)
         self.assertEqual(resp, dict())
 
-
-    def test_do_put_config_invalid_content_type(self, filestore):
-        ztpserver.controller.create_filestore = filestore
-
-        resource = random_string()
-        body = random_string()
-        request = Mock(content_type='text/html', body=body)
-
-        controller = ztpserver.controller.NodesController()
-        self.assertRaises(AssertionError, controller.do_put_config, dict(),
-                          resource=resource, request=request)
-
-    def test_do_put_config_invalid_resource(self, filestore):
-        filestore.return_value.write_file = Mock(side_effect=IOError)
-        ztpserver.controller.create_filestore = filestore
-
-        resource = random_string()
-        body = random_string()
-        request = Mock(content_type='text/plain', body=body)
-
-        controller = ztpserver.controller.NodesController()
-        self.assertRaises(IOError, controller.do_put_config, dict(),
-                          resource=resource, request=request)
-
-@patch('ztpserver.controller.create_filestore')
 class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
     def setUp(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', False, 'default')
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
 
-    def test_missing_required_attributes(self, filestore):
+    def test_missing_required_attributes(self):
         url = '/nodes'
         body = json.dumps(dict())
-
-        ztpserver.controller.create_filestore = filestore
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
@@ -855,13 +755,12 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
         self.assertEqual(resp.status_code, 400)
 
-    def test_node_exists(self, filestore):
+    def test_node_exists(self):
         url = '/nodes'
         systemmac = random_string()
         body = json.dumps(dict(systemmac=systemmac))
 
-        filestore.exists.return_value = True
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.return_value.exists.return_value = True
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
@@ -869,64 +768,67 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
         location = 'http://localhost/nodes/%s' % systemmac
 
-        self.assertTrue(filestore.return_value.write_file.called)
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.location, location)
 
-    def test_post_config(self, filestore):
+    def test_post_config(self):
         url = '/nodes'
         systemmac = random_string()
         config = random_string()
         body = json.dumps(dict(systemmac=systemmac, config=config))
 
-        filestore.return_value.exists.return_value = False
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.return_value.exists.return_value = False
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
 
         location = 'http://localhost/nodes/%s' % systemmac
-        filename = '%s/startup-config' % systemmac
-
-        filestore.return_value.add_folder.assert_called_with(systemmac)
-        filestore.return_value.write_file.assert_called_with(filename, config)
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.location, location)
 
-    def test_post_node_success(self, filestore):
+    def test_post_node_success(self):
         node = create_node()
 
-        definition_file = create_definition()
-        definition_file.add_action()
+        definition = create_definition()
+        definition.add_action()
 
-        filestore.return_value.exists.return_value = False
-        filestore.return_value.get_file.return_value.contents = \
-            definition_file.as_yaml()
+        cfg = {'return_value.exists.return_value': False}
 
-        ztpserver.controller.create_filestore = filestore
+        self.m_repository.configure_mock(**cfg)
 
-        ztpserver.neighbordb.topology.match_node = Mock(return_value=[Mock()])
+        cfg = {'return_value.match_node.return_value': [Mock()]}
+        ztpserver.neighbordb.load = Mock()
+        ztpserver.neighbordb.load.configure_mock(**cfg)
 
         request = Request.blank('/nodes', body=node.as_json(), method='POST',
                                 headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
+
+        args_list = list()
+        args_list.append('nodes/%s/%s' % (node.systemmac, DEFINITION_FN))
+        args_list.append('nodes/%s/%s' % (node.systemmac, PATTERN_FN))
+
+        for arg in args_list:
+            self.m_repository.return_value.add_file.assert_any_call(arg)
 
         location = 'http://localhost/nodes/%s' % node.systemmac
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.location, location)
 
 
-@patch('ztpserver.controller.create_filestore')
 class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
     def setUp(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', False, 'default')
 
-    def test_get_fsm_missing_node(self, filestore):
-        filestore.return_value.get_file = \
-            Mock(side_effect=ztpserver.repository.FileObjectNotFound)
+        self.m_repository = Mock()
+        ztpserver.controller.create_repository = self.m_repository
+
+    def test_get_fsm_missing_node(self):
+        cfg = {'return_value.get_file.side_effect': FileObjectNotFound}
+        self.m_repository.configure_mock(**cfg)
 
         url = '/nodes/%s' % random_string()
         request = Request.blank(url, method='GET')
@@ -934,29 +836,32 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
         self.assertEqual(resp.status_code, 400)
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_startup_config_wo_validation(self, *args):
+
+    def test_get_startup_config_wo_validation(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', True, 'default')
 
+        ztpserver.neighbordb.load_pattern = Mock()
+        ztpserver.neighbordb.create_node = Mock()
+
+        definition = create_definition()
+        definition.add_action()
+
         node = create_node()
-        filestore = args[2]
+        cfg = dict()
 
-        def exists(filepath):
-            if filepath.endswith('startup-config'):
-                return True
-            return False
-        filestore.return_value.exists = Mock(side_effect=exists)
-
-        def get_file(filepath):
+        def m_get_file(arg):
             fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
+            if arg.endswith('.node'):
+                fileobj.return_value.read.return_value = node.as_dict()
+            elif arg.endswith('startup-config'):
+                fileobj.return_value.read.return_value = random_string()
+            else:
+                raise ztpserver.repository.FileObjectNotFound
+            return fileobj
+        cfg['return_value.get_file'] = Mock(side_effect=m_get_file)
 
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        self.m_repository.configure_mock(**cfg)
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -966,31 +871,33 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertIsInstance(json.loads(resp.body), dict)
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_startup_config_w_validation_success(self, *args):
+    def test_get_startup_config_w_validation_success(self):
+        ztpserver.neighbordb.create_node = Mock()
+
+        definition = create_definition()
+        definition.add_action()
+
         node = create_node()
-        filestore = args[2]
+        cfg = dict()
 
-        def exists(filepath):
-            if filepath.endswith('startup-config'):
-                return True
-            return False
-        filestore.return_value.exists = Mock(side_effect=exists)
-
-        def get_file(filepath):
+        def m_get_file(arg):
             fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            elif filepath.endswith('pattern'):
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
+            if arg.endswith('.node'):
+                fileobj.return_value.read.return_value = node.as_dict()
+            elif arg.endswith('startup-config'):
+                fileobj.return_value.read.return_value = random_string()
+            elif arg.endswith('pattern'):
+                fileobj.return_value.read.return_value = random_string()
+            else:
+                raise ztpserver.repository.FileObjectNotFound
+            return fileobj
+        cfg['return_value.get_file'] = Mock(side_effect=m_get_file)
 
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        self.m_repository.configure_mock(**cfg)
 
         cfg = {'return_value.match_node.return_value': True}
-        args[1].configure_mock(**cfg)
+        ztpserver.neighbordb.load_pattern = Mock()
+        ztpserver.neighbordb.load_pattern.configure_mock(**cfg)
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -1000,18 +907,19 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertIsInstance(json.loads(resp.body), dict)
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_startup_config_w_validation_failure(self, *args):
-        node = create_node()
+    def test_get_startup_config_w_validation_failure(self):
+        m_load_pattern = Mock()
+        m_load_pattern.return_value.match_node.return_value = list()
+        ztpserver.neighbordb.load_pattern = m_load_pattern
 
-        filestore = args[2]
+        node = create_node()
+        cfg = dict()
 
         def exists(filepath):
             if filepath.endswith('startup-config'):
                 return True
             return False
-        filestore.return_value.exists = Mock(side_effect=exists)
+        cfg['return_value.exists'] = Mock(side_effect=exists)
 
         def get_file(filepath):
             fileobj = Mock()
@@ -1021,10 +929,9 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
             elif filepath.endswith('pattern'):
                 return fileobj
             raise ztpserver.repository.FileObjectNotFound
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        cfg['return_value.get_file'] = Mock(side_effect=get_file)
 
-        cfg = {'return_value.match_node.return_value': False}
-        args[1].configure_mock(**cfg)
+        self.m_repository.configure_mock(**cfg)
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -1034,9 +941,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'text/html')
         self.assertEqual(resp.body, str())
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_definition_wo_validation(self, *args):
+    def test_get_definition_wo_validation(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', True, 'default')
 
@@ -1044,53 +949,21 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file.add_action()
 
         node = create_node()
-        filestore = args[2]
+        cfg = dict()
 
-        def get_file(filepath):
-            fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            elif filepath.endswith('definition'):
-                fileobj.contents = definitions_file.as_yaml()
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        def m_get_file(arg):
+            m_file_object = Mock()
+            if arg.endswith('.node'):
+                m_file_object.read.return_value = node.as_dict()
+            elif arg.endswith('definition'):
+                m_file_object.read.return_value = definitions_file.as_dict()
+            else:
+                raise ztpserver.repository.FileObjectNotFound
+            return m_file_object
 
-        url = '/nodes/%s' % node.systemmac
-        request = Request.blank(url, method='GET')
-        resp = request.get_response(ztpserver.controller.Router())
+        cfg['return_value.get_file.side_effect'] = m_get_file
 
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content_type, 'application/json')
-        self.assertIsInstance(json.loads(resp.body), dict)
-
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_definition_w_validation_success(self, *args):
-        node = create_node()
-
-        definitions_file = create_definition()
-        definitions_file.add_action()
-
-        def get_file(filepath):
-            fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            elif filepath.endswith('definition'):
-                fileobj.contents = definitions_file.as_yaml()
-                return fileobj
-            elif filepath.endswith('pattern'):
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
-
-
-        filestore = args[2]
-        filestore.return_value.get_file = Mock(side_effect=get_file)
-
-        cfg = {'return_value.match_node.return_value': True}
-        args[1].configure_mock(**cfg)
+        self.m_repository.configure_mock(**cfg)
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -1100,29 +973,61 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertIsInstance(json.loads(resp.body), dict)
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_definition_w_validation_failure(self, *args):
+    def test_get_definition_w_validation_success(self):
         node = create_node()
 
         definitions_file = create_definition()
         definitions_file.add_action()
 
-        def get_file(filepath):
-            fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            elif filepath.endswith('definition'):
-                fileobj.contents = definitions_file.as_yaml()
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
+        cfg = dict()
 
-        filestore = args[2]
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        def m_get_file(arg):
+            m_file_object = Mock()
+            if arg.endswith('definition'):
+                m_file_object.read.return_value = definitions_file.as_dict()
+            elif arg.endswith('attributes'):
+                raise ztpserver.repository.FileObjectNotFound
+            return m_file_object
 
-        cfg = {'return_value.match_node.return_value': False}
-        args[1].configure_mock(**cfg)
+        cfg['return_value.get_file.side_effect'] = m_get_file
+
+        self.m_repository.configure_mock(**cfg)
+
+        m_load_pattern = Mock()
+        m_load_pattern.return_value.match_node.return_value = Mock()
+        ztpserver.neighbordb.load_pattern = m_load_pattern
+
+        url = '/nodes/%s' % node.systemmac
+        request = Request.blank(url, method='GET')
+        resp = request.get_response(ztpserver.controller.Router())
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertIsInstance(json.loads(resp.body), dict)
+
+
+    def test_get_definition_w_validation_failure(self):
+        definitions_file = create_definition()
+        definitions_file.add_action()
+
+        node = create_node()
+        cfg = dict()
+
+        def m_get_file(arg):
+            m_file_object = Mock()
+            if arg.endswith('.node'):
+                m_file_object.read.return_value = node.as_dict()
+            elif arg.endswith('definition'):
+                m_file_object.read.return_value = definitions_file.as_dict()
+            return m_file_object
+
+        cfg['return_value.get_file.side_effect'] = m_get_file
+
+        self.m_repository.configure_mock(**cfg)
+
+        m_load_pattern = Mock()
+        m_load_pattern.return_value.match_node.return_value = [Mock()]
+        ztpserver.neighbordb.load_pattern = m_load_pattern
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
@@ -1132,9 +1037,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'text/html')
         self.assertEqual(resp.body, str())
 
-    @patch('ztpserver.neighbordb.load_pattern')
-    @patch('ztpserver.neighbordb.create_node')
-    def test_get_definition_w_attributes_no_substitution(self, *args):
+    def test_get_definition_w_attributes_no_substitution(self):
         node = create_node()
 
         g_attr_foo = random_string()
@@ -1147,32 +1050,26 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file.add_action(name='dummy action',
                                     attributes=dict(url=l_attr_url))
 
-        filestore = args[2]
 
-        def exists(filepath):
-            if filepath.endswith('startup-config'):
-                return False
-            return True
-        filestore.return_value.exists = Mock(side_effect=exists)
+        cfg = dict()
 
-        def get_file(filepath):
-            fileobj = Mock()
-            if filepath.endswith('node'):
-                fileobj.contents = node.as_json()
-                return fileobj
-            elif filepath.endswith('definition'):
-                fileobj.contents = definitions_file.as_yaml()
-                return fileobj
-            elif filepath.endswith('attributes'):
-                fileobj.contents = attributes_file.as_yaml()
-                return fileobj
-            elif filepath.endswith('pattern'):
-                return fileobj
-            raise ztpserver.repository.FileObjectNotFound
-        filestore.return_value.get_file = Mock(side_effect=get_file)
+        def m_get_file(arg):
+            m_file_object = Mock()
+            if arg.endswith('.node'):
+                m_file_object.read.return_value = node.as_dict()
+            elif arg.endswith('definition'):
+                m_file_object.read.return_value = definitions_file.as_dict()
+            elif arg.endswith('attributes'):
+                m_file_object.read.return_value = attributes_file.as_dict()
+            elif arg.endswith('startup-config'):
+                raise ztpserver.repository.FileObjectNotFound
+            return m_file_object
+        cfg['return_value.get_file'] = Mock(side_effect=m_get_file)
 
-        cfg = {'return_value.match_node.return_value': True}
-        args[1].configure_mock(**cfg)
+        cfg['return_value.match_node.return_value'] = True
+        self.m_repository.configure_mock(**cfg)
+
+        ztpserver.neighbordb.load_pattern = Mock()
 
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')

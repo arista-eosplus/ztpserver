@@ -32,6 +32,7 @@
 # pylint: disable=W0622,W0402,W0613,W0142,R0201
 #
 
+import os
 import logging
 import urlparse
 
@@ -41,13 +42,15 @@ import routes
 
 from webob.static import FileApp
 
-import ztpserver.wsgiapp
 import ztpserver.config
 import ztpserver.neighbordb
 
-from ztpserver.serializers import SerializerError
-from ztpserver.repository import create_filestore
-from ztpserver.repository import FileObjectNotFound, FileStoreError
+from ztpserver.wsgiapp import WSGIController, WSGIRouter
+
+from ztpserver.neighbordb import create_node, Node
+
+from ztpserver.repository import create_repository
+from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
@@ -62,27 +65,44 @@ BOOTSTRAP_CONF = 'bootstrap.conf'
 
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
+class BaseController(WSGIController):
 
-class StoreController(ztpserver.wsgiapp.Controller):
+    FOLDER = None
 
-    def __init__(self, name, **kwargs):
-        try:
-            path_prefix = kwargs.get('path_prefix')
-            self.store = create_filestore(name, basepath=path_prefix)
-        except FileStoreError:
-            self.store = None
-        super(StoreController, self).__init__()
+    def __init__(self, **kwargs):
+        data_root = ztpserver.config.runtime.default.data_root
+        self.repository = create_repository(data_root)
+        super(BaseController, self).__init__()
+
+    def expand(self, *args, **kwargs):
+        ''' Returns an expanded filepath relative to data_root '''
+
+        filepath = os.path.join(*args)
+        folder = kwargs.get('folder', self.FOLDER)
+        return os.path.join(folder, filepath)
+
+    def http_bad_request(self, *args, **kwargs):
+        ''' Returns HTTP 400 Bad Request '''
+
+        log.debug('HTTP_BAD_REQUEST')
+        return dict(body='', content_type='text/html',
+                    status=HTTP_STATUS_BAD_REQUEST)
+
+    def http_not_found(self, *args, **kwargs):
+        ''' Returns HTTP 404 Not Found '''
+
+        log.debug('HTTP_NOT_FOUND')
+        return dict(body='', content_type='text/html',
+                    status=HTTP_STATUS_NOT_FOUND)
 
 
-class FilesController(StoreController):
 
-    def __init__(self):
-        prefix = ztpserver.config.runtime.files.path_prefix
-        folder = ztpserver.config.runtime.files.folder
-        super(FilesController, self).__init__(folder, path_prefix=prefix)
+class FilesController(BaseController):
+
+    FOLDER = 'files'
 
     def __repr__(self):
-        return 'FilesController'
+        return 'FilesController(folder=%s)' % self.FOLDER
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /files/{resource} '''
@@ -91,59 +111,58 @@ class FilesController(StoreController):
             urlvars = request.urlvars
             if urlvars.get('format') is not None:
                 resource += '.%s' % urlvars.get('format')
-            filename = self.store.get_file(resource).name
-            log.debug('Requesting file %s', filename)
+            log.debug('Requesting file: %s', resource)
+            filepath = self.expand(resource)
+            filename = self.repository.get_file(filepath).name
             return FileApp(filename)
         except FileObjectNotFound:
-            log.debug('Requested file was not found')
-            return dict(status=HTTP_STATUS_NOT_FOUND)
-        except Exception as exc:
-            log.exception(exc)
-            return dict(status=HTTP_STATUS_BAD_REQUEST)
+            log.error('Requested file %s was not found', resource)
+            return self.http_not_found()
 
 
-class ActionsController(StoreController):
+class ActionsController(BaseController):
 
-    def __init__(self):
-        prefix = ztpserver.config.runtime.actions.path_prefix
-        folder = ztpserver.config.runtime.actions.folder
-        super(ActionsController, self).__init__(folder, path_prefix=prefix)
+    FOLDER = 'actions'
 
     def __repr__(self):
-        return 'ActionsController'
+        return 'ActionsController(folder=%s)' % self.FOLDER
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /actions/{resource} '''
 
         try:
             log.debug('Requesting action: %s', resource)
-            body = self.store.get_file(resource).contents
+            filepath = self.expand(resource)
+            body = self.repository.get_file(filepath).read(CONTENT_TYPE_PYTHON)
             return dict(body=body, content_type=CONTENT_TYPE_PYTHON)
-        except Exception:       # pylint: disable=W0703
-            log.exception('Requested action not found')
-            return dict(status=HTTP_STATUS_NOT_FOUND)
+        except FileObjectNotFound:
+            log.error('Requested action %s was not found', resource)
+            return self.http_not_found()
 
 
-class NodesController(StoreController):
+class NodesController(BaseController):
 
-    def __init__(self):
-        self.definitions = create_filestore('definitions')
-        super(NodesController, self).__init__('nodes')
+    FOLDER = 'nodes'
 
     def __repr__(self):
-        return 'NodesController'
+        return 'NodesController(folder=%s)' % self.FOLDER
 
     def create(self, request, **kwargs):
-        node = ztpserver.neighbordb.create_node(request.json)
+        try:
+            node = create_node(request.json)
+        except Exception:       # pylint: disable=W0703
+            log.exception('Unable to create node metadata')
+            response = self.http_bad_request()
+            return self.response(**response)
         return self.fsm('required_attributes', request=request, node=node)
 
     def show(self, request, resource, *args, **kwargs):
         try:
-            node = self.load_node(resource)
+            fobj = self.repository.get_file(self.expand(resource, NODE_FN))
+            node = fobj.read(CONTENT_TYPE_JSON, Node)
             state = 'get_definition'
-        except Exception as exc:           # pylint: disable=W0703
-            log.error('There was an error trying to load the node definition')
-            log.exception(exc)
+        except Exception:           # pylint: disable=W0703
+            log.exception('Unable to load node metadata')
             response = self.http_bad_request()
             return self.response(**response)
         return self.fsm(state, resource=resource, node=node)
@@ -165,50 +184,37 @@ class NodesController(StoreController):
                 method = getattr(self, next_state)
                 (response, next_state) = method(response, **kwargs)
             log.debug('FSM completed successfully')
-        except Exception as exc:            # pylint: disable=W0703
-            log.exception(exc)
+        except Exception:            # pylint: disable=W0703
+            log.exception('Unexpected error in FSM')
             response = self.http_bad_request()
         finally:
             log.debug('response: %s', response)
-            return self.response(**response)      # pylint: disable=W0150
-
-    def load_node(self, resource, *args, **kwargs):
-        ''' Returns a :py:class:`ztpserver.topology.Node` instance
-
-        :param resource: system mac in string format of node
-        '''
-        try:
-            filepath = '%s/%s' % (resource, NODE_FN)
-            log.debug('Loading node from %s', filepath)
-            attrs = self.deserialize(self.store.get_file(filepath).contents,
-                                     CONTENT_TYPE_YAML)
-            node = ztpserver.neighbordb.create_node(attrs)
-        except Exception:
-            log.error('Unable to load node object!')
-            raise
-        return node
+            return response     # pylint: disable=W0150
 
     def get_startup_config_file(self, response, resource, **kwargs):
-        next_state = 'http_bad_request'
-        filepath = '%s/%s' % (resource, STARTUP_CONFIG_FN)
-        if self.store.exists(filepath):
-            response['body'] = self.store.get_file(filepath).contents
+        try:
+            filename = self.expand(resource, STARTUP_CONFIG_FN)
+            response['body'] = self.repository.get_file(filename).read()
             response['content_type'] = CONTENT_TYPE_OTHER
-            next_state = None
-        return (response, next_state)
+        except FileObjectNotFound:
+            log.error('Startup config file was not found')
+            raise
+        else:
+            return (response, None)
 
     def do_put_config(self, response, **kwargs):
         try:
-            request = kwargs['request']
-            assert request.content_type == CONTENT_TYPE_OTHER
-            filepath = '%s/%s' % (kwargs['resource'], STARTUP_CONFIG_FN)
-            self.store.write_file(filepath, request.body)
-        except AssertionError:
-            log.error('Invalid content-type specified for PUT method')
-            raise
+            body = str(kwargs['request'].body)
+            content_type = str(kwargs['request'].content_type)
+            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            fobj = self.repository.get_file(filename)
+        except FileObjectNotFound:
+            fobj = self.repository.add_file(filename)
         except Exception:
             log.error('Unable to write startup-config for node')
             raise
+        finally:
+            fobj.write(body, content_type)
         return (response, None)
 
     def required_attributes(self, response, *args, **kwargs):
@@ -216,23 +222,20 @@ class NodesController(StoreController):
         values are present
         '''
 
-        # pylint: disable=R0201
-        next_state = 'node_exists'
         req_attrs = ['systemmac']
         request = kwargs.get('request')
         if not set(req_attrs).issubset(set(request.json.keys())):
-            log.error('Missing required attributes in request')
+            log.error('Missing required attributes in request object')
             raise AttributeError
-        return (response, next_state)
+        return (response, 'node_exists')
 
     def node_exists(self, response, *args, **kwargs):
         next_state = 'post_config'
-        node = kwargs.get('node')
+        systemmac = kwargs.get('node').systemmac
 
-        valid = lambda x: self.store.exists('%s/%s' % (x, DEFINITION_FN)) or \
-                          self.store.exists('%s/%s' % (x, STARTUP_CONFIG_FN))
-
-        if valid(node.systemmac):
+        if self.repository.exists(self.expand(systemmac, DEFINITION_FN)) or \
+           self.repository.exists(self.expand(systemmac, STARTUP_CONFIG_FN)):
+            log.info('Found node entry for %s', systemmac)
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
 
@@ -241,20 +244,28 @@ class NodesController(StoreController):
     def dump_node(self, response, *args, **kwargs):
         try:
             node = kwargs.get('node')
-            self.store.write_file('%s/%s' % (node.systemmac, NODE_FN),
-                                  node.dumps(CONTENT_TYPE_YAML))
-        except Exception:
-            log.error('Unable to write node metadata')
+            contents = node.serialize()
+            filename = self.expand(node.systemmac, NODE_FN)
+            fobj = self.repository.get_file(filename)
+        except FileObjectNotFound:
+            fobj = self.repository.add_file(filename)
+        except:
+            log.error('Unexpected error trying to execute dump_node')
             raise
-        else:
-            return (response, 'set_location')
+        finally:
+            fobj.write(contents, CONTENT_TYPE_YAML)
+        return (response, 'set_location')
 
     def post_config(self, response, *args, **kwargs):
         try:
-            request = kwargs.get('request')
-            config = request.json['config']
-            node = kwargs.get('node')
-            self.add_node(node.systemmac, [('startup-config', config)])
+            config = kwargs['request'].json['config']
+            systemmac = kwargs['node'].systemmac
+
+            self.repository.add_folder(self.expand(systemmac))
+
+            config_fn = self.expand(systemmac, STARTUP_CONFIG_FN)
+            self.repository.add_file(config_fn).write(config)
+
             response['status'] = HTTP_STATUS_CREATED
             next_state = 'set_location'
         except KeyError as exc:
@@ -265,48 +276,44 @@ class NodesController(StoreController):
         return (response, next_state)
 
     def post_node(self, response, *args, **kwargs):
-        ndb = ztpserver.neighbordb
         try:
-            request = kwargs['request']
-            assert 'neighbors' in request.json
             node = kwargs['node']
-            matches = ndb.topology.match_node(node)
-            assert matches
+            topology = ztpserver.neighbordb.load()
+            # pylint: disable=E1103
+            matches = topology.match_node(node.systemmac)
+            log.info('Node matched %d pattern(s)', len(matches))
+            match = matches[0]
 
-            fileset = list()
-            url = matches[0].definition
+            self.repository.add_folder(self.expand(node.systemmac))
 
-            fileset.append((DEFINITION_FN,
-                            self.definitions.get_file(url).contents))
+            definition_url = self.expand(match.definition, folder='definitions')
+            definition = self.repository.get_file(definition_url).read()
+            definition_fn = self.expand(node.systemmac, DEFINITION_FN)
 
-            fileset.append((PATTERN_FN,
-                            matches[0].dumps(CONTENT_TYPE_YAML)))
+            fobj = self.repository.add_file(definition_fn)
+            fobj.write(definition, CONTENT_TYPE_YAML)
 
-            self.add_node(node.systemmac, fileset)
+            pattern_fn = self.expand(node.systemmac, PATTERN_FN)
+            fobj = self.repository.add_file(pattern_fn)
+            fobj.write(match.serialize(), CONTENT_TYPE_YAML)
 
             response['status'] = HTTP_STATUS_CREATED
-            next_state = 'dump_node'
-        except Exception:
-            log.error('Unable to create node definition')
+        except IndexError:
+            log.error('Unable to find pattern match for %s', node.systemmac)
             raise
-        return (response, next_state)
+        except Exception:
+            log.error('Unexpected error trying to execute post_node')
+            raise
+        return (response, 'dump_node')
 
     def set_location(self, response, *args, **kwargs):
         try:
             node = kwargs.get('node')
-            response['location'] = '/nodes/%s' % node.systemmac
+            response['location'] = self.expand(node.systemmac)
         except Exception:
-            log.error('Unable to set HTTP Location header')
+            log.error('Unexpected error trying to execute set_location')
             raise
         return (response, None)
-
-    def add_node(self, systemmac, files=None):
-        log.debug('Adding node %s to server', systemmac)
-        self.store.add_folder(systemmac)
-        if files:
-            for filename, contents in files:
-                filepath = '%s/%s' % (systemmac, filename)
-                self.store.write_file(filepath, contents)
 
     def get_definition(self, response, *args, **kwargs):
         ''' Reads the node specific definition from disk and stores it in the
@@ -314,15 +321,14 @@ class NodesController(StoreController):
         '''
 
         try:
-            filepath = '%s/%s' % (kwargs['resource'], DEFINITION_FN)
-            log.debug('defintion filepath is %s', filepath)
-            assert self.store.exists(filepath)
-            contents = self.store.get_file(filepath).contents
-            definition = self.deserialize(contents, CONTENT_TYPE_YAML)
+            filename = self.expand(kwargs['resource'], DEFINITION_FN)
+            log.debug('defintion filename is %s', filename)
+            fobj = self.repository.get_file(filename)
+            definition = fobj.read(CONTENT_TYPE_YAML)
             response['definition'] = definition
             log.debug('loaded definition from file with %d actions',
                       len(definition['actions']))
-        except AssertionError:
+        except FileObjectNotFound:
             log.warning('Node definition file does not exist')
         except Exception:
             log.error('Unable to load definition file')
@@ -331,9 +337,9 @@ class NodesController(StoreController):
 
     def get_startup_config(self, response, *args, **kwargs):
         try:
-            filepath = '%s/%s' % (kwargs['resource'], STARTUP_CONFIG_FN)
-            log.debug('startup-config filepath is %s', filepath)
-            assert self.store.exists(filepath)
+            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            log.debug('startup-config filename is %s', filename)
+            self.repository.get_file(filename)
             response['get_startup_config'] = True
             if 'definition' not in response:
                 response['definition'] = dict(name='Autogenerated definition',
@@ -341,9 +347,10 @@ class NodesController(StoreController):
             response['definition']['actions'].append(\
                 ztpserver.neighbordb.replace_config_action(kwargs['resource'],
                                                            STARTUP_CONFIG_FN))
-        except AssertionError:
+        except FileObjectNotFound:
             log.warning('Node startup-config file does not exist')
         except Exception:
+            log.error('Unable to load startup-config definition file')
             raise
         return (response, 'do_actions')
 
@@ -367,35 +374,34 @@ class NodesController(StoreController):
         return (response, 'get_attributes')
 
     def do_validation(self, response, *args, **kwargs):
-        config = ztpserver.config.runtime
         try:
+            config = ztpserver.config.runtime
             if not config.default.disable_topology_validation:
-                filepath = '%s/%s' % (kwargs['resource'], PATTERN_FN)
-                log.debug('pattern filepath is %s', filepath)
-                fileobj = self.store.get_file(filepath)
-                pattern = ztpserver.neighbordb.load_pattern(fileobj.name)
+                filename = self.expand(kwargs['resource'], PATTERN_FN)
+                log.debug('pattern filename is %s', filename)
+                fobj = self.repository.get_file(filename)
+                pattern = ztpserver.neighbordb.load_pattern(fobj.name)
                 if not pattern.match_node(kwargs['node']):
                     raise Exception('Node failed pattern validation')
                 log.info('Node pattern is valid')
             else:
                 log.warning('Topology validation is disabled')
         except Exception:
-            log.error('Unable to validate node pattern')
+            log.error('Unexpected error trying to execute do_validation')
             raise
         return (response, 'get_startup_config')
 
     def get_attributes(self, response, *args, **kwargs):
         ''' Reads the resource specific attributes file and stores it in the
-        response dict with key 'attributes'
+        response dict as 'attributes'
         '''
         try:
-            filepath = '%s/%s' % (kwargs['resource'], ATTRIBUTES_FN)
-            log.debug('attributes filepath is %s', filepath)
-            fileobj = self.store.get_file(filepath)
-            response['attributes'] = self.deserialize(fileobj.contents,
-                                                      CONTENT_TYPE_YAML)
-            log.debug('loaded %d attributes from file', \
-                len(response['attributes']))
+            filename = self.expand(kwargs['resource'], ATTRIBUTES_FN)
+            log.debug('Attributes filename is %s', filename)
+            fileobj = self.repository.get_file(filename)
+            attributes = fileobj.read(CONTENT_TYPE_YAML)
+            response['attributes'] = attributes
+            log.debug('loaded %d attributes from file', len(attributes))
         except FileObjectNotFound:
             log.warning('Node specific attributes file does not exist')
             response['attributes'] = dict()
@@ -461,100 +467,62 @@ class NodesController(StoreController):
 
     def finalize_response(self, response, *args, **kwargs):
         _response = dict()
-        _response['body'] = self.serialize(response['definition'],
-                                           CONTENT_TYPE_JSON)
+        _response['body'] = response['definition']
         _response['status'] = response.get('status', 200)
         _response['content_type'] = response.get('content_type',
                                                  CONTENT_TYPE_JSON)
         return (_response, None)
 
-    def http_bad_request(self, *args, **kwargs):
-        ''' return HTTP 400 Bad Request '''
-
-        log.debug('HTTP_BAD_REQUEST')
-        response = dict()
-        response['body'] = ''
-        response['content_type'] = 'text/html'
-        response['status'] = HTTP_STATUS_BAD_REQUEST
-        return response
 
 
-class BootstrapController(StoreController):
+class BootstrapController(BaseController):
 
     DEFAULTCONFIG = {
         'logging': list(),
         'xmpp': dict()
     }
 
-    def __init__(self):
-        prefix = ztpserver.config.runtime.bootstrap.path_prefix
-        folder = ztpserver.config.runtime.bootstrap.folder
-        super(BootstrapController, self).__init__(folder, path_prefix=prefix)
+    FOLDER = 'bootstrap'
 
     def __repr__(self):
-        return 'BootstrapController'
-
-    def get_bootstrap(self):
-        ''' Returns the bootstrap script '''
-
-        try:
-            filepath = ztpserver.config.runtime.bootstrap.filename
-            return self.deserialize(self.store.get_file(filepath).contents,
-                                    CONTENT_TYPE_PYTHON)
-        except FileObjectNotFound:
-            log.error('Bootstrap script does not exist')
-            raise
-        except:
-            raise
-
-    def get_config(self):
-        ''' Returns the bootstrap configuration as a dict '''
-
-        try:
-            data = self.store.get_file(BOOTSTRAP_CONF).contents
-            contents = self.deserialize(data, CONTENT_TYPE_YAML)
-        except FileObjectNotFound:
-            log.warning('Bootstrap config file not found, returning defaults')
-            contents = self.DEFAULTCONFIG
-        except:
-            raise
-        return contents
-
+        return 'BootstrapController(folder=%s)' % self.FOLDER
 
     def config(self, request, **kwargs):
         ''' Handles GET /bootstrap/config '''
 
-        # pylint: disable=W0613
         try:
-            log.debug('Requesting bootstrap.conf')
-            conf = self.serialize(self.get_config(), CONTENT_TYPE_JSON)
-            resp = dict(body=conf, content_type=CONTENT_TYPE_JSON)
-        except SerializerError:
-            log.error('Unable to deserialize bootstrap.conf file')
-        except Exception as exc:
-            log.exception(exc)
-            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
+            filename = self.expand(BOOTSTRAP_CONF)
+            body = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
+            resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
+        except FileObjectNotFound:
+            log.warning('Bootstrap config file not found, returning defaults')
+            body = self.DEFAULTCONFIG
+            resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
+        except FileObjectError:
+            log.exception('Unable to retrieve bootstrap config file')
+            resp = self.http_bad_request()
         return resp
 
     def index(self, request, **kwargs):
         ''' Handles GET /bootstrap '''
 
         try:
-            bootstrap = self.get_bootstrap()
+            filename = self.expand(ztpserver.config.runtime.bootstrap.filename)
+            fobj = self.repository.get_file(filename).read(CONTENT_TYPE_PYTHON)
             default_server = ztpserver.config.runtime.default.server_url
-            body = Template(bootstrap).substitute(SERVER=default_server)
+            body = Template(fobj).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
         except KeyError:
             log.debug('Expected variable was not provided')
-            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
-        except Exception as exc:
-            log.exception(exc)
-            resp = dict(status=HTTP_STATUS_BAD_REQUEST)
+            resp = self.http_bad_request()
+        except (FileObjectNotFound, FileObjectError):
+            log.exception('Unable to retrieve bootstrap script')
+            resp = self.http_bad_request()
         return resp
 
 
-class Router(ztpserver.wsgiapp.Router):
-    ''' handles incoming requests by mapping urls to controllers '''
+class Router(WSGIRouter):
+    ''' Routes incoming requests by mapping the URL to a controller '''
 
     def __init__(self):
         # pylint: disable=E1103,W0142
@@ -576,50 +544,45 @@ class Router(ztpserver.wsgiapp.Router):
         with mapper.submapper(**kwargs) as router_mapper:
 
             # configure /bootstrap
-            controller = BootstrapController()
-            router_mapper.connect('bootstrap',
-                                  '/bootstrap',
-                                  controller=controller,
+            router_mapper.connect('bootstrap', '/bootstrap',
+                                  controller=BootstrapController,
                                   action='index',
                                   conditions=dict(method=['GET']))
 
             router_mapper.connect('bootstrap_config', '/bootstrap/config',
-                                  controller=controller,
+                                  controller=BootstrapController,
                                   action='config',
                                   conditions=dict(method=['GET']))
 
             # configure /nodes
-            controller = NodesController()
-            router_mapper.collection('nodes',
-                                     'node',
-                                     controller=controller,
+            router_mapper.collection('nodes', 'node',
+                                     controller=NodesController,
                                      collection_actions=['create'],
                                      member_actions=['show'],
                                      member_prefix='/{resource}')
+
             router_mapper.connect('get_node_config',
                                   '/nodes/{resource}/startup-config',
-                                  controller=controller,
+                                  controller=NodesController,
                                   action='get_config',
                                   conditions=dict(method=['GET']))
 
             router_mapper.connect('put_node_config',
                                   '/nodes/{resource}/startup-config',
-                                  controller=controller,
+                                  controller=NodesController,
                                   action='put_config',
                                   conditions=dict(method=['PUT']))
 
             # configure /actions
-            router_mapper.collection('actions',
-                                     'action',
-                                     controller=ActionsController(),
+            router_mapper.collection('actions', 'action',
+                                     controller=ActionsController,
                                      collection_actions=[],
                                      member_actions=['show'],
                                      member_prefix='/{resource}')
 
             # configure /files
-            router_mapper.collection('files',
-                                     'file',
-                                     controller=FilesController(),
+            router_mapper.collection('files', 'file',
+                                     controller=FilesController,
                                      collection_actions=[],
                                      member_actions=['show'],
                                      member_prefix='/{resource:.*}')

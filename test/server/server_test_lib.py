@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,9 +29,12 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=C0103
+#
 import json
 import os
+import logging
 import random
 import shutil
 import string        #pylint: disable=W0402
@@ -41,9 +43,26 @@ import yaml
 
 WORKINGDIR = '/tmp/ztpserver'
 
+log = logging.getLogger('ztpserver')
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
                    for _ in range(random.randint(3, 20)))
+
+def enable_console(level='DEBUG'):
+
+    logging_fmt = '%(levelname)s: [%(module)s:%(lineno)d] %(message)s'
+    formatter = logging.Formatter(logging_fmt)
+
+    ch = logging.StreamHandler()
+    level = level or 'DEBUG'
+    level = str(level).upper()
+    level = logging.getLevelName(level)
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    log.addHandler(ch)
 
 def random_json(keys=None):
     data = dict()
@@ -180,4 +199,62 @@ class BootstrapConf(SerializerMixin):
 
 def create_bootstrap_conf():
     return BootstrapConf()
+
+class Pattern(SerializerMixin):
+
+    def __init__(self, **kwargs):
+
+        self.name = kwargs.get('name', random_string())
+        self.node = kwargs.get('node')
+        self.definition = kwargs.get('definition', random_string())
+        self.interfaces = list()
+
+    def add_interface(self, local_intf, remote_device, remote_intf):
+        self.interfaces.append({local_intf: {'device': remote_device,
+                                             'port': remote_intf}})
+
+    def add_random_interface(self, count=1):
+        for i in range(0, count):       # pylint: disable=W0612
+            while True:
+                intf = 'Ethernet%d' % random.randint(1, 64)
+                if intf not in self.interfaces:
+                    self.add_interface(intf, random_string(), random_string())
+                    break
+
+    def as_dict(self):
+        return dict(name=self.name,
+                    node=self.node,
+                    definition=self.definition,
+                    interfaces=self.interfaces)
+
+def create_pattern():
+    return Pattern()
+
+class NeighborDb(SerializerMixin):
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name', random_string())
+        self.variables = kwargs.get('variables', dict())
+        self.patterns = kwargs.get('patterns', list())
+
+    def get_patterns(self):
+        return [x.as_dict() for x in self.patterns]
+
+    def add_pattern(self, pattern=None):
+        if not pattern:
+            pattern = Pattern()
+            pattern = pattern.as_dict()
+        self.patterns.append(pattern)
+
+    def add_variable(self, key, value):
+        self.variables[key] = value
+
+    def as_dict(self):
+        return dict(name=self.name,
+                    variables=self.variables,
+                    patterns=[x.as_dict() for x in self.patterns])
+
+def create_neighbordb():
+    return NeighborDb()
+
 

@@ -44,7 +44,7 @@ class TestWsgiApp(unittest.TestCase):
 
     def setUp(self):
         mapper = routes.Mapper()
-        mapper.collection('tests', 'test', controller=WSGIController())
+        mapper.collection('tests', 'test', controller=WSGIController)
 
         self.router = WSGIRouter(mapper)
 
