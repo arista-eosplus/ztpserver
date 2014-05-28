@@ -96,7 +96,7 @@ class RepositoryUnitTests(unittest.TestCase):
     def test_create_file_success(self, m_fileobj):
         try:
             store = Repository(random_string())
-            store.create_file(random_string())
+            store.add_file(random_string())
             self.assertFalse(m_fileobj.return_value.write.called)
         except Exception as exc:
             self.fail(exc)
@@ -105,7 +105,7 @@ class RepositoryUnitTests(unittest.TestCase):
     def test_create_file_with_contents_success(self, m_fileobj):
         try:
             store = Repository(random_string())
-            store.create_file(random_string(), random_string())
+            store.add_file(random_string(), random_string())
             self.assertTrue(m_fileobj.return_value.write.called)
         except Exception as exc:
             self.fail(exc)
@@ -114,7 +114,7 @@ class RepositoryUnitTests(unittest.TestCase):
     def test_create_file_failure(self, m_fileobj):
         m_fileobj.return_value.write.side_effect = FileObjectError
         store = Repository(random_string())
-        self.assertRaises(RepositoryError, store.create_file,
+        self.assertRaises(RepositoryError, store.add_file,
                           random_string(), random_string())
 
     @patch('os.path.exists')

@@ -40,8 +40,9 @@ import ztpserver.app
 class TestApp(unittest.TestCase):
     #pylint: disable=R0904,C0103
 
-    @patch('ztpserver.controller.create_filestore')
-    def test_application_defaults(self, filestore):
+    @patch('ztpserver.neighbordb.load')
+    @patch('ztpserver.controller.create_repository')
+    def test_application_defaults(self, m_repository, m_load):
         obj = ztpserver.app.start_wsgiapp()
         self.assertIsInstance(obj, ztpserver.controller.Router)
 
