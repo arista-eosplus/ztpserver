@@ -51,19 +51,29 @@ class SerializerError(Exception):
     ''' base error raised by serialization functions '''
     pass
 
+class SerializerMixin(object):
+    ''' Base serializer object '''
 
-class TextSerializer(object):
+    def serialize(self, data, **kwargs):
+        ''' Serialize a dict to object '''
+        raise NotImplementedError
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
+        ''' Deserialize an object to dict '''
+        raise NotImplementedError
+
+class TextSerializer(SerializerMixin):
+
+    def deserialize(self, data, **kwargs):
         ''' Deserialize a text object and return a dict '''
         return str(data)
 
-    def serialize(self, data):
+    def serialize(self, data, **kwargs):
         ''' Serialize a dict object and return text '''
         return str(data)
 
 
-class YAMLSerializer(object):
+class YAMLSerializer(SerializerMixin):
 
     def __new__(cls):
         if not YAML_AVAILABLE:
@@ -72,7 +82,7 @@ class YAMLSerializer(object):
         else:
             return super(YAMLSerializer, cls).__new__(cls)
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         ''' Deserialize a YAML object and return a dict '''
 
         try:
@@ -81,7 +91,7 @@ class YAMLSerializer(object):
             log.exception('Unable to deserialize YAML data')
             raise
 
-    def serialize(self, data, safe_dump=False):
+    def serialize(self, data, safe_dump=False, **kwargs):
         ''' Serialize a dict object and return YAML '''
 
         try:
@@ -92,9 +102,9 @@ class YAMLSerializer(object):
             log.exception('Unable to serialize YAML data')
             raise
 
-class JSONSerializer(object):
+class JSONSerializer(SerializerMixin):
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
         ''' Deserialize a JSON object and return a dict '''
 
         try:
@@ -103,7 +113,7 @@ class JSONSerializer(object):
             log.exception('Unable to deserialize JSON data')
             raise
 
-    def serialize(self, data):
+    def serialize(self, data, **kwargs):
         ''' Serialize a dict object and return JSON '''
 
         try:
@@ -115,11 +125,21 @@ class JSONSerializer(object):
 
 class Serializer(object):
 
-    handlers = {
-        'text/plain': TextSerializer(),
-        'application/json': JSONSerializer(),
-        'application/yaml': YAMLSerializer()
-    }
+    def __init__(self):
+        self._handlers = {
+            'text/plain': TextSerializer(),
+            'application/json': JSONSerializer(),
+            'application/yaml': YAMLSerializer()
+        }
+
+    @property
+    def handlers(self):
+        return self._handlers
+
+    def add_handler(self, content_type, instance):
+        if content_type in self._handlers:
+            log.warning('Overwriting previous loaded handler %s', content_type)
+        self._handlers[content_type] = instance
 
     def serialize(self, obj, content_type=None, **kwargs):
         ''' Serialize the data based on the content_type '''
@@ -128,7 +148,7 @@ class Serializer(object):
             handler = self.handlers.get(content_type, TextSerializer())
             return handler.serialize(obj, **kwargs)
         except:
-            log.error('Unable to serialize data')
+            log.exception('Unable to serialize data')
             raise SerializerError
 
     def deserialize(self, obj, content_type=None, cls=None, **kwargs):
@@ -136,22 +156,22 @@ class Serializer(object):
 
         try:
             handler = self.handlers.get(content_type, TextSerializer())
-            obj = self._convert(handler.deserialize(obj, **kwargs))
+            obj = self._convert_from_unicode(handler.deserialize(obj, **kwargs))
             if cls:
                 obj = cls(**obj)
             return obj
         except:
-            log.error('Unable to deserialize data')
+            log.exception('Unable to deserialize data')
             raise SerializerError
 
     @staticmethod
-    def _convert(data):
+    def _convert_from_unicode(data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([Serializers._convert(x) for x in data.items()])
+            return dict([Serializer._convert_from_unicode(x) for x in data.items()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([Serializers._convert(x) for x in data])
+            return type(data)([Serializer._convert_from_unicode(x) for x in data])
         else:
             return data
 
@@ -178,7 +198,7 @@ def dumps(obj, content_type=None, cls=None, **kwargs):
         serializer = Serializer()
         if hasattr(obj, 'serialize'):
             obj = obj.serialize()
-        return serializers.serialize(obj, content_type, cls=cls, **kwargs)
+        return serializer.serialize(obj, content_type, cls=cls, **kwargs)
     except SerializerError:
         log.error('Unable to serialize object with content-type %s',
                   content_type)

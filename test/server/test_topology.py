@@ -32,6 +32,7 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 import unittest
+import traceback
 
 from mock import Mock
 
@@ -39,9 +40,52 @@ import ztpserver.serializers
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
 from ztpserver.topology import ResourcePool, ResourcePoolError
+from ztpserver.topology import Pattern, PatternError
+from ztpserver.topology import Topology, TopologyError
+from ztpserver.topology import Node, NodeError
 
 from server_test_lib import random_string
-from server_test_lib import create_node
+from server_test_lib import create_node, create_neighbordb, create_pattern
+
+class NodeUnitTests(unittest.TestCase):
+
+    def test_create_node_success(self):
+        node = create_node()
+        systemmac = node.systemmac
+        kwargs = node.as_dict()
+        del kwargs['systemmac']
+
+        node = Node(systemmac, **kwargs)
+
+        self.assertEqual(node.systemmac, systemmac)
+
+    def test_create_node_systemmac_only(self):
+        systemmac = random_string()
+        node = Node(systemmac)
+
+        self.assertEqual(node.systemmac, systemmac)
+
+    def test_create_node_failure(self):
+
+        node = Node()
+
+    def test_create_node_neighbors_valid(self):
+        pass
+
+    def test_create_node_neighbors_invalid(self):
+        pass
+
+    def test_add_neighbors_success(self):
+        pass
+
+    def test_add_neighbors_failure(self):
+        pass
+
+    def test_serialize_success(self):
+        pass
+
+    def test_serialize_failure(self):
+        pass
 
 
 class ResourcePoolUnitTests(unittest.TestCase):
@@ -189,6 +233,36 @@ class TestPattern(unittest.TestCase):
         self.assertEqual(len(obj.interfaces), 1)
 
 
+class PatternUnitTests(unittest.TestCase):
+
+    def test_add_interface_success(self):
+        kwargs = dict(name=random_string(),
+              definition=random_string(),
+              interfaces=None)
+
+        pattern = Pattern(**kwargs)
+
+        remote_device = random_string()
+        remote_intf = random_string()
+        neighbors = dict(Ethernet1={'device': remote_device,
+                                    'port': remote_intf})
+
+        try:
+            pattern.add_interface(neighbors)
+        except Exception as exc:
+            print traceback.print_exc(exc)
+            self.fail('add_interface raised an exception unexpectedly')
+
+
+    def test_add_interface_failure(self):
+        kwargs = dict(name=random_string(),
+                      definition=random_string(),
+                      interfaces=None)
+
+        pattern = Pattern(**kwargs)
+        self.assertRaises(PatternError, pattern.add_interface, random_string())
+
+
 class TestInterfacePattern(unittest.TestCase):
     #pylint: disable=W0142
 
@@ -264,6 +338,24 @@ class TestInterfacePattern(unittest.TestCase):
 
     def test_match_port_false(self):
         self.remote_port_test('Ethernet1', 'Ethernet2', fail=True)
+
+# class TopologyUnitTests(unittest.TestCase):
+
+#     def test_deserialize_success_single_pattern(self):
+#         ndb = create_neighbordb()
+#         pattern = create_pattern()
+#         ndb.add_pattern(pattern)
+
+#         topology = Topology()
+#         topology.deserialize(ndb.as_dict())
+
+#         self.assertEqual(topology.global_variables, ndb.variables)
+
+#         t_patterns =  [x.serialize() for x in topology.patterns['globals']]
+#         self.assertEqual(t_patterns, ndb.get_patterns())
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

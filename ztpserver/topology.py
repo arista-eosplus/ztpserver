@@ -40,7 +40,7 @@ import string # pylint: disable=W0402
 
 import ztpserver.config
 
-from ztpserver.serializers import SerializableMixin, DeserializableMixin
+from ztpserver.serializers import Serializer
 from ztpserver.constants import CONTENT_TYPE_YAML
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
@@ -52,25 +52,33 @@ ALL_CHARS = set([chr(c) for c in range(256)])
 NON_HEX_CHARS = ALL_CHARS - set(string.hexdigits)
 
 log = logging.getLogger(__name__)
-serializer = ztpserver.serializers.Serializer()
+serializer = Serializer()
 
-def log_msg(text, error=False):
-    text = 'NeighborDB: %s' % text
-    if error:
-        text = 'ERROR: %s' % text
-    log.debug(text)
 
 class ResourcePoolError(Exception):
     ''' base error raised by :py:class:`Resource` '''
     pass
 
+
+class NodeError(Exception):
+    ''' base error raised by :py:class:`Node` '''
+    pass
+
+
 class PatternError(Exception):
     ''' base error raised by :py:class:`Pattern` '''
     pass
 
+
 class InterfacePatternError(Exception):
     ''' base error raised by :py:class:`InterfacePattern` '''
     pass
+
+
+class TopologyError(Exception):
+    ''' base error class raised by :py:class:`Topology` '''
+    pass
+
 
 class OrderedCollection(collections.OrderedDict):
     ''' base object for using an ordered dictionary '''
@@ -79,49 +87,66 @@ class OrderedCollection(collections.OrderedDict):
         return self.get(key) if key else self.keys()
 
 
+class Function(object):
+    def __init__(self, value):
+        self.value = value
+
+    def match(self, arg):
+        raise NotImplementedError
+
+
+class IncludesFunction(Function):
+    def match(self, arg):
+        return arg in self.value
+
+
+class ExcludesFunction(Function):
+    def match(self, arg):
+        return arg not in self.value
+
+
+class RegexFunction(Function):
+    def match(self, arg):
+        match = re.match(self.value, arg)
+        return match is not None
+
+
+class ExactFunction(Function):
+    def match(self, arg):
+        return arg == self.value
+
+
 Neighbor = collections.namedtuple('Neighbor', ['device', 'port'])
 
 
-class Node(SerializableMixin, DeserializableMixin):
+class Node(object):
 
-    def __init__(self, systemmac,
-                 model=None, serialnumber=None,
-                 version=None, neighbors=None):
+    def __init__(self, systemmac, **kwargs):
 
-        self.systemmac = systemmac
-        self.model = model
-        self.serialnumber = serialnumber
-        self.version = version
+        self.systemmac = str(systemmac)
+        self.model = str(kwargs.get('model', ''))
+        self.serialnumber = str(kwargs.get('serialnumber', ''))
+        self.version = str(kwargs.get('version', ''))
 
         self.neighbors = OrderedCollection()
-        if neighbors:
-            self.add_neighbors(neighbors)
+        if 'neighbors' in kwargs:
+            self.add_neighbors(kwargs['neighbors'])
+
 
     def __repr__(self):
-        return 'Node(node=%s, neighbors=%s, ...)' % \
-               (self.systemmac, str(self.neighbors))
+        return 'Node(systemmac=%s)' % self.systemmac
 
     def add_neighbors(self, neighbors):
-        ''' adds a list of neighbors to the node object
-
-        :param neighbors: an unordered list of neighbors
-                          (each represented as a touple)
-        '''
-        for interface, neighbor_list in neighbors.iteritems():
-            neighbors = []
-            for neighbor in neighbor_list:
-                neighbors.append(Neighbor(neighbor['device'],
-                                          neighbor['port']))
-            self.neighbors[interface] = neighbors
-
-    def deserialize(self, json):
-        for prop in ['model', 'node', 'serialnumber', 'version']:
-            if prop in json:
-                setattr(self, prop, json[prop])
-
-        self.neighbors = OrderedCollection()
-        if 'neighbors' in json:
-            self.add_neighbors(json['neighbors'])
+        try:
+            for interface, neighbors in neighbors.items():
+                _neighbors = []
+                for neighbor in neighbors:
+                    _neighbors.append(Neighbor(neighbor['device'],
+                                               neighbor['port']))
+                self.neighbors[interface] = _neighbors
+        except AttributeError:
+            log.error('Unable to add neighbor due to missing attribute')
+            raise NodeError
 
     def serialize(self):
         result = {}
@@ -135,14 +160,13 @@ class Node(SerializableMixin, DeserializableMixin):
                 serialized_neighbor_list = []
                 for neighbor in neighbor_list:
                     serialized_neighbor_list.append(
-                        dict(device=neighbor.device,
-                             port=neighbor.port))
+                        dict(device=neighbor.device, port=neighbor.port))
                 neighbors[interface] = serialized_neighbor_list
         result['neighbors'] = neighbors
         return result
 
 
-class ResourcePool(DeserializableMixin, SerializableMixin):
+class ResourcePool(object):
 
     def __init__(self):
         cfg = ztpserver.config.runtime
@@ -150,10 +174,7 @@ class ResourcePool(DeserializableMixin, SerializableMixin):
         self.data = None
 
     def serialize(self):
-        return self.data
-
-    def deserialize(self, contents):
-        self.data = contents
+        return [(key, str(value)) for (key, value) in contents.items()]
 
     def allocate(self, pool, node):
         try:
@@ -191,166 +212,127 @@ class ResourcePool(DeserializableMixin, SerializableMixin):
             matches = [m[0] for m in self.data.iteritems()
                        if m[1] == node.systemmac]
             key = matches[0] if matches else None
+            return key
         except Exception as exc:
             log.exception('An error occurred trying to lookup existing '
                           'resource for node %s', node.systemmac)
             raise ResourcePoolError
-        return key
 
 
-class Functions(object):
+class Topology(object):
 
-    @classmethod
-    def exact(cls, arg, value):
-        return arg == value
+    RESERVED_VARIABLES = ['any', 'none']
 
-    @classmethod
-    def regex(cls, arg, value):
-        return re.match(arg, value)
-
-    @classmethod
-    def includes(cls, arg, value):
-        return arg in value
-
-    @classmethod
-    def excludes(cls, arg, value):
-        return arg not in value
-
-
-class Topology(DeserializableMixin):
-
-    def __init__(self):
-        self.global_variables = {}
-        self.patterns = {'globals': [],
-                         'nodes': {}}
+    def __init__(self, **kwargs):
+        self.variables = kwargs.get('variables', dict())
+        self.patterns = {'globals': list(), 'nodes': dict()}
 
     def __repr__(self):
         return 'Topology(variables=%d, globals=%d, nodes=%d)' % \
-               (len(self.global_variables),
+               (len(self.variables),
                 len(self.patterns['globals']),
                 len(self.patterns['nodes']))
 
-    def clear(self):
-        self.global_variables.clear()
-        self.patterns['globals'] = []
-        self.patterns['nodes'].clear()
-
-    def load_from_file(self, filepath, content_type=CONTENT_TYPE_YAML):
-        self.clear()
-        super(Topology, self).load_from_file(filepath, content_type)
-
-    def deserialize(self, contents):
-        self.global_variables = contents.get('variables', {})
-
-        reserved_variable_names = ['any', 'none']
-        for var in reserved_variable_names:
-            if var in self.global_variables:
-                log_msg('Reserved word used for variable name: %s' % var,
-                        error=True)
-                del self.global_variables[var]
-
-        for pattern in contents.get('patterns'):
-            self.add_pattern(**pattern)
-
-    def add_pattern(self, name=None, definition=None,
-                    node=None, interfaces=None,
-                    variables=None):
-        log_msg('Adding pattern: name=%s, ...' % name)
-
-        if not (name and (isinstance(name, (int, long, float,
-                                            complex, basestring)))):
-            log_msg('Failed to parse pattern because of invalid name: '
-                    '%s' % str(name), error=True)
-            return
-
-        if not (definition and isinstance(definition, basestring) and
-                len(definition.split()) == 1):
-            log_msg('Failed to parse pattern because of invalid definition: '
-                    '%s' % str(definition), error=True)
-            return
-
-        if not (interfaces and isinstance(interfaces, list)):
-            log_msg('Failed to parse pattern because of invalid interfaces: '
-                    '%s' % str(interfaces), error=True)
-            return
-
-        if node and \
-                (not isinstance(node, basestring) or
-                 len(node.translate(''.join(ALL_CHARS),
-                                    ''.join(NON_HEX_CHARS))) != 12):
-            log_msg('Failed to parse pattern because of invalid systemmac: '
-                    '%s' % str(node), error=True)
-            return
-
-        if variables and not isinstance(variables, dict):
-            log_msg('Failed to parse pattern because of '
-                    'invalid variables list: %s' % str(variables), error=True)
-            return
-
-        # Compute list of variables
-        pattern_variables = variables or {}
-        for key in [x for x in self.global_variables
-                    if x not in pattern_variables]:
-            pattern_variables[key] = self.global_variables[key]
-
-        # Create pattern
+    def add_variable(self, key, value, overwrite=False):
         try:
-            pattern = Pattern(name, definition, interfaces,
-                              node=node, variables=pattern_variables)
-            log_msg('Pattern entry parsed successfully')
+            if key in self.RESERVED_VARIABLES:
+                log.error('Variable name \'%s\' is reserved', key)
+                raise TopologyError
+            elif key in self.variables and not overwrite:
+                log.error('Global variable \'%s\' already exists', key)
+                raise TopologyError
+            self.variables[key] = value
+        except TopologyError:
+            raise
+
+    def add_variables(self, variables):
+        if not hasattr(variables, 'items'):
+            log.error('Unable to process variables')
+            raise TopologyError
+
+        for key, value in variables.items():
+            self.add_variable(key, value)
+
+    def add_pattern(self, name, definition, interfaces, **kwargs):
+
+        try:
+            log.info('Adding pattern %s', name)
+
+            kwargs['node'] = kwargs.get('node')
+            kwargs['variables'] = kwargs.get('variables', dict())
+
+            for key in set(self.variables).difference(kwargs['variables']):
+                kwargs['variables'][key] = self.variables[key]
+
+            pattern = Pattern(name, definition, interfaces, **kwargs)
+
+            log.info('Pattern \'%s\' parsed successfully', pattern.name)
+            log.debug('%r', pattern)
 
             # Add pattern to topology
-            if node:
+            if kwargs['node']:
                 self.patterns['nodes'][pattern.node] = pattern
             else:
                 self.patterns['globals'].append(pattern)
-        except PatternError as error:
-            log_msg('Failed to parse pattern: %s' % str(error),
-                    error=True)
+        except KeyError:
+            log.error('Unable to add pattern \'%s\' due to missing attributes',
+                      pattern.get('name'))
+            raise TopologyError
+        except PatternError:
+            log.warning('Failed to add pattern \'%s\' to topology', name)
+            raise TopologyError
+        except Exception:
+            log.exception('Unexpected exception during add_pattern')
+            raise TopologyError
 
-    def node_patterns(self):
-        result = []
-        for entry in self.patterns['nodes'].itervalues():
-            result.append(entry.name)
-        return sorted(result)
+    def add_patterns(self, patterns, continue_on_error=True):
+        for pattern in patterns:
+            try:
+                self.add_pattern(**pattern)
+            except TopologyError:
+                if not continue_on_error:
+                    raise
+                continue
 
-    def global_patterns(self):
-        return sorted([x.name for x in self.patterns['globals']])
+    def isnodepattern(self, pattern):
+        return pattern.node is not None
 
-    def all_patterns(self):
-        return sorted(self.node_patterns() + self.global_patterns())
+    def isglobalpattern(self, pattern):
+        return pattern.node == '' or pattern.node is None
 
-    def find_eligible_patterns(self, node):
-        ''' returns a list of possible patterns for a given node '''
-        log_msg('Searching for eligible patterns for node: %s' % node.systemmac)
+    def get_patterns(self, predicate=None):
+        _patterns = set(self.patterns['nodes'].values())
+        _patterns = sorted(_patterns.union(self.patterns['globals']))
+        return filter(predicate, _patterns) if predicate else _patterns
 
-        if node.systemmac in self.patterns['nodes']:
-            pattern = self.patterns['nodes'].get(node.systemmac)
-            log_msg('Eligible pattern: %s' % pattern.name)
+    def find_patterns(self, node):
+        try:
+            systemmac = node.systemmac
+            log.info('Searching for eligible patterns for node %s', systemmac)
+            pattern = self.patterns['nodes'][systemmac]
+            log.info('Eligible pattern: %s', pattern.name)
             return [pattern]
-        else:
-            log_msg('Eligible patterns: all global patterns')
-            return self.patterns['globals']
+        except KeyError:
+            log.info('Eligible patterns: all global patterns')
+            return self.get_patterns(predicate=self.isglobalpattern)
 
     def match_node(self, node):
-        ''' Returns a list of :py:class:`Pattern` classes satisfied
-        by the :py:class:`Node` argument
-        '''
-
-        result = []
-        for pattern in self.find_eligible_patterns(node):
-            log_msg('Attempting to match pattern %s' % pattern.name)
-
-            if pattern.match_node(node):
-                log_msg('Match for pattern %s succeeded' % pattern.name)
-                result.append(pattern)
-            else:
-                log_msg('Match for pattern %s failed' % pattern.name)
-
-        return result
+        try:
+            result = list()
+            for pattern in self.find_patterns(node):
+                log.info('Attempting to match pattern %s', pattern.name)
+                if pattern.match_node(node):
+                    log.info('Match for pattern %s succeeded', pattern.name)
+                    result.append(pattern)
+                else:
+                    log.info('Match for pattern %s failed', pattern.name)
+            return result
+        except Exception:
+            log.exception('Unexpected error trying to execute match_node')
+            raise TopologyError
 
 
-class Pattern(DeserializableMixin, SerializableMixin):
+class Pattern(object):
 
     def __init__(self, name, definition, interfaces,
                  node=None, variables=None):
@@ -359,410 +341,317 @@ class Pattern(DeserializableMixin, SerializableMixin):
         self.definition = definition
 
         self.node = node
-        self.variables = variables or {}
+        self.variables = variables or dict()
 
-        self.interfaces = []
+        self.interfaces = list()
         if interfaces:
             self.add_interfaces(interfaces)
 
         self.variable_substitution()
 
+        #TODO hacky workaround to update regular expressions
+        [interface.refresh() for interface in self.interfaces]
+
     def __repr__(self):
-        return "Pattern(name=%s)" % self.name
+        return 'Pattern(name=\'%s\')' % self.name
 
     def variable_substitution(self):
-        substitution = False
-        for item in self.interfaces:
-            if(item.remote_device and
-               item.remote_device.startswith('$') and
-               item.remote_device[1:] in self.variables):
-                item.remote_device = self.variables[item.remote_device[1:]]
-                substitution = True
-            if(item.remote_interface and
-               item.remote_interface.startswith('$') and
-               item.remote_interface[1:] in self.variables):
-                item.remote_interface = \
-                    self.variables[item.remote_interface[1:]]
-                substitution = True
-            if substitution:
-                log_msg('InterfacePattern substitution: %s' % str(item))
-            substitution = False
-
-    def deserialize(self, contents):
-        self.name = contents.get('name')
-        self.definition = contents.get('definition')
-
-        self.node = contents.get('node', None)
-        self.variables = contents.get('variables', {})
-
-        self.interfaces = []
-        self.add_interfaces(contents.get('interfaces', []))
-        self.variable_substitution()
+        try:
+            log.info('Checking pattern entries for variable substitution')
+            for item in self.interfaces:
+                for attr in ['device', 'port']:
+                    value = getattr(item, attr)
+                    if value.startswith('$'):
+                        newvalue = self.variables[value[1:]]
+                        setattr(item, attr, newvalue)
+                        log.info('Found variable %s, new value %s',
+                                  value, newvalue)
+            log.info('Variable substitution is complete')
+        except KeyError:
+            log.error('Variable substitution failed due to unknown variable')
+            raise PatternError
 
     def serialize(self):
-        data = dict(name=self.name, definition=self.definition)
+        try:
+            data = dict(name=self.name, definition=self.definition)
 
-        interfaces = []
-        for entry in self.interfaces:
-            interfaces.append({entry.interfaces_init: entry.serialize()})
-        data['interfaces'] = interfaces
+            interfaces = []
+            for entry in self.interfaces:
+                interfaces.append({entry.interfaces_init: entry.serialize()})
+            data['interfaces'] = interfaces
 
-        if self.variables:
             data['variables'] = self.variables
-
-        if self.node:
             data['node'] = self.node
 
-        return data
+            return data
+        except Exception:
+            log.exception('Unexpected error trying to serialize object')
+            raise PatternError
 
-    def add_interface(self, interface_details):
-        if not isinstance(interface_details, dict):
-            raise PatternError('Expected dict, but got: %s' %
-                               str(interface_details))
+    def add_interface(self, interface):
+        try:
+            if not hasattr(interface, 'items'):
+                log.error('\'interface\' argument has no attribute \'items\'')
+                raise PatternError
 
-        for intf, peer_info in interface_details.iteritems():
-            try:
-                args = self.parse_interface(intf, peer_info)
-                log_msg('Adding interface to pattern: %s' % str(args))
-                (interface, remote_device, remote_interface) = args
+            for key, value in interface.items():
+                (interface, device, port) = self.parse_interface(key, value)
 
-                self.interfaces.append(InterfacePattern(interface,
-                                                        remote_device,
-                                                        remote_interface))
-            except InterfacePatternError as error:
-                log_msg('Could not add pattern %s because %s' %
-                        (self.name, error), error=True)
-                raise PatternError('Failed to create interface pattern')
+                if interface in ['none', 'any']:
+                    log.info('Adding interface to pattern %s', interface)
+                    pattern = InterfacePattern(interface, device, port)
+                    self.interfaces.append(pattern)
+                else:
+                    for item in self.expand_interface(interface):
+                        log.info('Adding interface to pattern %s', item)
+                        pattern = InterfacePattern(item, device, port)
+                        self.interfaces.append(pattern)
 
-    def add_interfaces(self, interfaces):
-        for interface_details in interfaces:
-            self.add_interface(interface_details)
+        except ValueError:
+            log.error('Unable to parse interface \'%s\'', key)
+            raise PatternError
+        except InterfacePatternError:
+            log.exception('Unable add interface pattern \'%s\'', key)
+            raise PatternError
+        except Exception:
+            log.exception('Unexpected error trying to execute add_interface')
+            raise PatternError
 
-    @classmethod
-    def parse_interface(cls, interface, peer_info):
-        log_msg('parse_interface[%s]: %s' % (str(interface), str(peer_info)))
+    def add_interfaces(self, interfaces, continue_on_error=False):
+        try:
+            for interface in interfaces:
+                try:
+                    self.add_interface(interface)
+                except PatternError:
+                    log.error('Unable to add interface to pattern')
+                    if not continue_on_error:
+                        raise
+                    continue
+        except TypeError:
+            log.error('\'interfaces\' is not iterable')
+            raise PatternError
 
-        if isinstance(peer_info, dict):
-            for key in peer_info:
-                if key not in ['device', 'port']:
-                    raise InterfacePatternError('Unexpected key: %s' % key)
-            remote_device = peer_info.get('device', 'any')
-            remote_interface = peer_info.get('port', 'any')
+    @staticmethod
+    def parse_interface(interface, neighbor):
+        log.debug('parse_interface[%s]: %s', interface, neighbor)
 
-        elif isinstance(peer_info, basestring):
-            if peer_info == 'any':
-                # handles the case of implicit 'any'
-                remote_device, remote_interface = 'any', 'any'
-            elif peer_info == 'none':
-                # handles the case of implicit 'none'
-                remote_device, remote_interface = 'none', 'none'
-            elif ':' not in peer_info:
-                remote_device = peer_info
-                remote_interface = 'any'
-            else:
-                tokens = peer_info.split(':')
-                if len(tokens) != 2:
-                    raise InterfacePatternError('Unexpected peer: %s' %
-                                                peer_info)
-                remote_device = tokens[0]
-                remote_interface = tokens[1]
+        if hasattr(neighbor, 'items'):
+            device = neighbor['device']
+            port = neighbor['port']
+
         else:
-            raise InterfacePatternError('Unexpected peer: %s' % peer_info)
+            if neighbor == 'any':
+                device, port = 'any', 'any'
+            elif neighbor == 'none':
+                device, port = 'none', 'none'
+            elif ':' not in neighbor:
+                device = neighbor
+                port = 'any'
+            else:
+                tokens = neighbor.split(':')
+                device = tokens[0]
+                port = tokens[1]
 
-        remote_device = remote_device.strip()
-        if len(remote_device.split()) != 1:
-            raise InterfacePatternError('Unexpected peer: %s' %
-                                        peer_info)
-        remote_interface = remote_interface.strip()
-        if len(remote_interface.split()) != 1:
-            raise InterfacePatternError('Unexpected peer: %s' %
-                                        peer_info)
+        device = device.strip()
+        if len(device.split()) != 1:
+            log.error('Invalid peer device')
+            raise PatternError
 
-        return (interface, remote_device, remote_interface)
+        remote_port = port.strip()
+        if len(port.split()) != 1:
+            log.error('Invalid peer port')
+            raise PatternError
+
+        return (interface, device, port)
 
     def match_node(self, node):
-        log_msg('Attempting to match node: %s' % str(node))
 
-        patterns = list(self.interfaces)
-        for intf, neighbors in node.neighbors.iteritems():
-            match = None
-            for index, intf_pattern in enumerate(patterns):
-                # True, False, None
-                result = intf_pattern.match_neighbors(intf, neighbors)
-                if result is True and not match:
-                    log_msg('Interface %s matched %s '%
-                            (intf, str(intf_pattern)))
-                    match = index
-                elif result is False:
-                    log_msg('Failed to match node: interface %s does not '
-                            'comply with %s'  %
-                            (intf, str(intf_pattern)))
+        log.info('Attempting to match node %s', node.systemmac)
+        log.debug('node=%r', node)
+
+        try:
+            patterns = list(self.interfaces)
+            matches = list()
+
+            for interface, neighbors in node.neighbors.items():
+                matched_index = None
+                for index, pattern in enumerate(patterns):
+                    try:
+                        if pattern.match(interface, neighbors):
+                            matched_index = index
+                            break
+                    except InterfacePatternError:
+                        log.warning('Interface %s matched but neighbors were '
+                                    'invalid', interface)
+                        return False
+
+                if matched_index is not None:
+                    log.debug('Removing pattern %r from available patterns',
+                              patterns[matched_index])
+                    matches.append(patterns[matched_index])
+                    del patterns[matched_index]
+                if matched_index is None:
+                    log.warning('Pattern was not matched')
+
+            log.debug('patterns=%s', patterns)
+            log.debug('matches=%s', matches)
+
+            for pattern in patterns:
+                log.debug('Checking remaining patterns for positive contraint')
+                if not pattern.is_wildcard():
+                    log.debug('pattern %s has positive contraint', pattern)
                     return False
+            return True
 
-            if match is not None:
-                del patterns[match]
-            else:
-                log_msg('Failed to match node: %s does not match '
-                        'any pattern'  % intf)
+        except Exception:
+            log.exception('Unexpected exception during match_node')
+            raise PatternError
 
-        for intf_pattern in patterns:
-            if intf_pattern.is_positive_constraint():
-                log_msg('Failed to match node: no neighbor matched %s' %
-                        str(intf_pattern))
-                return False
+    def atoi(self, text):
+        return int(text) if text.isdigit() else text
 
-        return True
+    def natural_keys(self, text):
+        return [self.atoi(c) for c in re.split('(\d+)', text)]
+
+    def expand_interface(self, entry):
+        indicies_re = re.compile(r'\d+')
+        range_re = re.compile(r'(\d+)\-(\d+)')
+
+        indicies = indicies_re.findall(entry)
+        ranges = range_re.findall(entry)
+        interfaces = set()
+
+        for start, end in ranges:
+            s = int(start)
+            e = int(end) + 1
+            for z in range(s, e):
+                interfaces.add('Ethernet%s' % z)
+
+        for i in indicies:
+            interfaces.add('Ethernet%s' % i)
+
+        interfaces = list(interfaces)
+        interfaces.sort(key=self.natural_keys)
+        return interfaces
 
 
 class InterfacePattern(object):
 
-    def __init__(self, interfaces, remote_device, remote_interface):
+    KEYWORDS = {
+        'any': RegexFunction('.*'),
+        'none': RegexFunction('[^a-zA-Z0-9]')
+    }
 
-        # Used for serialization
-        self.interfaces_init = interfaces
-        self.remote_device_init = remote_device
-        self.remote_interface_init = remote_interface
+    FUNCTIONS = {
+        'exact': ExactFunction,
+        'includes': IncludesFunction,
+        'excludes': ExcludesFunction,
+        'regex': RegexFunction
+    }
 
-        self.interfaces = self.parse_interfaces(interfaces)
+    def __init__(self, interface, device, port):
 
-        # Used for potential variable substitution
-        self.remote_device = remote_device
-        self.remote_interface = remote_interface
+        self.interface = interface
+        self.device = device
+        self.port = port
+
+        self.interface_re = self.compile(interface)
+        self.device_re = self.compile(device)
+        self.port_re = self.compile(port)
+
+    def __repr__(self):
+        return 'InterfacePattern(interface=%s, device=%s, port=%s)' % \
+                (self.interface, self.device, self.port)
+
+    def serialize(self):
+        return dict(interface=self.interface,
+                    device=self.device,
+                    port=self.port)
+
+    def refresh(self):
+        self.interface_re = self.compile(self.interface)
+        self.device_re = self.compile(self.device)
+        self.port_re = self.compile(self.port)
+
+    def match(self, interface, neighbors):
+        log.debug('%r', self)
+        log.debug('match interface: %s, neighbors: %s', interface, neighbors)
+
+        match_interface = self.match_interface(interface)
+        log.debug('match_interface=%s', match_interface)
+
+        if match_interface in [True, None]:
+            match_neighbors = self.match_neighbors(neighbors)
+            log.debug('match_neighbors=%s', match_neighbors)
+        else:
+            log.debug('skipping match_neighbors')
+
+        if match_interface and not match_neighbors:
+            log.warning('Interface matches but neighbors are invalid')
+            raise InterfacePatternError
+
+        log.debug('match returns %s', (match_interface and match_neighbors))
+        return match_interface and match_neighbors
+
+    def compile(self, value):
+        log.debug('Compiling function for %s', value)
+        if value in self.KEYWORDS:
+            log.debug('Found pattern keyword %s', value)
+            return self.KEYWORDS[value]
+
+        match = FUNC_RE.match(value)
+        if match:
+            function = match.group('function')
+            arg = match.group('arg')
+            log.debug('Found function %s with arg %s', function, arg)
+            return self.FUNCTIONS[function](arg)
+        else:
+            return ExactFunction(value)
+
+    def match_neighbors(self, neighbors):
+        for neighbor in neighbors:
+            if self.match_neighbor(neighbor):
+                return True
+        return False
+
+    def match_neighbor(self, neighbor):
+        match_device = self.device_re.match(neighbor.device)
+        log.debug('match_device=%s', match_device)
+
+        match_port = self.port_re.match(neighbor.port)
+        log.debug('match_port=%s', match_port)
+
+        return match_device and match_port or False
+
+    def match_interface(self, interface):
+        if self.interface == 'none':
+            return None
+        match = self.interface_re.match(interface)
+        return match is not None and match is not False
 
     def is_positive_constraint(self):
-        if self.interfaces == 'any':
-            if self.remote_device == 'any':
+        if self.interface == 'any':
+            if self.device == 'any':
                 return True
-            elif self.remote_device != 'none':
-                return self.remote_interface != 'none'
+            elif self.device != 'none':
+                return self.interface != 'none'
 
-        elif self.interfaces != 'none':
-            if self.remote_device == 'any':
+        elif self.interface != 'none':
+            if self.device == 'any':
                 return True
-            elif self.remote_device != 'none':
-                return self.remote_interface != 'none'
+            elif self.device != 'none':
+                return self.interface != 'none'
 
         return False
 
-    def __repr__(self):
-        return 'InterfacePattern(interface=%s, remote_device=%s, '\
-               'remote_interface=%s, remote_device_init=%s, '\
-               'remote_interface_init=%s)' % (self.interfaces_init,
-                                              self.remote_device,
-                                              self.remote_interface,
-                                              self.remote_device_init,
-                                              self.remote_interface_init)
+    def is_wildcard(self):
+        return self.interface in ['any', 'none'] or \
+               self.device in ['any', 'none']
 
-    def serialize(self):
-        result = dict()
-        result['device'] = self.remote_device_init or 'none'
-        result['port'] = self.remote_interface_init or 'none'
-        return result
 
-    @classmethod
-    def parse_interfaces(cls, interface_range):
-        # pylint: disable=R0912
 
-        def raiseError():
-            raise InterfacePatternError('Unable to parse interface range: %s' %
-                                        interface_range)
 
-        if interface_range in ['any', 'none']:
-            return interface_range
 
-        if(not isinstance(interface_range, basestring) or
-           not interface_range.startswith('Ethernet')):
-            raiseError()
 
-        interfaces = []
-        for token in interface_range[8:].split(','):
-            if '-' in token and '/' in token:
-                raiseError()
-            elif '-' in token:
-                if len(token.split('-')) != 2:
-                    raiseError()
-                start, stop = token.split('-')
-                try:
-                    start = int(start)
-                    stop = int(stop)
-                    if(stop < start or
-                       start < 0 or
-                       stop < 0):
-                        raiseError()
-                    for index in range(int(start), int(stop) + 1):
-                        interfaces.append('Ethernet%s' % index)
-                except ValueError:
-                    raiseError()
-            elif '/' in token:
-                tkns = token.split('/')
-                if len(tkns) > 3:
-                    raiseError()
-                for tok in tkns:
-                    try:
-                        tok_int = int(tok)
-                        if tok_int < 1:
-                            raise ValueError
-                    except ValueError:
-                        raiseError()
-                interfaces.append('Ethernet%s' % token)
-            else:
-                try:
-                    tok_int = int(token)
-                    if tok_int < 1:
-                        raise ValueError
-                except ValueError:
-                    raiseError()
-                interfaces.append('Ethernet%s' % token)
 
-        return interfaces
 
-    def match_neighbors(self, intf, neighbors):
-        # pylint: disable=R0911,R0912
-
-        log_msg('Attempting to match %s against %r' %
-                (neighbors, self))
-
-        if self.interfaces == 'any':
-            if self.remote_device == 'any':
-                if self.remote_interface == 'any':
-                    return True
-                elif self.remote_interface == 'none':
-                    # bogus
-                    return False
-                else:
-                    if self.match_remote_interface(neighbors):
-                        return True
-            elif self.remote_device == 'none':
-                if self.remote_interface == 'any':
-                    # bogus
-                    return False
-                elif self.remote_interface == 'none':
-                    # bogus
-                    return False
-                else:
-                    return False
-            else:
-                if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbors):
-                        return True
-                elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbors):
-                        return False
-                else:
-                    if(self.match_remote_device(neighbors) and
-                       self.match_remote_interface(neighbors)):
-                        return True
-
-        elif self.interfaces == 'none':
-            if self.remote_device == 'any':
-                if self.remote_interface == 'any':
-                    # bogus
-                    return False
-                elif self.remote_interface == 'none':
-                    # bogus
-                    return False
-                else:
-                    if self.match_remote_interface(neighbors):
-                        return False
-            elif self.remote_device == 'none':
-                if self.remote_interface == 'any':
-                    # bogus
-                    return False
-                elif self.remote_interface == 'none':
-                    return False
-                else:
-                    # bogus
-                    return False
-            else:
-                if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbors):
-                        return False
-                elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbors):
-                        return False
-                else:
-                    if(self.match_remote_device(neighbors) and
-                       self.match_remote_interface(neighbors)):
-                        return False
-        else:
-            if self.remote_device == 'any':
-                if self.remote_interface == 'any':
-                    if intf in self.interfaces:
-                        return True
-                elif self.remote_interface == 'none':
-                    if intf in self.interfaces:
-                        return False
-                else:
-                    if(intf in self.interfaces and
-                       self.match_remote_interface(neighbors)):
-                        return True
-            elif self.remote_device == 'none':
-                if self.remote_interface == 'any':
-                    if intf in self.interfaces:
-                        return False
-                elif self.remote_interface == 'none':
-                    if intf in self.interfaces:
-                        return False
-                else:
-                    if(intf in self.interfaces and
-                       self.match_remote_interface(neighbors)):
-                        return False
-            else:
-                if self.remote_interface == 'any':
-                    if self.match_remote_device(neighbors):
-                        return True
-                elif self.remote_interface == 'none':
-                    if self.match_remote_device(neighbors):
-                        return False
-                else:
-                    if(intf in self.interfaces and
-                       self.match_remote_device(neighbors) and
-                       self.match_remote_interface(neighbors)):
-                        return True
-
-        return None
-
-    @classmethod
-    def run_function(cls, function, argument):
-        match = FUNC_RE.match(function)
-        if not match:
-            method = 'exact'
-            arg = function
-        else:
-            method = getattr(Functions, match.group('function'))
-            arg = match.group('arg')
-        return method(arg, argument)
-
-    def match_remote_device(self, neighbors):
-        if self.remote_device == 'any':
-            return True
-        elif self.remote_device is None:
-            return False
-        elif FUNC_RE.match(self.remote_device):
-            for neighbor in neighbors:
-                if self.run_function(self.remote_device,
-                                     neighbor.device):
-                    return True
-            return False
-        else:
-            for neighbor in neighbors:
-                if self.remote_device == neighbor.device:
-                    return True
-            return False
-
-    def match_remote_interface(self, neighbors):
-        if self.remote_interface == 'any':
-            return True
-        elif self.remote_interface is None:
-            return False
-        elif FUNC_RE.match(self.remote_interface):
-            for neighbor in neighbors:
-                if self.run_function(self.remote_interface,
-                                     neighbor.port):
-                    return True
-            return False
-        else:
-            for neighbor in neighbors:
-                if self.remote_interface == neighbor.port:
-                    return True
-            return False

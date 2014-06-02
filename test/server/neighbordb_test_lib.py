@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -29,10 +28,15 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
 import unittest
+import json
 
 import ztpserver.neighbordb     #pylint: disable=F0401
+
+from ztpserver.topology import Topology
+from ztpserver.serializers import loads
 
 class NodeTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
@@ -47,36 +51,28 @@ class NodeTest(unittest.TestCase):
         self.neighbordb_node = ztpserver.neighbordb.create_node(node_details)
 
     def setUp(self):
-        reload(ztpserver.neighbordb)
-
         print '\n---Starting test: %ss---\n' % self.name
-        ztpserver.neighbordb.topology.clear()
+        self.topology = ztpserver.neighbordb.load_topology(contents=self.neighbordb)
 
-        assert not ztpserver.neighbordb.topology.patterns['globals']
-        assert not ztpserver.neighbordb.topology.patterns['nodes']
-
-        ztpserver.neighbordb.topology.deserialize(self.neighbordb)
-        print 'INFO: NeighborDB: %r' % ztpserver.neighbordb.topology
+        print 'INFO: NeighborDB: %r' % self.topology
         self.longMessage = True     # pylint: disable=C0103
 
     def run_test(self):
-        topology = ztpserver.neighbordb.topology
-
         print 'INFO: Checking node: %s [%s]' % (self.node['name'], self.name)
-        result = topology.match_node(self.neighbordb_node)
+        result = self.topology.match_node(self.neighbordb_node)
         result = [x.name for x in result]
-        print 'INFO: Matches Result: %s' % result
+        print 'INFO: Matches Result: %s' % result.sort()
 
         expected_result = self.node['matches']
         if expected_result.get('includes', None):
-            self.assertEqual(result, expected_result['includes'],
+            self.assertEqual(result, sorted(expected_result['includes']),
                              'test \'includes\' failed for node %s [%s]' % \
                                  (self.node['name'], self.name))
 
         if expected_result.get('excludes', None):
-            not_result = sorted([x for x in
-                                 topology.all_patterns()
-                                 if x not in result])
+            not_result = sorted([x.name for x in
+                                 self.topology.get_patterns()
+                                 if x.name not in result])
             self.assertEqual(not_result, sorted(expected_result['excludes']),
                              'test \'excludes\' failed for node %s [%s]' % \
                                  (self.node['name'], self.name))
@@ -97,25 +93,20 @@ class NeighbordbTest(unittest.TestCase):
 
     def setUp(self):
         print '\n---Starting test: %ss---\n' % self.name
-        ztpserver.neighbordb.topology.clear()
+        self.topology = ztpserver.neighbordb.load_topology(contents=self.neighbordb)
 
-        assert not ztpserver.neighbordb.topology.patterns['globals']
-        assert not ztpserver.neighbordb.topology.patterns['nodes']
-
-        ztpserver.neighbordb.topology.deserialize(self.neighbordb)
-        print 'INFO: NeighborDB: %r' % ztpserver.neighbordb.topology
+        print 'INFO: NeighborDB: %r' % self.topology
         self.longMessage = True     # pylint: disable=C0103
 
     def run_test(self):
-        topology = ztpserver.neighbordb.topology
         print 'INFO: Checking neighbordb [%s]' % self.name
 
         if self.result.get('nodes', None):
             self.assertEqual(sorted(self.result['nodes']),
-                             topology.node_patterns(),
+                             self.topology.get_patterns(self.topology.isnodepattern),
                              'failed to match node patterns [%s]' % self.name)
 
         if self.result.get('globals', None):
             self.assertEqual(sorted(self.result['globals']),
-                             topology.global_patterns(),
+                             self.topology.get_patterns(self.topology.isglobalpattern),
                              'failed to match global patterns [%s]' % self.name)
