@@ -25,7 +25,7 @@
             "ssh_wait_timeout": "20m",
             "guest_os_type": "fedora-64",
             "tools_upload_flavor": "linux",
-            "vm_name":"ztpserver",
+            "vm_name":"ztps",
             "vmx_data": {
               "memsize": "2048",
               "numvcpus": "1",
@@ -41,11 +41,16 @@
         }
 	],
 	"provisioners": [
-          {
-            "type" : "shell",
+	  {
+	    "source": "conf",
+	    "destination": "/tmp/packer",
+	    "type":"file"
+	  },
+	  {
             "scripts": [
-              "scripts/install-packages.sh"
-            ] 
-	}
-     ]
+	      "scripts/setup.sh"
+	    ],  
+	    "type" : "shell"
+          }
+        ]
 }
