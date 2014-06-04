@@ -32,10 +32,10 @@ dns1	A	172.16.130.10
 ;
 ;
 ztps		A	172.16.130.10
-veos1		A	172.16.130.11
-veos2		A	172.16.130.12
-veos3		A	172.16.130.13
-veosmgmt	A	172.16.130.14
+;veos1		A	172.16.130.11
+;veos2		A	172.16.130.12
+;veos3		A	172.16.130.13
+;veosmgmt	A	172.16.130.14
 ;
 ;XMPP Services
 _xmpp-client._tcp.ztps-test.com. 86400 IN SRV 5 0 5222 im.ztps-test.com.

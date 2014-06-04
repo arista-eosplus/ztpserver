@@ -5,16 +5,21 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 
 * Create a VM with 7GB Hard Drive
 * 2GB RAM
-* Fedora 19 Desktop with Gnome
+* Fedora 20 Minimal Install
+* Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
+    * eth0 (vmnet8-NAT) 172.16.130.10
+    * eth1 (vmnet1-Bridged) DHCP
 * Users
-    * root/ztpserver and ztps/eosplus
+    * root/eosplus and ztpsadmin/eosplus
 * DHCP installed with Option 66/67 configured
 * BIND DNS server installed with zone ztps-test.com
     * wildcard forward rule to 8.8.8.8 for all other queries
     * SRV RR for im.ztps-test.com
 * rsyslog-ng installed
 * XMPP server configured for im.ztps-test.com
+* httpd installed and configured for ZTPServer (mod_wsgi)
+* ZTPServer installed
 
 ##Installation of Packer
 Packer.io automates the creation of the Virtual Machine.  Therefore, the first step is downloading and installing Packer.
@@ -72,6 +77,24 @@ vmware-iso output will be in this color.
 ==> vmware-iso: Provisioning with shell script: scripts/setup.sh
 ...
 ```
+7. After some extensive yumming, you will see:
+```
+==> vmware-iso: Gracefully halting virtual machine...
+    vmware-iso: Waiting for VMware to clean up after itself...
+==> vmware-iso: Deleting unnecessary VMware files...
+    vmware-iso: Deleting: output-vmware-iso/startMenu.plist
+    vmware-iso: Deleting: output-vmware-iso/vmware.log
+    vmware-iso: Deleting: output-vmware-iso/ztps.plist
+    vmware-iso: Deleting: output-vmware-iso/ztps.vmx.lck/M62713.lck
+==> vmware-iso: Cleaning VMX prior to finishing up...
+    vmware-iso: Detaching ISO from CD-ROM device...
+==> vmware-iso: Compacting the disk image
+Build 'vmware-iso' finished.
+
+==> Builds finished. The artifacts of successful builds are:
+--> vmware-iso: VM files in directory: output-vmware-iso
+```
+
 
 ####References
 http://www.packer.io/docs/builders/vmware-iso.html
