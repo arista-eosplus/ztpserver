@@ -25,15 +25,17 @@
             "ssh_wait_timeout": "20m",
             "guest_os_type": "fedora-64",
             "tools_upload_flavor": "linux",
-            "vm_name":"ztps",
+            "vm_name":"ztpserver",
             "vmx_data": {
               "memsize": "2048",
               "numvcpus": "1",
               "cpuid.coresPerSocket": "1",
               "ethernet0.present" : "TRUE",
+	      "ethernet0.connectionType" : "NAT",
               "ethernet0.startConnected" : "TRUE",
               "ethernet1.present" : "TRUE",
-              "ethernet1.startConnected" : "TRUE"
+              "ethernet1.startConnected" : "TRUE",
+	      "ethernet1.connectionType" : "NAT"
             },
             "shutdown_command": "systemctl poweroff",
             "tools_upload_flavor": "linux",

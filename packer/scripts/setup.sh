@@ -2,8 +2,6 @@
 
 # Remove unnecessary packages
 yum -y remove kbd
-
-yum -y remove NetworkManager
 yum -y remove plymouth
 yum -y remove uboot-tools
 
@@ -25,11 +23,6 @@ yum -y install httpd-devel
 yum -y install dhcp
 yum -y install bind
 yum -y install ejabberd
-
-#systemctl stop NetworkManager.service
-#systemctl disable NetworkManager.service
-#systemctl start network.service
-#systemctl enable network.service
 
 #Create a place for packer to upload service configurations
 #mkdir /tmp/packer
@@ -68,6 +61,35 @@ cd mod_wsgi-4.1.3
 make
 make install
 
+mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
+cp /tmp/packer/httpd.conf /etc/httpd/conf/httpd.conf
+systemctl restart httpd.service
+systemctl enable httpd.service
+
+######################################
+# CONFIGURE BIND
+######################################
+mv /etc/named.conf /etc/named.conf.bak
+cp /tmp/packer/named.conf /etc/named.conf
+cp /tmp/packer/ztps-test.com.zone /var/named/
+service named restart
+systemctly enable named.service
+
+######################################
+# CONFIGURE DHCP
+######################################
+mv /etc/dhcp/dhcp.conf /etc/dhcp/dhcpd.conf.bak
+cp /tmp/packer/dhcpd.conf /etc/dhcp/dhcpd.conf
+systemctl restart dhcpd.service
+systemctl enable dhcpd.service
+
+######################################
+# CONFIGURE eJabberd
+######################################
+mv /etc/ejabberd/ejabberd.cfg /etc/ejabberd/ejabberd.cfg.bak
+cp /tmp/packer/ejabberd.cfg /etc/ejabberd/ejabberd.cfg
+systemctl restart ejabberd.service
+systemctl enable ejabberd.service
 
 ######################################
 # INSTALL ZTPSERVER
@@ -82,3 +104,9 @@ cd ztpserver
 #build/install
 python setup.py build
 python setup.py install
+
+systemctl stop NetworkManager.service
+systemctl disable NetworkManager.service
+systemctl restart network.service
+systemctl enable network.service
+yum -y remove NetworkManager

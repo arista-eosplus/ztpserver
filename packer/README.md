@@ -26,22 +26,22 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 4. Run ```packer``` to make sure ```PATH``` is updated.
 
 ##Creating a VM for use with VMWare Fusion
-The following procedure was tested using VMWare Fusion 6.0.3.
+> **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
 1. Retrieve the EOS+ packer files here: 
 2. ```cd``` to the location of the .json
-3. Run 
+3. Run ```packer build ztps-fedora_20_x86_64.json```
 
 You will see:
 ```
-phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json.testing
+phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
 vmware-iso output will be in this color.
 
 ==> vmware-iso: Downloading or copying ISO
     vmware-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
 ==> vmware-iso: Creating virtual machine disk
 ==> vmware-iso: Building and writing VMX file
-==> vmware-iso: Starting HTTP server on port 8360
+==> vmware-iso: Starting HTTP server on port 8608
 ==> vmware-iso: Starting virtual machine...
 ==> vmware-iso: Waiting 2s for boot...
 ==> vmware-iso: Connecting to VM via VNC
@@ -49,10 +49,29 @@ vmware-iso output will be in this color.
 ==> vmware-iso: Waiting for SSH to become available...
 ```
 
-##The Minimal Fedora 20 ISO
-Install net-insta iso, then
- - yum install net-tools
- - 
+4. Once the ISO is downloaded, the installation bring up a VMWare VM. The Anaconda installation will proceed without any user input.
+5. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in.
+6. You'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
+```
+phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
+vmware-iso output will be in this color.
+
+==> vmware-iso: Downloading or copying ISO
+    vmware-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
+==> vmware-iso: Creating virtual machine disk
+==> vmware-iso: Building and writing VMX file
+==> vmware-iso: Starting HTTP server on port 8574
+==> vmware-iso: Starting virtual machine...
+==> vmware-iso: Waiting 2s for boot...
+==> vmware-iso: Connecting to VM via VNC
+==> vmware-iso: Typing the boot command over VNC...
+==> vmware-iso: Waiting for SSH to become available...
+==> vmware-iso: Connected to SSH!
+==> vmware-iso: Uploading the 'linux' VMware Tools
+==> vmware-iso: Uploading conf => /tmp/packer
+==> vmware-iso: Provisioning with shell script: scripts/setup.sh
+...
+```
 
 ####References
 http://www.packer.io/docs/builders/vmware-iso.html
