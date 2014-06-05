@@ -18,6 +18,7 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
     * SRV RR for im.ztps-test.com
 * rsyslog-ng installed
 * XMPP server configured for im.ztps-test.com
+    * XMPP admmin user ztpsadmin, pass eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi)
 * ZTPServer installed
 
