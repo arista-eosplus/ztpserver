@@ -25,7 +25,7 @@
             "ssh_wait_timeout": "20m",
             "guest_os_type": "fedora-64",
             "tools_upload_flavor": "linux",
-            "vm_name":"ztps",
+            "vm_name":"ztpserver",
             "vmx_data": {
               "memsize": "2048",
               "numvcpus": "1",
