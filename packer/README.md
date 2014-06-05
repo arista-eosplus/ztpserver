@@ -54,8 +54,8 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> vmware-iso: Typing the boot command over VNC...
     ==> vmware-iso: Waiting for SSH to become available...
     ```
-4. Once the ISO is downloaded, the installation bring up a VMWare VM. The Anaconda installation will proceed without any user input.
-5. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in.
+4. Once the ISO is downloaded, packer brings up a VMWare VM. The Anaconda installation will proceed without any user input.
+5. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
 6. You'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
