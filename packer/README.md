@@ -95,6 +95,16 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     --> vmware-iso: VM files in directory: output-vmware-iso
     ```
 
+##Troubleshooting
+###Gathering Diags
+To gather a log file, just pre-pend ```PACKER_LOG=true PACKER_LOG_PATH=./debug.log```.  For example, ```PACKER_LOG=true PACKER_LOG_PATH=./debug.log packer build ztps-fedora_20_x86_64.json```.
+
+###Potential Issues
+####Error Detecting Host IP
+Make sure that VMWare is running and that vmnet8 is enabled.  You can confirm this by going to your VMWare Fusion tools path, possibly ```/Applications/VMware Fusion.app/Contents/Library``` and typing ```sudo ./vmnet-cli --status```.
+
+####Anaconda Installer Hangs at 'Installing Bootloader'
+Type ```ctrl-c``` to exit the packer build, delete any references to the VM in the VMWare Fusion Library and then restart VMWare.
 
 ####References
 http://www.packer.io/docs/builders/vmware-iso.html
