@@ -77,7 +77,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> vmware-iso: Provisioning with shell script: scripts/setup.sh
     ... (shell script output)
     ```
-    7. After some extensive yumming, you will see:
+7. After some extensive yumming, you will see:
     ```
     ==> vmware-iso: Gracefully halting virtual machine...
         vmware-iso: Waiting for VMware to clean up after itself...
