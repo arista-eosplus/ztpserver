@@ -37,7 +37,7 @@
               "ethernet1.startConnected" : "TRUE",
 	      "ethernet1.connectionType" : "BRIDGED"
             },
-            "shutdown_command": "systemctl poweroff",
+            "shutdown_command": "/sbin/shutdown -h now",
             "tools_upload_flavor": "linux",
             "http_directory":"http/"
         }

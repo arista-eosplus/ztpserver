@@ -12,6 +12,8 @@ yum -y clean all
 
 #Install ztps-related related packages
 yum -y install python-devel
+yum -y install python-pip
+yum -y install mod_wsgi
 yum -y install gcc make gcc-c++
 yum -y install tar
 yum -y install wget
@@ -26,27 +28,6 @@ yum -y install dhcp
 yum -y install bind bind-utils
 yum -y install ejabberd
 
-
-#Install Python 2.7.6
-#cd /tmp
-#wget http://www.python.org/ftp/python/2.7.6/Python-2.7.6.tar.xz
-#xz -d Python-2.7.6.tar.xz
-#tar -xvf Python-2.7.6.tar
-#cd Python-2.7.6
-#./configure --prefix=/usr/local
-#make
-#make altinstall
-
-
-######################################
-#INSTALL PIP
-######################################
-cd /tmp
-wget https://bootstrap.pypa.io/get-pip.py
-python get-pip.py
-
-#Install Virtualenv
-pip install virtualenv
 
 ######################################
 # CONFIGURE FIREWALLd
@@ -95,16 +76,8 @@ systemctl restart ejabberd.service
 ejabberdctl status
 
 ######################################
-# CONFIGURE APACHE AND INSTALL MODWSGI
+# CONFIGURE APACHE
 ######################################
-cd /tmp
-wget https://github.com/GrahamDumpleton/mod_wsgi/archive/4.1.3.tar.gz
-tar xvfz 4.1.3.tar.gz
-cd mod_wsgi-4.1.3
-./configure
-make
-make install
-
 mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
 cp /tmp/packer/httpd.conf /etc/httpd/conf/httpd.conf
 systemctl restart httpd.service
