@@ -55,6 +55,7 @@ pip install virtualenv
 systemctl disable firewalld.service
 systemctl stop firewalld.service
 firewall-cmd --state
+ifconfig
 
 #Put Eth0 in the internal zone. Eth1 is already in the public zone
 #firewall-cmd --permanent --zone=internal --change-interface=eth0
