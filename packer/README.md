@@ -22,6 +22,8 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * ZTPServer installed
 
 ##Installation of Packer
+> **Note:** This installation requires internet access.
+
 Packer.io automates the creation of the Virtual Machine.  Therefore, the first step is downloading and installing Packer.
 
 1. Download the appropriate binaries - http://www.packer.io/downloads.html
