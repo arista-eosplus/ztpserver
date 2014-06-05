@@ -12,18 +12,18 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
     * eth1 (vmnet1-Bridged) DHCP
 * Users
     * root/eosplus and ztpsadmin/eosplus
-* DHCP installed with Option 66/67 configured
+* DHCP installed with Option 67 configured (eth0 only)
 * BIND DNS server installed with zone ztps-test.com
     * wildcard forward rule to 8.8.8.8 for all other queries
     * SRV RR for im.ztps-test.com
-* rsyslog-ng installed
+* rsyslog-ng installed listening on UDP and TCP (port 514)
 * XMPP server configured for im.ztps-test.com
-    * XMPP admmin user ztpsadmin, pass eosplus
-* httpd installed and configured for ZTPServer (mod_wsgi)
+    * XMPP admin user ztpsadmin, passwd eosplus
+* httpd installed and configured for ZTPServer (mod_wsgi) running on port 8080
 * ZTPServer installed
 
 ##Installation of Packer
-> **Note:** This installation requires internet access.
+> **Note:** This installation procedure requires internet access.
 
 Packer.io automates the creation of the Virtual Machine.  Therefore, the first step is downloading and installing Packer.
 
