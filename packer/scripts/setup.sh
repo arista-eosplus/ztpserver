@@ -46,7 +46,7 @@ ifconfig
 ######################################
 # CONFIGURE SCREEN
 ######################################
-cp /tmp/packer/screenrc /home/ztpserveradmin/.screenrc
+cp /tmp/packer/screenrc /home/ztpsadmin/.screenrc
 
 ######################################
 # CONFIGURE rsyslog
