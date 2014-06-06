@@ -1,10 +1,5 @@
 #!/bin/sh -x
 
-# Remove unnecessary packages
-yum -y remove kbd
-yum -y remove plymouth
-yum -y remove uboot-tools
-
 #Grab any updates and cleanup
 yum -y update yum
 yum -y update
