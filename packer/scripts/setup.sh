@@ -22,6 +22,7 @@ yum -y install httpd-devel
 yum -y install dhcp
 yum -y install bind bind-utils
 yum -y install ejabberd
+yum -y install rsyslog
 
 
 ######################################

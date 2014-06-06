@@ -8,15 +8,16 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * Fedora 20 Minimal Install
 * Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
-    * eth0 (vmnet8-NAT) 172.16.130.10
-    * eth1 (vmnet1-Bridged) DHCP
+    * ens32 (vmnet8-NAT) 172.16.130.10/24
+    * ens33 (vmnet1-Bridged) DHCP
+* Firewalld disabled.
 * Users
     * root/eosplus and ztpsadmin/eosplus
-* DHCP installed with Option 67 configured (eth0 only)
+* DHCP installed with Option 67 configured (ens32 only)
 * BIND DNS server installed with zone ztps-test.com
     * wildcard forward rule to 8.8.8.8 for all other queries
     * SRV RR for im.ztps-test.com
-* rsyslog-ng installed listening on UDP and TCP (port 514)
+* rsyslog-ng installed; Listening on UDP and TCP (port 514)
 * XMPP server configured for im.ztps-test.com
     * XMPP admin user ztpsadmin, passwd eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi) running on port 8080
@@ -36,8 +37,8 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 ##Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
-1. Retrieve the EOS+ packer files here: 
-2. ```cd``` to the location of the .json
+1. Retrieve the EOS+ packer files here. 
+2. ```cd``` to the location of the .json file.
 3. Run ```packer build ztps-fedora_20_x86_64.json```
     You will see:
     ```
@@ -57,7 +58,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ```
 4. Once the ISO is downloaded, packer brings up a VMWare VM. The Anaconda installation will proceed without any user input.
 5. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
-6. You'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
+6. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
     vmware-iso output will be in this color.
@@ -78,7 +79,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> vmware-iso: Provisioning with shell script: scripts/setup.sh
     ... (shell script output)
     ```
-7. After some extensive yumming, you will see:
+7. After some extensive yumming (~5minutes), you will see:
     ```
     ==> vmware-iso: Gracefully halting virtual machine...
         vmware-iso: Waiting for VMware to clean up after itself...
@@ -95,6 +96,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> Builds finished. The artifacts of successful builds are:
     --> vmware-iso: VM files in directory: output-vmware-iso
     ```
+8. You now have a full-featured ZTPServer.
 
 ##Troubleshooting
 ###Gathering Diags
