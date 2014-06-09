@@ -110,8 +110,8 @@ cd /home/ztpsadmin
 
 #clone from GitHub
 git clone https://github.com/arista-eosplus/ztpserver.git -b develop
-git checkout v1.0.0
 cd ztpserver
+git checkout v1.0.0
 
 #build/install
 python setup.py build
