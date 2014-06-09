@@ -106,7 +106,8 @@ systemctl status dhcpd.service
 cd /home/ztpsadmin
 
 #clone from GitHub
-git clone https://github.com/arista-eosplus/ztpserver.git -b release-1.0
+git clone https://github.com/arista-eosplus/ztpserver.git -b develop
+git checkout v1.0.0
 cd ztpserver
 
 #build/install
