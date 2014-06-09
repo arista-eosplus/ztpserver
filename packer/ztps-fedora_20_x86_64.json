@@ -23,7 +23,7 @@
             "ssh_wait_timeout": "20m",
             "guest_os_type": "fedora-64",
             "tools_upload_flavor": "linux",
-            "vm_name":"ztps",
+            "vm_name":"ztps-fedora-20-x86_64",
             "vmx_data": {
               "memsize": "2048",
               "numvcpus": "1",
@@ -36,7 +36,6 @@
 	      "ethernet1.connectionType" : "BRIDGED"
             },
             "shutdown_command": "/sbin/shutdown -h now",
-            "tools_upload_flavor": "linux",
             "http_directory":"http/"
         }
 	],

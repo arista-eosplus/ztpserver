@@ -15,7 +15,7 @@ yum -y install mod_wsgi
 yum -y install gcc make gcc-c++
 yum -y install tar
 yum -y install wget
-yum -y install libyaml
+yum -y install libyaml libyaml-devel
 yum -y install screen
 yum -y install git
 yum -y install net-tools
