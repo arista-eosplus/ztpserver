@@ -162,13 +162,13 @@ class Attributes(object):
         self.local_attr = local_attr if local_attr else []
         self.special_attr = special_attr if special_attr else []
 
-    def get(self, attr):
+    def get(self, attr, default=None):
         if attr in self.local_attr:
             return self.local_attr[attr]
         elif attr in self.special_attr:
             return self.special_attr[attr]
         else:
-            return None
+            return default
 
     def copy(self):
         attrs = dict()
