@@ -1,6 +1,9 @@
 #!/bin/sh -x
 
-#Grab any updates and cleanup
+#enable delta rpms's to make yum faster
+yum -y install deltarpm
+
+#Grab updates and cleanup
 yum -y update yum
 yum -y update
 yum -y clean all
