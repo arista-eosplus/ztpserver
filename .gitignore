@@ -44,3 +44,6 @@ _templates
 
 # local environment
 .env
+
+#disk images
+.iso
