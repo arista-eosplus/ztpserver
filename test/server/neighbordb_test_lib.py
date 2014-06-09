@@ -33,8 +33,7 @@
 import unittest
 import json
 
-import ztpserver.neighbordb     #pylint: disable=F0401
-
+from ztpserver.neighbordb import load_topology, create_node
 from ztpserver.topology import Topology
 from ztpserver.serializers import loads
 
@@ -48,11 +47,11 @@ class NodeTest(unittest.TestCase):
         self.neighbordb = neighbordb
         node_details = node['node']
         node_details['neighbors'] = node['neighbors']
-        self.neighbordb_node = ztpserver.neighbordb.create_node(node_details)
+        self.neighbordb_node = create_node(node_details)
 
     def setUp(self):
         print '\n---Starting test: %ss---\n' % self.name
-        self.topology = ztpserver.neighbordb.load_topology(contents=self.neighbordb)
+        self.topology = load_topology(contents=self.neighbordb)
 
         print 'INFO: NeighborDB: %r' % self.topology
         self.longMessage = True     # pylint: disable=C0103
@@ -82,6 +81,7 @@ class NodeTest(unittest.TestCase):
                              'test \'count\' failed for node %s [%s]' % \
                                  (self.node['name'], self.name))
 
+
 class NeighbordbTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
 
@@ -93,7 +93,7 @@ class NeighbordbTest(unittest.TestCase):
 
     def setUp(self):
         print '\n---Starting test: %ss---\n' % self.name
-        self.topology = ztpserver.neighbordb.load_topology(contents=self.neighbordb)
+        self.topology = load_topology(contents=self.neighbordb)
 
         print 'INFO: NeighborDB: %r' % self.topology
         self.longMessage = True     # pylint: disable=C0103

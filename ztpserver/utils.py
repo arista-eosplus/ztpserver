@@ -29,44 +29,48 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import re
 
-import os
-import unittest
+def atoi(text):
+    return int(text) if text.isdigit() else text
 
-import yaml
+def natural_keys(text):
+    return [atoi(c) for c in re.split('(\d+)', text)]
 
-#pylint: disable=F0401
-from ztpserver.app import enable_handler_console
-from neighbordb_test_lib import NodeTest, NeighbordbTest
+def expand_range(text, match_prefix=None, replace_prefix=None):
+    ''' Returns a naturally sorted list of items expanded from text. '''
 
-TEST_DIR = 'test/neighbordb'
+    match_prefix = match_prefix or '[a-zA-Z]'
+    prefix_match_re = r'^(?P<prefix>%s+)(?=\d)' % match_prefix
+    match = re.match(prefix_match_re, text)
 
-def load_tests(loader, tests, pattern):            #pylint: disable=W0613
-    suite = unittest.TestSuite()
-    test_list = os.environ.get('TESTS', None)
-    if not test_list:
-        test_list = [f for f in os.listdir(TEST_DIR)
-                 if os.path.join(TEST_DIR, f).endswith('_test')]
-    else:
-        test_list = test_list.split(',')
+    if not match:
+        raise TypeError('unable to match prefix')
+    elif match and not replace_prefix:
+        prefix = match.group('prefix')
+    elif match and replace_prefix:
+        prefix = replace_prefix
 
-    print test_list
-    for test in test_list:
-        print 'Starting test %s' % test
+    indicies_re = re.compile(r'\d+')
+    range_re = re.compile(r'(\d+)\-(\d+)')
 
-        definition = yaml.load(open(os.path.join(TEST_DIR, test)))
-        nodes = definition.get('nodes', [])
+    indicies = indicies_re.findall(text)
+    ranges = range_re.findall(text)
 
-        for node in nodes:
-            print 'Adding test: %s' % node['name']
-            suite.addTest(NodeTest(test, node, definition['neighbordb']))
+    items = set()
 
-        if definition.get('configured_neighbordb', None):
-            suite.addTest(NeighbordbTest(test, definition['neighbordb'],
-                                         definition['configured_neighbordb']))
+    for start, end in ranges:
+        start = int(start)
+        end = int(end) + 1
+        for index in range(start, end):
+            items.add('%s%s' % (prefix, index))
 
-    return suite
+    for index in indicies:
+        items.add('%s%s' % (prefix, index))
 
-if __name__ == '__main__':
-    enable_handler_console()
-    unittest.main()
+    items = list(items)
+    items.sort(key=natural_keys)
+    return items
+
+
+

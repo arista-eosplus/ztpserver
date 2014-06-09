@@ -41,8 +41,11 @@ import ztpserver.topology
 from ztpserver.topology import Topology, TopologyError
 from ztpserver.topology import Node
 
+from ztpserver.resources import ResourcePool
+
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, dump, SerializerError
+from ztpserver.validators import validate_topology
 
 log = logging.getLogger(__name__)
 
@@ -59,33 +62,52 @@ def load(filename, content_type):
 
 def load_topology(filename=None, contents=None):
     try:
-        if filename is not None:
-            filename = filename or default_filename()
+        log.info('Start loading topology')
+        if filename is None and contents is None:
+            contents = load(default_filename(), CONTENT_TYPE_YAML)
+        elif filename is not None:
             contents = load(filename, CONTENT_TYPE_YAML)
         elif contents is None:
             log.warning('Creating empty topology object')
 
+        if not validate_topology(contents):
+            log.info('Unable to load neighbordb due to validation failure')
+            return
+
         topology = Topology()
+
         if 'variables' in contents:
             topology.add_variables(contents['variables'])
+
         topology.add_patterns(contents['patterns'])
 
-        log.info('Loaded neighbordb: %r', topology)
+        log.info('Loaded topology: %r', topology)
         return topology
     except TopologyError:
         log.warning('Unable to load neighbordb from %s', filename)
     except SerializerError:
         log.error('Unable to load topology file %s', filename)
 
-def load_pattern(filename, content_type=CONTENT_TYPE_YAML):
-    # See #44
-    pattern = ztpserver.topology.Pattern(None, None, None)
-    pattern.load_from_file(filename, content_type)
-    return pattern
+def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
+    try:
+        if not hasattr(kwargs, 'items'):
+            kwargs = load(kwargs, content_type)
+        return Pattern(**kwargs)
+    except TypeError:
+        log.error('Unable to load pattern object')
 
-def load_node(filename, content_type=CONTENT_TYPE_YAML):
-    node = ztpserver.serializers.load(filename, content_type, Node)
-    return node
+def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
+    try:
+        if not hasattr(kwargs, 'items'):
+            kwargs = load(kwargs, content_type)
+        for symbol in [':', '.']:
+            kwargs['systemmac'] = str(kwargs['systemmac']).replace(symbol, '')
+        return Node(**kwargs)
+    except TypeError:
+        log.error('Unable to load node object')
+    except KeyError:
+        log.error('Missing required attribute(s)')
+
 
 def create_node(nodeattrs):
     try:
@@ -102,12 +124,12 @@ def resources(attributes, node):
     log.debug('Start processing resources with attributes: %s', attributes)
 
     _attributes = dict()
-    _resources = ztpserver.topology.ResourcePool()
+    _resources = ResourcePool()
 
     for key, value in attributes.items():
-        if isinstance(value, dict):
+        if hasattr(value, 'items'):
             value = resources(value, node)
-        elif isinstance(value, list):
+        elif hasattr(value, '__iter__'):
             _value = list()
             for item in value:
                 match = ztpserver.topology.FUNC_RE.match(item)
@@ -117,7 +139,7 @@ def resources(attributes, node):
                 else:
                     _value.append(item)
             value = _value
-        elif isinstance(value, str):
+        else:
             match = ztpserver.topology.FUNC_RE.match(value)
             if match:
                 method = getattr(_resources, match.group('function'))

@@ -38,10 +38,9 @@ import os
 import re
 import string # pylint: disable=W0402
 
-import ztpserver.config
-
 from ztpserver.serializers import Serializer
 from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.utils import expand_range
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -53,11 +52,6 @@ NON_HEX_CHARS = ALL_CHARS - set(string.hexdigits)
 
 log = logging.getLogger(__name__)
 serializer = Serializer()
-
-
-class ResourcePoolError(Exception):
-    ''' base error raised by :py:class:`Resource` '''
-    pass
 
 
 class NodeError(Exception):
@@ -138,13 +132,15 @@ class Node(object):
 
     def add_neighbors(self, neighbors):
         try:
-            for interface, neighbors in neighbors.items():
-                _neighbors = []
-                for neighbor in neighbors:
-                    _neighbors.append(Neighbor(neighbor['device'],
-                                               neighbor['port']))
+            for interface, peers in neighbors.items():
+                _neighbors = list()
+                for peer in peers:
+                    log.debug('Creating neighbor %s:%s for interface %s',
+                              peer['device'], peer['port'], interface)
+                    _neighbors.append(Neighbor(peer['device'],
+                                               peer['port']))
                 self.neighbors[interface] = _neighbors
-        except AttributeError:
+        except KeyError:
             log.error('Unable to add neighbor due to missing attribute')
             raise NodeError
 
@@ -164,59 +160,6 @@ class Node(object):
                 neighbors[interface] = serialized_neighbor_list
         result['neighbors'] = neighbors
         return result
-
-
-class ResourcePool(object):
-
-    def __init__(self):
-        cfg = ztpserver.config.runtime
-        self.filepath = os.path.join(cfg.default.data_root, 'resources')
-        self.data = None
-
-    def serialize(self):
-        return [(key, str(value)) for (key, value) in contents.items()]
-
-    def allocate(self, pool, node):
-        try:
-            match = self.lookup(pool, node)
-            if match:
-                log.info('Found allocated resource, returning %s', match)
-                return match
-
-            filepath = os.path.join(self.filepath, pool)
-            self.load_from_file(filepath, CONTENT_TYPE_YAML)
-
-            key = next(x[0] for x in self.data.items() if x[1] is None)
-
-            log.info('Assigning %s from pool %s to node %s',
-                     key, pool, node.systemmac)
-            self.data[key] = node.systemmac
-            self.dump_to_file(filepath, CONTENT_TYPE_YAML)
-        except StopIteration:
-            log.warning('No resources available in pool %s', pool)
-            raise ResourcePoolError
-        except Exception as exc:
-            log.exception('Unable to allocate resource')
-            raise ResourcePoolError
-        return key
-
-    def lookup(self, pool, node):
-        ''' Return an existing allocated resource if one exists '''
-
-        try:
-            log.info('Looking up resource for node %s', node.systemmac)
-
-            filepath = os.path.join(self.filepath, pool)
-            self.load_from_file(filepath, CONTENT_TYPE_YAML)
-
-            matches = [m[0] for m in self.data.iteritems()
-                       if m[1] == node.systemmac]
-            key = matches[0] if matches else None
-            return key
-        except Exception as exc:
-            log.exception('An error occurred trying to lookup existing '
-                          'resource for node %s', node.systemmac)
-            raise ResourcePoolError
 
 
 class Topology(object):
@@ -402,7 +345,7 @@ class Pattern(object):
                     pattern = InterfacePattern(interface, device, port)
                     self.interfaces.append(pattern)
                 else:
-                    for item in self.expand_interface(interface):
+                    for item in expand_range(interface):
                         log.info('Adding interface to pattern %s', item)
                         pattern = InterfacePattern(item, device, port)
                         self.interfaces.append(pattern)
@@ -433,36 +376,40 @@ class Pattern(object):
 
     @staticmethod
     def parse_interface(interface, neighbor):
-        log.debug('parse_interface[%s]: %s', interface, neighbor)
+        try:
+            #log.debug('parse_interface[%s]: %s', interface, neighbor)
 
-        if hasattr(neighbor, 'items'):
-            device = neighbor['device']
-            port = neighbor['port']
+            if hasattr(neighbor, 'items'):
+                device = neighbor['device']
+                port = neighbor['port']
 
-        else:
-            if neighbor == 'any':
-                device, port = 'any', 'any'
-            elif neighbor == 'none':
-                device, port = 'none', 'none'
-            elif ':' not in neighbor:
-                device = neighbor
-                port = 'any'
             else:
-                tokens = neighbor.split(':')
-                device = tokens[0]
-                port = tokens[1]
+                if neighbor == 'any':
+                    device, port = 'any', 'any'
+                elif neighbor == 'none':
+                    device, port = 'none', 'none'
+                elif ':' not in neighbor:
+                    device = neighbor
+                    port = 'any'
+                else:
+                    tokens = neighbor.split(':')
+                    device = tokens[0]
+                    port = tokens[1]
 
-        device = device.strip()
-        if len(device.split()) != 1:
-            log.error('Invalid peer device')
+            device = device.strip()
+            if len(device.split()) != 1:
+                log.error('Invalid peer device')
+                raise PatternError
+
+            remote_port = port.strip()
+            if len(port.split()) != 1:
+                log.error('Invalid peer port')
+                raise PatternError
+
+            return (interface, device, port)
+        except KeyError:
+            log.error('Missing required attribute from neighbor')
             raise PatternError
-
-        remote_port = port.strip()
-        if len(port.split()) != 1:
-            log.error('Invalid peer port')
-            raise PatternError
-
-        return (interface, device, port)
 
     def match_node(self, node):
 
@@ -506,33 +453,6 @@ class Pattern(object):
         except Exception:
             log.exception('Unexpected exception during match_node')
             raise PatternError
-
-    def atoi(self, text):
-        return int(text) if text.isdigit() else text
-
-    def natural_keys(self, text):
-        return [self.atoi(c) for c in re.split('(\d+)', text)]
-
-    def expand_interface(self, entry):
-        indicies_re = re.compile(r'\d+')
-        range_re = re.compile(r'(\d+)\-(\d+)')
-
-        indicies = indicies_re.findall(entry)
-        ranges = range_re.findall(entry)
-        interfaces = set()
-
-        for start, end in ranges:
-            s = int(start)
-            e = int(end) + 1
-            for z in range(s, e):
-                interfaces.add('Ethernet%s' % z)
-
-        for i in indicies:
-            interfaces.add('Ethernet%s' % i)
-
-        interfaces = list(interfaces)
-        interfaces.sort(key=self.natural_keys)
-        return interfaces
 
 
 class InterfacePattern(object):

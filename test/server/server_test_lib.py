@@ -159,7 +159,7 @@ class Attributes(SerializerMixin):
 def create_attributes():
     return Attributes()
 
-class Node(SerializerMixin):
+class NodeDict(SerializerMixin):
 
     def __init__(self, **kwargs):
         self.serialnumber = kwargs.get('serialnumber', random_string())
@@ -168,8 +168,14 @@ class Node(SerializerMixin):
         self.systemmac = kwargs.get('systemmac', random_string())
         self.neighbors = kwargs.get('neighbors', dict())
 
-    def add_neighbor(self, key, value):
-        self.neighbors[key] = value
+    def add_random_neighbor(self, interface):
+        neighbor = dict(device=random_string(), port=random_string())
+        self.add_neighbor(interface, neighbor)
+
+    def add_neighbor(self, interface, peer):
+        if interface not in self.neighbors:
+            self.neighbors[interface] = list()
+        self.neighbors[interface].append(peer)
 
     def add_neighbors(self, neighbors):
         assert isinstance(neighbors, dict)
@@ -184,7 +190,7 @@ class Node(SerializerMixin):
                     neighbors=self.neighbors)
 
 def create_node():
-    return Node()
+    return NodeDict()
 
 class BootstrapConf(SerializerMixin):
     def __init__(self, **kwargs):

@@ -37,6 +37,7 @@ import traceback
 from mock import Mock
 
 import ztpserver.serializers
+import ztpserver.topology
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
 from ztpserver.topology import ResourcePool, ResourcePoolError
@@ -47,6 +48,7 @@ from ztpserver.topology import Node, NodeError
 from server_test_lib import random_string
 from server_test_lib import create_node, create_neighbordb, create_pattern
 
+
 class NodeUnitTests(unittest.TestCase):
 
     def test_create_node_success(self):
@@ -54,160 +56,216 @@ class NodeUnitTests(unittest.TestCase):
         systemmac = node.systemmac
         kwargs = node.as_dict()
         del kwargs['systemmac']
-
         node = Node(systemmac, **kwargs)
-
         self.assertEqual(node.systemmac, systemmac)
 
     def test_create_node_systemmac_only(self):
         systemmac = random_string()
         node = Node(systemmac)
-
         self.assertEqual(node.systemmac, systemmac)
 
     def test_create_node_failure(self):
-
-        node = Node()
+        try:
+            node = Node()
+        except TypeError:
+            pass
+        except Exception:
+            self.fail()
 
     def test_create_node_neighbors_valid(self):
-        pass
+        systemmac = random_string()
+        nodeattrs = create_node()
 
-    def test_create_node_neighbors_invalid(self):
-        pass
+        device = random_string()
+        port = random_string()
+
+        neighbors = {'Ethernet1': {'device': device, 'port': port}}
+        nodeattrs.add_neighbors(neighbors)
+
+        kwargs = nodeattrs.as_dict()
+        del kwargs['systemmac']
+
+        node = Node(systemmac, **kwargs)
+
+        self.assertEqual(node.systemmac, systemmac)
+        self.assertIsNotNone(node.neighbors('Ethernet1'))
+        self.assertEqual(node.neighbors('Ethernet1')[0].device, device)
+        self.assertEqual(node.neighbors('Ethernet1')[0].port, port)
+
+    def test_create_node_neighbors_port_missing(self):
+        systemmac = random_string()
+        nodeattrs = create_node()
+
+        device = random_string()
+
+        neighbors = {'Ethernet1': {'device': device}}
+        nodeattrs.add_neighbors(neighbors)
+
+        kwargs = nodeattrs.as_dict()
+        del kwargs['systemmac']
+
+        try:
+            node = None
+            node = Node(systemmac, **kwargs)
+        except NodeError:
+            pass
+        except Exception as exc:
+            self.fail(exc)
+        finally:
+            self.assertIsNone(node)
+
+    def test_create_node_neighbors_device_missing(self):
+        systemmac = random_string()
+        nodeattrs = create_node()
+
+        port = random_string()
+
+        neighbors = {'Ethernet1': {'port': port}}
+        nodeattrs.add_neighbors(neighbors)
+
+        kwargs = nodeattrs.as_dict()
+        del kwargs['systemmac']
+
+        try:
+            node = None
+            node = Node(systemmac, **kwargs)
+        except NodeError:
+            pass
+        except Exception as exc:
+            self.fail(exc)
+        finally:
+            self.assertIsNone(node)
 
     def test_add_neighbors_success(self):
-        pass
+        systemmac = random_string()
+        nodeattrs = create_node()
 
-    def test_add_neighbors_failure(self):
-        pass
+        device = random_string()
+        port = random_string()
+        neighbors = {'Ethernet1': [{'device': device, 'port': port}]}
 
-    def test_serialize_success(self):
-        pass
+        kwargs = nodeattrs.as_dict()
+        del kwargs['systemmac']
 
-    def test_serialize_failure(self):
-        pass
+        node = Node(systemmac, **kwargs)
+        node.add_neighbors(neighbors)
 
-
-class ResourcePoolUnitTests(unittest.TestCase):
-
-    def setUp(self):
-        self.pool = ResourcePool()
-
-        self.pool.load_from_file = Mock()
-        self.pool.dump_to_file = Mock()
-
-        self.pooldata = dict()
-        for i in range(0, 10):      # pylint: disable=W0612
-            self.pooldata[random_string()] = None
-        self.pool.data = self.pooldata
+        self.assertEqual(node.systemmac, systemmac)
+        self.assertIsNotNone(node.neighbors('Ethernet1'))
+        self.assertEqual(node.neighbors('Ethernet1')[0].device, device)
+        self.assertEqual(node.neighbors('Ethernet1')[0].port, port)
 
     def test_serialize_success(self):
-        resp = self.pool.serialize()
-        self.assertEqual(resp, self.pool.data)
-
-    def test_deserialize_success(self):
-        pooldata = dict()
-        for i in range(0, 10):      # pylint: disable=W0612
-            pooldata[random_string()] = None
-        self.pool.deserialize(pooldata)
-        self.assertEqual(pooldata, self.pool.data)
-
-    def test_allocate_success(self):
-        node = create_node()
-        resp = self.pool.allocate(random_string(), node)
-        self.assertIsNotNone(resp)
-        self.assertIn(resp, self.pooldata.keys())
-
-    def test_allocate_success_existing(self):
-        node = create_node()
-        key = random_string()
-        self.pool.data[key] = node.systemmac
-        resp = self.pool.allocate(random_string(), node)
-        self.assertIsNotNone(resp)
-        self.assertIn(resp, key)
-
-    def test_allocate_success_no_resource(self):
-        node = create_node()
-        key = random_string()
-        for key in self.pool.data.keys():
-            self.pool.data[key] = random_string()
-
-        self.assertRaises(ResourcePoolError, self.pool.allocate,
-                          random_string(), node)
-
-    def test_lookup_success_found_key(self):
-        node = create_node()
-        key = random_string()
-        self.pool.data[key] = node.systemmac
-        resp = self.pool.lookup(random_string(), node)
-        self.assertEqual(resp, key)
-
-    def test_lookup_success_no_key(self):
-        node = create_node()
-        resp = self.pool.lookup(random_string(), node)
-        self.assertIsNone(resp)
+        nodeattrs = create_node()
+        systemmac = nodeattrs.systemmac
+        kwargs = nodeattrs.as_dict()
+        del kwargs['systemmac']
+        node = Node(systemmac, **kwargs)
+        result = node.serialize()
+        self.assertEqual(result, nodeattrs.as_dict())
 
 
-class Functions(unittest.TestCase):
+# class ResourcePoolUnitTests(unittest.TestCase):
 
-    def setUp(self):
-        self.longMessage = True     # pylint: disable=C0103
-        self.Functions = ztpserver.topology.Functions   #pylint: disable=C0103
+#     def setUp(self):
+#         self.pool = ResourcePool()
 
-    def test_functions_exact_true(self):
-        self.assertTrue(self.Functions.exact('test', 'test'))
+#         self.pool.load_from_file = Mock()
+#         self.pool.dump_to_file = Mock()
 
-    def test_functions_exact_false(self):
-        self.assertFalse(self.Functions.exact('test', 'nottest'))
+#         self.pooldata = dict()
+#         for i in range(0, 10):      # pylint: disable=W0612
+#             self.pooldata[random_string()] = None
+#         self.pool.data = self.pooldata
 
-    def test_functions_includes_true(self):
-        self.assertTrue(self.Functions.includes('test', 'unittest'))
+#     def test_serialize_success(self):
+#         resp = self.pool.serialize()
+#         self.assertEqual(resp, self.pool.data)
 
-    def test_functions_includes_false(self):
-        self.assertFalse(self.Functions.includes('test', 'functions'))
+#     def test_deserialize_success(self):
+#         pooldata = dict()
+#         for i in range(0, 10):      # pylint: disable=W0612
+#             pooldata[random_string()] = None
+#         self.pool.deserialize(pooldata)
+#         self.assertEqual(pooldata, self.pool.data)
 
-    def test_functions_excludes_true(self):
-        self.assertTrue(self.Functions.excludes('test', 'functions'))
+#     def test_allocate_success(self):
+#         node = create_node()
+#         resp = self.pool.allocate(random_string(), node)
+#         self.assertIsNotNone(resp)
+#         self.assertIn(resp, self.pooldata.keys())
 
-    def test_functions_excludes_false(self):
-        self.assertFalse(self.Functions.excludes('test', 'unittest'))
+#     def test_allocate_success_existing(self):
+#         node = create_node()
+#         key = random_string()
+#         self.pool.data[key] = node.systemmac
+#         resp = self.pool.allocate(random_string(), node)
+#         self.assertIsNotNone(resp)
+#         self.assertIn(resp, key)
 
-    def test_functions_regex_true(self):
-        self.assertTrue(self.Functions.regex(r'\w+', 'test'))
+#     def test_allocate_success_no_resource(self):
+#         node = create_node()
+#         key = random_string()
+#         for key in self.pool.data.keys():
+#             self.pool.data[key] = random_string()
 
-    def test_functions_regex_false(self):
-        self.assertFalse(self.Functions.regex(r'\d+', 'test'))
+#         self.assertRaises(ResourcePoolError, self.pool.allocate,
+#                           random_string(), node)
+
+#     def test_lookup_success_found_key(self):
+#         node = create_node()
+#         key = random_string()
+#         self.pool.data[key] = node.systemmac
+#         resp = self.pool.lookup(random_string(), node)
+#         self.assertEqual(resp, key)
+
+#     def test_lookup_success_no_key(self):
+#         node = create_node()
+#         resp = self.pool.lookup(random_string(), node)
+#         self.assertIsNone(resp)
 
 
-class TestNode(unittest.TestCase):
+class FunctionsUnitTests(unittest.TestCase):
 
-    def test_node_creation(self):
-        obj = ztpserver.topology.Node('1234567890')
-        self.assertEqual(obj.systemmac, '1234567890')
-        self.assertEqual(repr(obj), 'Node(node=1234567890, '
-                         'neighbors=OrderedCollection(), ...)')
+    def test_exactfunction_true(self):
+        value = random_string()
+        func = ztpserver.topology.ExactFunction(value)
+        self.assertTrue(func.match(value))
 
-    def test_node_creation_with_kwargs(self):
-        obj = ztpserver.topology.Node(model='vEOS',
-                                      systemmac='00:1c:73:aa:11:bb',
-                                      serialnumber='0123456789',
-                                      version='4.12.0')
+    def test_exactfunction_false(self):
+        value = random_string()
+        func = ztpserver.topology.ExactFunction(value)
+        self.assertFalse(func.match(random_string()))
 
-        self.assertEqual(repr(obj), 'Node(node=00:1c:73:aa:11:bb, '
-                         'neighbors=OrderedCollection(), ...)')
-        self.assertEqual(obj.model, 'vEOS')
-        self.assertEqual(obj.systemmac, '00:1c:73:aa:11:bb')
-        self.assertEqual(obj.serialnumber, '0123456789')
-        self.assertEqual(obj.version, '4.12.0')
+    def test_includesfunction_true(self):
+        value = random_string()
+        func = ztpserver.topology.IncludesFunction(value)
+        self.assertTrue(func.match(value))
 
-    def test_node_add_neighbors_valid(self):
-        obj = ztpserver.topology.Node('1234567890')
-        obj.add_neighbors({'Ethernet': [{'device': 'test', 'port': 'test'}]})
-        self.assertEqual(repr(obj), 'Node(node=1234567890, '
-                         'neighbors=OrderedCollection([(\'Ethernet\', '
-                         '[Neighbor(device=\'test\', port=\'test\')])]), '
-                         '...)')
-        self.assertIsNotNone(obj.neighbors('Ethernet'))
+    def test_includesfunction_false(self):
+        value = random_string()
+        func = ztpserver.topology.IncludesFunction(value)
+        self.assertFalse(func.match(random_string()))
+
+    def test_excludesfunction_true(self):
+        value = random_string()
+        func = ztpserver.topology.ExcludesFunction(value)
+        self.assertTrue(func.match(random_string()))
+
+    def test_excludesfunction_false(self):
+        value = random_string()
+        func = ztpserver.topology.ExcludesFunction(value)
+        self.assertFalse(func.match(value))
+
+    def test_regexfunction_true(self):
+        value = '[\w+]'
+        func = ztpserver.topology.RegexFunction(value)
+        self.assertTrue(func.match(random_string()))
+
+    def test_regexfunction_false(self):
+        value = '[^a-zA-Z0-9]'
+        func = ztpserver.topology.RegexFunction(value)
+        self.assertFalse(func.match(random_string()))
 
 
 class TestPattern(unittest.TestCase):
@@ -264,13 +322,15 @@ class PatternUnitTests(unittest.TestCase):
 
 
 class TestInterfacePattern(unittest.TestCase):
-    #pylint: disable=W0142
 
     def test_create_interface_pattern(self):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1', 'any', 'any')
-        reprobj = 'InterfacePattern(interface=Ethernet1, remote_device=any, '\
-            'remote_interface=any, remote_device_init=any, '\
-            'remote_interface_init=any)'
+        intf = random_string()
+        device = random_string()
+        port = random_string()
+
+        obj = ztpserver.topology.InterfacePattern(intf, device, port)
+        reprobj = 'InterfacePattern(interface=%s, device=%s, port=%s)' % \
+                  (intf, device, port)
         self.assertEqual(repr(obj), reprobj)
 
     def remote_device_test(self, device_to_match, device, fail=False):
@@ -339,20 +399,7 @@ class TestInterfacePattern(unittest.TestCase):
     def test_match_port_false(self):
         self.remote_port_test('Ethernet1', 'Ethernet2', fail=True)
 
-# class TopologyUnitTests(unittest.TestCase):
 
-#     def test_deserialize_success_single_pattern(self):
-#         ndb = create_neighbordb()
-#         pattern = create_pattern()
-#         ndb.add_pattern(pattern)
-
-#         topology = Topology()
-#         topology.deserialize(ndb.as_dict())
-
-#         self.assertEqual(topology.global_variables, ndb.variables)
-
-#         t_patterns =  [x.serialize() for x in topology.patterns['globals']]
-#         self.assertEqual(t_patterns, ndb.get_patterns())
 
 
 
