@@ -47,3 +47,7 @@ _templates
 
 #disk images
 .iso
+
+#packer local folders
+output-vmware-iso/
+packer_cache/
