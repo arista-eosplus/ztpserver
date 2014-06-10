@@ -23,17 +23,21 @@
             "ssh_wait_timeout": "20m",
             "guest_os_type": "fedora-64",
             "tools_upload_flavor": "linux",
-            "vm_name":"ztps-fedora-20-x86_64",
+            "vm_name":"ztps-fedora-20-x86_64-{{isotime}}",
             "vmx_data": {
               "memsize": "2048",
               "numvcpus": "1",
               "cpuid.coresPerSocket": "1",
               "ethernet0.present" : "TRUE",
-	      "ethernet0.connectionType" : "NAT",
+              "ethernet0.virtualdev" :  "e1000",
+              "ethernet0.connectionType" : "nat",
               "ethernet0.startConnected" : "TRUE",
+              "ethernet0.pcislotnumber" : "32",
+              "ethernet1.pcislotnumber" : "33",
+              "ethernet1.virtualdev" :  "e1000",
               "ethernet1.present" : "TRUE",
               "ethernet1.startConnected" : "TRUE",
-	      "ethernet1.connectionType" : "BRIDGED"
+              "ethernet1.connectionType" : "hostonly"
             },
             "shutdown_command": "/sbin/shutdown -h now",
             "http_directory":"http/"
@@ -48,7 +52,7 @@
 	  {
             "scripts": [
 	      "scripts/setup.sh"
-	    ],  
+	    ],
 	    "type" : "shell"
           }
         ]
