@@ -1,7 +1,7 @@
 # Tests various neighbordb pattern values
 #  - test variuos pattern attribute values
 
-debug: false
+debug: true
 tag: entries_test
 tests:
   - pattern
@@ -68,7 +68,7 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
 
-    # Single character
+    # # Single character
     - name: $
       definition: test
       interfaces:
@@ -85,7 +85,7 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
 
-    # Missing name - will not be provisioned
+    # # Missing name - will not be provisioned
     - name:
       definition: test
       interfaces:

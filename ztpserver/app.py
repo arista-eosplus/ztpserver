@@ -44,6 +44,11 @@ import ztpserver.config
 import ztpserver.controller
 import ztpserver.neighbordb
 
+from ztpserver.serializers import load
+from ztpserver.validators import TopologyValidator
+from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.neighbordb import default_filename
+
 from ztpserver import __version__ as VERSION
 
 DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
@@ -82,6 +87,13 @@ def start_logging():
         if ztpserver.config.runtime.default.console_logging:
             enable_handler_console()
 
+def load_config(conf=None):
+    conf = conf or DEFAULT_CONF
+    conf = os.environ.get('ZTPS_CONFIG', conf)
+
+    if os.path.exists(conf):
+        ztpserver.config.runtime.read(conf)
+
 def start_wsgiapp(conf=None):
     """ Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
@@ -93,13 +105,9 @@ def start_wsgiapp(conf=None):
 
     """
 
-    conf = conf or DEFAULT_CONF
-    conf = os.environ.get('ZTPS_CONFIG', conf)
-
-    if os.path.exists(conf):
-        ztpserver.config.runtime.read(conf)
-
+    load_config(conf)
     start_logging()
+
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
 
@@ -129,6 +137,29 @@ def run_server(conf):
     except KeyboardInterrupt:
         print 'Shutdown'
 
+def run_validator(filename=None):
+    try:
+        print 'Validating file \'%s\'\n' % filename
+        validator = TopologyValidator()
+        filename = filename or default_filename()
+        validator.validate(load(filename, CONTENT_TYPE_YAML))
+        print 'Valid Patterns (count: %d)' % len(validator.valid_patterns)
+        print '--------------------------'
+        for index, pattern in enumerate(sorted(validator.valid_patterns)):
+            print '[%d] %s' % (index, pattern[1])
+        print
+        print 'Failed Patterns (count: %d)' % len(validator.failed_patterns)
+        print '---------------------------'
+        for index, pattern in enumerate(sorted(validator.failed_patterns)):
+            print '[%d] %s' % (index, pattern[1])
+        print
+
+    except Exception as exc:
+        log.exception(exc)
+        print 'An unexpected error occurred trying to run the validator'
+
+
+
 def main():
     """ The :py:func:`main` is the main entry point for the ztpserver if called
     from the commmand line.   When called from the command line, the server is
@@ -149,9 +180,20 @@ def main():
                         default=DEFAULT_CONF,
                         help='Specifies the configuration file to use')
 
+    parser.add_argument('--validate',
+                        type=str,
+                        metavar='FILENAME',
+                        help='Runs a validation check on neighbordb')
+
+
     args = parser.parse_args()
     if args.version:
         print 'ztps version %s' % VERSION
+        sys.exit()
+
+    if args.validate is not None:
+        load_config(args.conf)
+        run_validator(args.validate)
         sys.exit()
 
     return run_server(args.conf)

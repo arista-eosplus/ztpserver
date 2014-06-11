@@ -287,8 +287,8 @@ class NodesController(BaseController):
             self.repository.add_folder(self.expand(node.systemmac))
 
             definition_url = self.expand(match.definition, folder='definitions')
-            definition = \
-                self.repository.get_file(definition_url).read(content_type=CONTENT_TYPE_YAML)
+            fobj = self.repository.get_file(definition_url)
+            definition = fobj.read(content_type=CONTENT_TYPE_YAML)
             definition_fn = self.expand(node.systemmac, DEFINITION_FN)
 
             fobj = self.repository.add_file(definition_fn)
