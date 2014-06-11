@@ -207,7 +207,7 @@ def dumps(obj, content_type=None, cls=None, **kwargs):
 def dump(obj, filepath, content_type=None, cls=None, **kwargs):
     try:
         with open(filepath, 'w') as fh:
-            fh.write(self.dumps(obj, content_type, cls=cls, **kwargs))
+            fh.write(dumps(obj, content_type, cls=cls, **kwargs))
     except (OSError, IOError):
         log.error('Unable to write to file %s', filepath)
         raise

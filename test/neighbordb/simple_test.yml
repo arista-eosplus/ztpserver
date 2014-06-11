@@ -1,4 +1,38 @@
-name: simple interface patterns
+debug: false
+tag: simple_interface_patterns
+tests:
+  - pattern
+  - topology
+valid_patterns:
+  globals:
+    - simple pattern 1
+    - simple pattern 2
+    - simple pattern 3
+    - simple pattern 4
+    - simple pattern 5
+    - simple pattern 6
+    - simple pattern 7
+    - simple pattern 8
+nodes:
+  pass:
+    - name: 2b3c
+      match: simple pattern 1
+
+2b3c:
+  systemmac: 00:1c:73:1a:2b:3c
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+    Ethernet2:
+      - device: localhost
+        port: Ethernet1
+    Ethernet3:
+      - device: localhost
+        port: Ethernet1
+    Ethernet4:
+      - device: localhost
+        port: Ethernet1
 
 neighbordb:
 
@@ -48,33 +82,3 @@ neighbordb:
       definition: test
       interfaces:
         - Ethernet5-10: none
-
-nodes:
-  - name: 2b3c
-    matches:
-      count: 5
-      includes:
-        - simple pattern 1
-        - simple pattern 2
-        - simple pattern 3
-        - simple pattern 5
-        - simple pattern 8
-      excludes:
-        - simple pattern 4
-        - simple pattern 6
-        - simple pattern 7
-    node:
-      systemmac: 00:1c:73:1a:2b:3c
-    neighbors:
-      Ethernet1:
-        - device: localhost
-          port: Ethernet1
-      Ethernet2:
-        - device: localhost
-          port: Ethernet1
-      Ethernet3:
-        - device: localhost
-          port: Ethernet1
-      Ethernet4:
-        - device: localhost
-          port: Ethernet1

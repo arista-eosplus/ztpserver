@@ -1,4 +1,20 @@
-name: sample pattern test
+tag: large_pattern_test
+test:
+  - pattern
+  - topology
+valid_patterns:
+  nodes:
+    - sample node template 1
+    - sample node template 2
+  globals:
+    - sample global template 1
+    - sample global template 2
+    - sample global template 3
+    - default catch all
+nodes:
+  pass:
+    - name: node_d27d
+      match: sample node template 1
 
 neighbordb:
   variables:
@@ -18,7 +34,6 @@ neighbordb:
             device: localhost
             port: Ethernet50
 
-
     - name: sample node template 2
       definition: leaf_template
       node: 001c73aabbcc
@@ -29,7 +44,6 @@ neighbordb:
         - any:
             device: regex('pod\d+-spine1')
             port: Ethernet2/3
-
 
     - name: sample global template 1
       definition: test
@@ -48,7 +62,6 @@ neighbordb:
         - Ethernet50:
             device: includes('localhost')
             port: Ethernet50
-
 
     - name: sample global template 2
       definition: mlag_leaf_template
@@ -82,101 +95,4 @@ neighbordb:
       interfaces:
         - Ethernet1: none
 
-nodes:
-  - name: 2b3d
-    node:
-      model: vEOS
-      serialnumber: 1234567890
-      systemmac: 00:1c:73:1a:2b:3d
-      version: 4.12.0
-    neighbors:
-      Ethernet1:
-          -
-            device: pod1-spine1
-            port: Ethernet1
-      Ethernet2:
-          -
-            device: pod1-spine2
-            port: Ethernet1
-      Ethernet6:
-          -
-            device: spine4
-            port: Ethernet8
-          -
-            device: spine5
-            port: Ethernet2
-      Ethernet7:
-          -
-            device: spine4
-            port: Ethernet8
-          -
-            device: spine5
-            port: Ethernet2
-      Ethernet49:
-          -
-            device: localhost
-            port: Ethernet49
-      Ethernet50:
-          -
-            device: localhost
-            port: Ethernet50
-    matches:
-      count: 0
-      excludes:
-      excludes:
-        - default catch all
-        - sample node template 1
-        - sample node template 2
-        - sample global template 1
-        - sample global template 2
-        - sample global template 3
 
-  - name: d27d
-    node:
-      model: vEOS
-      serialnumber: 1234567890
-      systemmac: 00:0c:29:f5:d2:7d
-      version: 4.12.0
-    neighbors:
-       Ethernet1:
-         -
-           device: localhost
-           port: Ethernet1
-       Ethernet2:
-         -
-           device: localhost
-           port: Ethernet1
-       Ethernet3:
-         -
-           device: localhost
-           port: Ethernet1
-       Ethernet6:
-         -
-           device: spine4
-           port: Ethernet8
-         -
-           device: spine5
-           port: Ethernet2
-       Ethernet7:
-         -
-           device: spine4
-           port: Ethernet8
-         -
-           device: spine5
-           port: Ethernet2
-       Ethernet49:
-         -
-           device: localhost
-           port: Ethernet49
-       Ethernet50:
-         -
-           device: localhost
-           port: Ethernet50
-    matches:
-      count: 0
-      excludes:
-        - default catch all
-        - sample node template 2
-        - sample global template 1
-        - sample global template 2
-        - sample global template 3

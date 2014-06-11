@@ -85,7 +85,9 @@ class NeighbordbTest(unittest.TestCase):
     def _validate_topology(self):
         validator = TopologyValidator()
         validator.validate(self.ndb)
-        return (validator.valid_patterns, validator.failed_patterns, validator.messages)
+        return (validator.valid_patterns,
+                validator.failed_patterns,
+                validator.messages)
 
     def neighbordb_pattern(self):
         log.info('START: neighbordb_patterns')
@@ -98,15 +100,11 @@ class NeighbordbTest(unittest.TestCase):
             self.assertEqual(failed_names, sorted(self.failed_patterns), tag)
             self.assertEqual(len(failed), len(self.failed_patterns), tag)
 
-        try:
-            p_all = self.valid_patterns.get('nodes') + \
-                    self.valid_patterns.get('globals')
-            if p_all:
-                valid_names = sorted([p[1] for p in valid])
-                self.assertEqual(valid_names, sorted(p_all), tag)
-        except AssertionError:
-            for msg in messages:
-                log.error(msg)
+        p_all = self.valid_patterns.get('nodes') + \
+                self.valid_patterns.get('globals')
+        if p_all:
+            valid_names = sorted([p[1] for p in valid])
+            self.assertEqual(valid_names, sorted(p_all), tag)
 
         log.info('END: neighbordb_patterns')
 
@@ -165,9 +163,9 @@ def get_test_list(filepath):
     if not test_list:
         log.debug('Checking directory %s for tests', TEST_DIR)
         test_list = [os.path.join(filepath, f) for f in os.listdir(filepath)
-                     if f.startswith('ndb_')]
+                     if f.endswith('yml')]
     else:
-        test_list = test_list.split(',')
+        test_list = [os.path.join(filepath, f) for f in test_list.split(',')]
     return test_list
 
 def load_tests(loader, tests, pattern):
@@ -213,7 +211,7 @@ def load_tests(loader, tests, pattern):
                     if not entries is None:
                         for entry in entries:
                             fn = entry['name'].split('/')[-1]
-                            kwargs['node'] = harness.get(fn, name)
+                            kwargs['node'] = harness.get(fn, entry['name'])
                             kwargs['match'] = entry.get('match')
                             kwargs['tag'] = entry.get('tag', fn)
                             log.info('Adding node %s', name)
@@ -225,5 +223,5 @@ def load_tests(loader, tests, pattern):
         return suite
 
 if __name__ == '__main__':
-    enable_logging()
+    #enable_logging()
     unittest.main()

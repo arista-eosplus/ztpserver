@@ -102,7 +102,7 @@ def start_wsgiapp(conf=None):
     start_logging()
     log.info('Logging started for ztpserver')
 
-    ztpserver.neighbordb.load()
+    ztpserver.neighbordb.load_topology()
     return ztpserver.controller.Router()
 
 def run_server(conf):

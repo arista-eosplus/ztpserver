@@ -68,5 +68,5 @@ def load_tests(loader, tests, pattern):            #pylint: disable=W0613
     return suite
 
 if __name__ == '__main__':
-    enable_handler_console()
+    #enable_handler_console()
     unittest.main()

@@ -40,7 +40,7 @@ import ztpserver.serializers
 import ztpserver.topology
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
-from ztpserver.topology import ResourcePool, ResourcePoolError
+#from ztpserver.topology import ResourcePool, ResourcePoolError
 from ztpserver.topology import Pattern, PatternError
 from ztpserver.topology import Topology, TopologyError
 from ztpserver.topology import Node, NodeError
@@ -333,76 +333,90 @@ class TestInterfacePattern(unittest.TestCase):
                   (intf, device, port)
         self.assertEqual(repr(obj), reprobj)
 
-    def remote_device_test(self, device_to_match, device, fail=False):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1',
-                                                  device_to_match,
-                                                  'any')
-        neighbors = [ztpserver.topology.Neighbor(device, 'any')]
-        try:
-            self.assertTrue(obj.match_remote_device(neighbors))
-            if fail:
-                self.assertFalse('Erroneously matched %s to %s' %
-                                 (device, obj))
-        except AssertionError:
-            if not fail:
-                raise
+    def test_match_success(self):
+        interface = random_string()
+        device = random_string()
+        port = random_string()
+        neighbors = [dict(device=device, port=port)]
 
-    def test_match_device_exact_true(self):
-        self.remote_device_test('exact("spine")', 'spine')
+        pattern = ztpserver.topology.InterfacePattern(interface, device, port)
+        pattern.match_neighbors = Mock(return_value=True)
+        pattern.match_interface = Mock(return_value=True)
 
-    def test_match_device_exact_false(self):
-        self.remote_device_test('exact("spine")', 'leaf',
-                                fail=True)
+        neighbor = ztpserver.topology.Neighbor(device, port)
+        result = pattern.match(interface, neighbor)
+        self.assertTrue(result)
 
-    def test_match_device_includes_true(self):
-        self.remote_device_test('includes("spine")', 'pod1-spine1')
+    def test_match_false_interface(self):
+        interface = random_string()
+        device = random_string()
+        port = random_string()
+        neighbors = [dict(device=device, port=port)]
 
-    def test_match_device_includes_false(self):
-        self.remote_device_test('includes("spine")', 'pod1-leaf1',
-                                fail=True)
+        pattern = ztpserver.topology.InterfacePattern(interface, device, port)
+        pattern.match_neighbors = Mock(return_value=True)
+        pattern.match_interface = Mock(return_value=False)
 
-    def test_match_device_excludes_true(self):
-        self.remote_device_test('excludes("spine")', 'pod1-leaf1')
+        neighbor = ztpserver.topology.Neighbor(device, port)
+        result = pattern.match(interface, neighbor)
 
-    def test_match_device_excludes_false(self):
-        self.remote_device_test('excludes("spine")', 'pod1-spine1',
-                                fail=True)
+        self.assertFalse(pattern.match_neighbors.called)
+        self.assertFalse(result)
 
-    def test_match_device_regex_true(self):
-        self.remote_device_test(r'regex("pod\d+-spine\d+")',
-                               'pod1-spine1')
+    def test_match_false_neighbor(self):
+        interface = random_string()
+        device = random_string()
+        port = random_string()
+        neighbors = [dict(device=device, port=port)]
 
-    def test_match_device_regex_false(self):
-        self.remote_device_test(r'exact("pod\d+-spine\d+")',
-                                'pod1-leaf1', fail=True)
+        pattern = ztpserver.topology.InterfacePattern(interface, device, port)
+        pattern.match_neighbors = Mock(return_value=False)
+        pattern.match_interface = Mock(return_value=True)
 
-    def remote_port_test(self, port_to_match, port, fail=False):
-        obj = ztpserver.topology.InterfacePattern('Ethernet1',
-                                                  'any',
-                                                  port_to_match)
-        neighbors = [ztpserver.topology.Neighbor('any', port)]
-        try:
-            self.assertTrue(obj.match_remote_interface(neighbors))
-            if fail:
-                self.assertFalse('Erroneously matched %s to %s' %
-                                 (port, obj))
-        except AssertionError:
-            if not fail:
-                raise
+        neighbor = ztpserver.topology.Neighbor(device, port)
 
-    def test_match_port_true(self):
-        self.remote_port_test('Ethernet1', 'Ethernet1')
-
-    def test_match_port_true_range(self):
-        self.remote_port_test('regex("Ethernet[1-3]")', 'Ethernet1')
-
-    def test_match_port_false(self):
-        self.remote_port_test('Ethernet1', 'Ethernet2', fail=True)
+        self.assertRaises(ztpserver.topology.InterfacePatternError,
+                          pattern.match, interface, neighbor)
 
 
+    def compile_known_function(self, interface, cls):
+        pattern = ztpserver.topology.InterfacePattern(interface,
+                                                      random_string(),
+                                                      random_string())
+        self.assertIsInstance(pattern.interface_re, cls)
 
+    def test_compile_exact_function(self):
+        interface = 'exact(\'%s\')' % random_string()
+        self.compile_known_function(interface, ztpserver.topology.ExactFunction)
 
+    def test_compile_includes_function(self):
+        interface = 'includes(\'%s\')' % random_string()
+        self.compile_known_function(interface,
+                                    ztpserver.topology.IncludesFunction)
 
+    def test_compile_excludes_function(self):
+        interface = 'excludes(\'%s\')' % random_string()
+        self.compile_known_function(interface,
+                                    ztpserver.topology.ExcludesFunction)
+
+    def test_compile_regex_function(self):
+        interface = 'regex(\'%s\')' % random_string()
+        self.compile_known_function(interface,
+                                    ztpserver.topology.RegexFunction)
+
+    def test_compile_no_function(self):
+        interface = random_string()
+        self.compile_known_function(interface,
+                                    ztpserver.topology.ExactFunction)
+
+    def test_compile_unknown_function(self):
+        interface = '%s(\'%s\')' % (random_string(), random_string())
+        device = random_string()
+        port = random_string()
+
+        self.assertRaises(ztpserver.topology.InterfacePatternError,
+                          ztpserver.topology.InterfacePattern,
+                          interface, random_string(), random_string())
 
 if __name__ == '__main__':
     unittest.main()

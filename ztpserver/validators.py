@@ -111,7 +111,10 @@ class TopologyValidator(Validator):
             if not validator.validate(entry):
                 log.info('Add pattern %s to failed patterns', entry.get('name'))
                 self.error('Unable to validate pattern at index %d', index)
-                self.failed_patterns.add((index, entry.get('name')))
+                try:
+                    self.failed_patterns.add((index, entry.get('name')))
+                except TypeError:
+                    self.failed_patterns.add((index, None))
                 for msg in validator.messages:
                     self.messages.append(msg)
             else:
@@ -127,7 +130,8 @@ class PatternValidator(Validator):
         if not set(REQUIRED_PATTERN_ATTRIBUTES).issubset(self.contents.keys()):
             self.error('Validation failed due to missing attributes')
 
-        self._validate_definition(self.contents['definition'])
+        if 'definition' in self.contents:
+            self._validate_definition(self.contents['definition'])
 
         if 'node' in self.contents:
             self._validate_node(self.contents['node'])
@@ -135,30 +139,33 @@ class PatternValidator(Validator):
         if 'variables' in self.contents:
             self._validate_pattern_variables(self.contents['variables'])
 
-        if not hasattr(self.contents['interfaces'], '__iter__'):
-            self.error('Validation failed due to interfaces attribute is '
-                       'not iterable')
+        if 'interfaces' in self.contents:
+            if not hasattr(self.contents['interfaces'], '__iter__'):
+                self.error('Validation failed due to interfaces attribute is '
+                           'not iterable')
 
-        for item in self.contents['interfaces']:
-            if not hasattr(item, 'items'):
-                self.error('Validation failed due to invalid interface '
-                           'pattern %s', item)
-                break
-
-            for interface, peer in item.items():
-                if peer is None:
-                    self.error('Validation failed due to invalid peer')
+            for item in self.contents['interfaces']:
+                if not hasattr(item, 'items'):
+                    self.error('Validation failed due to invalid interface '
+                               'pattern %s', item)
                     break
 
-                try:
-                    (interface, device, port) = \
-                        Pattern.parse_interface(interface, peer)
-                except PatternError:
-                    self.error('Validation failed due to PatternError')
-                else:
-                    if interface not in INTERFACE_PATTERN_KEYWORDS:
-                        for entry in expand_range(interface):
-                            self._validate_pattern(entry, device, port)
+                for interface, peer in item.items():
+                    if peer is None:
+                        self.error('Validation failed due to invalid peer')
+                        break
+
+                    try:
+                        (interface, device, port) = \
+                            Pattern.parse_interface(interface, peer)
+                    except PatternError:
+                        self.error('Validation failed due to PatternError')
+                    else:
+                        try:
+                            for entry in expand_range(interface):
+                                self._validate_pattern(entry, device, port)
+                        except TypeError:
+                            self._validate_pattern(interface, device, port)
 
     def _validate_definition(self, definition):
         try:
@@ -207,8 +214,8 @@ class PatternValidator(Validator):
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
-                self.error('Failed to parse pattern due to invalid '
-                           'interface pattern')
+                self.error('Failed to parse pattern (%s, %s, %s) due to invalid'
+                           ' interface pattern', interface, device, port)
                 pattern_failed = True
         return not pattern_failed
 

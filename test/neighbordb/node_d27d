@@ -1,0 +1,30 @@
+model: vEOS
+serialnumber: 1234567890
+systemmac: 00:0c:29:f5:d2:7d
+version: 4.12.0
+neighbors:
+   Ethernet1:
+     - device: localhost
+       port: Ethernet1
+   Ethernet2:
+     - device: localhost
+       port: Ethernet1
+   Ethernet3:
+     - device: localhost
+       port: Ethernet1
+   Ethernet6:
+     - device: spine4
+       port: Ethernet8
+     - device: spine5
+       port: Ethernet2
+   Ethernet7:
+     - device: spine4
+       port: Ethernet8
+     - device: spine5
+       port: Ethernet2
+   Ethernet49:
+     - device: localhost
+       port: Ethernet49
+   Ethernet50:
+     - device: localhost
+       port: Ethernet50

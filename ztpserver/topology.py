@@ -130,17 +130,24 @@ class Node(object):
     def __repr__(self):
         return 'Node(systemmac=%s)' % self.systemmac
 
+    def add_neighbor(self, interface, peers):
+        try:
+            _neighbors = list()
+            for peer in peers:
+                log.debug('Creating neighbor %s:%s for interface %s',
+                          peer['device'], peer['port'], interface)
+                _neighbors.append(Neighbor(peer['device'],
+                                           peer['port']))
+            self.neighbors[interface] = _neighbors
+        except KeyError:
+            log.error('Unable to add neighbor due to missing attribute')
+            raise NodeError
+
     def add_neighbors(self, neighbors):
         try:
             for interface, peers in neighbors.items():
-                _neighbors = list()
-                for peer in peers:
-                    log.debug('Creating neighbor %s:%s for interface %s',
-                              peer['device'], peer['port'], interface)
-                    _neighbors.append(Neighbor(peer['device'],
-                                               peer['port']))
-                self.neighbors[interface] = _neighbors
-        except KeyError:
+                self.add_neighbor(interface, peers)
+        except AttributeError:
             log.error('Unable to add neighbor due to missing attribute')
             raise NodeError
 
@@ -152,7 +159,7 @@ class Node(object):
 
         neighbors = {}
         if self.neighbors:
-            for interface, neighbor_list in self.neighbors.iteritems():
+            for interface, neighbor_list in self.neighbors.items():
                 serialized_neighbor_list = []
                 for neighbor in neighbor_list:
                     serialized_neighbor_list.append(
@@ -292,23 +299,22 @@ class Pattern(object):
 
         self.variable_substitution()
 
-        #TODO hacky workaround to update regular expressions
-        [interface.refresh() for interface in self.interfaces]
-
     def __repr__(self):
         return 'Pattern(name=\'%s\')' % self.name
 
     def variable_substitution(self):
         try:
             log.info('Checking pattern entries for variable substitution')
-            for item in self.interfaces:
-                for attr in ['device', 'port']:
-                    value = getattr(item, attr)
-                    if value.startswith('$'):
-                        newvalue = self.variables[value[1:]]
-                        setattr(item, attr, newvalue)
-                        log.info('Found variable %s, new value %s',
-                                  value, newvalue)
+            for entry in self.interfaces:
+                for item in entry['patterns']:
+                    for attr in ['device', 'port']:
+                        value = getattr(item, attr)
+                        if value.startswith('$'):
+                            newvalue = self.variables[value[1:]]
+                            setattr(item, attr, newvalue)
+                            log.info('Found variable %s, new value %s',
+                                      value, newvalue)
+                    item.refresh()
             log.info('Variable substitution is complete')
         except KeyError:
             log.error('Variable substitution failed due to unknown variable')
@@ -317,14 +323,14 @@ class Pattern(object):
     def serialize(self):
         try:
             data = dict(name=self.name, definition=self.definition)
-
-            interfaces = []
-            for entry in self.interfaces:
-                interfaces.append({entry.interfaces_init: entry.serialize()})
-            data['interfaces'] = interfaces
-
             data['variables'] = self.variables
             data['node'] = self.node
+
+            interfaces = []
+            for item in self.interfaces:
+                _item = item['metadata']
+                interfaces.append({_item['interface']: _item['neighbors']})
+            data['interfaces'] = interfaces
 
             return data
         except Exception:
@@ -340,15 +346,18 @@ class Pattern(object):
             for key, value in interface.items():
                 (interface, device, port) = self.parse_interface(key, value)
 
+                metadata = dict(interface=interface, neighbors=value)
                 if interface in ['none', 'any']:
                     log.info('Adding interface to pattern %s', interface)
-                    pattern = InterfacePattern(interface, device, port)
-                    self.interfaces.append(pattern)
+                    patterns = [InterfacePattern(interface, device, port)]
                 else:
+                    patterns = list()
                     for item in expand_range(interface):
                         log.info('Adding interface to pattern %s', item)
                         pattern = InterfacePattern(item, device, port)
-                        self.interfaces.append(pattern)
+                        patterns.append(pattern)
+                self.interfaces.append(dict(metadata=metadata,
+                                            patterns=patterns))
 
         except ValueError:
             log.error('Unable to parse interface \'%s\'', key)
@@ -396,12 +405,12 @@ class Pattern(object):
                     device = tokens[0]
                     port = tokens[1]
 
-            device = device.strip()
+            device = str(device).strip()
             if len(device.split()) != 1:
                 log.error('Invalid peer device')
                 raise PatternError
 
-            remote_port = port.strip()
+            remote_port = str(port).strip()
             if len(port.split()) != 1:
                 log.error('Invalid peer port')
                 raise PatternError
@@ -417,7 +426,10 @@ class Pattern(object):
         log.debug('node=%r', node)
 
         try:
-            patterns = list(self.interfaces)
+            patterns = list()
+            for entry in self.interfaces:
+                for pattern in entry['patterns']:
+                    patterns.append(pattern)
             matches = list()
 
             for interface, neighbors in node.neighbors.items():
@@ -483,11 +495,6 @@ class InterfacePattern(object):
         return 'InterfacePattern(interface=%s, device=%s, port=%s)' % \
                 (self.interface, self.device, self.port)
 
-    def serialize(self):
-        return dict(interface=self.interface,
-                    device=self.device,
-                    port=self.port)
-
     def refresh(self):
         self.interface_re = self.compile(self.interface)
         self.device_re = self.compile(self.device)
@@ -504,13 +511,13 @@ class InterfacePattern(object):
             match_neighbors = self.match_neighbors(neighbors)
             log.debug('match_neighbors=%s', match_neighbors)
         else:
-            log.debug('skipping match_neighbors')
+            log.debug('skipping match_neighbors due to match interface failure')
+            match_neighbors = False
 
         if match_interface and not match_neighbors:
-            log.warning('Interface matches but neighbors are invalid')
-            raise InterfacePatternError
+           log.warning('Interface matches but neighbors are invalid')
+           raise InterfacePatternError
 
-        log.debug('match returns %s', (match_interface and match_neighbors))
         return match_interface and match_neighbors
 
     def compile(self, value):
@@ -519,14 +526,18 @@ class InterfacePattern(object):
             log.debug('Found pattern keyword %s', value)
             return self.KEYWORDS[value]
 
-        match = FUNC_RE.match(value)
-        if match:
-            function = match.group('function')
-            arg = match.group('arg')
-            log.debug('Found function %s with arg %s', function, arg)
-            return self.FUNCTIONS[function](arg)
-        else:
-            return ExactFunction(value)
+        try:
+            match = FUNC_RE.match(value)
+            if match:
+                function = match.group('function')
+                arg = match.group('arg')
+                log.debug('Found function %s with arg %s', function, arg)
+                return self.FUNCTIONS[function](arg)
+            else:
+                return ExactFunction(value)
+        except KeyError:
+            log.error('Unknown function \'%s\'', function)
+            raise InterfacePatternError
 
     def match_neighbors(self, neighbors):
         for neighbor in neighbors:

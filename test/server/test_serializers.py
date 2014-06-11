@@ -29,48 +29,25 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import re
+import unittest
 
-def atoi(text):
-    return int(text) if text.isdigit() else text
+from mock import patch
 
-def natural_keys(text):
-    return [atoi(c) for c in re.split('(\d+)', text)]
+import ztpserver.serializers
 
-def expand_range(text, match_prefix=None, replace_prefix=None):
-    ''' Returns a naturally sorted list of items expanded from text. '''
+class SerializersUnitTest(unittest.TestCase):
 
-    match_prefix = match_prefix or '[a-zA-Z]'
-    prefix_match_re = r'^(?P<prefix>%s+)(?=\d)' % match_prefix
-    match = re.match(prefix_match_re, text)
+    def test_dump_success(self, m_open):
+        pass
 
-    if not match:
-        raise TypeError('unable to match prefix: %s' % text)
-    elif match and not replace_prefix:
-        prefix = match.group('prefix')
-    elif match and replace_prefix:
-        prefix = replace_prefix
+    def test_dumps_success(self):
+        pass
 
-    indicies_re = re.compile(r'\d+')
-    range_re = re.compile(r'(\d+)\-(\d+)')
+    def test_load_success(self):
+        pass
 
-    indicies = indicies_re.findall(text)
-    ranges = range_re.findall(text)
+    def test_loads_success(self):
+        pass
 
-    items = set()
-
-    for start, end in ranges:
-        start = int(start)
-        end = int(end) + 1
-        for index in range(start, end):
-            items.add('%s%s' % (prefix, index))
-
-    for index in indicies:
-        items.add('%s%s' % (prefix, index))
-
-    items = list(items)
-    items.sort(key=natural_keys)
-    return items
-
-
-
+if __name__ == '__main__':
+    unittest.main()

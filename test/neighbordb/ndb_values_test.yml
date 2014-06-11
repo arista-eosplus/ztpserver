@@ -1,12 +1,64 @@
 # Tests various neighbordb pattern values
 #  - test variuos pattern attribute values
 
-name: neighbourdb values test
+debug: false
+tag: entries_test
+tests:
+  - pattern
+valid_patterns:
+  globals:
+    - single_word
+    - 1
+    - a
+    - $
+    - multiple words
+    - special chars ~!@^&*()$`'[]\|-_+ ==1234567890
+    - realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    - definition - basic case
+    - definition - relative path
+    - definition - absolute path
+    - definition - url 1
+    - definition - url 2
+    - definition - url 3
+    - random hostname and interface 1
+    - random hostname and interface 2
+    - intf not connected
+    - intf not connected long
+    - intf connected to anything
+    - intf connected to anything long
+    - intf connected to any interface on device
+    - intf connected to any interface on device long
+    - intf connected to port on any device
+    - intf connected to port on any device long 1
+    - intf connected to port on any device long 2
+    - intf not connected to port
+    - intf not connected to port long
+    - intf connected to device on any port
+    - intf connected to device on any port long
+    - intf not connected to device
+    - intf not connected to device long
+    - intf any none
+    - intf any none long
+    - intf none any
+    - intf none any long
+    - intf any any
+    - intf any any long
+    - intf none none
+    - intf none none long
+    - intf range 1
+    - intf range 2
+    - intf range 3
+    - intf range 4
+  nodes:
+    - correct system mac 1
+    - correct system mac 2
+    - correct system mac 3
+    - correct system mac 4
+
 
 neighbordb:
 
   patterns:
-
 
     # ---Tests for 'name' attribute---
 
@@ -219,7 +271,7 @@ neighbordb:
       interfaces:
         Ethernet1: localhost:Ethernet2
 
-    # Anything allowed for hostname/interface, as long as it is 
+    # Anything allowed for hostname/interface, as long as it is
     # a single word.
     - name: random hostname and interface 1
       definition: test
@@ -229,7 +281,7 @@ neighbordb:
     - name: random hostname and interface 2
       definition: test
       interfaces:
-        - Ethernet1: 
+        - Ethernet1:
             device: hostname1234//344??>>>^&%$
             port: dfsdfs??>$%&&ernet1/2/3/4
 
@@ -526,53 +578,3 @@ neighbordb:
       interfaces:
         - Ethernet2-a: none:none
 
-configured_neighbordb:
-  nodes:
-  globals:
-    - single_word
-    - 1
-    - a
-    - $
-    - multiple words
-    - special chars ~!@^&*()$`'[]\|-_+ ==1234567890
-    - realy long name xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    - definition - basic case
-    - definition - relative path
-    - definition - absolute path
-    - definition - url 1
-    - definition - url 2
-    - definition - url 3
-    - random hostname and interface 1
-    - random hostname and interface 2
-    - intf not connected
-    - intf not connected long
-    - intf connected to anything
-    - intf connected to anything long
-    - intf connected to any interface on device
-    - intf connected to any interface on device long
-    - intf connected to port on any device
-    - intf connected to port on any device long 1
-    - intf connected to port on any device long 2
-    - intf not connected to port
-    - intf not connected to port long
-    - intf connected to device on any port
-    - intf connected to device on any port long
-    - intf not connected to device
-    - intf not connected to device long
-    - intf any none
-    - intf any none long
-    - intf none any
-    - intf none any long
-    - intf any any
-    - intf any any long
-    - intf none none
-    - intf none none long
-    - intf range 1
-    - intf range 2
-    - intf range 3
-    - intf range 4
-  nodes:
-    - correct system mac 1
-    - correct system mac 2
-    - correct system mac 3
-    - correct system mac 4
