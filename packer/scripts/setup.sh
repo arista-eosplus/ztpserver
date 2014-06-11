@@ -37,19 +37,11 @@ systemctl stop firewalld.service
 firewall-cmd --state
 ifconfig
 
-#Put Eth0 in the internal zone. Eth1 is already in the public zone
-#firewall-cmd --permanent --zone=internal --change-interface=eth0
-#Open port for 8080 ZTPS
-#firewall-cmd --permanent --zone=internal --add-port=8080
-#Open port for XMPP
-#firewall-cmd --permanent --zone=internal --add-port=5222
-#Open port for DNS
-#firewall-cmd --permanent --zone=internal --add-port=53
-
 ######################################
 # CONFIGURE SCREEN
 ######################################
 cp /tmp/packer/screenrc /home/ztpsadmin/.screenrc
+cp /tmp/packer/screenrc /root/.screenrc
 
 ######################################
 # CONFIGURE rsyslog
@@ -80,8 +72,8 @@ ejabberdctl status
 mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
 cp /tmp/packer/httpd.conf /etc/httpd/conf/httpd.conf
 systemctl restart httpd.service
-systemctl enable httpd.service
-systemctl status httpd.service
+#Stopping httpd since ztps will manage this
+systemctl stop httpd.service
 
 ######################################
 # CONFIGURE BIND
@@ -116,3 +108,21 @@ git checkout v1.0.0
 #build/install
 python setup.py build
 python setup.py install
+
+mkdir /home/ztpsadmin/ztps-sampleconfig
+cd /home/ztpsadmin/ztps-sampleconfig
+git clone https://github.com/arista-eosplus/ztpserver-demo.git
+
+cd ztpserver-demo/
+cp -R ./definitions /usr/share/ztpserver/
+cp -R ./files /usr/share/ztpserver/
+cp -R ./nodes /usr/share/ztpserver/
+cp -R ./resources /usr/share/ztpserver/
+cp -R ./neighbordb /usr/share/ztpserver/
+cp ztpserver.conf /etc/ztpserver/ztpserver.conf
+
+cd /usr/share/ztpserver/files
+mkdir images
+cp -R /tmp/packer/files/images .
+mkdir puppet
+cp -R /tmp/packer/files/puppet .

@@ -1,6 +1,6 @@
 {
-       "builders": [
-          {
+   "builders": [
+     {
             "boot_command": [
                "<esc>",
                "<wait>",
@@ -49,11 +49,16 @@
 	    "destination": "/tmp/packer",
 	    "type":"file"
 	  },
+    {
+      "source": "files",
+      "destination": "/tmp/packer",
+      "type":"file"
+    },
 	  {
-            "scripts": [
-	      "scripts/setup.sh"
-	    ],
+      "scripts": [
+	    "scripts/setup.sh"
+	      ],
 	    "type" : "shell"
-          }
-        ]
+    }
+  ]
 }

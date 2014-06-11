@@ -21,7 +21,7 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * XMPP server configured for im.ztps-test.com
     * XMPP admin user ztpsadmin, passwd eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi) running on port 8080
-* ZTPServer installed
+* ZTPServer installed (with sameple files to get you running)
 
 ##Installation of Packer
 > **Note:** This installation procedure requires internet access.
@@ -37,9 +37,37 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 ##Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
-1. Retrieve the EOS+ packer files here. 
+1. Retrieve the EOS+ packer files here.
 2. ```cd``` to the location of the .json file.
-3. Run ```packer build ztps-fedora_20_x86_64.json```
+3. Download the following files and place them in the corresponding directories:
+    * vEOS.swi - ```./files/images/vEOS.swi```
+    * puppet-2.7.20-1.fc16.noarch.rpm - ```./files/puppet/puppet-2.7.20-1.fc16.noarch.rpm```
+    * facter-1.6.17-1.fc16.i686.rpm - ```./files/puppet/facter-1.6.17-1.fc16.i686.rpm```
+    * ruby-1.8.7.swix - ```./files/puppet/ruby-1.8.7.swix```
+    * ruby-json-1.5.5.swix - ```./files/puppet/ruby-json-1.5.5.swix```
+    * rubygems-1.3.7.swix - ```./files/puppet/rubygems-1.3.7.swix```
+    
+    Your directory should look like:
+    ```
+    [root]
+       - ztps-fedora_20_x86_64.json
+       - /http
+           - ks-net.cfg
+       - /conf
+           - ...conf files
+       - /scripts
+           - setup.sh
+       - /files
+           - /images
+               - vEOS.swi
+           - /puppet
+               - puppet-2.7.20-1.fc16.noarch.rpm
+               - facter-1.6.17-1.fc16.i686.rpm
+               - ruby-1.8.7.swix
+               - ruby-json-1.5.5.swix
+               - rubygems-1.3.7.swix
+   ```
+4. Run ```packer build ztps-fedora_20_x86_64.json```
     You will see:
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
@@ -56,9 +84,9 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> vmware-iso: Typing the boot command over VNC...
     ==> vmware-iso: Waiting for SSH to become available...
     ```
-4. Once the ISO is downloaded, packer brings up a VMWare VM. The Anaconda installation will proceed without any user input.
-5. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
-6. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
+5. Once the ISO is downloaded, packer brings up a VMWare VM. The Anaconda installation will proceed without any user input.
+6. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
+7. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
     vmware-iso output will be in this color.
@@ -79,7 +107,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> vmware-iso: Provisioning with shell script: scripts/setup.sh
     ... (shell script output)
     ```
-7. After some extensive yumming (~5minutes), you will see:
+8. After some extensive yumming (~5minutes), you will see:
     ```
     ==> vmware-iso: Gracefully halting virtual machine...
         vmware-iso: Waiting for VMware to clean up after itself...
@@ -96,7 +124,15 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ==> Builds finished. The artifacts of successful builds are:
     --> vmware-iso: VM files in directory: output-vmware-iso
     ```
-8. You now have a full-featured ZTPServer.
+9. You now have a full-featured ZTPServer.
+10. Simply type ```ztps``` to start the ztpserver.
+
+##Setting up a Quick Demo
+As part of the installation above, sample files were copied from the ztpserver-demo repo and placed into the necessary locations ( /etc/ztpserver/ and /usr/share/ztpserver).  Follow the steps below to create a quick demo:
+
+1. type ```cd /usr/share/ztpserver/nodes```.
+2. copy the default spine config to a new node that has the MAC address of your local vEOS instance. ```mv 005056761aae <local spine MAC>```.
+3. start ztpserver ```ztps```.
 
 ##Troubleshooting
 ###Gathering Diags
