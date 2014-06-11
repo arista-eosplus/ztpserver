@@ -348,12 +348,10 @@ class Pattern(object):
 
                 metadata = dict(interface=interface, neighbors=value)
                 if interface in ['none', 'any']:
-                    log.info('Adding interface to pattern %s', interface)
                     patterns = [InterfacePattern(interface, device, port)]
                 else:
                     patterns = list()
                     for item in expand_range(interface):
-                        log.info('Adding interface to pattern %s', item)
                         pattern = InterfacePattern(item, device, port)
                         patterns.append(pattern)
                 self.interfaces.append(dict(metadata=metadata,
@@ -521,9 +519,7 @@ class InterfacePattern(object):
         return match_interface and match_neighbors
 
     def compile(self, value):
-        log.debug('Compiling function for %s', value)
         if value in self.KEYWORDS:
-            log.debug('Found pattern keyword %s', value)
             return self.KEYWORDS[value]
 
         try:

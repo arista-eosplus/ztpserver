@@ -101,8 +101,8 @@ def start_wsgiapp(conf=None):
 
     start_logging()
     log.info('Logging started for ztpserver')
+    log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
 
-    ztpserver.neighbordb.load_topology()
     return ztpserver.controller.Router()
 
 def run_server(conf):

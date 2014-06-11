@@ -253,7 +253,7 @@ class NodesController(BaseController):
             log.error('Unexpected error trying to execute dump_node')
             raise
         finally:
-            fobj.write(contents, CONTENT_TYPE_YAML)
+            fobj.write(contents, CONTENT_TYPE_JSON)
         return (response, 'set_location')
 
     def post_config(self, response, *args, **kwargs):
@@ -278,16 +278,17 @@ class NodesController(BaseController):
     def post_node(self, response, *args, **kwargs):
         try:
             node = kwargs['node']
-            topology = ztpserver.neighbordb.load()
+            topology = ztpserver.neighbordb.load_topology()
             # pylint: disable=E1103
-            matches = topology.match_node(node.systemmac)
+            matches = topology.match_node(node)
             log.info('Node matched %d pattern(s)', len(matches))
             match = matches[0]
 
             self.repository.add_folder(self.expand(node.systemmac))
 
             definition_url = self.expand(match.definition, folder='definitions')
-            definition = self.repository.get_file(definition_url).read()
+            definition = \
+                self.repository.get_file(definition_url).read(content_type=CONTENT_TYPE_YAML)
             definition_fn = self.expand(node.systemmac, DEFINITION_FN)
 
             fobj = self.repository.add_file(definition_fn)

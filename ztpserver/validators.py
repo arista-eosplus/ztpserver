@@ -73,9 +73,7 @@ class Validator(object):
         for name in methods:
             if name[0].startswith('validate_'):
               method = getattr(self, name[0])
-              log.debug('Starting validator: %s', name[0])
               method()
-              log.debug('Finished validator: %s', name[0])
         return not self.errors
 
     def error(self, msg, *args, **kwargs):
@@ -205,7 +203,8 @@ class PatternValidator(Validator):
             return True
 
     def _validate_pattern(self, interface, device, port):
-        if not VALID_INTERFACE_RE.match(interface):
+        if interface not in INTERFACE_PATTERN_KEYWORDS and \
+           not VALID_INTERFACE_RE.match(interface):
             self.error('Failed to parse pattern due to invalid interface '
                        'name %s', interface)
             return False

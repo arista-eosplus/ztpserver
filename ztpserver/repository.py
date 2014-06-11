@@ -113,6 +113,7 @@ class Repository(object):
             obj = FileObject(filepath)
             if contents:
                 obj.write(contents, content_type)
+            return obj
         except FileObjectError:
             raise RepositoryError
 
