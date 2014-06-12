@@ -51,19 +51,6 @@ def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
                    for _ in range(random.randint(3, 20)))
 
-def enable_console(level='DEBUG'):
-
-    logging_fmt = '%(levelname)s: [%(module)s:%(lineno)d] %(message)s'
-    formatter = logging.Formatter(logging_fmt)
-
-    ch = logging.StreamHandler()
-    level = level or 'DEBUG'
-    level = str(level).upper()
-    level = logging.getLevelName(level)
-    ch.setLevel(level)
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
-
 def random_json(keys=None):
     data = dict()
     if keys:

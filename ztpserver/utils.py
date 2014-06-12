@@ -35,7 +35,7 @@ def atoi(text):
     return int(text) if text.isdigit() else text
 
 def natural_keys(text):
-    return [atoi(c) for c in re.split('(\d+)', text)]
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 def expand_range(text, match_prefix=None, replace_prefix=None):
     ''' Returns a naturally sorted list of items expanded from text. '''

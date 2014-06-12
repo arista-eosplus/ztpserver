@@ -29,9 +29,28 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 import unittest
 
+from mock import  patch
+
+import ztpserver.config
+import ztpserver.neighbordb
+import ztpserver.serializers
+
+from server_test_lib import random_string
+from server_test_lib import create_neighbordb
+
+class NeighbordbUnitTests(unittest.TestCase):
+
+    def test_default_filename(self):
+        result = ztpserver.neighbordb.default_filename()
+        self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
+
+    @patch('ztpserver.neighbordb.load')
+    def test_load_file(self, m_load):
+        m_load.return_value = random_string()
+        result = ztpserver.neighbordb.load_file(random_string(), 'text/plain')
+        self.assertEqual(result, m_load.return_value)
 
 
 if __name__ == '__main__':

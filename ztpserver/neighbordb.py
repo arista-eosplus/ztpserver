@@ -30,7 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=C0103
+# pylint: disable=C0103,W0142
 #
 import os
 import logging
@@ -54,9 +54,9 @@ def default_filename():
     filename = ztpserver.config.runtime.neighbordb.filename
     return os.path.join(filepath, filename)
 
-def load(filename, content_type):
+def load_file(filename, content_type):
     try:
-        return ztpserver.serializers.load(filename, content_type)
+        return load(filename, content_type)
     except SerializerError:
         log.exception('Unable to load file %s', filename)
 
@@ -64,9 +64,9 @@ def load_topology(filename=None, contents=None):
     try:
         log.info('Start loading topology')
         if filename is None and contents is None:
-            contents = load(default_filename(), CONTENT_TYPE_YAML)
+            contents = load_file(default_filename(), CONTENT_TYPE_YAML)
         elif filename is not None:
-            contents = load(filename, CONTENT_TYPE_YAML)
+            contents = load_file(filename, CONTENT_TYPE_YAML)
         elif contents is None:
             log.warning('Creating empty topology object')
 
@@ -91,7 +91,7 @@ def load_topology(filename=None, contents=None):
 def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
     try:
         if not hasattr(kwargs, 'items'):
-            kwargs = load(kwargs, content_type)
+            kwargs = load_file(kwargs, content_type)
         return Pattern(**kwargs)
     except TypeError:
         log.error('Unable to load pattern object')
@@ -99,7 +99,7 @@ def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
 def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
     try:
         if not hasattr(kwargs, 'items'):
-            kwargs = load(kwargs, content_type)
+            kwargs = load_file(kwargs, content_type)
         for symbol in [':', '.']:
             kwargs['systemmac'] = str(kwargs['systemmac']).replace(symbol, '')
         return Node(**kwargs)

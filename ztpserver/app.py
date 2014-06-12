@@ -154,7 +154,7 @@ def run_validator(filename=None):
             print '[%d] %s' % (index, pattern[1])
         print
 
-    except Exception as exc:
+    except Exception as exc:        #pylint: disable=W0703
         log.exception(exc)
         print 'An unexpected error occurred trying to run the validator'
 

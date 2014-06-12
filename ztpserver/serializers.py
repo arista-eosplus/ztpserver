@@ -158,7 +158,7 @@ class Serializer(object):
             handler = self.handlers.get(content_type, TextSerializer())
             obj = self._convert_from_unicode(handler.deserialize(obj, **kwargs))
             if cls:
-                obj = cls(**obj)
+                obj = cls(**obj)    #pylint: disable=W0142
             return obj
         except:
             log.exception('Unable to deserialize data')
@@ -169,9 +169,11 @@ class Serializer(object):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([Serializer._convert_from_unicode(x) for x in data.items()])
+            return dict([Serializer._convert_from_unicode(x) \
+                         for x in data.items()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([Serializer._convert_from_unicode(x) for x in data])
+            return type(data)([Serializer._convert_from_unicode(x) \
+                              for x in data])
         else:
             return data
 
@@ -180,7 +182,7 @@ def loads(obj, content_type=None, cls=None, **kwargs):
     try:
         serializer = Serializer()
         return serializer.deserialize(obj, content_type, cls=cls, **kwargs)
-    except SerializerError as exc:
+    except SerializerError:
         log.error('Unable to deserialize object with content-type %s',
                   content_type)
         raise
@@ -206,8 +208,8 @@ def dumps(obj, content_type=None, cls=None, **kwargs):
 
 def dump(obj, filepath, content_type=None, cls=None, **kwargs):
     try:
-        with open(filepath, 'w') as fh:
-            fh.write(dumps(obj, content_type, cls=cls, **kwargs))
+        with open(filepath, 'w') as fhandler:
+            fhandler.write(dumps(obj, content_type, cls=cls, **kwargs))
     except (OSError, IOError):
         log.error('Unable to write to file %s', filepath)
         raise

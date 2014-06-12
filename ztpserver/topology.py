@@ -34,12 +34,10 @@
 #
 import collections
 import logging
-import os
 import re
 import string # pylint: disable=W0402
 
 from ztpserver.serializers import Serializer
-from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.utils import expand_range
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
@@ -245,9 +243,11 @@ class Topology(object):
                 continue
 
     def isnodepattern(self, pattern):
+        #pylint: disable=R0201
         return pattern.node is not None
 
     def isglobalpattern(self, pattern):
+        #pylint: disable=R0201
         return pattern.node == '' or pattern.node is None
 
     def get_patterns(self, predicate=None):
@@ -408,7 +408,7 @@ class Pattern(object):
                 log.error('Invalid peer device')
                 raise PatternError
 
-            remote_port = str(port).strip()
+            port = str(port).strip()
             if len(port.split()) != 1:
                 log.error('Invalid peer port')
                 raise PatternError
@@ -513,8 +513,8 @@ class InterfacePattern(object):
             match_neighbors = False
 
         if match_interface and not match_neighbors:
-           log.warning('Interface matches but neighbors are invalid')
-           raise InterfacePatternError
+            log.warning('Interface matches but neighbors are invalid')
+            raise InterfacePatternError
 
         return match_interface and match_neighbors
 

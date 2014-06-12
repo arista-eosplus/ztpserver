@@ -57,7 +57,7 @@ INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_NONE_RE, KW_NONE_RE, WC_PORT_RE)]
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class ValidationError(Exception):
     ''' Base error class for validation failures '''
@@ -82,8 +82,8 @@ class Validator(object):
         return not self.fail
 
     def error(self, msg, *args, **kwargs):
+        #pylint: disable=W0613
         log.error(msg, *args)
-        self.messages.append(msg % args)
         self.errors = True
 
 class TopologyValidator(Validator):
@@ -123,27 +123,28 @@ class PatternValidator(Validator):
         if not hasattr(self.data['interfaces'], '__iter__'):
             raise ValidationError('interface attribute is not iterable')
 
-            for item in self.data['interfaces']:
-                if not hasattr(item, 'items'):
-                    raise ValidationError('invalid value for interfaces')
+        for item in self.data['interfaces']:
+            if not hasattr(item, 'items'):
+                raise ValidationError('invalid value for interfaces')
 
-            for key, value in item.items():
-                if value is None:
-                    raise ValidationError('invalid value')
+        for key, value in item.items():
+            if value is None:
+                raise ValidationError('invalid value')
 
+            try:
+                (intf, device, port) = Pattern.parse_interface(key, value)
+            except PatternError:
+                self.error('Validation failed due to PatternError')
+            else:
                 try:
-                    (intf, device, port) = Pattern.parse_interface(key, value)
-                except PatternError:
-                    self.error('Validation failed due to PatternError')
-                else:
-                    try:
-                        for entry in expand_range(intf):
-                            self._validate_pattern(entry, device, port)
-                    except TypeError:
-                        self._validate_pattern(intf, device, port)
+                    for entry in expand_range(intf):
+                        self._validate_pattern(entry, device, port)
+                except TypeError:
+                    self._validate_pattern(intf, device, port)
 
 
     def _validate_pattern(self, interface, device, port):
+        # pylint: disable=R0201
         if interface not in INTERFACE_PATTERN_KEYWORDS and \
            not VALID_INTERFACE_RE.match(interface):
             raise ValidationError('invalid interface name')
@@ -158,10 +159,10 @@ class PatternValidator(Validator):
             raise ValidationError('missing required attribute \'definition\'')
 
         if self.data is None or hasattr(self.data['definition'], '__iter__'):
-            raise ValidationRuleError('invalid definition attribute')
+            raise ValidationError('invalid definition attribute')
 
-        for ws in string.whitespace:
-            if ws in self.data['definition']:
+        for wspc in string.whitespace:
+            if wspc in self.data['definition']:
                 raise ValidationError('whitespace not allowed in definition')
 
     def validate_pattern(self):

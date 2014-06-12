@@ -37,7 +37,7 @@ import ztpserver.config
 from ztpserver.serializers import load, dump
 from ztpserver.constants import CONTENT_TYPE_YAML
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 
 class ResourcePoolError(Exception):
@@ -53,7 +53,7 @@ class ResourcePool(object):
         self.data = None
 
     def serialize(self):
-        return [(key, str(value)) for (key, value) in contents.items()]
+        return [(key, str(value)) for (key, value) in self.data.items()]
 
     def load(self, pool):
         self.data = None
@@ -82,7 +82,7 @@ class ResourcePool(object):
         except StopIteration:
             log.warning('No resources available in pool %s', pool)
             raise ResourcePoolError
-        except Exception as exc:
+        except Exception:
             log.exception('Unable to allocate resource')
             raise ResourcePoolError
         return key
@@ -97,7 +97,7 @@ class ResourcePool(object):
                        if m[1] == node.systemmac]
             key = matches[0] if matches else None
             return key
-        except Exception as exc:
+        except Exception:
             log.exception('An error occurred trying to lookup existing '
                           'resource for node %s', node.systemmac)
             raise ResourcePoolError
