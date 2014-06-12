@@ -85,15 +85,13 @@ class NeighbordbTest(unittest.TestCase):
     def _validate_topology(self):
         validator = TopologyValidator()
         validator.validate(self.ndb)
-        return (validator.valid_patterns,
-                validator.failed_patterns,
-                validator.messages)
+        return (validator.valid_patterns, validator.failed_patterns)
 
     def neighbordb_pattern(self):
         log.info('START: neighbordb_patterns')
         tag = 'tag=%s' % self.tag
 
-        (valid, failed, messages) = self._validate_topology()
+        (valid, failed) = self._validate_topology()
 
         if self.failed_patterns:
             failed_names = sorted([p[1] for p in failed])

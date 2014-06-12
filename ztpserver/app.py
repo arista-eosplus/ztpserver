@@ -185,6 +185,10 @@ def main():
                         metavar='FILENAME',
                         help='Runs a validation check on neighbordb')
 
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='Enables debug output to the STDOUT')
+
 
     args = parser.parse_args()
     if args.version:
@@ -193,6 +197,8 @@ def main():
 
     if args.validate is not None:
         load_config(args.conf)
+        if args.debug:
+            start_logging()
         run_validator(args.validate)
         sys.exit()
 
