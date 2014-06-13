@@ -68,7 +68,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
                - ruby-json-1.5.5.swix
                - rubygems-1.3.7.swix
    ```
-4. Run ```packer build ztps-fedora_20_x86_64.json```
+4. Run ```packer build --only=vmware-iso ztps-fedora_20_x86_64.json```
     You will see:
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
