@@ -1,0 +1,151 @@
+{
+   "builders": [
+      {
+          "boot_command": [
+           "<esc>",
+           "<wait>",
+           "vmlinuz ",
+           "initrd=initrd.img ",
+           "inst.stage2=hd:LABEL=Fedora\\x2020\\x20x86_64 ",
+           "rd.live.check ",
+           "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks-net.cfg",
+           "<enter>"
+          ],
+          "boot_wait": "2s",
+          "disk_size": 7000,
+          "type": "vmware-iso",
+          "iso_checksum": "376be7d4855ad6281cb139430606a782fd6189dcb01d7b61448e915802cc350f",
+          "iso_checksum_type": "sha256",
+          "iso_url": "http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso",
+          "ssh_username": "root",
+          "ssh_password":"eosplus",
+          "ssh_port":"22",
+          "ssh_wait_timeout": "20m",
+          "guest_os_type": "fedora-64",
+          "vm_name":"ztps-fedora-20-x86_64-{{isotime}}",
+          "vmx_data": {
+            "memsize": "2048",
+            "numvcpus": "1",
+            "cpuid.coresPerSocket": "1",
+            "ethernet0.present" : "TRUE",
+            "ethernet0.virtualdev" :  "e1000",
+            "ethernet0.connectionType" : "nat",
+            "ethernet0.startConnected" : "TRUE",
+            "ethernet0.pcislotnumber" : "32",
+            "ethernet1.pcislotnumber" : "33",
+            "ethernet1.virtualdev" :  "e1000",
+            "ethernet1.present" : "TRUE",
+            "ethernet1.startConnected" : "TRUE",
+            "ethernet1.connectionType" : "hostonly"
+          },
+          "shutdown_command": "/sbin/shutdown -h now",
+          "http_directory":"http/"
+      },
+      {
+          "boot_command": [
+           "<esc>",
+           "<wait>",
+           "vmlinuz ",
+           "initrd=initrd.img ",
+           "inst.stage2=hd:LABEL=Fedora\\x2020\\x20x86_64 ",
+           "rd.live.check ",
+           "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks-vbox.cfg",
+           "<enter>"
+          ],
+          "boot_wait": "3s",
+          "disk_size": 7000,
+          "type": "virtualbox-iso",
+          "iso_checksum": "376be7d4855ad6281cb139430606a782fd6189dcb01d7b61448e915802cc350f",
+          "iso_checksum_type": "sha256",
+          "iso_url": "http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso",
+          "ssh_username": "root",
+          "ssh_password":"eosplus",
+          "ssh_port":"22",
+          "ssh_wait_timeout": "20m",
+          "guest_os_type": "Fedora_64",
+          "vm_name":"ztps-fedora-20-x86_64-{{isotime}}",
+          "vboxmanage": [
+             [
+                 "modifyvm",
+                 "{{.Name}}",
+                 "--memory",
+                 "2048"
+             ],
+             [
+                  "modifyvm",
+                  "{{.Name}}",
+                  "--cpus",
+                 "1"
+             ],
+             [
+                  "modifyvm",
+                  "{{.Name}}",
+                  "--rtcuseutc",
+                  "on"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--bioslogodisplaytime",
+                   "1"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nic1",
+                   "nat"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nicproperty1",
+                   "name=ens32"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nictype1",
+                   "82540EM"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nic2",
+                   "nat"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nicproperty2",
+                   "name=ens33"
+             ],
+             [
+                   "modifyvm",
+                   "{{.Name}}",
+                   "--nictype2",
+                   "82540EM"
+             ]
+            ],
+          "shutdown_command": "/sbin/shutdown -h now",
+          "http_directory":"http/"
+      }
+	 ],
+	"provisioners": [
+	   {
+	    "source": "conf",
+	    "destination": "/tmp/packer",
+	    "type":"file"
+	   },
+     {
+      "source": "files",
+      "destination": "/tmp/packer",
+      "type":"file"
+     },
+	   {
+      "scripts": [
+	    "scripts/setup.sh"
+	      ],
+	    "type" : "shell"
+     }
+   ]
+}

@@ -1,0 +1,9 @@
+WSGIDaemonProcess ztpserver user=www-data group=www-data threads=5
+WSGIScriptAlias / /etc/ztpserver/ztpserver.wsgi
+
+<Directory /ztpserver>
+	WSGIProcessGroup ztpserver
+	WSGIApplicationGroup %{GLOBAL}
+	Order deny,allow
+	Allow from all
+</Directory>

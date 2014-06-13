@@ -1,0 +1,47 @@
+$ORIGIN ztps-test.com.
+$TTL 86400
+@	SOA	dns1.ztps-test.com.	hostmaster.ztps-test.com. (
+		2014052802 ; serial
+		21600      ; refresh after 6 hours
+		3600       ; retry after 1 hour
+		604800     ; expire after 1 week
+		86400 )    ; minimum TTL of 1 day
+;
+;
+	NS	dns1.ztps-test.com.
+dns1	A	172.16.130.10
+;
+;
+;@	MX	10	mail.example.com.
+;	MX	20	mail2.example.com.
+;mail	A	10.0.1.5
+;	AAAA	aaaa:bbbb::5
+;mail2	A	10.0.1.6
+;	AAAA	aaaa:bbbb::6
+;
+;
+; This sample zone file illustrates sharing the same IP addresses for multiple services:
+;
+;services	A	10.0.1.10
+;		AAAA	aaaa:bbbb::10
+;		A	10.0.1.11
+;		AAAA	aaaa:bbbb::11
+;
+;ftp	CNAME	services.example.com.
+;www	CNAME	services.example.com.
+;
+;
+ztps		A	172.16.130.10
+;veos1		A	172.16.130.11
+;veos2		A	172.16.130.12
+;veos3		A	172.16.130.13
+;veosmgmt	A	172.16.130.14
+;
+;XMPP Services
+_xmpp-client._tcp.ztps-test.com. 86400 IN SRV 5 0 5222 im.ztps-test.com.
+_xmpp-server._tcp.ztps-test.com. 86400 IN SRV 5 0 5269 im.ztps-test.com.
+;
+_xmpp-client._tcp.im.ztps-test.com. 86400 IN SRV 5 0 5222 im.ztps-test.com.
+_xmpp-server._tcp.im.ztps-test.com. 86400 IN SRV 5 0 5269 im.ztps-test.com.
+;
+im		A	172.16.130.10
