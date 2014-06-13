@@ -8,8 +8,8 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * Fedora 20 Minimal Install
 * Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
-    * ens32 (vmnet8-NAT) 172.16.130.10/24
-    * ens33 (vmnet1-Bridged) DHCP
+    * ens32 (NAT) DHCP
+    * ens33 (HostOnly) 172.16.130.10/24
 * Firewalld disabled.
 * Users
     * root/eosplus and ztpsadmin/eosplus
@@ -39,7 +39,8 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 
 1. Retrieve the EOS+ packer files here.
 2. ```cd``` to the location of the .json file.
-3. Download the following files and place them in the corresponding directories:
+3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step. ZTPServer will still run without these files.
+    Download the following files and place them in the corresponding directories:
     * vEOS.swi - ```./files/images/vEOS.swi```
     * puppet-2.7.20-1.fc16.noarch.rpm - ```./files/puppet/puppet-2.7.20-1.fc16.noarch.rpm```
     * facter-1.6.17-1.fc16.i686.rpm - ```./files/puppet/facter-1.6.17-1.fc16.i686.rpm```
