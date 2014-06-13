@@ -45,8 +45,10 @@ _templates
 # local environment
 .env
 
-#disk images
+#images
 .iso
+.vmd
+.swi
 
 #packer local folders
 output-vmware-iso/
