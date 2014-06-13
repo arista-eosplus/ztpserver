@@ -37,7 +37,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 ##Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
-1. Retrieve the EOS+ packer files here.
+1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.
 3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step. ZTPServer will still run without these files.
     Download the following files and place them in the corresponding directories:
