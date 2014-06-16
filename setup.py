@@ -62,7 +62,7 @@ setup(
         ('%s/nodes' % INSTALL_PATH, []),
         ('%s/definitions' % INSTALL_PATH, []),
         ('%s/files' % INSTALL_PATH, []),
-        ('%s/files/lib' % INSTALL_PATH, ['client/lib/*']),
+        ('%s/files/lib' % INSTALL_PATH, ['client/lib/sleekxmpp-1.3.1.tar.gz']),
         ('%s/resources' % INSTALL_PATH, [])
     ]
 )
