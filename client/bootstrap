@@ -29,12 +29,13 @@
 #
 # Bootstrap script
 #
-#    Version 0.1.0 3/1/2014
+#    Version 0.1.1 19/6/2014
 #    Written by:
 #       EOS+, Arista Networks
 #
 #    Revision history:
 #       0.1.0 - initial release
+#       0.1.1 - added support for 4.12.x release train
 
 
 import datetime
@@ -44,9 +45,7 @@ import jsonrpclib
 import logging
 import os.path
 import re
-import requests
 import shutil
-import sleekxmpp
 import socket
 import subprocess
 import sys
@@ -57,8 +56,7 @@ import urllib2
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
 
-
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
@@ -94,6 +92,11 @@ FLASH = '/mnt/flash'
 
 HTTP_TIMEOUT = 10
 
+SLEEK_XMPP = 'sleekxmpp-1.3.1.tar.gz'
+SLEEK_XMPP_URL = '%s/files/%s' % (SERVER, SLEEK_XMPP)
+REQUESTS = 'requests-2.3.0.tar.gz'
+REQUESTS_URL = '%s/files/%s' % (SERVER, REQUESTS)
+
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
 
@@ -103,6 +106,43 @@ xmpp_client = None        #pylint: disable=C0103
 # logging.basicConfig(level=logging.DEBUG,
 #                     format='%(levelname)-8s %(message)s')
 #---------------------------------XMPP------------------------
+
+import pdb; pdb.set_trace()
+# ------------------4.12.x support----------------------------
+def retrieve_url(url, path):
+    url = urllib2.urlopen(url)
+    output_file = open(path, 'wb')
+    output_file.write(url.read())
+    output_file.close()
+
+try:
+    import sleekxmpp
+except ImportError:
+    url = '/tmp/%s' % SLEEK_XMPP
+    version = SLEEK_XMPP.split('.')[0]
+    retrieve_url(SLEEK_XMPP_URL, '/tmp/%s' % SLEEK_XMPP)
+    res = os.system('sudo tar -xzvf %s -C /tmp;' 
+                    'cd /tmp/sleekxmpp-1.3.1;'
+                    'sudo python /tmp/sleekxmpp-1.3.1/setup.py build;'
+                    'sudo python /tmp/sleekxmpp-1.3.1/setup.py install' %
+                    (url, version, version) )
+    if res:
+        exit_bootstrap(20)
+
+try:
+    import requests
+except ImportError:
+    url = '/tmp/%s' % REQUESTS
+    version = REQUESTS.split('.')[0]
+    retrieve_url(REQUESTS_URL, '/tmp/%s' % REQUESTS)
+    res = os.system('sudo tar -xzvf %s -C /tmp;' 
+                    'cd /tmp/sleekxmpp-1.3.1;'
+                    'sudo python /tmp/%s/setup.py build;'
+                    'sudo python /tmp/%s/setup.py install' % 
+                    (url, version, version) )
+    if res:
+        exit_bootstrap(21)
+# ------------------4.12.x support----------------------------    
 
 SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
@@ -303,10 +343,7 @@ class Node(object):
         return STARTUP_CONFIG
 
     def retrieve_url(self, url, path):
-        url = urllib2.urlopen(url)
-        output_file = open(path, 'wb')
-        output_file.write(url.read())
-        output_file.close()
+        retrieve_url(url, path)
 
     @classmethod
     def server_address(cls):
@@ -545,7 +582,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
                               mbody=message,
                               mtype='groupchat')
 
-
 def apply_config(config):
     log('Applying server config')
     global xmpp_client                      #pylint: disable=W0603
@@ -562,6 +598,7 @@ def apply_config(config):
             'password' in xmpp_config and
             'rooms' in xmpp_config and
             xmpp_config['rooms']):
+
             xmpp_client = XmppClient(xmpp_config['username'],
                                      xmpp_config['domain'],
                                      xmpp_config['password'],
@@ -646,6 +683,7 @@ def restore_factory_default():
             os.remove(filename)
 
     shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
+
 
 def main():
     #pylint: disable=W0603,R0912,R0915
