@@ -62,7 +62,7 @@ setup(
         ('%s/nodes' % INSTALL_PATH, []),
         ('%s/definitions' % INSTALL_PATH, []),
         ('%s/files' % INSTALL_PATH, []),
+        ('%s/files/lib' % INSTALL_PATH, ['client/lib/*']),
         ('%s/resources' % INSTALL_PATH, [])
     ]
 )
-
