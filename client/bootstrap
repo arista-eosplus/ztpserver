@@ -60,7 +60,7 @@ __version__ = "0.1.1"
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
-SERVER = "$SERVER"
+SERVER = '$SERVER'
 
 LOGGING_FACILITY = 'ztpbootstrap'
 SYSLOG = '/dev/log'
@@ -92,10 +92,8 @@ FLASH = '/mnt/flash'
 
 HTTP_TIMEOUT = 10
 
-SLEEK_XMPP = 'sleekxmpp-1.3.1.tar.gz'
-SLEEK_XMPP_URL = '%s/files/%s' % (SERVER, SLEEK_XMPP)
-REQUESTS = 'requests-2.3.0.tar.gz'
-REQUESTS_URL = '%s/files/%s' % (SERVER, REQUESTS)
+REQUESTS = 'requests-2.3.0'
+REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
 
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
@@ -107,7 +105,6 @@ xmpp_client = None        #pylint: disable=C0103
 #                     format='%(levelname)-8s %(message)s')
 #---------------------------------XMPP------------------------
 
-import pdb; pdb.set_trace()
 # ------------------4.12.x support----------------------------
 def retrieve_url(url, path):
     url = urllib2.urlopen(url)
@@ -116,32 +113,18 @@ def retrieve_url(url, path):
     output_file.close()
 
 try:
-    import sleekxmpp
-except ImportError:
-    url = '/tmp/%s' % SLEEK_XMPP
-    version = SLEEK_XMPP.split('.')[0]
-    retrieve_url(SLEEK_XMPP_URL, '/tmp/%s' % SLEEK_XMPP)
-    res = os.system('sudo tar -xzvf %s -C /tmp;' 
-                    'cd /tmp/sleekxmpp-1.3.1;'
-                    'sudo python /tmp/sleekxmpp-1.3.1/setup.py build;'
-                    'sudo python /tmp/sleekxmpp-1.3.1/setup.py install' %
-                    (url, version, version) )
-    if res:
-        exit_bootstrap(20)
-
-try:
     import requests
 except ImportError:
-    url = '/tmp/%s' % REQUESTS
-    version = REQUESTS.split('.')[0]
-    retrieve_url(REQUESTS_URL, '/tmp/%s' % REQUESTS)
-    res = os.system('sudo tar -xzvf %s -C /tmp;' 
-                    'cd /tmp/sleekxmpp-1.3.1;'
-                    'sudo python /tmp/%s/setup.py build;'
-                    'sudo python /tmp/%s/setup.py install' % 
-                    (url, version, version) )
+    url = '/tmp/%s.tar.gz' % REQUESTS
+    # removing extensions
+    retrieve_url(REQUESTS_URL, url)
+    cmd = 'sudo tar -xzvf %s -C /tmp;'  \
+          'sudo python /tmp/%s/setup.py build;' \
+          'sudo python /tmp/%s/setup.py install' %  (url, REQUESTS,
+                                                     REQUESTS)
+    res = os.system(cmd)
     if res:
-        exit_bootstrap(21)
+        exit_bootstrap(100)
 # ------------------4.12.x support----------------------------    
 
 SYSTEM_ID = None
