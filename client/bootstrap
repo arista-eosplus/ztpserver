@@ -61,7 +61,7 @@ __version__ = "0.1.1"
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
-SERVER = 'http://192.168.1.220:8787'
+SERVER = '$SERVER'
 
 LOGGING_FACILITY = 'ztpbootstrap'
 SYSLOG = '/dev/log'
