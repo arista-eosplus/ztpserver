@@ -65,7 +65,6 @@ setup(
         ('%s/resources' % INSTALL_PATH, []),
 
         # 4.12.x support
-        ('%s/files/lib' % INSTALL_PATH, ['client/lib/sleekxmpp-1.3.1.tar.gz']),
         ('%s/files/lib' % INSTALL_PATH, ['client/lib/requests-2.3.0.tar.gz']),
     ]
 )
