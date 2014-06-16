@@ -45,6 +45,7 @@ import jsonrpclib
 import logging
 import os.path
 import re
+import sleekxmpp
 import shutil
 import socket
 import subprocess
@@ -60,7 +61,7 @@ __version__ = "0.1.1"
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
-SERVER = '$SERVER'
+SERVER = 'http://192.168.1.220:8787'
 
 LOGGING_FACILITY = 'ztpbootstrap'
 SYSLOG = '/dev/log'
@@ -112,19 +113,41 @@ def retrieve_url(url, path):
     output_file.write(url.read())
     output_file.close()
 
+def exit_bootstrap(code):
+    #pylint: disable=W0702
+
+    # Wait for XMPP messages to drain
+    time.sleep(3)
+
+    if xmpp_client:
+        try:
+            xmpp_client.abort()
+        except:
+            pass
+        
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    #pylint: disable=W0212
+    # Need to close background sleekxmpp threads as well
+    os._exit(code)
+
+#pylint: disable=C0103
 try:
     import requests
 except ImportError:
-    url = '/tmp/%s.tar.gz' % REQUESTS
+    requests_url = '/tmp/%s.tar.gz' % REQUESTS
     # removing extensions
-    retrieve_url(REQUESTS_URL, url)
-    cmd = 'sudo tar -xzvf %s -C /tmp;'  \
-          'sudo python /tmp/%s/setup.py build;' \
-          'sudo python /tmp/%s/setup.py install' %  (url, REQUESTS,
-                                                     REQUESTS)
-    res = os.system(cmd)
+    retrieve_url(REQUESTS_URL, requests_url)
+    res = os.system('sudo tar -xzvf %s -C /tmp;'
+                    'cd /tmp/%s;'
+                    'sudo python setup.py build;'
+                    'sudo python setup.py install' %  
+                    (requests_url, REQUESTS))
     if res:
         exit_bootstrap(100)
+    import requests
+#pylint: enable=C0103
 # ------------------4.12.x support----------------------------    
 
 SYSTEM_ID = None
@@ -146,25 +169,6 @@ def log(msg, error=False, xmpp=True):
 
     if xmpp and xmpp_client and xmpp_client.connected:
         xmpp_client.message(msg)
-
-def exit_bootstrap(code):
-    #pylint: disable=W0702
-
-    # Wait for XMPP messages to drain
-    time.sleep(3)
-
-    if xmpp_client:
-        try:
-            xmpp_client.abort()
-        except:
-            pass
-        
-    sys.stdout.flush()
-    sys.stderr.flush()
-
-    #pylint: disable=W0212
-    # Need to close background sleekxmpp threads as well
-    os._exit(code)
 
 class ZtpBootstrapEapiError(Exception):
     pass
