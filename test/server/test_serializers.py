@@ -29,23 +29,25 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=W0613
-#
 import unittest
 
 from mock import patch
 
-import ztpserver.app
+import ztpserver.serializers
 
-class TestApp(unittest.TestCase):
-    #pylint: disable=R0904,C0103
+class SerializersUnitTest(unittest.TestCase):
 
-    @patch('ztpserver.neighbordb.load')
-    @patch('ztpserver.controller.create_repository')
-    def test_application_defaults(self, m_repository, m_load):
-        obj = ztpserver.app.start_wsgiapp()
-        self.assertIsInstance(obj, ztpserver.controller.Router)
+    def test_dump_success(self):
+        pass
 
+    def test_dumps_success(self):
+        pass
+
+    def test_load_success(self):
+        pass
+
+    def test_loads_success(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()

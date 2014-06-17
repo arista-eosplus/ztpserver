@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -6,14 +5,17 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#  - Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
-#  - Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#  - Neither the name of Arista Networks nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,146 +35,134 @@
 import unittest
 import os
 
-import ztpserver.repository
+from mock import patch, Mock
 
-from ztpserver.repository import FileObject, FileStore
-from ztpserver.repository import FileObjectNotFound, FileObjectError
-from ztpserver.repository import create_file_store
+from ztpserver.serializers import SerializerError
 
-from server_test_lib import random_string, remove_all
-from server_test_lib import add_folder, write_file
+from ztpserver.repository import FileObject, FileObjectError
+from ztpserver.repository import Repository, RepositoryError
+from ztpserver.repository import FileObjectNotFound
 
-class FileObjectTests(unittest.TestCase):
+from server_test_lib import random_string
 
-    def tearDown(self):
-        remove_all()
+class FileObjectUnitTests(unittest.TestCase):
 
-    def test_success(self):
-        filename = random_string()
-        contents = random_string()
+    @patch('ztpserver.serializers.load')
+    def test_read_success(self, m_load):
+        m_load.return_value = random_string()
+        obj = FileObject(random_string())
+        result = obj.read()
+        self.assertEqual(m_load.return_value, result)
 
-        filepath = write_file(contents, filename)
-        path = os.path.dirname(filepath)
-        assert os.path.exists(filepath)
+    @patch('ztpserver.serializers.load')
+    def test_read_failure(self, m_load):
+        m_load.side_effect = SerializerError
+        obj = FileObject(random_string())
+        self.assertRaises(FileObjectError, obj.read)
 
-        obj = FileObject(filename, path=path)
+    @patch('ztpserver.serializers.dump')
+    def test_write_success(self, m_dump):
+        obj = FileObjectError(random_string())
+        try:
+            obj = FileObject(random_string())
+            obj.write(random_string())
+        except Exception as exc:
+            self.fail(exc)
 
-        self.assertTrue(obj.name, filepath)
-        self.assertTrue(obj.exists)
-        self.assertEqual(obj.contents, contents)
+    @patch('ztpserver.serializers.dump')
+    def test_write_failure(self, m_dump):
+        m_dump.side_effect = SerializerError
+        obj = FileObject(random_string())
+        self.assertRaises(FileObjectError, obj.write, random_string())
 
-    def test_file_missing(self):
-        filename = random_string()
-        obj = FileObject(filename)
 
-        def contents(obj):
-            obj.contents
+class RepositoryUnitTests(unittest.TestCase):
 
-        self.assertRaises(ztpserver.repository.FileObjectError, contents, obj)
-        self.assertFalse(obj.exists)
+    @patch('os.makedirs')
+    def test_add_folder_success(self, m_makedirs):
+        try:
+            store = Repository(random_string())
+            store.add_folder(random_string())
+        except Exception as exc:
+            self.fail(exc)
 
-class FileStoreTests(unittest.TestCase):
+    @patch('os.makedirs')
+    def test_add_folder_failure(self, m_makedirs):
+        m_makedirs.side_effect = OSError
+        store = Repository(random_string())
+        self.assertRaises(RepositoryError, store.add_folder, random_string())
 
-    def setUp(self):
-        self.filepath = add_folder('filestore')
-        assert os.path.exists(self.filepath)
+    @patch('ztpserver.repository.FileObject')
+    def test_create_file_success(self, m_fileobj):
+        try:
+            store = Repository(random_string())
+            store.add_file(random_string())
+            self.assertFalse(m_fileobj.return_value.write.called)
+        except Exception as exc:
+            self.fail(exc)
 
-        self.filestore = FileStore(self.filepath)
+    @patch('ztpserver.repository.FileObject')
+    def test_create_file_with_contents_success(self, m_fileobj):
+        try:
+            store = Repository(random_string())
+            store.add_file(random_string(), random_string())
+            self.assertTrue(m_fileobj.return_value.write.called)
+        except Exception as exc:
+            self.fail(exc)
 
-    def tearDown(self):
-        remove_all()
+    @patch('ztpserver.repository.FileObject')
+    def test_create_file_failure(self, m_fileobj):
+        m_fileobj.return_value.write.side_effect = FileObjectError
+        store = Repository(random_string())
+        self.assertRaises(RepositoryError, store.add_file,
+                          random_string(), random_string())
 
-    def test_success(self):
-        self.assertIsInstance(self.filestore, FileStore)
-        self.assertEqual(repr(self.filestore), 'FileStore(path=%s)' % \
-            self.filepath)
+    @patch('os.path.exists')
+    def test_exists_success(self, m_exists):
+        store = Repository(random_string())
+        result = store.exists(random_string())
+        self.assertTrue(result)
 
-    def test_add_folder(self):
-        folder = random_string()
-        self.filestore.add_folder(folder)
+    @patch('os.path.exists')
+    def test_exists_missing_file(self, m_exists):
+        m_exists.return_value = False
+        store = Repository(random_string())
+        result = store.exists(random_string())
+        self.assertFalse(result)
 
-        filepath = os.path.join(self.filepath, folder)
-        self.assertTrue(os.path.exists(filepath))
+    @patch('os.path.exists')
+    @patch('ztpserver.repository.FileObject')
+    def test_get_file_success(self, m_fileobj, m_exists):
+        try:
+            store = Repository(random_string())
+            store.get_file(random_string())
+            self.assertTrue(m_fileobj.called)
+        except Exception as exc:
+            self.fail(exc)
 
-    def test_add_nested_folder(self):
-        folder = '%s/%s/%s' % \
-            (random_string(), random_string(), random_string())
-        self.filestore.add_folder(folder)
+    @patch('os.path.exists')
+    @patch('ztpserver.repository.FileObject')
+    def test_get_file_failure(self, m_fileobj, m_exists):
+        m_exists.return_value = False
+        store = Repository(random_string())
+        self.assertRaises(FileObjectNotFound, store.get_file, random_string())
+        self.assertFalse(m_fileobj.called)
 
-        filepath = os.path.join(self.filepath, folder)
-        self.assertTrue(os.path.exists(filepath))
+    @patch('os.remove')
+    def test_delete_file_success(self, m_remove):
+        try:
+            store = Repository(random_string())
+            store.delete_file(random_string())
+            self.assertTrue(m_remove.called)
+        except Exception as exc:
+            self.fail(exc)
 
-    def test_write_file(self):
-        filename = random_string()
-        contents = random_string()
-        self.filestore.write_file(filename, contents)
+    @patch('os.remove')
+    def test_delete_file_failure(self, m_remove):
+        m_remove.side_effect = OSError
+        store = Repository(random_string())
+        self.assertRaises(RepositoryError, store.delete_file, random_string())
 
-        filepath = os.path.join(self.filepath, filename)
-        self.assertTrue(os.path.exists(filepath))
-        self.assertEqual(open(filepath).read(), contents)
-
-    def test_file_exists(self):
-        filename = random_string()
-        contents = random_string()
-        filepath = os.path.join(self.filepath, filename)
-        write_file(contents, filepath)
-        assert os.path.exists(filepath)
-
-        self.assertTrue(self.filestore.exists(filename))
-
-    def test_file_exists_failure(self):
-        filename = random_string()
-        assert not os.path.exists(os.path.join(self.filepath, filename))
-
-        self.assertFalse(self.filestore.exists(filename))
-
-    def test_get_file(self):
-
-        filename = random_string()
-        contents = random_string()
-        filepath = os.path.join(self.filepath, filename)
-        write_file(contents, filename=filepath)
-
-        obj = self.filestore.get_file(filename)
-        self.assertIsInstance(obj, ztpserver.repository.FileObject)
-        self.assertTrue(obj.exists)
-        self.assertEqual(filepath, obj.name)
-
-    def test_get_file_missing(self):
-        filename = random_string()
-        assert not os.path.exists(os.path.join(self.filepath, filename))
-
-        self.assertRaises(ztpserver.repository.FileObjectNotFound,
-                          self.filestore.get_file,
-                          filename)
-
-    def test_delete_file(self):
-        filename = random_string()
-        contents = random_string()
-        filepath = os.path.join(self.filepath, filename)
-        write_file(contents, filepath)
-        assert os.path.exists(filepath)
-
-        self.filestore.delete_file(filename)
-        self.assertFalse(os.path.exists(filename))
-
-    def test_delete_missing_file(self):
-        filename = random_string()
-        filepath = os.path.join(self.filepath, filename)
-        assert not os.path.exists(filepath)
-
-        self.filestore.delete_file(filepath)
-        self.assertFalse(os.path.exists(filepath))
-
-    def test_create_file_store(self):
-        fsname = random_string()
-        filepath = os.path.join(self.filepath, fsname)
-        os.makedirs(filepath)
-        assert os.path.exists(filepath)
-
-        obj = create_file_store(fsname, basepath=self.filepath)
-        self.assertIsInstance(obj, ztpserver.repository.FileStore)
-        self.assertTrue(os.path.exists(filepath))
 
 if __name__ == '__main__':
     unittest.main()

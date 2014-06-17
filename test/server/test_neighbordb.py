@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -6,14 +5,17 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#  - Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
-#  - Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#  - Neither the name of Arista Networks nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -26,44 +28,30 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-import os
+#
 import unittest
 
-import yaml
+from mock import  patch
 
-#pylint: disable=F0401
-from ztpserver.app import enable_handler_console
-from neighbordb_test_lib import NodeTest, NeighbordbTest
+import ztpserver.config
+import ztpserver.neighbordb
+import ztpserver.serializers
 
-TEST_DIR = 'test/neighbordb'
+from server_test_lib import random_string
+from server_test_lib import create_neighbordb
 
-def load_tests(loader, tests, pattern):            #pylint: disable=W0613
-    suite = unittest.TestSuite()
-    test_list = os.environ.get('TESTS', None)
-    if not test_list:
-        test_list = [f for f in os.listdir(TEST_DIR)
-                 if os.path.join(TEST_DIR, f).endswith('_test')]
-    else:
-        test_list = test_list.split(',')
+class NeighbordbUnitTests(unittest.TestCase):
 
-    print test_list
-    for test in test_list:
-        print 'Starting test %s' % test
+    def test_default_filename(self):
+        result = ztpserver.neighbordb.default_filename()
+        self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
 
-        definition = yaml.load(open(os.path.join(TEST_DIR, test)))
+    @patch('ztpserver.neighbordb.load')
+    def test_load_file(self, m_load):
+        m_load.return_value = random_string()
+        result = ztpserver.neighbordb.load_file(random_string(), 'text/plain')
+        self.assertEqual(result, m_load.return_value)
 
-        nodes = definition.get('nodes', [])
-        for node in nodes:
-            print 'Adding test: %s' % node['name']
-            suite.addTest(NodeTest(test, node, definition['neighbordb']))
-
-        if definition.get('configured_neighbordb', None):
-            suite.addTest(NeighbordbTest(test, definition['neighbordb'], 
-                                         definition['configured_neighbordb']))
-
-    return suite
 
 if __name__ == '__main__':
-    enable_handler_console()
     unittest.main()

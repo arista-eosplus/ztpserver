@@ -29,23 +29,50 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=W0613
-#
-import unittest
+import re
 
-from mock import patch
+def atoi(text):
+    return int(text) if text.isdigit() else text
 
-import ztpserver.app
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
 
-class TestApp(unittest.TestCase):
-    #pylint: disable=R0904,C0103
+def expand_range(text, match_prefix=None, replace_prefix=None):
+    ''' Returns a naturally sorted list of items expanded from text. '''
 
-    @patch('ztpserver.neighbordb.load')
-    @patch('ztpserver.controller.create_repository')
-    def test_application_defaults(self, m_repository, m_load):
-        obj = ztpserver.app.start_wsgiapp()
-        self.assertIsInstance(obj, ztpserver.controller.Router)
+    match_prefix = match_prefix or '[a-zA-Z]'
+    prefix_match_re = r'^(?P<prefix>%s+)(?=\d)' % match_prefix
+    match = re.match(prefix_match_re, text)
+
+    if not match:
+        raise TypeError('unable to match prefix: %s' % text)
+    elif match and not replace_prefix:
+        prefix = match.group('prefix')
+    elif match and replace_prefix:
+        prefix = replace_prefix
+
+    indicies_re = re.compile(r'\d+')
+
+    indicies_re = re.compile(r'[Ethernet|,](\d+)(?!-)')
+    range_re = re.compile(r'(\d+)\-(\d+)')
+
+    indicies = indicies_re.findall(text)
+    ranges = range_re.findall(text)
+
+    items = set()
+
+    for start, end in ranges:
+        start = int(start)
+        end = int(end) + 1
+        for index in range(start, end):
+            items.add('%s%s' % (prefix, index))
+
+    for index in indicies:
+        items.add('%s%s' % (prefix, index))
+
+    items = list(items)
+    items.sort(key=natural_keys)
+    return items
 
 
-if __name__ == '__main__':
-    unittest.main()
+

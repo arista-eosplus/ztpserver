@@ -1,4 +1,10 @@
-name: simple function patterns
+debug: false
+tag: bogus_patterns_test
+tests:
+  - pattern
+valid_patterns:
+  globals:
+    - good pattern
 
 neighbordb:
 
@@ -107,16 +113,3 @@ neighbordb:
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
-
-nodes:
-  - name: test_node
-    matches:
-      count: 1
-      includes:
-        - good pattern
-    node:
-      systemmac: 00:1c:73:1a:2b:3c
-    neighbors:
-      Ethernet1:
-        - device: hostname
-          port: Ethernet2

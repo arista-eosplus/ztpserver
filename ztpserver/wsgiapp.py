@@ -40,15 +40,12 @@ import webob.exc
 
 from routes.middleware import RoutesMiddleware
 
-from ztpserver.serializers import Serializer
+from ztpserver.serializers import dumps
 from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK
 
 log = logging.getLogger(__name__)
 
-class Controller(object):
-
-    def __init__(self):
-        self.serializer = Serializer()
+class WSGIController(object):
 
     def index(self, request, **kwargs):
         return webob.exc.HTTPNoContent()
@@ -71,12 +68,6 @@ class Controller(object):
     def edit(self, request, resource, **kwargs):
         return webob.exc.HTTPNotFound()
 
-    def serialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):
-        return self.serializer.serialize(data, content_type, **kwargs)
-
-    def deserialize(self, data, content_type=CONTENT_TYPE_HTML, **kwargs):
-        return self.serializer.deserialize(data, content_type, **kwargs)
-
     def response(self, **kwargs):
         return webob.Response(**kwargs)
 
@@ -88,8 +79,8 @@ class Controller(object):
             method = getattr(self, action)    #pylint: disable=R0921
             result = method(request, **request.urlvars)
 
-        except Exception as exc:
-            log.debug(exc)
+        except Exception:
+            log.exception('An unrecoverable error was detected')
             raise webob.exc.HTTPInternalServerError()
 
         if result is None:
@@ -99,7 +90,7 @@ class Controller(object):
             # serialize body based on response content type
             if 'body' in result:
                 content_type = result.get('content_type')
-                result['body'] = self.serialize(result['body'], content_type)
+                result['body'] = dumps(result['body'], content_type)
 
             result.setdefault('status', HTTP_STATUS_OK)
             result.setdefault('content_type', CONTENT_TYPE_HTML)
@@ -112,22 +103,25 @@ class Controller(object):
 
         return result
 
-class Router(object):
+class WSGIRouter(object):
 
     def __init__(self, mapper):
         self.map = mapper
-        self.router = RoutesMiddleware(self.dispatch, self.map)
+        self.router = RoutesMiddleware(self.route, self.map)
 
     @webob.dec.wsgify
     def __call__(self, request):
         return self.router
 
     @webob.dec.wsgify
-    def dispatch(self, request):
+    def route(self, request):
+        ''' Routes the incoming request to the appropriate controller '''
+
         try:
-            return request.urlvars['controller']
+            controller = request.urlvars['controller']
+            return controller()
         except KeyError:
-            log.debug('Router: controller not found, returning 404')
+            log.debug('WSGIRouter: controller not found, returning 404')
             return webob.exc.HTTPNotFound()
 
 

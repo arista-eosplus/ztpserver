@@ -29,23 +29,18 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=W0613
-#
+
+import os
 import unittest
 
-from mock import patch
+import yaml
 
-import ztpserver.app
+#pylint: disable=F0401
+from ztpserver.app import enable_handler_console
+from neighbordb_test_lib import NodeTest, NeighbordbTest
 
-class TestApp(unittest.TestCase):
-    #pylint: disable=R0904,C0103
-
-    @patch('ztpserver.neighbordb.load')
-    @patch('ztpserver.controller.create_repository')
-    def test_application_defaults(self, m_repository, m_load):
-        obj = ztpserver.app.start_wsgiapp()
-        self.assertIsInstance(obj, ztpserver.controller.Router)
-
+TEST_DIR = 'test/neighbordb'
 
 if __name__ == '__main__':
+    #enable_handler_console()
     unittest.main()

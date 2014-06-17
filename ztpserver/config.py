@@ -285,6 +285,12 @@ runtime.add_attribute(BoolAttr(
     default=True
 ))
 
+runtime.add_attribute(StrAttr(
+    name='console_logging_format',
+    default='%(levelname)s: [%(module)s:%(lineno)d] %(message)s',
+    environ='ZTPS_CONSOLE_LOGGING_FORMAT'
+))
+
 runtime.add_attribute(BoolAttr(
     name='disable_topology_validation',
     default=False

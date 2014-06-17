@@ -34,10 +34,8 @@
 #
 import warnings
 import collections
-import json
 import logging
-
-from ztpserver.constants import CONTENT_TYPE_OTHER
+import json
 
 try:
     import yaml
@@ -45,16 +43,37 @@ try:
 except ImportError:
     YAML_AVAILABLE = False
 
+
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
+
 class SerializerError(Exception):
-    """ base error raised by serialization functions """
+    ''' base error raised by serialization functions '''
     pass
 
-class YAMLSerializer(object):
-    """ The :py:class:`YAMLSerializer` class will generate a
-    RuntimeWarning if the PyYaml module is unavialable
-    """
+class SerializerMixin(object):
+    ''' Base serializer object '''
+
+    def serialize(self, data, **kwargs):
+        ''' Serialize a dict to object '''
+        raise NotImplementedError
+
+    def deserialize(self, data, **kwargs):
+        ''' Deserialize an object to dict '''
+        raise NotImplementedError
+
+class TextSerializer(SerializerMixin):
+
+    def deserialize(self, data, **kwargs):
+        ''' Deserialize a text object and return a dict '''
+        return str(data)
+
+    def serialize(self, data, **kwargs):
+        ''' Serialize a dict object and return text '''
+        return str(data)
+
+
+class YAMLSerializer(SerializerMixin):
 
     def __new__(cls):
         if not YAML_AVAILABLE:
@@ -63,185 +82,136 @@ class YAMLSerializer(object):
         else:
             return super(YAMLSerializer, cls).__new__(cls)
 
-    def deserialize(self, data):
+    def deserialize(self, data, **kwargs):
+        ''' Deserialize a YAML object and return a dict '''
+
         try:
-            contents = yaml.safe_load(data)
+            return yaml.safe_load(data)
+        except yaml.YAMLError:
+            log.exception('Unable to deserialize YAML data')
+            raise
 
-        except yaml.YAMLError as exc:
-            log.debug(exc)
-            contents = None
+    def serialize(self, data, safe_dump=False, **kwargs):
+        ''' Serialize a dict object and return YAML '''
 
-        return contents
+        try:
+            if safe_dump:
+                return yaml.safe_dump(data, default_flow_style=False)
+            return yaml.dump(data, default_flow_style=False)
+        except yaml.YAMLError:
+            log.exception('Unable to serialize YAML data')
+            raise
 
-    def serialize(self, data, safe_dump=False):
-        if safe_dump:
-            return yaml.safe_dump(data, default_flow_style=False)
-        return yaml.dump(data, default_flow_style=False)
+class JSONSerializer(SerializerMixin):
 
-class JSONSerializer(object):
+    def deserialize(self, data, **kwargs):
+        ''' Deserialize a JSON object and return a dict '''
 
-    def deserialize(self, data):
-        ''' deserialize a JSON object and return a dict '''
+        try:
+            return json.loads(data)
+        except:
+            log.exception('Unable to deserialize JSON data')
+            raise
 
-        assert isinstance(data, basestring)
-        return json.loads(data)
+    def serialize(self, data, **kwargs):
+        ''' Serialize a dict object and return JSON '''
 
-    def serialize(self, data):
-        ''' serialize a dict object and return JSON '''
+        try:
+            return json.dumps(data)
+        except:
+            log.exception('Unable to serialize JSON data')
+            raise
 
-        assert isinstance(data, dict)
-        return json.dumps(data)
 
 class Serializer(object):
-    """ The :py:class:`Serializer` will serialize a data structure
-    based on the content-type.   If the content-type is not supported
-    the :py:class:`Serializer` will simply return the data as a
-    :py:class:`str` object
-    """
 
-
-
-    def serialize(self, data, content_type, **kwargs):
-        """ serialize the data base on the content_type
-
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be serialized
-        :param content_type: string specifies the serialize
-                             handler to use
-
-        """
-        #pylint: disable=E1103
-        try:
-            data = self.convert(data)
-            handler = self._serialize_handler(content_type)
-            return handler.serialize(data, **kwargs) if handler else str(data)
-
-        except Exception:
-            raise SerializerError('Could not serialize data %s:' % data)
-
-    def deserialize(self, data, content_type, **kwargs):
-        """ deserialize the data based on the content_type
-
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be deserialized
-        :param content_type: string specifies the deserialize
-                             handler to use
-
-        """
-
-        try:
-            handler = self._deserialize_handler(content_type)
-            data = handler.deserialize(data, **kwargs) if handler else str(data)
-            data = self.convert(data)
-            return data
-
-        except Exception:
-            raise SerializerError('Could not deserialize data: %s' % data)
-
-
-    def _deserialize_handler(self, content_type):
-        handlers = {
+    def __init__(self):
+        self._handlers = {
+            'text/plain': TextSerializer(),
             'application/json': JSONSerializer(),
             'application/yaml': YAMLSerializer()
         }
-        return handlers.get(content_type)
 
+    @property
+    def handlers(self):
+        return self._handlers
 
-    def _serialize_handler(self, content_type):
-        handlers = {
-            'application/json': JSONSerializer(),
-            'application/yaml': YAMLSerializer()
-        }
-        return handlers.get(content_type)
+    def add_handler(self, content_type, instance):
+        if content_type in self._handlers:
+            log.warning('Overwriting previous loaded handler %s', content_type)
+        self._handlers[content_type] = instance
 
-    @classmethod
-    def convert(cls, data):
+    def serialize(self, obj, content_type=None, **kwargs):
+        ''' Serialize the data based on the content_type '''
+
+        try:
+            handler = self.handlers.get(content_type, TextSerializer())
+            return handler.serialize(obj, **kwargs)
+        except:
+            log.exception('Unable to serialize data')
+            raise SerializerError
+
+    def deserialize(self, obj, content_type=None, cls=None, **kwargs):
+        ''' Deserialize the data based on the content_type '''
+
+        try:
+            handler = self.handlers.get(content_type, TextSerializer())
+            obj = self._convert_from_unicode(handler.deserialize(obj, **kwargs))
+            if cls:
+                obj = cls(**obj)    #pylint: disable=W0142
+            return obj
+        except:
+            log.exception('Unable to deserialize data')
+            raise SerializerError
+
+    @staticmethod
+    def _convert_from_unicode(data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([cls.convert(x) for x in data.iteritems()])
+            return dict([Serializer._convert_from_unicode(x) \
+                         for x in data.items()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([cls.convert(x) for x in data])
+            return type(data)([Serializer._convert_from_unicode(x) \
+                              for x in data])
         else:
             return data
 
-class DeserializableMixin(object):
-    ''' The :py:class:`DeserializableMixin` provides a mixin class
-    that addes the ability to load and deserialize an object from
-    a file-like object stored in a format supported by
-    :py:class:`Serializer`.   Class objects using this mixin should
-    define a deserialize method to automatically transform the
-    contents loaded
-    '''
 
-    def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
+def loads(obj, content_type=None, cls=None, **kwargs):
+    try:
         serializer = Serializer()
-        log.debug('attempting to deserialize %r with content_type %s',
-                  self, content_type)
-        contents = serializer.deserialize(contents, content_type)
-        self.deserialize(contents)
+        return serializer.deserialize(obj, content_type, cls=cls, **kwargs)
+    except SerializerError:
+        log.error('Unable to deserialize object with content-type %s',
+                  content_type)
+        raise
 
-    def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        try:
-            self.loads(fobj.read(), content_type)
-        except IOError as exc:
-            log.debug(exc)
-            raise SerializerError('unable to load file')
+def load(filepath, content_type=None, cls=None, **kwargs):
+    try:
+        contents = open(filepath).read()
+        return loads(contents, content_type, cls=cls, **kwargs)
+    except (OSError, IOError):
+        log.error('Unable to load file from %s', filepath)
+        raise
 
-    def load_from_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
-        try:
-            self.load(open(filepath), content_type)
-        except IOError as exc:
-            log.error('Cannot read from file %s (bad permissions?)', filepath)
-            log.exception(exc)
-            raise SerializerError
-
-    def deserialize(self, contents):
-        ''' objects that use this mixin must provide this method '''
-        raise NotImplementedError
-
-class SerializableMixin(object):
-    ''' The :py:class:`SerializableMixin` provides a mixin class
-    that addes the ability to dump and serialize an object from
-    a file-like object stored in a format supported by
-    :py:class:`Serializer`.  Class objects using this mixin should
-    define a serialize method to automatically transform the
-    contents loaded
-    '''
-
-    def dumps(self, content_type=CONTENT_TYPE_OTHER):
+def dumps(obj, content_type=None, cls=None, **kwargs):
+    try:
         serializer = Serializer()
-        contents = self.serialize()
-        log.debug('attempting to serialize %r with content_type %s',
-                  self, content_type)
-        return serializer.serialize(contents, content_type)
+        if hasattr(obj, 'serialize'):
+            obj = obj.serialize()
+        return serializer.serialize(obj, content_type, cls=cls, **kwargs)
+    except SerializerError:
+        log.error('Unable to serialize object with content-type %s',
+                  content_type)
+        raise
 
-    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        try:
-            contents = self.dumps(content_type)
-            fobj.write(contents)
-        except IOError as exc:
-            log.error(exc)
-            log.exception(exc)
-            raise SerializerError
-
-    def dump_to_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
-        log.debug('Writing to file %s', filepath)
-        try:
-            self.dump(open(filepath, 'w'), content_type)
-        except IOError as exc:
-            log.error('Cannot write to file %s (bad permissions?)', filepath)
-            log.exception(exc)
-            raise SerializerError
-
-    def serialize(self):
-        ''' objects that use this mixin must provide this method '''
-        raise NotImplementedError
-
-
+def dump(obj, filepath, content_type=None, cls=None, **kwargs):
+    try:
+        with open(filepath, 'w') as fhandler:
+            fhandler.write(dumps(obj, content_type, cls=cls, **kwargs))
+    except (OSError, IOError):
+        log.error('Unable to write to file %s', filepath)
+        raise
 
 
