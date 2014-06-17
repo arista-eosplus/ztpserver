@@ -39,6 +39,7 @@ import ztpserver.config
 import ztpserver.topology
 
 from ztpserver.topology import Topology, TopologyError
+from ztpserver.topology import Pattern, PatternError
 from ztpserver.topology import Node
 
 from ztpserver.resources import ResourcePool

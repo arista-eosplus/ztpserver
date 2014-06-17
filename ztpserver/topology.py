@@ -418,7 +418,6 @@ class Pattern(object):
     def match_node(self, node):
 
         log.info('Attempting to match node %s', node.systemmac)
-        log.debug('node=%r', node)
 
         try:
             patterns = list()
@@ -446,9 +445,6 @@ class Pattern(object):
                     del patterns[matched_index]
                 if matched_index is None:
                     log.warning('Pattern was not matched')
-
-            log.debug('patterns=%s', patterns)
-            log.debug('matches=%s', matches)
 
             for pattern in patterns:
                 log.debug('Checking remaining patterns for positive contraint')
@@ -540,11 +536,7 @@ class InterfacePattern(object):
 
     def match_neighbor(self, neighbor):
         match_device = self.device_re.match(neighbor.device)
-        log.debug('match_device=%s', match_device)
-
         match_port = self.port_re.match(neighbor.port)
-        log.debug('match_port=%s', match_port)
-
         return match_device and match_port or False
 
     def match_interface(self, interface):

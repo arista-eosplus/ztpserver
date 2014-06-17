@@ -284,12 +284,12 @@ class NodesController(BaseController):
             log.info('Node matched %d pattern(s)', len(matches))
             match = matches[0]
 
-            self.repository.add_folder(self.expand(node.systemmac))
-
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
             definition = fobj.read(content_type=CONTENT_TYPE_YAML)
             definition_fn = self.expand(node.systemmac, DEFINITION_FN)
+
+            self.repository.add_folder(self.expand(node.systemmac))
 
             fobj = self.repository.add_file(definition_fn)
             fobj.write(definition, CONTENT_TYPE_YAML)
@@ -301,6 +301,10 @@ class NodesController(BaseController):
             response['status'] = HTTP_STATUS_CREATED
         except IndexError:
             log.error('Unable to find pattern match for %s', node.systemmac)
+            raise
+        except FileObjectNotFound as exc:
+            # TODO add folder clean up if exception is raised
+            log.error('Unable to find file %s', exc.message)
             raise
         except Exception:
             log.error('Unexpected error trying to execute post_node')

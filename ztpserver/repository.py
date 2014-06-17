@@ -260,7 +260,7 @@ class Repository(object):
         '''
         filepath = self.expand(filepath)
         if not self.exists(filepath):
-            raise FileObjectNotFound
+            raise FileObjectNotFound(filepath)
         return FileObject(filepath)
 
     def delete_file(self, filepath):
