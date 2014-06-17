@@ -1,4 +1,4 @@
-debug: false
+debug: true
 tag: small_pattern_test
 tests:
   - pattern
@@ -19,6 +19,69 @@ nodes:
   fail:
     - name: node_2b3d
 
+node_2b3d:
+  model: vEOS
+  serialnumber: 1234567890
+  systemmac: 00:1c:73:1a:2b:3d
+  version: 4.12.0
+  neighbors:
+    Ethernet1:
+      - device: pod1-spine1
+        port: Ethernet1
+    Ethernet2:
+      - device: pod1-spine2
+        port: Ethernet1
+    Ethernet6:
+      - device: spine4
+        port: Ethernet8
+      - device: spine5
+        port: Ethernet2
+    Ethernet7:
+      - device: spine4
+        port: Ethernet8
+      - device: spine5
+        port: Ethernet2
+    Ethernet49:
+      - device: localhost
+        port: Ethernet49
+    Ethernet50:
+      - device: localhost
+        port: Ethernet50
+
+
+node_d27d:
+  model: vEOS
+  serialnumber: 1234567890
+  systemmac: 00:0c:29:f5:d2:7d
+  version: 4.12.0
+  neighbors:
+     Ethernet1:
+       - device: localhost
+         port: Ethernet1
+     Ethernet2:
+       - device: localhost
+         port: Ethernet1
+     Ethernet3:
+       - device: localhost
+         port: Ethernet1
+     Ethernet6:
+       - device: spine4
+         port: Ethernet8
+       - device: spine5
+         port: Ethernet2
+     Ethernet7:
+       - device: spine4
+         port: Ethernet8
+       - device: spine5
+         port: Ethernet2
+     Ethernet49:
+       - device: localhost
+         port: Ethernet49
+     Ethernet50:
+       - device: localhost
+         port: Ethernet50
+
+
 neighbordb:
   variables:
     not_spine: includes('localhost')
@@ -26,6 +89,7 @@ neighbordb:
     ny_pod: regex("ny\d+")
 
   patterns:
+
     - name: sample node template 1
       definition: test
       node: 000c29f5d27d

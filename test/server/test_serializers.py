@@ -37,7 +37,7 @@ import ztpserver.serializers
 
 class SerializersUnitTest(unittest.TestCase):
 
-    def test_dump_success(self, m_open):
+    def test_dump_success(self):
         pass
 
     def test_dumps_success(self):

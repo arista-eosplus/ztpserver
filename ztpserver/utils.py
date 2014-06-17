@@ -52,6 +52,8 @@ def expand_range(text, match_prefix=None, replace_prefix=None):
         prefix = replace_prefix
 
     indicies_re = re.compile(r'\d+')
+
+    indicies_re = re.compile(r'[Ethernet|,](\d+)(?!-)')
     range_re = re.compile(r'(\d+)\-(\d+)')
 
     indicies = indicies_re.findall(text)

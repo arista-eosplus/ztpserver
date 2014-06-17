@@ -31,6 +31,23 @@
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
+'''
+    MODULE:
+        ztpserver.respository
+
+    AUTHOR:
+        Arista Networks
+
+    DESCRIPTION:
+        The repository module provides read and write access to files
+        for ztpserver.  The repository module can perform basic file
+        system like functionality for performing basid CRUD on
+        files and well as reading and writing specific file contents.
+
+    :copyright: Copyright (c) 2014, Arista Networks
+    :license: BSD, see LICENSE for more details
+
+'''
 import os
 import mimetypes
 import logging
@@ -40,21 +57,38 @@ import ztpserver.serializers
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
-class FileObjectNotFound(Exception):
-    """ raised if url not found in the file store """
-    pass
-
 class RepositoryError(Exception):
-    """ base exception class for FileStore objects """
+    ''' Base exception class for :py:class:`Repository` '''
     pass
 
 class FileObjectError(Exception):
-    ''' base exception class for FileObject '''
+    ''' Base exception class for :py:class:`FileObject` '''
+    pass
+
+class FileObjectNotFound(RepositoryError):
+    ''' Raised when a requested file is not found in the repository.  This
+    exception is a subclass of :py:class:`RespositoryError`
+    '''
     pass
 
 class FileObject(object):
+    ''' The :py:class:`FileObject` represents a single file entity in the
+    repository.   The instance provides convienent methods to read and write
+    contents to the file using a specified serialization
+    '''
 
     def __init__(self, name, path=None, **kwargs):
+        ''' The initialize method for :py:class:`FileObject`
+
+        :param name: the name of the file
+        :type name: str
+        :param path: the base path of the file
+        :type path: str
+        :param content_type: the content type of the file (optional)
+        :type content_type: str
+        :returns: instance
+
+        '''
         self.name = name
         if path is not None:
             self.name = os.path.join(path, name)
@@ -66,6 +100,24 @@ class FileObject(object):
         return 'FileObject(name=%s)' % self.name
 
     def read(self, content_type=None, cls=None):
+        ''' Reads the contents from the file system
+
+        :param content_type: defines the content_type of the file used to
+                             deserialize the object
+        :type content_type: str
+        :param cls: an optional class argument to read the contents into
+        :type cls: object
+        :returns: instance
+        :raises: FileObjectError
+
+        The read method will read the file from the file system, deserializing
+        the contents as specified by the content_type argument.  If the
+        content_type argument is not specified, the read method will read
+        the file as text.   The optional cls argument will create an instance
+        of the specified class using the deserailized file contents.  If
+        any errors occur, a FileObjectError is raised
+
+        '''
         try:
             self.content_type = content_type
             return ztpserver.serializers.load(self.name, content_type, cls)
@@ -74,6 +126,24 @@ class FileObject(object):
             raise FileObjectError
 
     def write(self, contents, content_type=None):
+        ''' Writes the contents to the file
+
+        :param contents: specifies the contents to be written to the file
+        :type contents: str
+        :param content_type: defines the serialization format to use when
+                             saving the file
+        :type content_type: str
+        :returns: None
+        :raises: FileObjectError
+
+        The write method takes the contents argument and writes it to the file
+        using the serialization specified in the content_type argument.  If
+        the content_type argument is not specified, the contents are written
+        as string text.  This method will overwrite any contents that
+        previously existed for the FileObj instance.  If any errors are
+        encountered during the write operation, a FileObjectError is raised
+
+        '''
         try:
             ztpserver.serializers.dump(contents, self.name, content_type)
             self.content_type = content_type
@@ -83,14 +153,35 @@ class FileObject(object):
 
 
 class Repository(object):
+    ''' The Respository class represents a repository of :py:class:`FileObject`
+    instances.  It is an abstract wrapper providing the ability to interact
+    with persistently stored files.
+    '''
 
     def __init__(self, path):
+        ''' The initialize method for :py:class:`Repository`
+
+        :param path: the base path of the repository
+        :type path: str
+        :returns: object
+
+        '''
         self.path = path
 
     def __repr__(self):
         return "Repository(path=%s)" % self.path
 
     def expand(self, filepath):
+        ''' Expands a filepath to the full path to a file object
+
+        :param filepath: the file path to expand
+        :type filepath: str
+        :returns: str -- the full path to the file
+
+        This method is used to transform a relative file path into an
+        absolute file path for identifying a file object resource
+
+        '''
         if filepath == '/':
             filepath = self.path
         elif not str(filepath).startswith(self.path):
@@ -99,6 +190,14 @@ class Repository(object):
         return filepath
 
     def add_folder(self, folderpath):
+        ''' Add a new folder to the repository
+
+        :param folderpath: the full path of the folder to add
+        :type folderpath: str
+        :returns: str -- the full path to the new folder
+        :raises: RespositoryError
+
+        '''
         try:
             folderpath = self.expand(folderpath)
             os.makedirs(folderpath)
@@ -108,6 +207,25 @@ class Repository(object):
             raise RepositoryError
 
     def add_file(self, filepath, contents=None, content_type=None):
+        ''' Adds a new :py:class:`FileObject` to the repository
+
+        :param filepath: the full path of the file to add
+        :type filepath: str
+        :param contents: the contents to write to the file
+        :type contents: str
+        :param content_type: specifies the serialization to use for the file
+        :type content_type: str
+        :returns: :py:class:`FileObject'
+        :raises: RespositoryError
+
+        The add_file method allows for a new file to be added to the
+        respository.  If the file already exists, it is returned as an instance
+        of :py:class:`FileObject`.   If the file doesn't already exist and
+        the contents argument is not None, then the file is created and
+        the contents written to the file.  The content_type argument provides
+        the serialization to be used when saving the file.
+
+        '''
         try:
             filepath = self.expand(filepath)
             obj = FileObject(filepath)
@@ -118,16 +236,42 @@ class Repository(object):
             raise RepositoryError
 
     def exists(self, filepath):
+        ''' Returns boolean if the filepath exists in the repository
+
+        :param filepath: the filepath to check for existence
+        :type filepath: str
+        :returns: boolean -- True if it exists otherwise False
+
+        '''
         filepath = self.expand(filepath)
         return os.path.exists(filepath)
 
     def get_file(self, filepath):
+        ''' Returns an intance of :py:class:`FileObject` if it exists
+
+        :param filepath: the file path of the instance to return
+        :type filepath: str
+        :returns: instance of :py:class:`FileObject`
+        :raises: FileObjectNotFound
+
+        This method will retrieve a file object instance if it exists in the
+        repository.  If the file does not exist then an error is raised
+
+        '''
         filepath = self.expand(filepath)
         if not self.exists(filepath):
             raise FileObjectNotFound
         return FileObject(filepath)
 
     def delete_file(self, filepath):
+        ''' Deletes an existing file in the respository
+
+        :param filepath: the file path of the instance to delete
+        :type filepath: str
+        :returns: None
+        :raises: RepositoryError
+
+        '''
         try:
             filepath = self.expand(filepath)
             os.remove(filepath)

@@ -43,7 +43,7 @@ from ztpserver.repository import FileObject, FileObjectError
 from ztpserver.repository import Repository, RepositoryError
 from ztpserver.repository import FileObjectNotFound
 
-from server_test_lib import random_string, enable_console
+from server_test_lib import random_string
 
 class FileObjectUnitTests(unittest.TestCase):
 

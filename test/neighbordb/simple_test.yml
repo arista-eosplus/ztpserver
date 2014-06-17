@@ -1,5 +1,4 @@
-debug: false
-tag: simple_interface_patterns
+debug: true
 tests:
   - pattern
   - topology

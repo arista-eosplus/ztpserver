@@ -48,7 +48,6 @@ import ztpserver.repository
 
 from ztpserver.controller import DEFINITION_FN, PATTERN_FN
 
-from ztpserver.app import enable_handler_console
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 
 from server_test_lib import remove_all, random_string
@@ -516,7 +515,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         m_load = Mock()
         m_load.return_value.match_node.return_value = [Mock()]
-        ztpserver.neighbordb.load = m_load
+        ztpserver.neighbordb.load_topology = m_load
 
         controller = ztpserver.controller.NodesController()
 
@@ -532,7 +531,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         m_load = Mock()
         m_load.return_value.match_node.return_value = [Mock(), Mock(), Mock()]
-        ztpserver.neighbordb.load = m_load
+        ztpserver.neighbordb.load_topology = m_load
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_node(dict(), request=request, node=node)
@@ -547,11 +546,12 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         m_load = Mock()
         m_load.return_value.match_node.return_value = list()
-        ztpserver.neighbordb.load = m_load
+        ztpserver.neighbordb.load_topology = m_load
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(IndexError, controller.post_node, dict(),
                           request=request, node=node)
+
 
     def test_post_node_no_definition_in_pattern(self):
         request = Mock(json=dict(neighbors=dict()))
@@ -562,7 +562,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         m_load = Mock()
         m_load.return_value.match_node.return_value = [pattern]
-        ztpserver.neighbordb.load = m_load
+        ztpserver.neighbordb.load_topology = m_load
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.post_node, dict(),
@@ -794,12 +794,11 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         definition.add_action()
 
         cfg = {'return_value.exists.return_value': False}
-
         self.m_repository.configure_mock(**cfg)
 
         cfg = {'return_value.match_node.return_value': [Mock()]}
-        ztpserver.neighbordb.load = Mock()
-        ztpserver.neighbordb.load.configure_mock(**cfg)
+        ztpserver.neighbordb.load_topology = Mock()
+        ztpserver.neighbordb.load_topology.configure_mock(**cfg)
 
         request = Request.blank('/nodes', body=node.as_json(), method='POST',
                                 headers=ztp_headers())

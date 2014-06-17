@@ -204,8 +204,6 @@ class Topology(object):
     def add_pattern(self, name, definition, interfaces, **kwargs):
 
         try:
-            log.info('Adding pattern %s', name)
-
             kwargs['node'] = kwargs.get('node')
             kwargs['variables'] = kwargs.get('variables', dict())
 
@@ -236,6 +234,7 @@ class Topology(object):
     def add_patterns(self, patterns, continue_on_error=True):
         for pattern in patterns:
             try:
+                log.debug('Adding pattern \'%s\' to topology', pattern['name'])
                 self.add_pattern(**pattern)
             except TopologyError:
                 if not continue_on_error:
@@ -251,9 +250,9 @@ class Topology(object):
         return pattern.node == '' or pattern.node is None
 
     def get_patterns(self, predicate=None):
-        _patterns = set(self.patterns['nodes'].values())
-        _patterns = sorted(_patterns.union(self.patterns['globals']))
+        _patterns = self.patterns['nodes'].values() + self.patterns['globals']
         return filter(predicate, _patterns) if predicate else _patterns
+
 
     def find_patterns(self, node):
         try:
@@ -384,11 +383,9 @@ class Pattern(object):
     @staticmethod
     def parse_interface(interface, neighbor):
         try:
-            #log.debug('parse_interface[%s]: %s', interface, neighbor)
-
             if hasattr(neighbor, 'items'):
                 device = neighbor['device']
-                port = neighbor['port']
+                port = neighbor.get('port', 'any')
 
             else:
                 if neighbor == 'any':

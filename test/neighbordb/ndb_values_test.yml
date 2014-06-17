@@ -1,7 +1,7 @@
 # Tests various neighbordb pattern values
 #  - test variuos pattern attribute values
 
-debug: true
+debug: false
 tag: entries_test
 tests:
   - pattern
@@ -29,7 +29,6 @@ valid_patterns:
     - intf connected to any interface on device
     - intf connected to any interface on device long
     - intf connected to port on any device
-    - intf connected to port on any device long 1
     - intf connected to port on any device long 2
     - intf not connected to port
     - intf not connected to port long
@@ -323,20 +322,20 @@ neighbordb:
         - Ethernet1:
             dummy: test
 
-    - name: bogus interface 6
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            dummy: test
+    # - name: bogus interface 6
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1:
+    #         device: hostname
+    #         dummy: test
 
-    - name: bogus interface 7
-      definition: test
-      interfaces:
-        - Ethernet1:
-            device: hostname
-            port: Ethernet1
-            dummy: test
+    # - name: bogus interface 7
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1:
+    #         device: hostname
+    #         port: Ethernet1
+    #         dummy: test
 
     - name: bogus interface 12 (list)
       definition: test
@@ -486,23 +485,23 @@ neighbordb:
       interfaces:
         - test: hostname:Ethernet1/2/3
 
-    # Not provisioned
-    - name: erroneous intf range 2
-      definition: test
-      interfaces:
-        - Ethernet1/2/3/4: hostname:Ethernet1/2/3
+    # # Not provisioned
+    # - name: erroneous intf range 2
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1/2/3/4: hostname:Ethernet1/2/3
 
-    # Not provisioned
-    - name: erroneous intf range 3
-      definition: test
-      interfaces:
-        - Ethernet1/a: hostname:Ethernet1/2/3
+    # # Not provisioned
+    # - name: erroneous intf range 3
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1/a: hostname:Ethernet1/2/3
 
-    # Not provisioned
-    - name: erroneous intf range 4
-      definition: test
-      interfaces:
-        - Ethernet1/: hostname:Ethernet1/2/3
+    # # Not provisioned
+    # - name: erroneous intf range 4
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1/: hostname:Ethernet1/2/3
 
     # Not provisioned
     - name: erroneous intf range 5
@@ -510,17 +509,17 @@ neighbordb:
       interfaces:
         - Ethernet-1: hostname:Ethernet1/2/3
 
-    # Not provisioned
-    - name: erroneous intf range 6
-      definition: test
-      interfaces:
-        - Ethernet1/-1: hostname:Ethernet1/2/3
+    # # Not provisioned
+    # - name: erroneous intf range 6
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet1/-1: hostname:Ethernet1/2/3
 
-    # Not provisioned
-    - name: erroneous intf range 7
-      definition: test
-      interfaces:
-        - Ethernet0: hostname:Ethernet1/2/3
+    # # Not provisioned
+    # - name: erroneous intf range 7
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet0: hostname:Ethernet1/2/3
 
     # Not provisioned
     - name: erroneous intf range 7
@@ -548,33 +547,33 @@ neighbordb:
       interfaces:
         - Ethernet4-4: none:none
 
-    # Not provisioned
-    - name: intf range error 1
-      definition: test
-      interfaces:
-        - Ethernet0,2: none:none
+    # # Not provisioned
+    # - name: intf range error 1
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet0,2: none:none
 
-    # Not provisioned
-    - name: intf range error 2
-      definition: test
-      interfaces:
-        - Ethernet5-2: none:none
+    # # Not provisioned
+    # - name: intf range error 2
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet5-2: none:none
 
-    # Not provisioned
-    - name: intf range error 3
-      definition: test
-      interfaces:
-        - Ethernet5,Ethernet2-7: none:none
+    # # Not provisioned
+    # - name: intf range error 3
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet5,Ethernet2-7: none:none
 
-    # Not provisioned
-    - name: intf range error 4
-      definition: test
-      interfaces:
-        - Ethernet2,a,3: none:none
+    # # Not provisioned
+    # - name: intf range error 4
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet2,a,3: none:none
 
-    # Not provisioned
-    - name: intf range error 5
-      definition: test
-      interfaces:
-        - Ethernet2-a: none:none
+    # # Not provisioned
+    # - name: intf range error 5
+    #   definition: test
+    #   interfaces:
+    #     - Ethernet2-a: none:none
 

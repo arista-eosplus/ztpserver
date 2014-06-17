@@ -52,7 +52,6 @@ def enable_logging(level=None):
     formatter = logging.Formatter(logging_fmt)
 
     ch = logging.StreamHandler()
-    ch.tag = 'console'
     level = level or 'DEBUG'
     level = str(level).upper()
     level = logging.getLevelName(level)
@@ -67,6 +66,7 @@ class NeighbordbTest(unittest.TestCase):
         self.node = kwargs.get('node')
         self.tag = kwargs.get('tag')
         self.match = kwargs.get('match')
+        self.filename = kwargs.get('filename')
 
         self.valid_patterns = kwargs.get('valid_patterns', dict())
         if not self.valid_patterns.get('nodes'):
@@ -77,6 +77,8 @@ class NeighbordbTest(unittest.TestCase):
         self.failed_patterns = kwargs.get('failed_patterns')
 
         self.longMessage = True
+        self.maxDiff = None
+
         super(NeighbordbTest, self).__init__(test_name)
 
     def _load_topology(self):
@@ -89,7 +91,7 @@ class NeighbordbTest(unittest.TestCase):
 
     def neighbordb_pattern(self):
         log.info('START: neighbordb_patterns')
-        tag = 'tag=%s' % self.tag
+        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
         (valid, failed) = self._validate_topology()
 
@@ -108,7 +110,7 @@ class NeighbordbTest(unittest.TestCase):
 
     def neighbordb_topology(self):
         log.info('START: neighbordb_topology')
-        tag = 'tag=%s' % self.tag
+        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
         topo = self._load_topology()
         self.assertIsNotNone(topo, tag)
@@ -128,12 +130,13 @@ class NeighbordbTest(unittest.TestCase):
 
     def node_pass(self):
         log.info('START: node_pass')
-        tag = 'tag=%s' % self.tag
+        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
         node = load_node(self.node)
         self.assertIsNotNone(node, tag)
 
         topology = self._load_topology()
+        self.assertIsNotNone(topology, tag)
         result = topology.match_node(node)
 
         self.assertEqual(result[0].name, self.match, tag)
@@ -143,7 +146,7 @@ class NeighbordbTest(unittest.TestCase):
 
     def node_fail(self):
         log.info('START: node_fail')
-        tag = 'tag=%s' % self.tag
+        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
         node = load_node(self.node)
         self.assertIsNotNone(node, tag)
@@ -194,7 +197,8 @@ def load_tests(loader, tests, pattern):
             kwargs = dict()
             kwargs['valid_patterns'] = harness.get('valid_patterns', dict())
             kwargs['failed_patterns'] = harness.get('failed_patterns')
-            kwargs['tag'] = harness.get('tag')
+            kwargs['tag'] = harness.get('tag', fn)
+            kwargs['filename'] = test
 
             for test in tests:
                 assert test in ['pattern', 'topology']
@@ -211,7 +215,7 @@ def load_tests(loader, tests, pattern):
                             fn = entry['name'].split('/')[-1]
                             kwargs['node'] = harness.get(fn, entry['name'])
                             kwargs['match'] = entry.get('match')
-                            kwargs['tag'] = entry.get('tag', fn)
+                            kwargs['tag'] = '%s:%s' % (harness.get('tag'), fn)
                             log.info('Adding node %s', name)
                             suite.addTest(NeighbordbTest(test, ndb, **kwargs))
 
@@ -221,5 +225,5 @@ def load_tests(loader, tests, pattern):
         return suite
 
 if __name__ == '__main__':
-    #enable_logging()
+    enable_logging()
     unittest.main()

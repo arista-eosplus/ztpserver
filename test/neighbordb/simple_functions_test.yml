@@ -1,5 +1,5 @@
 debug: false
-tag: simple_function_patterns
+tag: simple_functions_test
 tests:
   - topology
   - pattern
