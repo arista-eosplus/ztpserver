@@ -103,6 +103,7 @@ class TopologyValidator(Validator):
         if not self.data.get('patterns'):
             raise ValidationError('missing required \'patterns\' attribute')
 
+
         for index, entry in enumerate(self.data.get('patterns')):
             try:
                 name = entry.get('name')
