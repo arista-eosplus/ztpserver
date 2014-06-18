@@ -1,6 +1,5 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 - [ZTPServer Setup - Packer.io VM Automation](#ztpserver-setup---packerio-vm-automation)
   - [Introduction](#introduction)
@@ -58,7 +57,7 @@ Therefore, the first step is downloading and installing Packer.
 ###Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
-1. Retrieve the EOS+ packer files here.
+1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.
 3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step. ZTPServer will still run without these files.
     Download the following files and place them in the corresponding directories:

@@ -14,6 +14,3 @@ Currently, there is support for:
 
 ##Getting Started
 Choose which distro you would like to use and download the associated files. Use the READMEs included in each section to complete the installation.
-
-####References
-http://www.packer.io/docs/builders/virtualbox-iso.html

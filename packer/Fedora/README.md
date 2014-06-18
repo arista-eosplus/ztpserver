@@ -1,6 +1,5 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 - [ZTPServer Setup - Packer.io VM Automation](#ztpserver-setup---packerio-vm-automation)
   - [Introduction](#introduction)
@@ -155,7 +154,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 Therefore, open Vbox and open the General Settings/Preferences menu. Click on the **Network** tab. Click on **Host-only Networks.**
 Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 255.255.255.0 and turn off the DHCP server.
 
-1. Retrieve the EOS+ packer files here.
+1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.
 3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step.  ZTPServer will still run without these files.
     Download the following files and place them in the corresponding directories:
@@ -186,10 +185,8 @@ Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 
                - ruby-json-1.5.5.swix
                - rubygems-1.3.7.swix
     ```
-4. At this point you must choose whether to build the VM using VMWare or VirtualBox.
-    Run ```packer build --only=vmware-iso ztps-ubuntu-12.04.4_amd64.json``` for VMWare, or
-    Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox
-    You will see (example for Vbox):
+4. Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox
+    You will see:
     ```
     phil:Fedora phil$ packer build --only=virtualbox-iso ztps-fedora_20_x86_64.json
     virtualbox-iso output will be in this color.
@@ -201,7 +198,7 @@ Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 
     ==> virtualbox-iso: Downloading or copying ISO
         virtualbox-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
     ```
-5. Once the ISO is downloaded, packer brings up a VBox/VMWare VM. The installation will proceed without any user input.
+5. Once the ISO is downloaded, packer brings up a VBox VM. The installation will proceed without any user input.
 6. After a few minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
 7. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
     ```
