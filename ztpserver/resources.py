@@ -53,12 +53,17 @@ class ResourcePool(object):
         self.data = None
 
     def serialize(self):
-        return [(key, str(value)) for (key, value) in self.data.items()]
+        data = dict()
+        for key, value in self.data.items():
+            data[key] = str(value) if value is not None else None
+        return data
 
     def load(self, pool):
-        self.data = None
+        self.data = dict()
         filepath = os.path.join(self.filepath, pool)
-        self.data = load(filepath, CONTENT_TYPE_YAML)
+        contents = load(filepath, CONTENT_TYPE_YAML)
+        for key, value in contents.items():
+            self.data[key] = str(value) if value is not None else None
 
     def dump(self, pool):
         filepath = os.path.join(self.filepath, pool)
