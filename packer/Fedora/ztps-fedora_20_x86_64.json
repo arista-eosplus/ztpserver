@@ -6,6 +6,7 @@
            "<wait>",
            "vmlinuz ",
            "initrd=initrd.img ",
+           "biosdevname=0 net.ifnames=0 ",
            "inst.stage2=hd:LABEL=Fedora\\x2020\\x20x86_64 ",
            "rd.live.check ",
            "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks-net.cfg",
@@ -47,9 +48,10 @@
            "<wait>",
            "vmlinuz ",
            "initrd=initrd.img ",
+           "biosdevname=0 net.ifnames=0 ",
            "inst.stage2=hd:LABEL=Fedora\\x2020\\x20x86_64 ",
            "rd.live.check ",
-           "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks-vbox.cfg",
+           "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks-net.cfg",
            "<enter>"
           ],
           "boot_wait": "3s",
@@ -65,66 +67,48 @@
           "guest_os_type": "Fedora_64",
           "vm_name":"ztps-fedora-20-x86_64-{{isotime}}",
           "vboxmanage": [
-             [
-                 "modifyvm",
-                 "{{.Name}}",
-                 "--memory",
-                 "2048"
-             ],
-             [
+              [
                   "modifyvm",
                   "{{.Name}}",
-                  "--cpus",
-                 "1"
-             ],
-             [
-                  "modifyvm",
-                  "{{.Name}}",
-                  "--rtcuseutc",
-                  "on"
-             ],
-             [
+                  "--memory",
+                  "2048"
+              ],
+              [
                    "modifyvm",
                    "{{.Name}}",
-                   "--bioslogodisplaytime",
-                   "1"
-             ],
-             [
+                   "--cpus",
+                  "1"
+              ],
+              [
                    "modifyvm",
                    "{{.Name}}",
-                   "--nic1",
-                   "nat"
-             ],
-             [
-                   "modifyvm",
-                   "{{.Name}}",
-                   "--nicproperty1",
-                   "name=ens32"
-             ],
-             [
-                   "modifyvm",
-                   "{{.Name}}",
-                   "--nictype1",
-                   "82540EM"
-             ],
-             [
-                   "modifyvm",
-                   "{{.Name}}",
-                   "--nic2",
-                   "nat"
-             ],
-             [
-                   "modifyvm",
-                   "{{.Name}}",
-                   "--nicproperty2",
-                   "name=ens33"
-             ],
-             [
-                   "modifyvm",
-                   "{{.Name}}",
-                   "--nictype2",
-                   "82540EM"
-             ]
+                   "--rtcuseutc",
+                   "on"
+              ],
+              [
+                    "modifyvm",
+                    "{{.Name}}",
+                    "--bioslogodisplaytime",
+                    "1"
+              ],
+              [
+                    "modifyvm",
+                    "{{.Name}}",
+                    "--nic1",
+                    "nat"
+              ],
+              [
+                    "modifyvm",
+                    "{{.Name}}",
+                    "--nic2",
+                    "hostonly"
+              ],
+              [
+                    "modifyvm",
+                    "{{.Name}}",
+                    "--hostonlyadapter2",
+                    "vboxnet2"
+              ]
             ],
           "shutdown_command": "/sbin/shutdown -h now",
           "http_directory":"http/"

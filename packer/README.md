@@ -10,6 +10,7 @@ Currently, there is support for:
 * Ubuntu 12.04 on Virtual Box
 * Ubuntu 12.04 on VMWare
 * Fedora 20 on VMWare
+* Fedora 20 on Virtual Box
 
 ##Getting Started
 Choose which distro you would like to use and download the associated files. Use the READMEs included in each section to complete the installation.

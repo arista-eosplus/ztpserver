@@ -1,3 +1,22 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
+
+- [ZTPServer Setup - Packer.io VM Automation](#ztpserver-setup---packerio-vm-automation)
+  - [Introduction](#introduction)
+  - [Installation of Packer](#installation-of-packer)
+    - [Creating a VM for use with VMWare Fusion](#creating-a-vm-for-use-with-vmware-fusion)
+    - [Creating a VM for use with VirtualBox](#creating-a-vm-for-use-with-virtualbox)
+  - [Setting up a Quick Demo](#setting-up-a-quick-demo)
+  - [Troubleshooting](#troubleshooting)
+    - [Gathering Diags](#gathering-diags)
+    - [Potential Issues](#potential-issues)
+      - [Error Detecting Host IP](#error-detecting-host-ip)
+      - [Anaconda Installer Hangs at 'Installing Bootloader'](#anaconda-installer-hangs-at-installing-bootloader)
+      - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 #ZTPServer Setup - Packer.io VM Automation
 
 ##Introduction
@@ -8,8 +27,8 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * Fedora 20 Minimal Install
 * Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
-    * ens32 (NAT) DHCP
-    * ens33 (HostOnly) 172.16.130.10/24
+    * eth0 (NAT) DHCP
+    * eth1 (HostOnly) 172.16.130.10/24
 * Firewalld disabled.
 * Users
     * root/eosplus and ztpsadmin/eosplus
@@ -34,7 +53,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     * EG: in ~/.bash_login, add ```PATH=$PATH:/path/to/packer/files```
 4. Run ```packer``` to make sure ```PATH``` is updated.
 
-##Creating a VM for use with VMWare Fusion
+###Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
 
 1. Retrieve the EOS+ packer files here.
@@ -47,7 +66,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     * ruby-1.8.7.swix - ```./files/puppet/ruby-1.8.7.swix```
     * ruby-json-1.5.5.swix - ```./files/puppet/ruby-json-1.5.5.swix```
     * rubygems-1.3.7.swix - ```./files/puppet/rubygems-1.3.7.swix```
-    
+
     Your directory should look like:
     ```
     [root]
@@ -73,7 +92,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
     vmware-iso output will be in this color.
-    
+
     ==> vmware-iso: Downloading or copying ISO
     vmware-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
     ==> vmware-iso: Creating virtual machine disk
@@ -91,7 +110,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
     ```
     phil:ztpserver phil$ packer build ztps-fedora_20_x86_64.json
     vmware-iso output will be in this color.
-    
+
     ==> vmware-iso: Downloading or copying ISO
     vmware-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
     ==> vmware-iso: Creating virtual machine disk
@@ -121,12 +140,103 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
         vmware-iso: Detaching ISO from CD-ROM device...
     ==> vmware-iso: Compacting the disk image
     Build 'vmware-iso' finished.
-    
+
     ==> Builds finished. The artifacts of successful builds are:
     --> vmware-iso: VM files in directory: output-vmware-iso
     ```
 9. You now have a full-featured ZTPServer.
-10. Simply type ```ztps``` to start the ztpserver.
+10. Log into the server with ```root``` and password ```eosplus```. Simply type ```ztps``` to start the ztpserver.
+
+
+###Creating a VM for use with VirtualBox
+> **Note:** The following procedure was tested using VirtualBox 4.3.12.
+
+> **IMPORTANT:** Regarding VirtualBox networks. The default setup places eth1 on vboxnet2. This might not be created in your Virtual Box environment.  
+Therefore, open Vbox and open the General Settings/Preferences menu. Click on the **Network** tab. Click on **Host-only Networks.**
+Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 255.255.255.0 and turn off the DHCP server.
+
+1. Retrieve the EOS+ packer files here.
+2. ```cd``` to the location of the .json file.
+3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step.  ZTPServer will still run without these files.
+    Download the following files and place them in the corresponding directories:
+    * vEOS.swi - ```./files/images/vEOS.swi```
+    * puppet-2.7.20-1.fc16.noarch.rpm - ```./files/puppet/puppet-2.7.20-1.fc16.noarch.rpm```
+    * facter-1.6.17-1.fc16.i686.rpm - ```./files/puppet/facter-1.6.17-1.fc16.i686.rpm```
+    * ruby-1.8.7.swix - ```./files/puppet/ruby-1.8.7.swix```
+    * ruby-json-1.5.5.swix - ```./files/puppet/ruby-json-1.5.5.swix```
+    * rubygems-1.3.7.swix - ```./files/puppet/rubygems-1.3.7.swix```
+
+    Your directory should look like:
+    ```
+    [root]
+       - ztps-fedora_20_x86_64.json
+       - /http
+           - ks-net.cfg
+       - /conf
+           - ...conf files
+       - /scripts
+           - setup.sh
+       - /files
+           - /images
+               - vEOS.swi
+           - /puppet
+               - puppet-2.7.20-1.fc16.noarch.rpm
+               - facter-1.6.17-1.fc16.i686.rpm
+               - ruby-1.8.7.swix
+               - ruby-json-1.5.5.swix
+               - rubygems-1.3.7.swix
+    ```
+4. At this point you must choose whether to build the VM using VMWare or VirtualBox.
+    Run ```packer build --only=vmware-iso ztps-ubuntu-12.04.4_amd64.json``` for VMWare, or
+    Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox
+    You will see (example for Vbox):
+    ```
+    phil:Fedora phil$ packer build --only=virtualbox-iso ztps-fedora_20_x86_64.json
+    virtualbox-iso output will be in this color.
+
+    ==> virtualbox-iso: Downloading or copying Guest additions checksums
+        virtualbox-iso: Downloading or copying: http://download.virtualbox.org/virtualbox/4.3.12/SHA256SUMS
+    ==> virtualbox-iso: Downloading or copying Guest additions
+        virtualbox-iso: Downloading or copying: http://download.virtualbox.org/virtualbox/4.3.12/VBoxGuestAdditions_4.3.12.iso
+    ==> virtualbox-iso: Downloading or copying ISO
+        virtualbox-iso: Downloading or copying: http://mirrors.xmission.com/fedora/linux/releases/20/Fedora/x86_64/iso/Fedora-20-x86_64-netinst.iso
+    ```
+5. Once the ISO is downloaded, packer brings up a VBox/VMWare VM. The installation will proceed without any user input.
+6. After a few minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
+7. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
+    ```
+    ==> virtualbox-iso: Waiting for SSH to become available...
+    ==> virtualbox-iso: Connected to SSH!
+    ==> virtualbox-iso: Uploading VirtualBox version info (4.3.12)
+    ==> virtualbox-iso: Uploading VirtualBox guest additions ISO...
+    ==> virtualbox-iso: Uploading conf => /tmp/packer
+    ==> virtualbox-iso: Uploading files => /tmp/packer
+    ==> virtualbox-iso: Provisioning with shell script: scripts/setup.sh
+        virtualbox-iso: + yum -y install deltarpm
+      ... (shell script output)
+    ```
+8. After some extensive yumming (<5minutes), you will see:
+    ```
+    ==> virtualbox-iso: Gracefully halting virtual machine...
+        virtualbox-iso:
+        virtualbox-iso: Broadcast message from root@ztps.ztps-test.com on pts/0 (Tue 2014-06-17 08:44:25 EDT):
+        virtualbox-iso:
+        virtualbox-iso: The system is going down for power-off NOW!
+        virtualbox-iso:
+    ==> virtualbox-iso: Preparing to export machine...
+        virtualbox-iso: Deleting forwarded port mapping for SSH (host port 3213)
+    ==> virtualbox-iso: Exporting virtual machine...
+        virtualbox-iso: Executing: export ztps-fedora-20-x86_64-2014-06-17T12:29:58Z --output output-virtualbox-iso/ztps-fedora-20-x86_64-2014-06-17T12:29:58Z.ovf
+    ==> virtualbox-iso: Unregistering and deleting virtual machine...
+    Build 'virtualbox-iso' finished.
+
+    ==> Builds finished. The artifacts of successful builds are:
+    --> virtualbox-iso: VM files in directory: output-virtualbox-iso
+    Build 'vmware-iso' finished.
+    ```
+9. You now have a full-featured ZTPServer.
+10. Log into the server with ```root``` and password ```eosplus```. Simply type ```ztps``` to start the ztpserver.
+
 
 ##Setting up a Quick Demo
 As part of the installation above, sample files were copied from the ztpserver-demo repo and placed into the necessary locations ( /etc/ztpserver/ and /usr/share/ztpserver).  Follow the steps below to create a quick demo:

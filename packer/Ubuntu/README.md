@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
+
+- [ZTPServer Setup - Packer.io VM Automation](#ztpserver-setup---packerio-vm-automation)
+  - [Introduction](#introduction)
+  - [Installation of Packer](#installation-of-packer)
+    - [Creating a VM for use with VMWare Fusion](#creating-a-vm-for-use-with-vmware-fusion)
+    - [Creating a VM for use with VirtualBox](#creating-a-vm-for-use-with-virtualbox)
+  - [Setting up a Quick Demo](#setting-up-a-quick-demo)
+  - [Troubleshooting](#troubleshooting)
+    - [Gathering Diags](#gathering-diags)
+    - [Potential Issues](#potential-issues)
+      - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 #ZTPServer Setup - Packer.io VM Automation
 
 ##Introduction
@@ -12,7 +29,7 @@ This procedure will:
 * Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
     * eth0 (NAT) VBox DHCP
-    * eth1 (vboxnet2) Runs ZTPServer services
+    * eth1 (vboxnet2/Hostonly) Runs ZTPServer services
 * UFW Firewall disabled.
 * Users
     * root/eosplus and ztpsadmin/eosplus
@@ -38,7 +55,84 @@ Therefore, the first step is downloading and installing Packer.
     * EG: in ~/.bash_login, add ```PATH=$PATH:/path/to/packer/files```
 4. Run ```packer``` to make sure ```PATH``` is updated.
 
-##Creating a VM for use with VirtualBox
+###Creating a VM for use with VMWare Fusion
+> **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
+
+1. Retrieve the EOS+ packer files here.
+2. ```cd``` to the location of the .json file.
+3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step. ZTPServer will still run without these files.
+    Download the following files and place them in the corresponding directories:
+    * vEOS.swi - ```./files/images/vEOS.swi```
+    * puppet-2.7.20-1.fc16.noarch.rpm - ```./files/puppet/puppet-2.7.20-1.fc16.noarch.rpm```
+    * facter-1.6.17-1.fc16.i686.rpm - ```./files/puppet/facter-1.6.17-1.fc16.i686.rpm```
+    * ruby-1.8.7.swix - ```./files/puppet/ruby-1.8.7.swix```
+    * ruby-json-1.5.5.swix - ```./files/puppet/ruby-json-1.5.5.swix```
+    * rubygems-1.3.7.swix - ```./files/puppet/rubygems-1.3.7.swix```
+
+    Your directory should look like:
+    ```
+    [root]
+       - ztps-ubuntu-12.04.4_amd64.json
+       - /http
+           - preseed.cfg
+       - /conf
+           - ...conf files
+       - /scripts
+           - setup.sh
+       - /files
+           - /images
+               - vEOS.swi
+           - /puppet
+               - puppet-2.7.20-1.fc16.noarch.rpm
+               - facter-1.6.17-1.fc16.i686.rpm
+               - ruby-1.8.7.swix
+               - ruby-json-1.5.5.swix
+               - rubygems-1.3.7.swix
+   ```
+4. Run ```packer build --only=vmware-iso ztps-ubuntu-12.04.4_amd64.json``` for VMWare
+    You will see:
+    ```
+    phil:Ubuntu phil$ packer build --only=vmware-iso ztps-ubuntu-12.04.4_amd64.json
+    vmware-iso output will be in this color.
+
+    ==> vmware-iso: Downloading or copying ISO
+        vmware-iso: Downloading or copying: http://releases.ubuntu.com/12.04/ubuntu-12.04.4-server-amd64.iso
+    ```
+5. Once the ISO is downloaded, packer brings up a VMWare VM. The Anaconda installation will proceed without any user input.
+6. After 10 minutes the OS installation will be complete, the VM will reboot, and you will be presented with a login prompt.  Resist the urge to log in and tinker - things are still being setup.
+7. Meanwhile, you'll notice the packer builder ```ssh``` into the VM and begin working on updating, installing and configuring new services.
+    ```
+    ==> vmware-iso: Connecting to VM via VNC
+    ==> vmware-iso: Typing the boot command over VNC...
+    ==> vmware-iso: Waiting for SSH to become available...
+    ==> vmware-iso: Connected to SSH!
+    ==> vmware-iso: Uploading conf => /tmp/packer
+    ==> vmware-iso: Uploading files => /tmp/packer
+    ==> vmware-iso: Provisioning with shell script: scripts/setup.sh
+        vmware-iso: + apt-get -y update
+    ... (shell script output)
+    ```
+8. After some extensive apt-getting (~5minutes), you will see:
+    ```
+    ==> vmware-iso: Gracefully halting virtual machine...
+        vmware-iso: Waiting for VMware to clean up after itself...
+    ==> vmware-iso: Deleting unnecessary VMware files...
+        vmware-iso: Deleting: output-vmware-iso/startMenu.plist
+        vmware-iso: Deleting: output-vmware-iso/vmware.log
+        vmware-iso: Deleting: output-vmware-iso/ztps.plist
+        vmware-iso: Deleting: output-vmware-iso/ztps.vmx.lck/M62713.lck
+    ==> vmware-iso: Cleaning VMX prior to finishing up...
+        vmware-iso: Detaching ISO from CD-ROM device...
+    ==> vmware-iso: Compacting the disk image
+    Build 'vmware-iso' finished.
+
+    ==> Builds finished. The artifacts of successful builds are:
+    --> vmware-iso: VM files in directory: output-vmware-iso
+    ```
+9. You now have a full-featured ZTPServer.
+10. Log into the server with ```root``` and password ```eosplus```. Simply type ```ztps``` to start the ztpserver.
+
+###Creating a VM for use with VirtualBox
 > **Note:** The following procedure was tested using VirtualBox 4.3.12.
 
 > **IMPORTANT:** Regarding VirtualBox networks. The default setup places eth1 on vboxnet2. This might not be created in your Virtual Box environment.  
@@ -76,10 +170,7 @@ Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 
                - ruby-json-1.5.5.swix
                - rubygems-1.3.7.swix
    ```
-4. At this point you must choose whether to build the VM using VMWare or VirtualBox.
-    Run ```packer build --only=vmware-iso ztps-ubuntu-12.04.4_amd64.json``` for VMWare, or
-    Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox
-    You will see (example for Vbox):
+4. Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox:
     ```
     phil:Ubuntu phil$ packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json
     virtualbox-iso output will be in this color.
@@ -106,19 +197,23 @@ Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 
     ```
 8. After some extensive apt-getting (<5minutes), you will see:
     ```
-    ==> virtualbox-iso: Gracefully halting virtual machine...
-    ==> virtualbox-iso: Preparing to export machine...
-        virtualbox-iso: Deleting forwarded port mapping for SSH (host port 3213)
-    ==> virtualbox-iso: Exporting virtual machine...
-        virtualbox-iso: Executing: export ztps-ubuntu-12.04_amd64-2014-06-13T13:20:20Z --output output-virtualbox-iso/ztps-ubuntu-12.04_amd64-2014-06-13T13:20:20Z.ovf
-    ==> virtualbox-iso: Unregistering and deleting virtual machine...
-    Build 'virtualbox-iso' finished.
+    ==> vmware-iso: Gracefully halting virtual machine...
+        vmware-iso: Waiting for VMware to clean up after itself...
+    ==> vmware-iso: Deleting unnecessary VMware files...
+        vmware-iso: Deleting: output-vmware-iso/startMenu.plist
+        vmware-iso: Deleting: output-vmware-iso/vmware.log
+        vmware-iso: Deleting: output-vmware-iso/ztps-ubuntu-12.04_amd64-2014-06-18T01:33:54Z.plist
+        vmware-iso: Deleting: output-vmware-iso/ztps-ubuntu-12.04_amd64-2014-06-18T01:33:54Z.vmx.lck/M02907.lck
+    ==> vmware-iso: Cleaning VMX prior to finishing up...
+        vmware-iso: Detaching ISO from CD-ROM device...
+    ==> vmware-iso: Compacting the disk image
+    Build 'vmware-iso' finished.
 
     ==> Builds finished. The artifacts of successful builds are:
-    --> virtualbox-iso: VM files in directory: output-virtualbox-iso
+    --> vmware-iso: VM files in directory: output-vmware-iso
     ```
 9. You now have a full-featured ZTPServer.
-10. Simply type ```ztps``` to start the ztpserver.
+10. Log into the server with ```root``` and password ```eosplus```. Simply type ```ztps``` to start the ztpserver.
 
 > **Note**: If you created the VM with VBox, you will have to navigate to the output folder and double-click on the .ovf file to import it into Virtual Box.
 
