@@ -141,7 +141,7 @@ def resources(attributes, node):
                     _value.append(item)
             value = _value
         else:
-            match = ztpserver.topology.FUNC_RE.match(value)
+            match = ztpserver.topology.FUNC_RE.match(str(value))
             if match:
                 method = getattr(_resources, match.group('function'))
                 value = method(match.group('arg'), node)

@@ -89,12 +89,12 @@ class Function(object):
 
 class IncludesFunction(Function):
     def match(self, arg):
-        return arg in self.value
+        return self.value in arg 
 
 
 class ExcludesFunction(Function):
     def match(self, arg):
-        return arg not in self.value
+        return self.value not in arg
 
 
 class RegexFunction(Function):
