@@ -139,7 +139,7 @@ Therefore, the first step is downloading and installing Packer.
 Therefore, open Vbox and open the General Settings/Preferences menu. Click on the **Network** tab. Click on **Host-only Networks.**
 Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 255.255.255.0 and turn off the DHCP server.
 
-1. Retrieve the EOS+ packer files here.
+1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.
 3. This step is optional. If you want to use our demo files and get ZTPServer running quickly, then complete this step.  ZTPServer will still run without these files.
     Download the following files and place them in the corresponding directories:
