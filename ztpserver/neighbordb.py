@@ -39,13 +39,13 @@ import ztpserver.config
 import ztpserver.topology
 
 from ztpserver.topology import Topology, TopologyError
-from ztpserver.topology import Pattern, PatternError
+from ztpserver.topology import Pattern
 from ztpserver.topology import Node
 
 from ztpserver.resources import ResourcePool
 
 from ztpserver.constants import CONTENT_TYPE_YAML
-from ztpserver.serializers import load, dump, SerializerError
+from ztpserver.serializers import load, SerializerError
 from ztpserver.validators import validate_topology
 
 log = logging.getLogger(__name__)

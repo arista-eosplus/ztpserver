@@ -33,13 +33,3 @@
 __version__ = '1.0.0'
 __author__ = 'Arista Networks'
 
-import ztpserver.app
-import ztpserver.neighbordb
-
-def enable_logging():
-    ztpserver.app.enable_handler_console(level='INFO')
-
-
-
-
-

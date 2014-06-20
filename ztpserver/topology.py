@@ -89,7 +89,7 @@ class Function(object):
 
 class IncludesFunction(Function):
     def match(self, arg):
-        return self.value in arg 
+        return self.value in arg
 
 
 class ExcludesFunction(Function):
@@ -251,8 +251,8 @@ class Topology(object):
 
     def get_patterns(self, predicate=None):
         _patterns = self.patterns['nodes'].values() + self.patterns['globals']
-        return filter(predicate, _patterns) if predicate else _patterns
-
+        return [pattern for pattern in _patterns if predicate(pattern)]
+        #return filter(predicate, _patterns) if predicate else _patterns
 
     def find_patterns(self, node):
         try:
@@ -311,8 +311,6 @@ class Pattern(object):
                         if value.startswith('$'):
                             newvalue = self.variables[value[1:]]
                             setattr(item, attr, newvalue)
-                            log.info('Found variable %s, new value %s',
-                                      value, newvalue)
                     item.refresh()
             log.info('Variable substitution is complete')
         except KeyError:
