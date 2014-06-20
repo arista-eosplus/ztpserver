@@ -40,7 +40,6 @@ import ztpserver.serializers
 import ztpserver.topology
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
-#from ztpserver.topology import ResourcePool, ResourcePoolError
 from ztpserver.topology import Pattern, PatternError
 from ztpserver.topology import Topology, TopologyError
 from ztpserver.topology import Node, NodeError
@@ -135,6 +134,28 @@ class NodeUnitTests(unittest.TestCase):
             self.fail(exc)
         finally:
             self.assertIsNone(node)
+
+    def test_add_neighbor(self):
+        systemmac = random_string()
+        peer = Mock()
+        intf = random_string()
+
+        node = Node(systemmac)
+        node.add_neighbor(intf, [dict(device=peer.device, port=peer.port)])
+
+        self.assertIsNotNone(node.neighbors(intf))
+        self.assertEqual(node.neighbors(intf)[0].device, peer.device)
+        self.assertEqual(node.neighbors(intf)[0].port, peer.port)
+
+    def test_add_neighbor_existing_interface(self):
+        systemmac = random_string()
+        peer = Mock()
+        intf = random_string()
+
+        node = Node(systemmac)
+        node.add_neighbor(intf, [dict(device=peer.device, port=peer.port)])
+        self.assertRaises(ztpserver.topology.NodeError, node.add_neighbor,
+                          intf, [dict(device=peer.device, port=peer.port)])
 
     def test_add_neighbors_success(self):
         systemmac = random_string()
