@@ -53,22 +53,22 @@ serializer = Serializer()
 
 
 class NodeError(Exception):
-    ''' base error raised by :py:class:`Node` '''
+    ''' Base exception class for :py:class:`Node` '''
     pass
 
 
 class PatternError(Exception):
-    ''' base error raised by :py:class:`Pattern` '''
+    ''' Base exception class for :py:class:`Pattern` '''
     pass
 
 
 class InterfacePatternError(Exception):
-    ''' base error raised by :py:class:`InterfacePattern` '''
+    ''' Base exception class for :py:class:`InterfacePattern` '''
     pass
 
 
 class TopologyError(Exception):
-    ''' base error class raised by :py:class:`Topology` '''
+    ''' Base exception class for :py:class:`Topology` '''
     pass
 
 
@@ -112,9 +112,12 @@ Neighbor = collections.namedtuple('Neighbor', ['device', 'port'])
 
 
 class Node(object):
+    ''' A Node object is maps the metadata from an EOS node.  It provides
+    access to the node's meta data including interfaces and the
+    associated neighbors found on those interfaces.
+    '''
 
     def __init__(self, systemmac, **kwargs):
-
         self.systemmac = str(systemmac)
         self.model = str(kwargs.get('model', ''))
         self.serialnumber = str(kwargs.get('serialnumber', ''))
@@ -124,12 +127,13 @@ class Node(object):
         if 'neighbors' in kwargs:
             self.add_neighbors(kwargs['neighbors'])
 
-
     def __repr__(self):
         return 'Node(systemmac=%s)' % self.systemmac
 
     def add_neighbor(self, interface, peers):
         try:
+            if self.neighbors.get(interface):
+                raise NodeError('interface \'%s\' already exists' % interface)
             _neighbors = list()
             for peer in peers:
                 log.debug('Creating neighbor %s:%s for interface %s',
@@ -139,15 +143,15 @@ class Node(object):
             self.neighbors[interface] = _neighbors
         except KeyError:
             log.error('Unable to add neighbor due to missing attribute')
-            raise NodeError
+            raise NodeError('missing required attribute')
 
     def add_neighbors(self, neighbors):
         try:
             for interface, peers in neighbors.items():
                 self.add_neighbor(interface, peers)
         except AttributeError:
-            log.error('Unable to add neighbor due to missing attribute')
-            raise NodeError
+            log.error('Unable to add neighbors due to missing attribute')
+            raise NodeError('missing required attribute')
 
     def serialize(self):
         result = {}
