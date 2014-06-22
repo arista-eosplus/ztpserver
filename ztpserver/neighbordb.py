@@ -51,11 +51,22 @@ from ztpserver.validators import validate_topology
 log = logging.getLogger(__name__)
 
 def default_filename():
+    ''' Returns the path for neighbordb based on the conf file
+    '''
+
     filepath = ztpserver.config.runtime.default.data_root
     filename = ztpserver.config.runtime.neighbordb.filename
     return os.path.join(filepath, filename)
 
 def load_file(filename, content_type):
+    ''' Returns the contents of a file specified by filename.
+
+    The requred content_type argument is required and indicates the
+    text serialization format the contents are stored in.
+
+    If the serializer load function encounters errors, None is returned
+
+    '''
     try:
         return load(filename, content_type)
     except SerializerError:
@@ -63,7 +74,6 @@ def load_file(filename, content_type):
 
 def load_topology(filename=None, contents=None):
     try:
-        log.info('Start loading topology')
         if filename is None and contents is None:
             contents = load_file(default_filename(), CONTENT_TYPE_YAML)
         elif filename is not None:

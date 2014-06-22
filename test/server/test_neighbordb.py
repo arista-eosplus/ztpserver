@@ -31,11 +31,11 @@
 #
 import unittest
 
-from mock import  patch
+import yaml
 
-import ztpserver.config
+from mock import patch
+
 import ztpserver.neighbordb
-import ztpserver.serializers
 
 from server_test_lib import random_string
 from server_test_lib import create_neighbordb
@@ -48,9 +48,39 @@ class NeighbordbUnitTests(unittest.TestCase):
 
     @patch('ztpserver.neighbordb.load')
     def test_load_file(self, m_load):
-        m_load.return_value = random_string()
-        result = ztpserver.neighbordb.load_file(random_string(), 'text/plain')
+        result = ztpserver.neighbordb.load_file(random_string(),
+                                                random_string())
         self.assertEqual(result, m_load.return_value)
+
+    @patch('ztpserver.neighbordb.validate_topology')
+    @patch('ztpserver.neighbordb.load')
+    def test_load_file_failure(self, m_load):
+        m_load.side_effect = ztpserver.serializers.SerializerError
+        self.assertIsNone(ztpserver.neighbordb.load_file(random_string(),
+                                                         random_string()))
+
+    @patch('ztpserver.neighbordb.validate_topology')
+    @patch('ztpserver.neighbordb.load')
+    def test_load_topology(self, m_validate_topology, m_load):
+        contents = '''
+            variables:
+                foo: bar
+            patterns:
+                - any: any
+        '''
+        m_load.return_value = yaml.load(contents)
+        result = ztpserver.neighbordb.load_topology()
+        self.assertIsNotNone(result)
+
+
+
+
+    def test_replace_config_action(self):
+        resource = random_string()
+        result = ztpserver.neighbordb.replace_config_action(resource)
+        self.assertEqual('install static startup-config file', result['name'])
+        self.assertEqual('replace_config', result['action'])
+        self.assertTrue(result['always_execute'])
 
 
 if __name__ == '__main__':
