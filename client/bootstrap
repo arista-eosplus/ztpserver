@@ -223,6 +223,9 @@ class Node(object):
         except socket.error:
             raise ZtpBootstrapEapiError()
 
+        # Workaround for BUG89374
+        self.disable_copp()
+
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
             self.api_enable_cmds(['show version'])[0]['systemMacAddress']
@@ -267,6 +270,11 @@ class Node(object):
             return [x.values()[0] for x in result]
         else:
             return result
+
+    def disable_copp(self):
+        self.api_enable_cmds(['configure',
+                              'control-plane',
+                              'no service-policy input copp-system-policy'])
 
     def system(self):
         result = {}
