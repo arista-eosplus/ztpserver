@@ -185,7 +185,7 @@ Add or Modify vboxnet2.  Configure the IP Address for 172.16.130.1, the Netmask 
                - ruby-json-1.5.5.swix
                - rubygems-1.3.7.swix
     ```
-4. Run ```packer build --only=virtualbox-iso ztps-ubuntu-12.04.4_amd64.json``` for VirtualBox
+4. Run ```packer build --only=virtualbox-iso ztps-fedora_20_x86_64.json``` for VirtualBox
     You will see:
     ```
     phil:Fedora phil$ packer build --only=virtualbox-iso ztps-fedora_20_x86_64.json
