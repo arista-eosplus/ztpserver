@@ -17,7 +17,7 @@ and setup the virtual networks as depicted in the diagram below.
         * EG: in ~/.bash_login, add ```PATH=$PATH:/path/to/packer/files```
     4. Run ```packer``` to make sure ```PATH``` is updated.
  * **vEOS Packer Plug-in**
-    1. Download the custom [builder-vmware-veos]((https://www.dropbox.com/s/7w57dyai1qgdd82/builder-vmware-veos) plug-in.
+    1. Download the custom [builder-vmware-veos](https://www.dropbox.com/s/7w57dyai1qgdd82/builder-vmware-veos) plug-in.
     2. Put this plug-in with all of the standard Packer executables.
     3. Modify the ```.packerconfig``` file to add this plug-in.  If this file does not exist, create it in ```$HOME/.packerconfig``` (this is a location Packer will look for it). Add the following config to that file:
     ```
