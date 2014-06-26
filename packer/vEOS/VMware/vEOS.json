@@ -1,0 +1,77 @@
+{
+   "builders": [
+      {
+          "boot_wait": "1m15s",
+          "boot_command" : [
+            "admin<enter><wait>",
+            "en<enter><wait>",
+            "write erase<enter><wait>",
+            "y<enter><wait>",
+            "bash<enter><wait>",
+            "echo 0011.2233.4455 > /mnt/flash/system_mac_address<enter><wait>",
+            "exit<enter><wait>",
+            "reload now<enter>"
+          ],
+          "type": "vmware-veos",
+          "name" : "vEOS1",
+          "source_path": "source/vEOS.vmx",
+          "output_directory" : "vEOS1",
+          "skip_compaction" : "TRUE",
+          "ssh_username": "admin",
+          "vmx_data" : {
+            "displayName" : "vEOS-1",
+            "ethernet1.vnet" : "vmnet6",
+            "ethernet2.vnet" : "vmnet7",
+            "ethernet3.vnet" : "vmnet10"
+          },
+          "shutdown_command":"bash reload now"
+      },
+      {
+          "boot_wait": "1m15s",
+          "boot_command" : [
+            "admin<enter><wait>",
+            "en<enter><wait>",
+            "write erase<enter><wait>",
+            "y<enter><wait>",
+            "reload now<enter>"
+          ],
+          "type": "vmware-veos",
+          "name" : "vEOS2",
+          "source_path": "source/vEOS.vmx",
+          "output_directory" : "vEOS2",
+          "skip_compaction" : "TRUE",
+          "ssh_username": "admin",
+          "vmx_data" : {
+            "displayName" : "vEOS-2",
+            "ethernet1.vnet" : "vmnet6",
+            "ethernet2.vnet" : "vmnet11",
+            "ethernet3.vnet" : "vmnet9"
+          },
+          "shutdown_command":"bash reload now"
+      },
+      {
+          "boot_wait": "1m15s",
+          "boot_command" : [
+            "admin<enter><wait>",
+            "en<enter><wait>",
+            "write erase<enter><wait>",
+            "y<enter><wait>",
+            "reload now<enter>"
+          ],
+          "type": "vmware-veos",
+          "name" : "vEOS3",
+          "source_path": "source/vEOS.vmx",
+          "output_directory" : "vEOS3",
+          "skip_compaction" : "TRUE",
+          "ssh_username": "admin",
+          "vmx_data" : {
+            "displayName" : "vEOS-3",
+            "ethernet1.vnet" : "vmnet7",
+            "ethernet2.vnet" : "vmnet9",
+            "ethernet3.vnet" : "vmnet10",
+            "ethernet4.vnet" : "vmnet11"
+          },
+          "shutdown_command":"bash reload now"
+      }
+   ]
+}
