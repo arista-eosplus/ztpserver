@@ -13,4 +13,6 @@ Currently, there is support for:
 * Fedora 20 on Virtual Box
 
 ##Getting Started
-Choose which distro you would like to use and download the associated files. Use the READMEs included in each section to complete the installation.
+
+ * [Fedora Installation Notes](https://github.com/arista-eosplus/ztpserver/tree/feature-packer/packer/Fedora)
+ * [Ubuntu Installation Notes](https://github.com/arista-eosplus/ztpserver/tree/feature-packer/packer/Ubuntu)
