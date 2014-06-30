@@ -21,10 +21,10 @@ and setup the virtual networks as depicted in the diagram below.
     2. Put this plug-in with all of the standard Packer executables.
     3. Modify the ```.packerconfig``` file to add this plug-in.  If this file does not exist, create it in ```$HOME/.packerconfig``` (this is a location Packer will look for it). Add the following config to that file:
     ```
-      {
-         "builders": {
-            "vmware-veos": "builder-vmware-veos"
-          }
+    {
+        "builders": {
+          "vmware-veos": "builder-vmware-veos"
+        }
     }
     ```
  * You will need to log into your Arista.com account to obtain the following files from https://www.arista.com/en/support/software-download:
@@ -33,8 +33,8 @@ and setup the virtual networks as depicted in the diagram below.
 
 ##Creating vEOS Nodes for VMWare
 1. ```cd``` to the ```vEOS/VMware``` directory.
-2. Place the files mentioned above into the correct directories.
-   Your directory should look like:
+2. Place the files mentioned above into the correct directories. Your directory should look like:
+    
     ```
     vEOS
        /VMware
@@ -43,7 +43,7 @@ and setup the virtual networks as depicted in the diagram below.
               - vEOS.vmx
               - vEOS-4.13.5F.vmdk
               - Aboot-veos-2.0.8.iso
-   ```
+    ```
 3. The vEOS.json file contains unique configuration for three vEOS nodes - vEOS-1/2/3 as depicted above.
     * It requires a non-trivial amount of CPU/memory to turn up all three at the same time.  If you're feeling daring, run:
         * ```packer build vEOS.json```
