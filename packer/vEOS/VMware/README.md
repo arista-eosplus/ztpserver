@@ -30,11 +30,14 @@ and setup the virtual networks as depicted in the diagram below.
  * You will need to log into your Arista.com account to obtain the following files from https://www.arista.com/en/support/software-download:
      * Aboot-veos-2.0.8.iso
      * vEOS-4.13.5F.vmdk
+ * **Virtual Networks**
+     If you have not configured the vmnets described in the diagram above, you can run ```setup-fusion.sh``` to do this for you.  You can modify the script to only modify/create certain vmnets.
+     EG ```VMNETS=(2 3 4 5 6 7 9 10 11)```
 
 ##Creating vEOS Nodes for VMWare
 1. ```cd``` to the ```vEOS/VMware``` directory.
 2. Place the files mentioned above into the correct directories. Your directory should look like:
-    
+
     ```
     vEOS
        /VMware
