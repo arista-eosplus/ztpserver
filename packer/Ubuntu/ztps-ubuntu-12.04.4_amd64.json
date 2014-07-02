@@ -51,7 +51,8 @@
           "ethernet1.virtualdev" :  "e1000",
           "ethernet1.present" : "TRUE",
           "ethernet1.startConnected" : "TRUE",
-          "ethernet1.connectionType" : "hostonly"
+          "ethernet1.connectionType" : "custom",
+          "ethernet1.vnet":"vmnet2"
         },
         "shutdown_command": "/sbin/shutdown -h now",
         "http_directory":"http/"

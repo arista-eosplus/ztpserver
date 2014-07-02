@@ -27,11 +27,11 @@ You can use Packer.io to automate the creation of the ZTPServer VM.  By using th
 * Python 2.7.5 with PIP
 * Hostname ztps.ztps-test.com
     * eth0 (NAT) DHCP
-    * eth1 (HostOnly) 172.16.130.10/24
+    * eth1 (vmnet2) 172.16.130.10/24
 * Firewalld disabled.
 * Users
     * root/eosplus and ztpsadmin/eosplus
-* DHCP installed with Option 67 configured (ens32 only)
+* DHCP installed with Option 67 configured (eth1 only)
 * BIND DNS server installed with zone ztps-test.com
     * wildcard forward rule to 8.8.8.8 for all other queries
     * SRV RR for im.ztps-test.com
@@ -54,6 +54,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 
 ###Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
+> **IMPORTANT** As you read above, eth1 will be placed on vmnet2. Therefore, you need to have this non-standard vmnet setup in you VMware environment.  We've created a script ```setup-fusion.sh```([link](https://github.com/arista-eosplus/ztpserver/blob/feature-packer/packer/vEOS/VMware/setup-fusion.sh)) to help add vmnets so that your setup will work with this basic install, as well as the demo found [here](https://github.com/arista-eosplus/ztpserver/tree/feature-packer/packer/vEOS/VMware).
 
 1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.

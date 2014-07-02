@@ -20,9 +20,10 @@
           "ssh_username": "admin",
           "vmx_data" : {
             "displayName" : "vEOS-1",
-            "ethernet1.vnet" : "vmnet6",
-            "ethernet2.vnet" : "vmnet7",
-            "ethernet3.vnet" : "vmnet10"
+            "ethernet0.vnet" : "vmnet2",
+            "ethernet1.vnet" : "vmnet3",
+            "ethernet2.vnet" : "vmnet4",
+            "ethernet3.vnet" : "vmnet7"
           },
           "shutdown_command":"bash reload now"
       },
@@ -43,9 +44,10 @@
           "ssh_username": "admin",
           "vmx_data" : {
             "displayName" : "vEOS-2",
-            "ethernet1.vnet" : "vmnet6",
-            "ethernet2.vnet" : "vmnet11",
-            "ethernet3.vnet" : "vmnet9"
+            "ethernet0.vnet" : "vmnet2",
+            "ethernet1.vnet" : "vmnet5",
+            "ethernet2.vnet" : "vmnet6",
+            "ethernet3.vnet" : "vmnet7"
           },
           "shutdown_command":"bash reload now"
       },
@@ -66,10 +68,34 @@
           "ssh_username": "admin",
           "vmx_data" : {
             "displayName" : "vEOS-3",
-            "ethernet1.vnet" : "vmnet7",
-            "ethernet2.vnet" : "vmnet9",
-            "ethernet3.vnet" : "vmnet10",
-            "ethernet4.vnet" : "vmnet11"
+            "ethernet0.vnet" : "vmnet2",
+            "ethernet1.vnet" : "vmnet3",
+            "ethernet2.vnet" : "vmnet5",
+            "ethernet3.vnet" : "vmnet9"
+          },
+          "shutdown_command":"bash reload now"
+      },
+      {
+          "boot_wait": "1m15s",
+          "boot_command" : [
+            "admin<enter><wait>",
+            "en<enter><wait>",
+            "write erase<enter><wait>",
+            "y<enter><wait>",
+            "reload now<enter>"
+          ],
+          "type": "vmware-veos",
+          "name" : "vEOS4",
+          "source_path": "source/vEOS.vmx",
+          "output_directory" : "vEOS4",
+          "skip_compaction" : "TRUE",
+          "ssh_username": "admin",
+          "vmx_data" : {
+            "displayName" : "vEOS-4",
+            "ethernet0.vnet" : "vmnet2",
+            "ethernet1.vnet" : "vmnet4",
+            "ethernet2.vnet" : "vmnet6",
+            "ethernet3.vnet" : "vmnet9"
           },
           "shutdown_command":"bash reload now"
       }
