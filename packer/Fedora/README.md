@@ -54,7 +54,7 @@ Packer.io automates the creation of the Virtual Machine.  Therefore, the first s
 
 ###Creating a VM for use with VMWare Fusion
 > **Note:** The following procedure was tested using VMWare Fusion 6.0.3.
-> **IMPORTANT** As you read above, eth1 will be placed on vmnet2. Therefore, you need to have this non-standard vmnet setup in you VMware environment.  We've created a script ```setup-fusion.sh```([link](https://github.com/arista-eosplus/ztpserver/blob/feature-packer/packer/vEOS/VMware/setup-fusion.sh)) to help add vmnets so that your setup will work with this basic install, as well as the demo found [here](https://github.com/arista-eosplus/ztpserver/tree/feature-packer/packer/vEOS/VMware).
+> **IMPORTANT** As you read above, eth1 will be placed on vmnet2. Therefore, you need to have this non-standard vmnet setup in your VMware environment.  We've created a script ```setup-fusion.sh```([link](https://github.com/arista-eosplus/ztpserver/blob/feature-packer/packer/vEOS/VMware/setup-fusion.sh)) to help add vmnets so that your setup will work with this basic install, as well as the demo found [here](https://github.com/arista-eosplus/ztpserver/tree/feature-packer/packer/vEOS/VMware).
 
 1. Retrieve the EOS+ packer files by using the 'Download Zip' option here https://github.com/arista-eosplus/ztpserver/tree/feature-packer
 2. ```cd``` to the location of the .json file.
