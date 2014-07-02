@@ -6,7 +6,7 @@ Here is a way to automate that procedure so that you can start testing ZTPServer
 The following procedure will create three vEOS nodes,
 and setup the virtual networks as depicted in the diagram below.
 
-![vEOS Networks](https://raw.githubusercontent.com/arista-eosplus/ztpserver/feature-packer/tree/gh-pages/images/vEOS-topology.jpg)
+![vEOS Networks](https://raw.githubusercontent.com/arista-eosplus/ztpserver/feature-packer/tree/gh-pages/images/vEOS-spine-leaf.jpg)
 
 ###Prerequisites
 
