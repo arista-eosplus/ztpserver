@@ -14,10 +14,10 @@ VMNETS=(2 3 4 5 6 7 9 10 11)
 for i in "${VMNETS[@]}"; do
   printf "Creating/Modifying vmnet$i\n"
   NET=$(($i+128))
-  ./vmnet-cfgcli vnetcfgadd VNET_$i_DHCP no
-  ./vmnet-cfgcli vnetcfgadd VNET_$i_HOSTONLY_SUBNET 172.16.$NET.0
-  ./vmnet-cfgcli vnetcfgadd VNET_$i_HOSTONLY_NETMASK 255.255.255.0
-  ./vmnet-cfgcli vnetcfgadd VNET_$i_VIRTUAL_ADAPTER yes
+  ./vmnet-cfgcli vnetcfgadd VNET_${i}_DHCP no
+  ./vmnet-cfgcli vnetcfgadd VNET_${i}_HOSTONLY_SUBNET 172.16.${NET}.0
+  ./vmnet-cfgcli vnetcfgadd VNET_${i}_HOSTONLY_NETMASK 255.255.255.0
+  ./vmnet-cfgcli vnetcfgadd VNET_${i}_VIRTUAL_ADAPTER yes
 done
 
 ./vmnet-cli --configure
