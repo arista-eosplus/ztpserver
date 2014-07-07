@@ -54,7 +54,7 @@ class NeighbordbUnitTests(unittest.TestCase):
 
     @patch('ztpserver.neighbordb.validate_topology')
     @patch('ztpserver.neighbordb.load')
-    def test_load_file_failure(self, m_load):
+    def test_load_file_failure(self, m_load, m_validate_topology):
         m_load.side_effect = ztpserver.serializers.SerializerError
         self.assertIsNone(ztpserver.neighbordb.load_file(random_string(),
                                                          random_string()))
@@ -71,9 +71,6 @@ class NeighbordbUnitTests(unittest.TestCase):
         m_load.return_value = yaml.load(contents)
         result = ztpserver.neighbordb.load_topology()
         self.assertIsNotNone(result)
-
-
-
 
     def test_replace_config_action(self):
         resource = random_string()
