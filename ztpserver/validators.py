@@ -29,6 +29,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# pylint: disable=W0631
 
 import string
 import re
@@ -224,6 +225,7 @@ class InterfacePatternValidator(Validator):
             self._validate_pattern(intf, device, port)
 
     def _validate_pattern(self, interface, device, port):
+        # pylint: disable=R0201
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
