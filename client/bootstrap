@@ -104,6 +104,12 @@ xmpp_client = None        #pylint: disable=C0103
 # Uncomment this section in order to enable XMPP debug logging
 # logging.basicConfig(level=logging.DEBUG,
 #                     format='%(levelname)-8s %(message)s')
+
+# You will also have to uncomment the following lines:
+for logger in ['sleekxmpp.xmlstream.xmlstream',
+               'sleekxmpp.basexmpp']:
+    xmpp_log = logging.getLogger(logger)
+    xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
 # ------------------4.12.x support----------------------------
@@ -272,10 +278,12 @@ class Node(object):
             return result
 
     def disable_copp(self):
-        self.api_enable_cmds(['enable',
-                              'configure',
-                              'control-plane',
-                              'no service-policy input copp-system-policy'])
+        # COPP does not apply to vEOS
+        if self.system()['model'] != 'vEOS':
+            self.api_enable_cmds(['enable',
+                                  'configure',
+                                  'control-plane',
+                                  'no service-policy input copp-system-policy'])
 
     def system(self):
         result = {}
