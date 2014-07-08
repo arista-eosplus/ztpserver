@@ -354,7 +354,7 @@ class Bootstrap(object):
         cmds = ['show version',          # Collect system MAC for logging
                 'show version',
                 'show lldp neighbors']
-        return eapi_log()[3:6] == cmds
+        return eapi_log()[5:8] == cmds
 
     def eapi_configured(self):
         cmds = ['configure',
