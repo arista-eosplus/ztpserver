@@ -272,7 +272,8 @@ class Node(object):
             return result
 
     def disable_copp(self):
-        self.api_enable_cmds(['configure',
+        self.api_enable_cmds(['enable',
+                              'configure',
                               'control-plane',
                               'no service-policy input copp-system-policy'])
 
