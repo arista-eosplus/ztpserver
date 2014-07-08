@@ -303,7 +303,6 @@ class NodesController(BaseController):
             log.error('Unable to find pattern match for %s', node.systemmac)
             raise
         except FileObjectNotFound as exc:
-            # TODO add folder clean up if exception is raised
             log.error('Unable to find file %s', exc.message)
             raise
         except Exception:

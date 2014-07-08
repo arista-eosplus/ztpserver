@@ -86,7 +86,7 @@ class FileObject(object):
         :type path: str
         :param content_type: the content type of the file (optional)
         :type content_type: str
-        :returns: instance
+        :returns: object
 
         '''
         self.name = name
@@ -107,7 +107,7 @@ class FileObject(object):
         :type content_type: str
         :param cls: an optional class argument to read the contents into
         :type cls: object
-        :returns: instance
+        :returns: object
         :raises: FileObjectError
 
         The read method will read the file from the file system, deserializing

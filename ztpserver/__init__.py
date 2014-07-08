@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -29,17 +28,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __author__ = 'Arista Networks'
-
-import ztpserver.app
-import ztpserver.neighbordb
-
-def enable_logging():
-    ztpserver.app.enable_handler_console(level='INFO')
-
-
-
-
 

@@ -579,8 +579,11 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'do_validation')
         self.assertIsInstance(resp, dict)
 
-    def test_get_startup_config_success(self):
-        ztpserver.neighbordb.replace_config_action = Mock(return_value=dict())
+    @patch('ztpserver.neighbordb.replace_config_action')
+    def test_get_startup_config_success(self, m_replace_config_action):
+        m_replace_config_action.return_value = dict()
+
+        #ztpserver.neighbordb.replace_config_action = Mock(return_value=dict())
 
         response = dict(definition={'actions': list()})
 
@@ -591,12 +594,14 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'do_actions')
         self.assertIsInstance(resp, dict)
 
-    def test_get_startup_config_success_no_definition(self):
+    @patch('ztpserver.neighbordb.replace_config_action')
+    def test_get_startup_config_success_no_definition(self, m_replace_config_action):
         resource = random_string()
 
         action_name = random_string()
         action = {'name': action_name, 'action': 'replace_config'}
-        ztpserver.neighbordb.replace_config_action = Mock(return_value=action)
+        m_replace_config_action.return_value = action
+        #ztpserver.neighbordb.replace_config_action = Mock(return_value=action)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_startup_config(dict(), resource=resource)
