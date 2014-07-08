@@ -112,6 +112,7 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
     xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
+
 # ------------------4.12.x support----------------------------
 def retrieve_url(url, path):
     url = urllib2.urlopen(url)
@@ -155,6 +156,7 @@ except ImportError:
     import requests
 #pylint: enable=C0103
 # ------------------4.12.x support----------------------------    
+
 
 SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
