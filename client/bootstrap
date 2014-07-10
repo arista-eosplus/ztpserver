@@ -170,6 +170,8 @@ def log(msg, error=False, xmpp=True):
 
     if SYSTEM_ID:
         syslog_msg = 'ZTPS:%s: %s' % (SYSTEM_ID, msg)
+    else:
+        syslog_msg = msg
     print syslog_msg
 
     if syslog_manager:
