@@ -44,12 +44,3 @@ _templates
 
 # local environment
 .env
-
-#images
-.iso
-.vmd
-.swi
-
-#packer local folders
-output-vmware-iso/
-packer_cache/
