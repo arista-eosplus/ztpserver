@@ -588,7 +588,7 @@ class XmppClient(sleekxmpp.ClientXMPP):
                               mbody=message,
                               mtype='groupchat')
 
-def apply_config(config):
+def apply_config(config, node):
     log('Applying server config')
     global xmpp_client                      #pylint: disable=W0603
 
@@ -605,12 +605,12 @@ def apply_config(config):
             'rooms' in xmpp_config and
             xmpp_config['rooms']):
 
+            serial_number = node.system()['serialnumber']
             xmpp_client = XmppClient(xmpp_config['username'],
                                      xmpp_config['domain'],
                                      xmpp_config['password'],
                                      xmpp_config['rooms'],
-                                     xmpp_config.get('nickname',
-                                                     xmpp_config['username']),
+                                     serial_number,
                                      xmpp_config.get('server', None),
                                      xmpp_config.get('port', 5222))
         else:
@@ -715,12 +715,7 @@ def main():
             error=True)
         exit_bootstrap(1)
 
-    log('Config retrieved from server')
-    apply_config(config.json())
-
-
-    # Check node
-    log('Collecting node information')
+    # Creating node
     try:
         node = Node()
     except ZtpBootstrapEapiError:
@@ -728,7 +723,11 @@ def main():
             error=True)
         exit_bootstrap(2)
 
+    log('Config retrieved from server')
+    apply_config(config.json(), node)
+
     # Checking node on server
+    log('Collecting node information')
     try:
         status, content, location = server.post_nodes(node.details())
         if(status not in [STATUS_CREATED,
