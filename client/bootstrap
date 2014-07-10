@@ -161,7 +161,7 @@ except ImportError:
 SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    xmpp_msg = '%s: %s%s' % (timestamp,
+    xmpp_msg = 'ZTPS:%s: %s%s' % (timestamp,
                              'ERROR: ' if error else '',
                              msg)
 
@@ -169,14 +169,14 @@ def log(msg, error=False, xmpp=True):
         xmpp_client.message(xmpp_msg)
 
     if SYSTEM_ID:
-        msg = '%s: %s' % (SYSTEM_ID, msg)
-    print msg
+        syslog_msg = 'ZTPS:%s: %s' % (SYSTEM_ID, msg)
+    print syslog_msg
 
     if syslog_manager:
         if error:
-            syslog_manager.log.error(msg)
+            syslog_manager.log.error(syslog_msg)
         else:
-            syslog_manager.log.info(msg)
+            syslog_manager.log.info(syslog_msg)
 
 
 class ZtpBootstrapEapiError(Exception):
@@ -237,7 +237,7 @@ class Node(object):
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
-            self.api_enable_cmds(['show version'])[0]['systemMacAddress']
+            self.api_enable_cmds(['show version'])[0]['serialNumber']
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
