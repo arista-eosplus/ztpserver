@@ -169,7 +169,7 @@ def log(msg, error=False, xmpp=True):
         xmpp_client.message(xmpp_msg)
 
     if SYSTEM_ID:
-        syslog_msg = 'ZTPS:%s: %s' % (SYSTEM_ID, msg)
+        syslog_msg = '%s: %s' % (SYSTEM_ID, msg)
     else:
         syslog_msg = msg
     print syslog_msg
@@ -364,7 +364,7 @@ class SyslogManager(object):
     def __init__(self):
         self.log = logging.getLogger('ztpbootstrap')
         self.log.setLevel(logging.DEBUG)
-        self.formatter = logging.Formatter('ztp-bootstrap: %(levelname)s: '
+        self.formatter = logging.Formatter('ZTPS - %(levelname)s: '
                                            '%(message)s')
 
         # syslog to localhost enabled by default
@@ -584,8 +584,6 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.connected = False
 
     def message(self, message):
-        log('XmppClient: %s says %s' % (self.xmpp_jid, message),
-            xmpp=False)
         for room in self.xmpp_rooms:
             self.send_message(mto=room,
                               mbody=message,
