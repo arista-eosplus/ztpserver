@@ -160,6 +160,14 @@ except ImportError:
 
 SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    xmpp_msg = '%s: %s%s' % (timestamp,
+                             'ERROR: ' if error else '',
+                             msg)
+
+    if xmpp and xmpp_client and xmpp_client.connected:
+        xmpp_client.message(xmpp_msg)
+
     if SYSTEM_ID:
         msg = '%s: %s' % (SYSTEM_ID, msg)
     print msg
@@ -170,13 +178,6 @@ def log(msg, error=False, xmpp=True):
         else:
             syslog_manager.log.info(msg)
 
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    msg = '%s: ztp-bootstrap: %s%s' % (timestamp,
-                                       'ERROR: ' if error else '',
-                                       msg)
-
-    if xmpp and xmpp_client and xmpp_client.connected:
-        xmpp_client.message(msg)
 
 class ZtpBootstrapEapiError(Exception):
     pass
