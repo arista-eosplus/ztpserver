@@ -160,23 +160,26 @@ except ImportError:
 
 SYSTEM_ID = None
 def log(msg, error=False, xmpp=True):
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    xmpp_msg = 'ZTPS:%s: %s%s' % (timestamp,
+                             'ERROR: ' if error else '',
+                             msg)
+
+    if xmpp and xmpp_client and xmpp_client.connected:
+        xmpp_client.message(xmpp_msg)
+
     if SYSTEM_ID:
-        msg = '%s: %s' % (SYSTEM_ID, msg)
-    print msg
+        syslog_msg = '%s: %s' % (SYSTEM_ID, msg)
+    else:
+        syslog_msg = msg
+    print syslog_msg
 
     if syslog_manager:
         if error:
-            syslog_manager.log.error(msg)
+            syslog_manager.log.error(syslog_msg)
         else:
-            syslog_manager.log.info(msg)
+            syslog_manager.log.info(syslog_msg)
 
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    msg = '%s: ztp-bootstrap: %s%s' % (timestamp,
-                                       'ERROR: ' if error else '',
-                                       msg)
-
-    if xmpp and xmpp_client and xmpp_client.connected:
-        xmpp_client.message(msg)
 
 class ZtpBootstrapEapiError(Exception):
     pass
@@ -236,7 +239,7 @@ class Node(object):
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
-            self.api_enable_cmds(['show version'])[0]['systemMacAddress']
+            self.api_enable_cmds(['show version'])[0]['serialNumber']
 
     @classmethod
     def _cli_enable_cmd(cls, cmd):
@@ -361,7 +364,7 @@ class SyslogManager(object):
     def __init__(self):
         self.log = logging.getLogger('ztpbootstrap')
         self.log.setLevel(logging.DEBUG)
-        self.formatter = logging.Formatter('ztp-bootstrap: %(levelname)s: '
+        self.formatter = logging.Formatter('ZTPS - %(levelname)s: '
                                            '%(message)s')
 
         # syslog to localhost enabled by default
@@ -581,14 +584,12 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.connected = False
 
     def message(self, message):
-        log('XmppClient: %s says %s' % (self.xmpp_jid, message),
-            xmpp=False)
         for room in self.xmpp_rooms:
             self.send_message(mto=room,
                               mbody=message,
                               mtype='groupchat')
 
-def apply_config(config):
+def apply_config(config, node):
     log('Applying server config')
     global xmpp_client                      #pylint: disable=W0603
 
@@ -605,12 +606,12 @@ def apply_config(config):
             'rooms' in xmpp_config and
             xmpp_config['rooms']):
 
+            serial_number = node.system()['serialnumber']
             xmpp_client = XmppClient(xmpp_config['username'],
                                      xmpp_config['domain'],
                                      xmpp_config['password'],
                                      xmpp_config['rooms'],
-                                     xmpp_config.get('nickname',
-                                                     xmpp_config['username']),
+                                     serial_number,
                                      xmpp_config.get('server', None),
                                      xmpp_config.get('port', 5222))
         else:
@@ -715,12 +716,7 @@ def main():
             error=True)
         exit_bootstrap(1)
 
-    log('Config retrieved from server')
-    apply_config(config.json())
-
-
-    # Check node
-    log('Collecting node information')
+    # Creating node
     try:
         node = Node()
     except ZtpBootstrapEapiError:
@@ -728,7 +724,11 @@ def main():
             error=True)
         exit_bootstrap(2)
 
+    log('Config retrieved from server')
+    apply_config(config.json(), node)
+
     # Checking node on server
+    log('Collecting node information')
     try:
         status, content, location = server.post_nodes(node.details())
         if(status not in [STATUS_CREATED,
