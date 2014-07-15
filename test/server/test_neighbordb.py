@@ -37,6 +37,8 @@ from mock import patch
 
 import ztpserver.neighbordb
 
+from ztpserver.topology import Pattern
+
 from server_test_lib import random_string
 from server_test_lib import create_neighbordb
 
@@ -71,6 +73,22 @@ class NeighbordbUnitTests(unittest.TestCase):
         m_load.return_value = yaml.load(contents)
         result = ztpserver.neighbordb.load_topology()
         self.assertIsNotNone(result)
+
+    def test_load_pattern_minimal(self):
+        pattern = ztpserver.neighbordb.load_pattern({'name': random_string()})
+        self.assertIsInstance(pattern, Pattern)
+
+    def test_load_pattern_with_interfaces(self):
+        # github issue #128
+        contents = """
+            name: test
+            # Default pattern - always succeeds
+            interfaces:
+                - any: any:any
+        """
+        kwargs = yaml.load(contents)
+        pattern = ztpserver.neighbordb.load_pattern(kwargs)
+        self.assertIsInstance(pattern, Pattern)
 
     def test_replace_config_action(self):
         resource = random_string()

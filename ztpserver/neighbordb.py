@@ -34,6 +34,7 @@
 #
 import os
 import logging
+import collections
 
 import ztpserver.config
 import ztpserver.topology
@@ -100,8 +101,9 @@ def load_topology(filename=None, contents=None):
         log.error('Unable to load topology file %s', filename)
 
 def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
+    """ Returns an instance of Pattern """
     try:
-        if not hasattr(kwargs, 'items'):
+        if not isinstance(kwargs, collections.Mapping):
             kwargs = load_file(kwargs, content_type)
         return Pattern(**kwargs)
     except TypeError:
