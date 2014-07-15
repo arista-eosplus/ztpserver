@@ -314,10 +314,22 @@ class TestPattern(unittest.TestCase):
 
 class PatternUnitTests(unittest.TestCase):
 
+    def test_create_pattern(self):
+        pattern = Pattern(random_string())
+        self.assertIsInstance(pattern, Pattern)
+
+    def test_create_pattern_kwargs(self):
+        kwargs = dict(name=random_string(),
+                      definition=random_string(),
+                      interfaces=None)
+
+        pattern = Pattern(**kwargs)
+        self.assertIsInstance(pattern, Pattern)
+
     def test_add_interface_success(self):
         kwargs = dict(name=random_string(),
-              definition=random_string(),
-              interfaces=None)
+                      definition=random_string(),
+                      interfaces=None)
 
         pattern = Pattern(**kwargs)
 

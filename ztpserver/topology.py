@@ -128,7 +128,8 @@ class Node(object):
             self.add_neighbors(kwargs['neighbors'])
 
     def __repr__(self):
-        return 'Node(systemmac=%s)' % self.systemmac
+        return 'Node(serialnumber=%s, systemmac=%s)' % \
+               (self.serialnumber, self.systemmac)
 
     def add_neighbor(self, interface, peers):
         try:
@@ -287,7 +288,7 @@ class Topology(object):
 
 class Pattern(object):
 
-    def __init__(self, name, definition, interfaces,
+    def __init__(self, name, definition=None, interfaces=None,
                  node=None, variables=None):
 
         self.name = name
