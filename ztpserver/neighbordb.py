@@ -47,7 +47,7 @@ from ztpserver.resources import ResourcePool
 
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
-from ztpserver.validators import validate_topology
+from ztpserver.validators import validate_topology, validate_pattern
 
 log = logging.getLogger(__name__)
 
@@ -105,6 +105,11 @@ def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
     try:
         if not isinstance(kwargs, collections.Mapping):
             kwargs = load_file(kwargs, content_type)
+
+        if not validate_pattern(kwargs):
+            log.error('unable to validate pattern attributes')
+            return
+
         return Pattern(**kwargs)
     except TypeError:
         log.error('Unable to load pattern object')
