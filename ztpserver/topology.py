@@ -206,22 +206,24 @@ class Topology(object):
         for key, value in variables.items():
             self.add_variable(key, value)
 
-    def add_pattern(self, name, definition, interfaces, **kwargs):
+    def add_pattern(self, name, **kwargs):
 
         try:
             kwargs['node'] = kwargs.get('node')
+            kwargs['definition'] = kwargs.get('definition')
+            kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
             for key in set(self.variables).difference(kwargs['variables']):
                 kwargs['variables'][key] = self.variables[key]
 
-            pattern = Pattern(name, definition, interfaces, **kwargs)
+            pattern = Pattern(name, **kwargs)
 
             log.info('Pattern \'%s\' parsed successfully', pattern.name)
             log.debug('%r', pattern)
 
             # Add pattern to topology
-            if kwargs['node']:
+            if kwargs['node'] is not None:
                 self.patterns['nodes'][pattern.node] = pattern
             else:
                 self.patterns['globals'].append(pattern)
