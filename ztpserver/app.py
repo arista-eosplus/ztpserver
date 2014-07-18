@@ -82,8 +82,7 @@ def disable_handler(tag):
 
 def python_supported():
     """ Returns True if the current version of the python runtime is valid """
-
-    return (sys.version_info > (2, 7) and sys.version_info < (3, 0))
+    return sys.version_info > (2, 7) and sys.version_info < (3, 0)
 
 def start_logging():
     """ reads the runtime config and starts logging if enabled """
