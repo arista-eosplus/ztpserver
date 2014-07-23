@@ -456,7 +456,6 @@ class XmppConfigTest(unittest.TestCase):
                                'username' : 'test-username',
                                'password' : 'test-password',
                                'domain' :   'test-domain',
-                               'nickname' : 'test-nickname',
                                'rooms' : ['test-room-1', 'test-room-2']})
 
 
