@@ -6,8 +6,9 @@ Requirements
 
 The following packages must be installed to build the documentation::
 
-    pip install sphinx_rtd_theme
-    httpdomain (for REST APIs)
+    sudo pip install sphinx_rtd_theme
+    sudo pip install sphinxcontrib-napoleon
+    # httpdomain (for REST APIs)
         hg clone https://bitbucket.org/birkenfeld/sphinx-contrib
         cd sphinx-contrib/httpdomain/
         sudo python setup.py install
