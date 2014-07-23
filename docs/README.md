@@ -7,7 +7,10 @@ Requirements
 The following packages must be installed to build the documentation::
 
     pip install sphinx_rtd_theme
-    pip install httpdomain
+    httpdomain (for REST APIs)
+        hg clone https://bitbucket.org/birkenfeld/sphinx-contrib
+        cd sphinx-contrib/httpdomain/
+        sudo python setup.py install
 
 Building / Publishing Docs
 --------------------------
