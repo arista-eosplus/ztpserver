@@ -132,7 +132,8 @@ def create_node(nodeattrs):
         if nodeattrs.get('systemmac') is not None:
             _systemmac = nodeattrs['systemmac']
             for symbol in [':', '.']:
-                nodeattrs['systemmac'] = str(_systemmac).replace(symbol, '')
+                _systemmac = str(_systemmac).replace(symbol, '')
+            nodeattrs['systemmac'] = _systemmac
         node = Node(**nodeattrs)
         log.debug('Created node object %r', node)
         return node

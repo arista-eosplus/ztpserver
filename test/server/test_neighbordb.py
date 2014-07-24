@@ -33,7 +33,7 @@ import unittest
 
 import yaml
 
-from mock import patch
+from mock import patch, Mock
 
 import ztpserver.neighbordb
 
@@ -111,6 +111,15 @@ class NeighbordbUnitTests(unittest.TestCase):
         self.assertEqual('replace_config', result['action'])
         self.assertTrue(result['always_execute'])
 
+    def test_create_node_fixup_systemmac_colon(self):
+        attrs = Mock(systemmac='99:99:99:99:99:99')
+        result = ztpserver.neighbordb.create_node({'systemmac': attrs.systemmac})
+        self.assertTrue(':' not in result.systemmac)
+
+    def test_create_node_fixup_systemmac_period(self):
+        attrs = Mock(systemmac='99.99.99.99.99.99')
+        result = ztpserver.neighbordb.create_node({'systemmac': attrs.systemmac})
+        self.assertTrue('.' not in result.systemmac)
 
 if __name__ == '__main__':
     unittest.main()

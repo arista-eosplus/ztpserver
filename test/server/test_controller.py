@@ -879,15 +879,14 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
 
+    @patch('ztpserver.neighbordb.create_node')
     @patch('ztpserver.controller.create_repository')
     @patch('ztpserver.neighbordb.load_pattern')
     def test_get_startup_config_wo_validation(self, m_load_pattern,
-                                              m_repository):
+                                              m_repository, m_create_node):
 
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', True, 'default')
-
-        ztpserver.neighbordb.create_node = Mock()
 
         definition = create_definition()
         definition.add_action()
@@ -916,12 +915,13 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertIsInstance(json.loads(resp.body), dict)
 
+    @patch('ztpserver.neighbordb.create_node')
     @patch('ztpserver.controller.create_repository')
     @patch('ztpserver.neighbordb.load_pattern')
-    def test_get_startup_config_w_validation_success(self, m_load_pattern,
-                                                     m_repository):
-
-        ztpserver.neighbordb.create_node = Mock()
+    def test_get_startup_config_w_validation_success(self,
+                                                     m_load_pattern,
+                                                     m_repository,
+                                                     m_create_node):
 
         definition = create_definition()
         definition.add_action()
@@ -999,7 +999,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file = create_definition()
         definitions_file.add_action()
 
-        node = create_node()
+        node = Mock(systemmac=random_string())
         cfg = dict()
 
         def m_get_file(arg):
@@ -1090,7 +1090,8 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
     @patch('ztpserver.neighbordb.load_pattern')
     def test_get_definition_w_attributes_no_substitution(self, m_load_pattern,
                                                          m_repository):
-        node = create_node()
+
+        node = Mock(systemmac=random_string())
 
         g_attr_foo = random_string()
         attributes_file = create_attributes()
@@ -1102,13 +1103,11 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file.add_action(name='dummy action',
                                     attributes=dict(url=l_attr_url))
 
-
         cfg = dict()
-
         def m_get_file(arg):
             m_file_object = Mock()
             if arg.endswith('.node'):
-                m_file_object.read.return_value = node.as_dict()
+                m_file_object.read.return_value = node
             elif arg.endswith('definition'):
                 m_file_object.read.return_value = definitions_file.as_dict()
             elif arg.endswith('attributes'):
@@ -1124,6 +1123,8 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         url = '/nodes/%s' % node.systemmac
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
+
+        #import pdb; pdb.set_trace()
 
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content_type, 'application/json')

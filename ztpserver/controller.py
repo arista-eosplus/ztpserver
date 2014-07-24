@@ -194,7 +194,7 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = fobj.read(CONTENT_TYPE_JSON, Node)
             identifier = ztpserver.config.runtime.default.identifier
-            nodeid = node.get(identifier)
+            nodeid = getattr(node, identifier)
             if nodeid is None:
                 log.error('nodeid cannot be determined')
                 response = self.http_bad_request()
@@ -427,7 +427,6 @@ class NodesController(BaseController):
                        re-raises it
         """
         try:
-            node = kwargs.get('node')
             nodeid = kwargs.get('nodeid')
             response['location'] = self.expand(nodeid)
         except Exception:
