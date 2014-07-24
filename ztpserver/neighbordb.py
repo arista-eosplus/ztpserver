@@ -129,10 +129,11 @@ def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
 
 def create_node(nodeattrs):
     try:
-        systemmac = str(nodeattrs['systemmac']).replace(':', '')
-        systemmac = str(systemmac).replace('.', '')
-        del nodeattrs['systemmac']
-        node = Node(systemmac, **nodeattrs)
+        if nodeattrs.get('systemmac') is not None:
+            _systemmac = nodeattrs['systemmac']
+            for symbol in [':', '.']:
+                nodeattrs['systemmac'] = str(_systemmac).replace(symbol, '')
+        node = Node(**nodeattrs)
         log.debug('Created node object %r', node)
         return node
     except KeyError:

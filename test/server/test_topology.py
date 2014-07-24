@@ -54,13 +54,12 @@ class NodeUnitTests(unittest.TestCase):
         node = create_node()
         systemmac = node.systemmac
         kwargs = node.as_dict()
-        del kwargs['systemmac']
-        node = Node(systemmac, **kwargs)
+        node = Node(**kwargs)
         self.assertEqual(node.systemmac, systemmac)
 
     def test_create_node_systemmac_only(self):
         systemmac = random_string()
-        node = Node(systemmac)
+        node = Node(systemmac=systemmac)
         self.assertEqual(node.systemmac, systemmac)
 
     def test_create_node_failure(self):
@@ -82,11 +81,8 @@ class NodeUnitTests(unittest.TestCase):
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
-        del kwargs['systemmac']
+        node = Node(**kwargs)
 
-        node = Node(systemmac, **kwargs)
-
-        self.assertEqual(node.systemmac, systemmac)
         self.assertIsNotNone(node.neighbors('Ethernet1'))
         self.assertEqual(node.neighbors('Ethernet1')[0].device, device)
         self.assertEqual(node.neighbors('Ethernet1')[0].port, port)
@@ -101,11 +97,9 @@ class NodeUnitTests(unittest.TestCase):
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
-        del kwargs['systemmac']
-
         try:
             node = None
-            node = Node(systemmac, **kwargs)
+            node = Node(**kwargs)
         except NodeError:
             pass
         except Exception as exc:
@@ -123,11 +117,9 @@ class NodeUnitTests(unittest.TestCase):
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
-        del kwargs['systemmac']
-
         try:
             node = None
-            node = Node(systemmac, **kwargs)
+            node = Node(**kwargs)
         except NodeError:
             pass
         except Exception as exc:
@@ -140,7 +132,7 @@ class NodeUnitTests(unittest.TestCase):
         peer = Mock()
         intf = random_string()
 
-        node = Node(systemmac)
+        node = Node(systemmac=systemmac)
         node.add_neighbor(intf, [dict(device=peer.device, port=peer.port)])
 
         self.assertIsNotNone(node.neighbors(intf))
@@ -152,13 +144,12 @@ class NodeUnitTests(unittest.TestCase):
         peer = Mock()
         intf = random_string()
 
-        node = Node(systemmac)
+        node = Node(systemmac=systemmac)
         node.add_neighbor(intf, [dict(device=peer.device, port=peer.port)])
         self.assertRaises(ztpserver.topology.NodeError, node.add_neighbor,
                           intf, [dict(device=peer.device, port=peer.port)])
 
     def test_add_neighbors_success(self):
-        systemmac = random_string()
         nodeattrs = create_node()
 
         device = random_string()
@@ -166,12 +157,9 @@ class NodeUnitTests(unittest.TestCase):
         neighbors = {'Ethernet1': [{'device': device, 'port': port}]}
 
         kwargs = nodeattrs.as_dict()
-        del kwargs['systemmac']
-
-        node = Node(systemmac, **kwargs)
+        node = Node(**kwargs)
         node.add_neighbors(neighbors)
 
-        self.assertEqual(node.systemmac, systemmac)
         self.assertIsNotNone(node.neighbors('Ethernet1'))
         self.assertEqual(node.neighbors('Ethernet1')[0].device, device)
         self.assertEqual(node.neighbors('Ethernet1')[0].port, port)
@@ -180,8 +168,7 @@ class NodeUnitTests(unittest.TestCase):
         nodeattrs = create_node()
         systemmac = nodeattrs.systemmac
         kwargs = nodeattrs.as_dict()
-        del kwargs['systemmac']
-        node = Node(systemmac, **kwargs)
+        node = Node(**kwargs)
         result = node.serialize()
         self.assertEqual(result, nodeattrs.as_dict())
 

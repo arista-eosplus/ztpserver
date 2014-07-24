@@ -117,19 +117,19 @@ class Node(object):
     associated neighbors found on those interfaces.
     '''
 
-    def __init__(self, systemmac, **kwargs):
-        self.systemmac = str(systemmac)
-        self.model = str(kwargs.get('model', ''))
-        self.serialnum = str(kwargs.get('serialnum', ''))
-        self.version = str(kwargs.get('version', ''))
+    def __init__(self, **kwargs):
+        self.systemmac = kwargs.get('systemmac')
+        self.model = kwargs.get('model')
+        self.serialnumber = kwargs.get('serialnumber')
+        self.version = kwargs.get('version')
 
         self.neighbors = OrderedCollection()
         if 'neighbors' in kwargs:
             self.add_neighbors(kwargs['neighbors'])
 
     def __repr__(self):
-        return 'Node(serialnum=%s, systemmac=%s)' % \
-               (self.serialnum, self.systemmac)
+        return 'Node(serialnumber=%s, systemmac=%s)' % \
+               (self.serialnumber, self.systemmac)
 
     def add_neighbor(self, interface, peers):
         try:
@@ -156,7 +156,7 @@ class Node(object):
 
     def serialize(self):
         result = {}
-        for prop in ['model', 'systemmac', 'serialnum', 'version']:
+        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
             if getattr(self, prop):
                 result[prop] = getattr(self, prop)
 
