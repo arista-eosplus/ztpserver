@@ -171,7 +171,7 @@ class NodeDict(SerializerMixin):
 
     def as_dict(self):
         return dict(systemmac=self.systemmac,
-                    serialnumber=self.serialnumber,
+                    serialnum=self.serialnumber,
                     model=self.model,
                     version=self.version,
                     neighbors=self.neighbors)

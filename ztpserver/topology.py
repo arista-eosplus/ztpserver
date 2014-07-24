@@ -120,7 +120,7 @@ class Node(object):
     def __init__(self, systemmac, **kwargs):
         self.systemmac = str(systemmac)
         self.model = str(kwargs.get('model', ''))
-        self.serialnumber = str(kwargs.get('serialnumber', ''))
+        self.serialnum = str(kwargs.get('serialnum', ''))
         self.version = str(kwargs.get('version', ''))
 
         self.neighbors = OrderedCollection()
@@ -128,8 +128,8 @@ class Node(object):
             self.add_neighbors(kwargs['neighbors'])
 
     def __repr__(self):
-        return 'Node(serialnumber=%s, systemmac=%s)' % \
-               (self.serialnumber, self.systemmac)
+        return 'Node(serialnum=%s, systemmac=%s)' % \
+               (self.serialnum, self.systemmac)
 
     def add_neighbor(self, interface, peers):
         try:
@@ -156,7 +156,7 @@ class Node(object):
 
     def serialize(self):
         result = {}
-        for prop in ['model', 'systemmac', 'serialnumber', 'version']:
+        for prop in ['model', 'systemmac', 'serialnum', 'version']:
             if getattr(self, prop):
                 result[prop] = getattr(self, prop)
 
