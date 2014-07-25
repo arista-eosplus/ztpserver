@@ -117,11 +117,11 @@ class Node(object):
     associated neighbors found on those interfaces.
     '''
 
-    def __init__(self, systemmac, **kwargs):
-        self.systemmac = str(systemmac)
-        self.model = str(kwargs.get('model', ''))
-        self.serialnumber = str(kwargs.get('serialnumber', ''))
-        self.version = str(kwargs.get('version', ''))
+    def __init__(self, **kwargs):
+        self.systemmac = kwargs.get('systemmac')
+        self.model = kwargs.get('model')
+        self.serialnumber = kwargs.get('serialnumber')
+        self.version = kwargs.get('version')
 
         self.neighbors = OrderedCollection()
         if 'neighbors' in kwargs:
