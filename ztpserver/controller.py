@@ -148,24 +148,62 @@ class NodesController(BaseController):
         return 'NodesController(folder=%s)' % self.FOLDER
 
     def create(self, request, **kwargs):
+        """ Handle the POST /nodes request
+
+        The create method will handle in incoming POST request from the node
+        and determine if the node already exists or not.  If the node
+        does not exist, then the node will be created based on the
+        request body.
+
+        Args:
+            request (webob.Request): the request object from WSGI
+
+        Returns:
+            A dict as the result of the state machine which is used to
+            create a WSGI response object.
+
+        """
         try:
             node = create_node(request.json)
+            identifier = ztpserver.config.runtime.default.identifier
+            nodeid = getattr(node, identifier)
+            if nodeid is None:
+                log.error('nodeid cannot be determined')
+                response = self.http_bad_request()
+                return self.response(**response)
         except Exception:       # pylint: disable=W0703
             log.exception('Unable to create node metadata')
             response = self.http_bad_request()
             return self.response(**response)
-        return self.fsm('required_attributes', request=request, node=node)
+        return self.fsm('node_exists', request=request,
+                        node=node, nodeid=nodeid)
 
     def show(self, request, resource, *args, **kwargs):
+        """ Handle the GET /nodes/{resource} request
+
+        Args:
+            request (webob.Request): the request object from WSGI
+            resource (str): the resource being requested
+
+        Returns:
+            A dict as the result of the state machine which is used to
+            create a WSGI response object.
+
+        """
         try:
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = fobj.read(CONTENT_TYPE_JSON, Node)
-            state = 'get_definition'
+            identifier = ztpserver.config.runtime.default.identifier
+            nodeid = getattr(node, identifier)
+            if nodeid is None:
+                log.error('nodeid cannot be determined')
+                response = self.http_bad_request()
+                return self.response(**response)
         except Exception:           # pylint: disable=W0703
             log.exception('Unable to load node metadata')
             response = self.http_bad_request()
             return self.response(**response)
-        return self.fsm(state, resource=resource, node=node)
+        return self.fsm('get_definition', resource=resource, node=node)
 
     def get_config(self, request, resource, **kwargs):
         return self.fsm('get_startup_config_file', resource=resource)
@@ -217,39 +255,62 @@ class NodesController(BaseController):
             fobj.write(body, content_type)
         return (response, None)
 
-    def required_attributes(self, response, *args, **kwargs):
-        ''' Checks the initial POST to validate that all required
-        values are present
-        '''
-
-        req_attrs = ['systemmac']
-        request = kwargs.get('request')
-        if not set(req_attrs).issubset(set(request.json.keys())):
-            log.error('Missing required attributes in request object')
-            raise AttributeError
-        return (response, 'node_exists')
 
     def node_exists(self, response, *args, **kwargs):
-        next_state = 'post_config'
-        systemmac = kwargs.get('node').systemmac
+        """ Checks if the node already exists and determines the next state
 
-        if self.repository.exists(self.expand(systemmac, DEFINITION_FN)) or \
-           self.repository.exists(self.expand(systemmac, STARTUP_CONFIG_FN)):
-            log.info('Found node entry for %s', systemmac)
+        This method will check for the existence of the node in the
+        repository based on the nodeid.  The nodeid keyword is pulled
+        from the kwargs dict.
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            A tuple that includes the updated response object and the
+            next state to transition to.  If the node already exists
+            in the repository with a valid definition or startup-config,
+            then the next state is 'dump_node' otherwise the next state
+            is 'post_config'
+
+        """
+        next_state = 'post_config'
+        nodeid = kwargs.get('nodeid')
+
+        if self.repository.exists(self.expand(nodeid, DEFINITION_FN)) or \
+           self.repository.exists(self.expand(nodeid, STARTUP_CONFIG_FN)):
+            log.info('Found node entry for %s', nodeid)
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
 
         return (response, next_state)
 
     def dump_node(self, response, *args, **kwargs):
+        """ Writes the contents of the node to the repository
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            a tuple of response object and next state.  The next state is
+            'set_location'
+
+        Raises:
+            Exception: catches a general exception for logging an then
+                       re-raises it
+        """
+
         try:
             node = kwargs.get('node')
+            nodeid = kwargs.get('nodeid')
             contents = node.serialize()
-            filename = self.expand(node.systemmac, NODE_FN)
+            filename = self.expand(nodeid, NODE_FN)
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
             fobj = self.repository.add_file(filename)
-        except:
+        except Exception:
             log.error('Unexpected error trying to execute dump_node')
             raise
         finally:
@@ -257,13 +318,29 @@ class NodesController(BaseController):
         return (response, 'set_location')
 
     def post_config(self, response, *args, **kwargs):
+        """ Writes the nodes startup config file if found in the request
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            a tuple of response object and next state.  If a config key
+            was found in the request, the next state is 'set_location'.
+            If not, the next state is 'post_node'.
+
+        Raises:
+            KeyError: handles exception if exception message is 'config'
+                      otherwise re-raises it.  Sets next state to
+                      'post_node' if exception handled.
+        """
         try:
             config = kwargs['request'].json['config']
-            systemmac = kwargs['node'].systemmac
+            nodeid = kwargs['nodeid']
 
-            self.repository.add_folder(self.expand(systemmac))
+            self.repository.add_folder(self.expand(nodeid))
 
-            config_fn = self.expand(systemmac, STARTUP_CONFIG_FN)
+            config_fn = self.expand(nodeid, STARTUP_CONFIG_FN)
             self.repository.add_file(config_fn).write(config)
 
             response['status'] = HTTP_STATUS_CREATED
@@ -276,8 +353,32 @@ class NodesController(BaseController):
         return (response, next_state)
 
     def post_node(self, response, *args, **kwargs):
+        """ Checks topology validation matches and writes node specific files
+
+        This method will attempt to match the current node against the
+        defined topology.  If a match is found, then the pattern matched
+        and definition (defined in the pattern) are written to the nodes
+        folder in the repository and the response status is set to HTTP
+        201 Created.
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            a tuple of response object and next state.  The next state
+            is 'dump_node'
+
+        Raises:
+            If a match is not found, then a log message is created and
+            an IndexError is raised.  If the node does not already
+            exist in the repository, then a log message is created and a
+            FileObjectNotFound exception is raised
+            """
         try:
             node = kwargs['node']
+            nodeid = kwargs['nodeid']
+
             topology = ztpserver.neighbordb.load_topology()
             # pylint: disable=E1103
             matches = topology.match_node(node)
@@ -287,20 +388,20 @@ class NodesController(BaseController):
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
             definition = fobj.read(content_type=CONTENT_TYPE_YAML)
-            definition_fn = self.expand(node.systemmac, DEFINITION_FN)
+            definition_fn = self.expand(nodeid, DEFINITION_FN)
 
-            self.repository.add_folder(self.expand(node.systemmac))
+            self.repository.add_folder(self.expand(nodeid))
 
             fobj = self.repository.add_file(definition_fn)
             fobj.write(definition, CONTENT_TYPE_YAML)
 
-            pattern_fn = self.expand(node.systemmac, PATTERN_FN)
+            pattern_fn = self.expand(nodeid, PATTERN_FN)
             fobj = self.repository.add_file(pattern_fn)
             fobj.write(match.serialize(), CONTENT_TYPE_YAML)
 
             response['status'] = HTTP_STATUS_CREATED
         except IndexError:
-            log.error('Unable to find pattern match for %s', node.systemmac)
+            log.error('Unable to find pattern match for %s', nodeid)
             raise
         except FileObjectNotFound as exc:
             log.error('Unable to find file %s', exc.message)
@@ -311,9 +412,23 @@ class NodesController(BaseController):
         return (response, 'dump_node')
 
     def set_location(self, response, *args, **kwargs):
+        """ Writes the HTTP Content-Location header
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            a tuple of response object and next state.  The next state is
+            None.
+
+        Raises:
+            Exception: catches a general exception for logging and then
+                       re-raises it
+        """
         try:
-            node = kwargs.get('node')
-            response['location'] = self.expand(node.systemmac)
+            nodeid = kwargs.get('nodeid')
+            response['location'] = self.expand(nodeid)
         except Exception:
             log.error('Unexpected error trying to execute set_location')
             raise

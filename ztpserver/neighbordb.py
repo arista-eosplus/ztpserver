@@ -34,6 +34,7 @@
 #
 import os
 import logging
+import collections
 
 import ztpserver.config
 import ztpserver.topology
@@ -46,7 +47,7 @@ from ztpserver.resources import ResourcePool
 
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
-from ztpserver.validators import validate_topology
+from ztpserver.validators import validate_topology, validate_pattern
 
 log = logging.getLogger(__name__)
 
@@ -100,9 +101,15 @@ def load_topology(filename=None, contents=None):
         log.error('Unable to load topology file %s', filename)
 
 def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
+    """ Returns an instance of Pattern """
     try:
-        if not hasattr(kwargs, 'items'):
+        if not isinstance(kwargs, collections.Mapping):
             kwargs = load_file(kwargs, content_type)
+
+        if not validate_pattern(kwargs):
+            log.error('unable to validate pattern attributes')
+            return
+
         return Pattern(**kwargs)
     except TypeError:
         log.error('Unable to load pattern object')
@@ -122,10 +129,12 @@ def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
 
 def create_node(nodeattrs):
     try:
-        systemmac = str(nodeattrs['systemmac']).replace(':', '')
-        systemmac = str(systemmac).replace('.', '')
-        del nodeattrs['systemmac']
-        node = Node(systemmac, **nodeattrs)
+        if nodeattrs.get('systemmac') is not None:
+            _systemmac = nodeattrs['systemmac']
+            for symbol in [':', '.']:
+                _systemmac = str(_systemmac).replace(symbol, '')
+            nodeattrs['systemmac'] = _systemmac
+        node = Node(**nodeattrs)
         log.debug('Created node object %r', node)
         return node
     except KeyError:
