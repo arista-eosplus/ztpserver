@@ -750,6 +750,18 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, g_attr_foo)
 
+    def test_do_substitution_without_actions(self):
+        # github issue #129
+        definition = create_definition()
+        definition.actions.append({'name': 'foo'})
+        response = dict(definition=definition.as_dict())
+
+        controller = ztpserver.controller.NodesController()
+        (resp, state) = controller.do_substitution(response)
+
+        self.assertEqual(state, 'do_resources')
+        self.assertIsInstance(resp, dict)
+
     def test_do_resources_success(self):
         var_foo = random_string()
         ztpserver.neighbordb.resources = Mock(return_value=dict(foo=var_foo))
