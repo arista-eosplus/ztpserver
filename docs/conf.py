@@ -14,7 +14,12 @@
 # serve to show the default.
 
 import sys, os
-import sphinx_rtd_theme
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    import sphinx_rtd_theme
+
 #sys.path.insert(0, os.path.join('ztpserver', 'lib'))
 sys.path.insert(0, os.path.join('ztpserver'))
 sys.path.insert(0, os.path.abspath('..'))
