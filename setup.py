@@ -31,6 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from glob import glob
+import os
 
 try:
     from setuptools import setup
@@ -39,9 +40,14 @@ except ImportError:
 
 from ztpserver import __version__, __author__
 
-CONF_PATH = '/etc/ztpserver'
-INSTALL_PATH = '/usr/share/ztpserver'
-INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
+INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
+
+CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
+INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
+if os.environ.get('READTHEDOCS'):
+    INSTALL_REQUIREMENTS = open('requirements-doc.txt').read().split('\n')
+else:
+    INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 
 setup(
     name='ztpserver',
