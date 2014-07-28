@@ -41,13 +41,16 @@ except ImportError:
 from ztpserver import __version__, __author__
 
 INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
+if os.environ.get('READTHEDOCS'):
+    INSTALL_ROOT = "."
 
 CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
 INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
-if os.environ.get('READTHEDOCS'):
-    INSTALL_REQUIREMENTS = open('requirements-doc.txt').read().split('\n')
-else:
-    INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
+#if os.environ.get('READTHEDOCS'):
+#    INSTALL_REQUIREMENTS = open('requirements-doc.txt').read().split('\n')
+#else:
+#    INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
+INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 
 setup(
     name='ztpserver',
