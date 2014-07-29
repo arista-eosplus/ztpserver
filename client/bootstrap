@@ -29,13 +29,8 @@
 #
 # Bootstrap script
 #
-#    Version 0.1.1 19/6/2014
 #    Written by:
 #       EOS+, Arista Networks
-#
-#    Revision history:
-#       0.1.0 - initial release
-#       0.1.1 - added support for 4.12.x release train
 
 
 import datetime
@@ -56,8 +51,6 @@ import urllib2
 
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
-
-__version__ = "0.1.1"
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
@@ -96,7 +89,7 @@ HTTP_TIMEOUT = 10
 REQUESTS = 'requests-2.3.0'
 REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
 
-XMPP_MSG_TYPE = 'debug'
+XMPP_MSG_TYPE = None
 
 syslog_manager = None     #pylint: disable=C0103
 xmpp_client = None        #pylint: disable=C0103
@@ -627,13 +620,15 @@ def apply_config(config, node):
                 'password' in xmpp_config and
                 'rooms' in xmpp_config and
                 xmpp_config['rooms']):
-
-                serial_number = node.system()['serialnumber']
+                nick = node.system()['serialnumber']
+                if not nick:
+                    # vEOS might not have a serial number configured
+                    nick = node.system()['systemmac']                    
                 xmpp_client = XmppClient(xmpp_config['username'],
                                          xmpp_config['domain'],
                                          xmpp_config['password'],
                                          xmpp_config['rooms'],
-                                         serial_number,
+                                         nick,
                                          xmpp_config.get('server', None),
                                          xmpp_config.get('port', 5222))
             else:
@@ -692,7 +687,7 @@ def execute_action(server, action_details, special_attr):
 
     log('Executing action %s' % action, xmpp=log_xmpp())
     if 'onstart' in action_details:
-        log('ACTION %s:%s' % (action, action_details['onstart']))
+        log('Action %s: %s' % (action, action_details['onstart']))
 
     try:
         if action in sys.modules:
@@ -709,11 +704,11 @@ def execute_action(server, action_details, special_attr):
         log('Action %s executed succesfully' % action,
             xmpp=log_xmpp())
         if 'onsuccess' in action_details:
-            log('ACTION %s:%s' % (action, action_details['onsuccess']))
+            log('Action %s: %s' % (action, action_details['onsuccess']))
     except Exception as err:                  #pylint: disable=W0703
         log('Executing %s failed: %s' % (action, err), error=True)
         if 'onfailure' in action_details:
-            log('ACTION %s:%s' % (action, action_details['onfailure']))
+            log('Action %s: %s' % (action, action_details['onfailure']))
         exit_bootstrap(8)
 
 def restore_factory_default():
