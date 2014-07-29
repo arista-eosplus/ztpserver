@@ -29,8 +29,6 @@
 
 #pylint: disable=W0702,E1103
 
-import urlparse
-
 def main(attributes):
     '''Replaces stratup-config on the switch.
 
@@ -58,8 +56,6 @@ def main(attributes):
 
     if not url:
         return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(node.server_address(), url)
 
     try:
         node.retrieve_url(url, node.startup_config())

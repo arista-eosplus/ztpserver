@@ -34,7 +34,6 @@ BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
 
 import ast
 import os
-import urlparse
 
 def main(attributes):
     '''Installs EOS extension.
@@ -64,8 +63,6 @@ def main(attributes):
 
     if not url:
         return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(node.server_address(), url)
 
     force = ast.literal_eval(
         str(attributes.get('force')))

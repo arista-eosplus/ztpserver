@@ -36,7 +36,6 @@ PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
 
 import os
 import shutil
-import urlparse
 
 def is_subdir(path, directory):
     return os.path.realpath(path).startswith(os.path.realpath(directory))
@@ -88,8 +87,6 @@ def main(attributes):
 
     if not src_url:
         return 1
-    elif not urlparse.urlsplit(src_url).scheme:
-        src_url = urlparse.urljoin(node.server_address(), src_url)
 
     dst_url = attributes.get('dst_url')
     if not dst_url:

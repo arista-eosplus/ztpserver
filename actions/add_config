@@ -30,7 +30,6 @@
 #pylint: disable=W0702,W0402,E1103
 
 import os
-import urlparse
 from string import Template
 
 TEMP_CONFIG = '/tmp/tmp-config'
@@ -65,9 +64,7 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(node.server_address(), url)
+        return 'missing attribute(\'url\')'
 
     substitution_mode = attributes.get('substitution_mode', 'loose')
     if substitution_mode not in ['loose', 'strict']:

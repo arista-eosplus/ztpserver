@@ -48,6 +48,7 @@ import sys
 import time
 import traceback
 import urllib2
+import urlparse
 
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
@@ -110,6 +111,12 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
 
 # ------------------4.12.x support----------------------------
 def retrieve_url(url, path):
+    #pylint: disable=E1103
+    if not urlparse.urlsplit(url).scheme:
+        url = urlparse.urljoin(SERVER, url)
+
+    log('Retrieving URL: %s' % url, xmpp=log_xmpp())
+
     url = urllib2.urlopen(url)
     output_file = open(path, 'wb')
     output_file.write(url.read())

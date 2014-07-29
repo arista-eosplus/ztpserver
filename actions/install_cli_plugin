@@ -33,7 +33,6 @@ CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
 PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
 
 import os
-import urlparse
 
 def main(attributes):
     '''Installs EOS CliPlugin.
@@ -62,8 +61,6 @@ def main(attributes):
 
     if not url:
         return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('ztps_server'), url)
 
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
