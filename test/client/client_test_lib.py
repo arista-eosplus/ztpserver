@@ -478,8 +478,8 @@ class ZTPServer(object):
         self.responses = {}
 
     def set_file_response(self, filename, output,
-                            content_type='application/octet-stream',
-                            status=STATUS_OK):
+                          content_type='application/octet-stream',
+                          status=STATUS_OK):
         self.responses['/%s' % filename ] = Response(
             content_type, status,
             output, {})

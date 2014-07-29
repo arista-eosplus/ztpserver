@@ -577,9 +577,9 @@ class ActionFailureTest(unittest.TestCase):
             self.failUnless(bootstrap.action_failure())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless('test_action:%s' % text_onstart in log)
-            self.failUnless('test_action:%s' % text_onsuccess not in log)
-            self.failUnless('test_action:%s' % text_onfailure in log)
+            self.failUnless('test_action: %s' % text_onstart in log)
+            self.failUnless('test_action: %s' % text_onsuccess not in log)
+            self.failUnless('test_action: %s' % text_onfailure in log)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
@@ -757,9 +757,9 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.failUnless(bootstrap.success())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless('startup_config_action:%s' % text_onstart in log)
-            self.failUnless('startup_config_action:%s' % text_onsuccess in log)
-            self.failUnless('startup_config_action:%s' % 
+            self.failUnless('startup_config_action: %s' % text_onstart in log)
+            self.failUnless('startup_config_action: %s' % text_onsuccess in log)
+            self.failUnless('startup_config_action: %s' % 
                             text_onfailure not in log)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
