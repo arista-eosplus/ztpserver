@@ -46,17 +46,19 @@ from client_test_lib import startup_config_action
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('add_config', 1)
+        self.basic_test('add_config', 'missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('add_config', 2,
+        self.basic_test('add_config', 'unable to retrieve config from URL',
                         attributes={'url' :
                                     random_string()})
 
     def test_variables_failure(self):
         url = random_string()
         contents = random_string()
-        self.basic_test('add_config', 3,
+        self.basic_test('add_config', 
+                        'unable to perform variable substitution - '
+                        'invalid variables',
                         attributes={'url' : url,
                                     'variables' : random_string()},
                         file_responses={url : contents})
@@ -64,16 +66,20 @@ class FailureTest(ActionFailureTest):
     def test_variable_missing_failure(self):
         url = random_string()
         contents = random_string() + ' $missing_var'
-        self.basic_test('add_config', 4,
+        self.basic_test('add_config', 
+                        'unable to perform variable substitution - '
+                        'missing variable',
                         attributes={'url' : url,
                                     'substitution_mode': 'strict',
                                     'variables' : {}},
                         file_responses={url : contents})
 
     def test_invalid_substitution_mode(self):
-        self.basic_test('add_config', 5,
+        self.basic_test('add_config', 
+                        'invalid option specified for '
+                        'substitution_mode attribute',
                         attributes={'url': random_string(),
-                                    'substitution_mode': random_string()})
+                                    'substitution_mode': 'dummy'})
 
 
 class SuccessTest(unittest.TestCase):

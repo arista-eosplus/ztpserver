@@ -44,10 +44,12 @@ from client_test_lib import file_log, get_action, random_string
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('replace_config', 1)
+        self.basic_test('replace_config',
+                        'missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('replace_config', 2,
+        self.basic_test('replace_config',
+                        'unable to retrieve config from URL',
                         attributes={'url' : random_string()})
 
     def test_bad_file_status(self):
@@ -67,7 +69,7 @@ class FailureTest(ActionFailureTest):
         try:
             self.failUnless(bootstrap.action_failure())
             msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 2' in msg)
+            self.failUnless('unable to retrieve config from URL' in msg)
         except AssertionError:
             raise
         finally:

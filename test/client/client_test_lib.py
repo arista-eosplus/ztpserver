@@ -634,7 +634,7 @@ class SmtpServer(object):
 class ActionFailureTest(unittest.TestCase):
     #pylint: disable=R0904
 
-    def basic_test(self, action, return_code, attributes=None,
+    def basic_test(self, action, return_string, attributes=None,
                    action_value=None, file_responses=None):
         if not attributes:
             attributes = {}
@@ -660,7 +660,7 @@ class ActionFailureTest(unittest.TestCase):
         try:
             self.failUnless(bootstrap.action_failure())
             msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code %s' % return_code in msg)
+            self.failUnless('%s' % return_string in msg)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error

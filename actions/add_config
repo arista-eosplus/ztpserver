@@ -47,19 +47,8 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('url')
-        1 - missing attribute('ztps_server')
-        2 - unable to retrieve config from URL
-        3 - unable to perform variable substitution - invalid variables
-        4 - unable to perform variable substitution - missing variable
-        5 - invalid option specified for substitution_mode attribute
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     url = attributes.get('url')
 
@@ -68,12 +57,12 @@ def main(attributes):
 
     substitution_mode = attributes.get('substitution_mode', 'loose')
     if substitution_mode not in ['loose', 'strict']:
-        return 5
+        return 'invalid option specified for substitution_mode attribute'
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
     except:
-        return 2
+        return 'unable to retrieve config from URL'
 
     contents = open(TEMP_CONFIG, 'r').read()
 
@@ -82,15 +71,15 @@ def main(attributes):
         variables = {}
 
     if not isinstance(variables, dict):
-        node.log_msg('Invalid variables: %s' % variables)
-        return 3
+        node.log_msg('Variables: %s' % variables)
+        return 'unable to perform variable substitution - invalid variables'
     try:
         if substitution_mode == 'strict':
             contents = Template(contents).substitute(variables)
         else:
             contents = Template(contents).safe_substitute(variables)
     except KeyError:
-        return 4
+        return 'unable to perform variable substitution - missing variable'
 
     node.append_startup_config_lines(contents.split('\n'))
     os.remove(TEMP_CONFIG)

@@ -71,26 +71,17 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('src_url')
-        2 - missing attribute('dst_url')
-        3 - erroneous 'overwrite' value
-        4 - unable to retrieve file from URL
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     src_url = attributes.get('src_url')
 
     if not src_url:
-        return 1
+        return 'missing attribute(\'src_url\')'
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
-        return 2
+        return 'missing attribute(\'dst_url\')'
 
     name = os.path.basename(src_url)
 
@@ -112,7 +103,7 @@ def main(attributes):
         elif overwrite == 'replace':
             pass
         else:
-            return 3
+            return 'erroneous \'overwrite\' value'
 
         try:
             os.makedirs(dst_url)
@@ -125,7 +116,7 @@ def main(attributes):
             if mode is not None:
                 os.chmod(dst_path, int(mode, 8))
         except:
-            return 4
+            return 'unable to retrieve file from URL'
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
@@ -142,7 +133,7 @@ def main(attributes):
         elif overwrite == 'replace':
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         else:
-            return 3
+            return 'erroneous \'overwrite\' value'
 
         if mode:
             lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
@@ -157,6 +148,6 @@ def main(attributes):
             file_path = '%s/%s' % (PERSISTENT_DIR, name)
             node.retrieve_url(src_url, file_path)
         except:
-            return 4
+            return 'unable to retrieve file from URL'
 
         node.append_rc_eos_lines(lines)

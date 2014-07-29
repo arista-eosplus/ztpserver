@@ -81,29 +81,21 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing smarthost attribute
-        2 - missing sender attribute
-        3 - missing receivers attribute
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
 
     smarthost = attributes.get('smarthost')
     if not smarthost:
-        return 1
+        return 'missing attribute(\'smarthost\')'
 
     sender = attributes.get('sender')
     if not sender:
-        return 2
+        return 'missing attribute(\'sender\')'
 
     receivers = attributes.get('receivers')
     if not receivers:
-        return 3
+        return 'missing attribute(\'receivers\')'
 
     msg = MIMEMultipart.MIMEMultipart()
     msg['From'] = sender

@@ -47,10 +47,12 @@ from client_test_lib import startup_config_action
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('install_cli_plugin', 1)
+        self.basic_test('install_cli_plugin',
+                        'missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('install_cli_plugin', 2,
+        self.basic_test('install_cli_plugin',
+                        'unable to retrieve CliPlugin from URL',
                         attributes={'url' :
                                     random_string()})
 

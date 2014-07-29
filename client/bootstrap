@@ -707,7 +707,7 @@ def execute_action(server, action_details, special_attr):
                      else []
         ret = module.main(Attributes(local_attr, special_attr))
         if ret:
-            raise ZtpActionError('return code %s' % ret)
+            raise ZtpActionError('%s' % ret)
         log('Action %s executed succesfully' % action,
             xmpp=log_xmpp())
         if 'onsuccess' in action_details:

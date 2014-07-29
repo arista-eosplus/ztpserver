@@ -47,20 +47,13 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('url')
-        2 - unable to retrieve extension from URL
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     url = attributes.get('url')
 
     if not url:
-        return 1
+        return 'missing attribute(\'url\')'
 
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
@@ -73,7 +66,7 @@ def main(attributes):
         node.retrieve_url(url, '%s/%s' % 
                           (PERSISTENT_PLUGIN_DIR, name))
     except:
-        return 2
+        return 'unable to retrieve CliPlugin from URL'
 
     lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
                                     name,
