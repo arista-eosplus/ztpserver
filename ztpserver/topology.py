@@ -117,18 +117,19 @@ class Node(object):
     associated neighbors found on those interfaces.
     '''
 
-    def __init__(self, systemmac, **kwargs):
-        self.systemmac = str(systemmac)
-        self.model = str(kwargs.get('model', ''))
-        self.serialnumber = str(kwargs.get('serialnumber', ''))
-        self.version = str(kwargs.get('version', ''))
+    def __init__(self, **kwargs):
+        self.systemmac = kwargs.get('systemmac')
+        self.model = kwargs.get('model')
+        self.serialnumber = kwargs.get('serialnumber')
+        self.version = kwargs.get('version')
 
         self.neighbors = OrderedCollection()
         if 'neighbors' in kwargs:
             self.add_neighbors(kwargs['neighbors'])
 
     def __repr__(self):
-        return 'Node(systemmac=%s)' % self.systemmac
+        return 'Node(serialnumber=%s, systemmac=%s)' % \
+               (self.serialnumber, self.systemmac)
 
     def add_neighbor(self, interface, peers):
         try:
@@ -205,22 +206,24 @@ class Topology(object):
         for key, value in variables.items():
             self.add_variable(key, value)
 
-    def add_pattern(self, name, definition, interfaces, **kwargs):
+    def add_pattern(self, name, **kwargs):
 
         try:
             kwargs['node'] = kwargs.get('node')
+            kwargs['definition'] = kwargs.get('definition')
+            kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
             for key in set(self.variables).difference(kwargs['variables']):
                 kwargs['variables'][key] = self.variables[key]
 
-            pattern = Pattern(name, definition, interfaces, **kwargs)
+            pattern = Pattern(name, **kwargs)
 
             log.info('Pattern \'%s\' parsed successfully', pattern.name)
             log.debug('%r', pattern)
 
             # Add pattern to topology
-            if kwargs['node']:
+            if kwargs['node'] is not None:
                 self.patterns['nodes'][pattern.node] = pattern
             else:
                 self.patterns['globals'].append(pattern)
@@ -287,7 +290,7 @@ class Topology(object):
 
 class Pattern(object):
 
-    def __init__(self, name, definition, interfaces,
+    def __init__(self, name, definition=None, interfaces=None,
                  node=None, variables=None):
 
         self.name = name

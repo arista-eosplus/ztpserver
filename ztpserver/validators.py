@@ -35,11 +35,13 @@ import string
 import re
 import inspect
 import logging
+import collections
 
 from ztpserver.topology import Pattern, PatternError
 from ztpserver.utils import expand_range
 
-REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition', 'interfaces']
+REQUIRED_PATTERN_ATTRIBUTES = ['name']
+OPTIONAL_PATTERN_ATTRIBUTES = ['definition', 'interfaces', 'node', 'variables']
 INTERFACE_PATTERN_KEYWORDS = ['any', 'none']
 ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
 VALID_INTERFACE_RE = re.compile(r'^Ethernet[1-9]\d*(?:\/\d+){0,2}$')
@@ -104,7 +106,6 @@ class TopologyValidator(Validator):
         if not self.data.get('patterns'):
             raise ValidationError('missing required \'patterns\' attribute')
 
-
         for index, entry in enumerate(self.data.get('patterns')):
             try:
                 name = entry.get('name')
@@ -130,25 +131,34 @@ class PatternValidator(Validator):
         self.passed_interface_patterns = set()
         super(PatternValidator, self).__init__()
 
+    def validate_attributes(self):
+        for attr in REQUIRED_PATTERN_ATTRIBUTES:
+            if attr not in self.data:
+                raise ValidationError('missing required attribute: %s' % attr)
+
+        for attr in OPTIONAL_PATTERN_ATTRIBUTES:
+            if attr not in self.data:
+                log.warning('pattern missing optional attribute: %s', attr)
+
     def validate_name(self):
         if 'name' not in self.data:
-            raise ValidationError('missing required attribute \'name\'')
+            raise ValidationError('name attribute missing')
 
         if self.data is None or self.data['name'] is None:
             raise ValidationError('name attribute cannot be none')
 
-        if hasattr(self.data['name'], '__iter__'):
-            raise ValidationError('name attribute cannot be iterable')
+        if not isinstance(self.data['name'], (int, basestring)):
+            raise ValidationError('name attribute must be a string')
 
     def validate_interfaces(self):
         if 'interfaces' not in self.data:
-            raise ValidationError('missing required attribute \'interfaces\'')
+            return
 
-        if not hasattr(self.data['interfaces'], '__iter__'):
+        if not isinstance(self.data['interfaces'], collections.Iterable):
             raise ValidationError('interface attribute is not iterable')
 
         for index, pattern in enumerate(self.data['interfaces']):
-            if not hasattr(pattern, 'items'):
+            if not isinstance(pattern, collections.Mapping):
                 raise ValidationError('invalid value for interfaces')
 
             validator = InterfacePatternValidator()
@@ -161,13 +171,13 @@ class PatternValidator(Validator):
 
     def validate_definition(self):
         if 'definition' not in self.data:
-            raise ValidationError('missing required attribute \'definition\'')
+            return
 
         if self.data is None or self.data['definition'] is None:
             raise ValidationError('definition attribute cannot be none')
 
-        if hasattr(self.data['definition'], '__iter__'):
-            raise ValidationError('definition attribute cannot be iterable')
+        if not isinstance(self.data['definition'], basestring):
+            raise ValidationError('definition attribute must be a string')
 
         for wspc in string.whitespace:
             if wspc in self.data['definition']:
@@ -187,7 +197,6 @@ class PatternValidator(Validator):
     def validate_node(self):
         node = self.data.get('node')
         if node is not None:
-            # todo: make this check more intelligent
             node = str(node).replace(':', '').replace('.', '')
             if re.search(ANTINODE_PATTERN, str(node)) or len(node) != 12:
                 raise ValidationError('invalid node attribute')
@@ -230,6 +239,7 @@ class InterfacePatternValidator(Validator):
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
                 raise ValidationError('invalid interface pattern found')
+
 
 def _validator(contents, cls):
     try:

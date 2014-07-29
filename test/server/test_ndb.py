@@ -103,8 +103,9 @@ class NeighbordbTest(unittest.TestCase):
         p_all = self.valid_patterns.get('nodes') + \
                 self.valid_patterns.get('globals')
         if p_all:
-            valid_names = sorted([p[1] for p in valid])
-            self.assertEqual(valid_names, sorted(p_all), tag)
+            valid_actual = sorted([p[1] for p in valid])
+            valid_configured = sorted(p_all)
+            self.assertEqual(valid_actual, valid_configured, tag)
 
         log.info('END: neighbordb_patterns')
 

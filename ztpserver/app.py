@@ -80,6 +80,10 @@ def disable_handler(tag):
         except AttributeError:
             pass
 
+def python_supported():
+    """ Returns True if the current version of the python runtime is valid """
+    return sys.version_info > (2, 7) and sys.version_info < (3, 0)
+
 def start_logging():
     """ reads the runtime config and starts logging if enabled """
 
@@ -111,6 +115,9 @@ def start_wsgiapp(conf=None):
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
 
+    if not python_supported():
+        raise SystemExit('ERROR: ZTPServer requires Python 2.7')
+
     return ztpserver.controller.Router()
 
 def run_server(conf):
@@ -138,6 +145,7 @@ def run_server(conf):
         print 'Shutdown'
 
 def run_validator(filename=None):
+
     try:
         print 'Validating file \'%s\'\n' % filename
         validator = TopologyValidator()
@@ -199,8 +207,7 @@ def main():
         load_config(args.conf)
         if args.debug:
             start_logging()
-        run_validator(args.validate)
-        sys.exit()
+        sys.exit(run_validator(args.validate))
 
     return run_server(args.conf)
 

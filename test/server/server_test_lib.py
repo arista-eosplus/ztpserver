@@ -41,11 +41,17 @@ import string        #pylint: disable=W0402
 
 import yaml
 
+from ztpserver.app import enable_handler_console
+
 WORKINGDIR = '/tmp/ztpserver'
 
 log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
+
+def debug():
+    enable_handler_console()
+
 
 def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
