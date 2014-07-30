@@ -31,10 +31,6 @@
 #
 import unittest
 
-from mock import patch
-
-import ztpserver.serializers
-
 class SerializersUnitTest(unittest.TestCase):
 
     def test_dump_success(self):
