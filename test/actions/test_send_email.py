@@ -42,14 +42,17 @@ from client_test_lib import startup_config_action
 class FailureTest(ActionFailureTest):
 
     def test_missing_smarthost(self):
-        self.basic_test('send_email', 1)
+        self.basic_test('send_email',
+                        'missing attribute(\'smarthost\')')
 
     def test_missing_sender(self):
-        self.basic_test('send_email', 2,
+        self.basic_test('send_email',
+                        'missing attribute(\'sender\')',
                         attributes={'smarthost' :
                                     random_string()})
     def test_missing_receivers(self):
-        self.basic_test('send_email', 3,
+        self.basic_test('send_email',
+                        'missing attribute(\'receivers\')',
                         attributes={'smarthost' :
                                     random_string(),
                                     'sender' :

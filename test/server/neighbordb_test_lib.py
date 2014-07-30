@@ -31,11 +31,8 @@
 #
 
 import unittest
-import json
 
 from ztpserver.neighbordb import load_topology, create_node
-from ztpserver.topology import Topology
-from ztpserver.serializers import loads
 
 class NodeTest(unittest.TestCase):
     #pylint: disable=R0904,C0103
@@ -102,11 +99,13 @@ class NeighbordbTest(unittest.TestCase):
         print 'INFO: Checking neighbordb [%s]' % self.name
 
         if self.result.get('nodes', None):
-            self.assertEqual(sorted(self.result['nodes']),
-                             self.topology.get_patterns(self.topology.isnodepattern),
-                             'failed to match node patterns [%s]' % self.name)
+            self.assertEqual(
+                sorted(self.result['nodes']),
+                self.topology.get_patterns(self.topology.isnodepattern),
+                'failed to match node patterns [%s]' % self.name)
 
         if self.result.get('globals', None):
-            self.assertEqual(sorted(self.result['globals']),
-                             self.topology.get_patterns(self.topology.isglobalpattern),
-                             'failed to match global patterns [%s]' % self.name)
+            self.assertEqual(
+                sorted(self.result['globals']),
+                self.topology.get_patterns(self.topology.isglobalpattern),
+                'failed to match global patterns [%s]' % self.name)

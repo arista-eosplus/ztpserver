@@ -39,11 +39,5 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        RETURN CODES
-
-    Raises:
-        EXCEPTIONS
     '''
     print attributes

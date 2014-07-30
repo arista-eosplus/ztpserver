@@ -32,14 +32,12 @@
 # pylint: disable=W0622,W0402,W0613,W0142,R0201
 #
 
-import os
 import logging
+import os
+import routes
 import urlparse
 
 from string import Template
-
-import routes
-
 from webob.static import FileApp
 
 import ztpserver.config
@@ -53,6 +51,7 @@ from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
+from ztpserver.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
 from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
 
@@ -95,6 +94,12 @@ class BaseController(WSGIController):
         return dict(body='', content_type='text/html',
                     status=HTTP_STATUS_NOT_FOUND)
 
+    def http_internal_server_error(self, *args, **kwargs):
+        ''' Returns HTTP 500 Internal server error '''
+
+        log.debug('HTTP_INTERNAL_SERVER_ERROR')
+        return dict(body='', content_type='text/html',
+                    status=HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
 
 class FilesController(BaseController):
@@ -640,6 +645,38 @@ class BootstrapController(BaseController):
         return resp
 
 
+class MetaController(BaseController):
+
+    FOLDER = 'meta'
+
+    BODY = {'size': None,
+            'sha1': None}
+
+    def __repr__(self):
+        return 'MetaController(folder=%s)' % self.FOLDER
+
+    def metadata(self, request, **kwargs):
+        ''' Handles GET /meta/[actions|files]/<PATH_INFO> '''
+
+        filepath = '%s/%s' % (kwargs['type'], kwargs['path_info'])
+
+        try:
+            try:
+                filename = self.repository.get_file(filepath).name
+            except (FileObjectNotFound, IOError) as exc:
+                # IOError is filepath points to a folder
+                log.error(str(exc))
+                resp = self.http_not_found()
+            else:
+                self.BODY['size'] = filename.size()
+                self.BODY['sha1'] = filename.hash()
+                resp = dict(body=self.BODY, content_type=CONTENT_TYPE_JSON)
+        except IOError as exc:
+            log.error(str(exc))
+            resp = self.http_internal_server_error()
+        return resp
+
+
 class Router(WSGIRouter):
     ''' Routes incoming requests by mapping the URL to a controller '''
 
@@ -671,6 +708,14 @@ class Router(WSGIRouter):
             router_mapper.connect('bootstrap_config', '/bootstrap/config',
                                   controller=BootstrapController,
                                   action='config',
+                                  conditions=dict(method=['GET']))
+
+
+            # configure /meta
+            router_mapper.connect('meta', 
+                                  '/meta/{type:actions|files}/{path_info:.*}',
+                                  controller=MetaController,
+                                  action='metadata',
                                   conditions=dict(method=['GET']))
 
             # configure /nodes

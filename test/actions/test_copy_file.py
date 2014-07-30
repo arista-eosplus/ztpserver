@@ -55,15 +55,18 @@ def random_permissions():
 class FailureTest(ActionFailureTest):
 
     def test_missing_src_url(self):
-        self.basic_test('copy_file', 1)
+        self.basic_test('copy_file',
+                        'missing attribute(\'src_url\')')
 
     def test_missing_dst_url(self):
-        self.basic_test('copy_file', 2,
+        self.basic_test('copy_file',
+                        'missing attribute(\'dst_url\')',
                         attributes={'src_url' :
-                                    random_string()})
+                                        random_string()})
 
     def test_wrong_overwrite_value(self):
-        self.basic_test('copy_file', 3,
+        self.basic_test('copy_file',
+                        'erroneous \'overwrite\' value',
                         attributes={'src_url' :
                                     random_string(),
                                     'dst_url' :
@@ -76,7 +79,8 @@ class FailureTest(ActionFailureTest):
         action = action.replace('/mnt/flash/.ztp-files',
                                 '/tmp')
 
-        self.basic_test('copy_file', 4,
+        self.basic_test('copy_file',
+                        'unable to retrieve file from URL',
                         attributes={'src_url' :
                                     random_string(),
                                     'dst_url' :

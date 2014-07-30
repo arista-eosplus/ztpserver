@@ -30,9 +30,9 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=W0142
 #
 import unittest
-import traceback
 
 from mock import Mock
 
@@ -41,11 +41,10 @@ import ztpserver.topology
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
 from ztpserver.topology import Pattern, PatternError
-from ztpserver.topology import Topology, TopologyError
 from ztpserver.topology import Node, NodeError
 
 from server_test_lib import random_string
-from server_test_lib import create_node, create_neighbordb, create_pattern
+from server_test_lib import create_node
 
 
 class NodeUnitTests(unittest.TestCase):
@@ -62,16 +61,14 @@ class NodeUnitTests(unittest.TestCase):
         node = Node(systemmac=systemmac)
         self.assertEqual(node.systemmac, systemmac)
 
-    def test_create_node_failure(self):
+    @classmethod
+    def test_create_node_failure(cls):
         try:
-            node = Node()
+            _ = Node()
         except TypeError:
             pass
-        except Exception:
-            self.fail()
 
     def test_create_node_neighbors_valid(self):
-        systemmac = random_string()
         nodeattrs = create_node()
 
         device = random_string()
@@ -88,7 +85,6 @@ class NodeUnitTests(unittest.TestCase):
         self.assertEqual(node.neighbors('Ethernet1')[0].port, port)
 
     def test_create_node_neighbors_port_missing(self):
-        systemmac = random_string()
         nodeattrs = create_node()
 
         device = random_string()
@@ -102,13 +98,10 @@ class NodeUnitTests(unittest.TestCase):
             node = Node(**kwargs)
         except NodeError:
             pass
-        except Exception as exc:
-            self.fail(exc)
         finally:
             self.assertIsNone(node)
 
     def test_create_node_neighbors_device_missing(self):
-        systemmac = random_string()
         nodeattrs = create_node()
 
         port = random_string()
@@ -122,8 +115,6 @@ class NodeUnitTests(unittest.TestCase):
             node = Node(**kwargs)
         except NodeError:
             pass
-        except Exception as exc:
-            self.fail(exc)
         finally:
             self.assertIsNone(node)
 
@@ -166,7 +157,6 @@ class NodeUnitTests(unittest.TestCase):
 
     def test_serialize_success(self):
         nodeattrs = create_node()
-        systemmac = nodeattrs.systemmac
         kwargs = nodeattrs.as_dict()
         node = Node(**kwargs)
         result = node.serialize()
@@ -266,7 +256,7 @@ class FunctionsUnitTests(unittest.TestCase):
         self.assertFalse(func.match(value))
 
     def test_regexfunction_true(self):
-        value = '[\w+]'
+        value = r'[\w+]'
         func = ztpserver.topology.RegexFunction(value)
         self.assertTrue(func.match(random_string()))
 
@@ -313,7 +303,8 @@ class PatternUnitTests(unittest.TestCase):
         pattern = Pattern(**kwargs)
         self.assertIsInstance(pattern, Pattern)
 
-    def test_add_interface_success(self):
+    @classmethod
+    def test_add_interface_success(cls):
         kwargs = dict(name=random_string(),
                       definition=random_string(),
                       interfaces=None)
@@ -325,13 +316,8 @@ class PatternUnitTests(unittest.TestCase):
         neighbors = dict(Ethernet1={'device': remote_device,
                                     'port': remote_intf})
 
-        try:
-            pattern.add_interface(neighbors)
-        except Exception as exc:
-            print traceback.print_exc(exc)
-            self.fail('add_interface raised an exception unexpectedly')
-
-
+        pattern.add_interface(neighbors)
+            
     def test_add_interface_failure(self):
         kwargs = dict(name=random_string(),
                       definition=random_string(),
