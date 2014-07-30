@@ -41,7 +41,6 @@ from ztpserver.topology import Pattern
 from ztpserver.topology import Topology
 
 from server_test_lib import random_string
-from server_test_lib import create_neighbordb
 
 class NeighbordbUnitTests(unittest.TestCase):
 
@@ -57,14 +56,14 @@ class NeighbordbUnitTests(unittest.TestCase):
 
     @patch('ztpserver.neighbordb.validate_topology')
     @patch('ztpserver.neighbordb.load')
-    def test_load_file_failure(self, m_load, m_validate_topology):
+    def test_load_file_failure(self, m_load, _):
         m_load.side_effect = ztpserver.serializers.SerializerError
         self.assertIsNone(ztpserver.neighbordb.load_file(random_string(),
                                                          random_string()))
 
     @patch('ztpserver.neighbordb.validate_topology')
     @patch('ztpserver.neighbordb.load')
-    def test_load_topology(self, m_validate_topology, m_load):
+    def test_load_topology(self, _, m_load):
         contents = '''
             variables:
                 foo: bar
@@ -113,12 +112,14 @@ class NeighbordbUnitTests(unittest.TestCase):
 
     def test_create_node_fixup_systemmac_colon(self):
         attrs = Mock(systemmac='99:99:99:99:99:99')
-        result = ztpserver.neighbordb.create_node({'systemmac': attrs.systemmac})
+        result = ztpserver.neighbordb.create_node({'systemmac': 
+                                                   attrs.systemmac})
         self.assertTrue(':' not in result.systemmac)
 
     def test_create_node_fixup_systemmac_period(self):
         attrs = Mock(systemmac='99.99.99.99.99.99')
-        result = ztpserver.neighbordb.create_node({'systemmac': attrs.systemmac})
+        result = ztpserver.neighbordb.create_node({'systemmac': 
+                                                   attrs.systemmac})
         self.assertTrue('.' not in result.systemmac)
 
 if __name__ == '__main__':
