@@ -31,7 +31,7 @@
 #
 # pylint: disable=W0631
 
-import string
+import string    #pylint: disable=W0402
 import re
 import inspect
 import logging

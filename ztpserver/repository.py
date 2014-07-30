@@ -48,9 +48,12 @@
     :license: BSD, see LICENSE for more details
 
 '''
-import os
-import mimetypes
+
+import hashlib
 import logging
+import mimetypes
+import os
+
 
 import ztpserver.config
 import ztpserver.serializers
@@ -151,6 +154,22 @@ class FileObject(object):
             log.error('Unable to write file %s', self.name)
             raise FileObjectError
 
+    def size(self):
+        ''' Returns the size of the object in bytes.
+
+        :raises: IOError
+        '''
+        return os.path.getsize(self.name)
+
+    def hash(self):
+        ''' Returns the SHA1 hash of the object.
+
+        :raises: IOError
+        '''
+        
+        sha1 = hashlib.sha1()
+        sha1.update(open(self.name).read())       #pylint: disable=E1101
+        return sha1.hexdigest()
 
 class Repository(object):
     ''' The Respository class represents a repository of :py:class:`FileObject`
