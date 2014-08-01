@@ -7,24 +7,6 @@ Examples
 
 Global configuration file
 `````````````````````````
-.. code-block:: console
-
-    jere:~ jere$ cd src/eapi1/
-    jere:eapi1 jere$ ll
-    -bash: ll: command not found
-    jere:eapi1 jere$ ls -l
-    total 24
-    -rwxr-xr-x   1 jere  staff  241 Jun 10 12:37 getMac.py
-    drwxr-xr-x  11 jere  staff  374 Jun 10 12:45 jsonrpclib
-    -rwxr-xr-x   1 jere  staff  491 Jun 10 13:07 listInts.py
-    -rwxr-xr-x   1 jere  staff  694 Jun 10 13:11 setBanner.py
-    jere:eapi1 jere$ vi listInts.py 
-    jere:eapi1 jere$ 
-    jere:eapi1 jere$ 
-    jere:eapi1 jere$ 
-    jere:eapi1 jere$ vi listInts.py 
-    jere:eapi1 jere$ ./listInts.py 
-
 
 .. code-block:: ini
 
@@ -88,6 +70,7 @@ Dynamic neighbordb or pattern file
 
 .. code-block:: yaml
 
+    ---
     patterns:
     #dynamic sample
       - name: dynamic_sample
@@ -96,8 +79,8 @@ Dynamic neighbordb or pattern file
           - Ethernet1: spine1:Ethernet1
           - Ethernet2: spine2:Ethernet1
           - any: ztpserver:any
-    
-    - name: dynamic_sample2
+
+      - name: dynamic_sample2
         definition: tor2
         interfaces:
           - Ethernet1: spine1:Ethernet2
@@ -110,6 +93,7 @@ Static neighbordb and /node/<MAC>/pattern file
 ``````````````````````````````````````````````
 .. code-block:: yaml
 
+    ---
     patterns:
     #static sample
       - name: static_node
@@ -233,5 +217,5 @@ Sample resources
 More examples
 `````````````
 
-Additional ZTPServer file examples are available on GitHub at the `ZTP Server Demo <https://github.com/arista-eosplus/ztpserver-demo>`_.
+Additional ZTPServer file examples are available on GitHub at the `ZTPServer Demo <https://github.com/arista-eosplus/ztpserver-demo>`_.
 

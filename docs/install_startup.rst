@@ -42,6 +42,8 @@ To enable ZTPServer for an Apache server, we need to add the following WSGI conf
 
 .. code-block:: apacheconf
 
+    LoadModule wsgi_module modules/mod_wsgi.so
+
     WSGIDaemonProcess ztpserver user=www-data group=www-data threads=5
     WSGIScriptAlias / /etc/ztpserver/ztpserver.wsgi
     

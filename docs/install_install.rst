@@ -3,9 +3,11 @@ Installation
 
 .. contents:: Topics
 
+There are 3 primary installation methods:
 
-Requirements
-`````````````
+    * :ref:`packer_install`
+    * :ref:`pypi_install`
+    * :ref:`manual_install`
 
 Examples in this guide are based on the following:
 
@@ -14,8 +16,27 @@ Examples in this guide are based on the following:
  * pip
  * git
 
-.. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.0.0 installed on Fedora 20. 
+Requirements
+`````````````
 
+  **Server:**
+
+  * Python 2.7 or later (https://www.python.org/download/releases)
+  * routes 2.0 or later (https://pypi.python.org/pypi/Routes)
+  * webob 1.3 or later (http://webob.org/)
+  * PyYaml 3.0 or later (http://pyyaml.org/)
+
+  **Clients:**
+
+  * |EOS| 4.13.3 or later
+
+.. |EOS| raw:: html
+
+   <a href="HTTP://eos.arista.com/" target="_blank">Arista EOS</a>
+
+.. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20. 
+
+.. _packer_install:
 
 Turn-key VM Creation
 ````````````````````
@@ -53,10 +74,12 @@ VM Specification:
 
 See the Packer VM `code and documentation <https://github.com/arista-eosplus/packer-ztpserver>`_ as well as the `ZTPServer demo files <https://github.com/arista-eosplus/ztpserver-demo>`_ for the Packer VM.
 
+.. _pypi_install:
+
 PyPI Package (pip install)
 ``````````````````````````
 
-ZTPServer may be installed as a PyPI package.
+`ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ may be installed as a `PyPI <https://pypi.python.org/pypi/ztpserver>`_ package.
 
 This option assumes you have a server with python and pip pre-installed.  See `installing pip <https://pip.pypa.io/en/latest/installing.html>`_.
 
@@ -68,10 +91,47 @@ Once pip is installed, type:
 
 The pip install process will install all dependencies and run the install script, leaving you with a ZTPServer instance ready to configure.
 
+.. _manual_install:
+
 Manual installation
 ```````````````````
 
-.. NOTE::: If using the Packer based VM image, all of these steps will have been completed, please reference the VM documentation.
+Once the above system requirements are met, use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
+
+.. code-block:: console
+
+    bash-3.2$ git clone https://github.com/arista-eosplus/ztpserver.git
+
+Then checkout the release desired:
+
+.. code-block:: console
+
+    bash-3.2$ cd ztpserver
+    bash-3.2$ git checkout v1.1.0
+
+Execute ``setup.py`` to build and then install ZTPServer
+
+.. code-block:: console
+
+    [user@localhost ztpserver]$ python setup.py build
+    running build
+    running build_py
+    ...
+    
+    [root@localhost ztpserver]# sudo python setup.py install
+    running install
+    running build
+    running build_py
+    running install_lib
+    ...
+
+
+.. _server_config:
+
+Configure additional services
+`````````````````````````````
+
+.. NOTE::: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
 
 Configure the DHCP Service
 --------------------------
@@ -109,39 +169,9 @@ Ubuntu (and derivative Linux implementations)
 Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on boot.
 
 
-Download and install ZTPServer
-------------------------------
-
-Once the above system requirements are met, use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
-
-.. code-block:: console
-
-    bash-3.2$ git clone https://github.com/arista-eosplus/ztpserver.git -b develop
-
-Then checkout the release desired:
-
-.. code-block:: console
-
-    bash-3.2$ cd ztpserver
-    bash-3.2$ git checkout v1.0.0
-
-Execute ``setup.py`` to build and then install ZTPServer
-
-.. code-block:: console
-
-    [root@localhost ztpserver]# python setup.py build
-    running build
-    running build_py
-    ...
-    
-    [root@localhost ztpserver]# sudo python setup.py install
-    running install
-    running build
-    running build_py
-    running install_lib
-    ...
-
 Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`install_config` options for more information.
 
 At a minimum, create the ``/usr/share/ztpserver/neighbordb`` file.
+
+Now, you are ready to :doc:`install_startup` ZTPServer.
 

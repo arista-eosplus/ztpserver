@@ -2,7 +2,7 @@
 # pylint: disable=C0103
 
 #
-# ZTP Server documentation build configuration file, created by
+# ZTPServer documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 18 16:40:25 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'ZTP Server'
+project = u'ZTPServer'
 copyright = u'2014, Arista Networks'       # pylint: disable=W0622
 
 # The version info for the project you're documenting, acts as replacement for
@@ -204,7 +204,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'ZTPServer.tex', u'ZTP Server Documentation',
+  ('index', 'ZTPServer.tex', u'ZTPServer Documentation',
    u'Arista Networks', 'manual'),
 ]
 
@@ -234,7 +234,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'ztpserver', u'ZTP Server Documentation',
+    ('index', 'ztpserver', u'ZTPServer Documentation',
      [u'Arista Networks'], 1)
 ]
 
@@ -248,7 +248,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ZTPServer', u'ZTP Server Documentation',
+  ('index', 'ZTPServer', u'ZTPServer Documentation',
    u'Arista Networks', 'ZTPServer', 'One line description of project.',
    'Miscellaneous'),
 ]

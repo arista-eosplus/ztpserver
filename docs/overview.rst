@@ -1,10 +1,11 @@
 ZTPServer Overview
 ==================
 
-ZTPServer provides a bootstrap environment for Arista EOS based products.  ZTPserver interacts with the ZeroTouch Provisioning (ZTP) mode of EOS. The default ZTP startup mode takes an unprovisioned Arista EOS node to a bootstrap ready state whenever a valid configuration file is not present on the internal flash storage.
+ZTPServer provides a robust server which enables comprehensive bootstrap solutions for Arista EOS based network elements.  ZTPserver interacts with the ZeroTouch Provisioning (ZTP) mode of EOS which takes an unprovisioned network element to a bootstrap ready state whenever a valid configuration file is not present on the internal flash storage.
 
 ZTPServer provides a number of features that extend beyond simply loading a configuration file and and boot image on a node, including: 
 
+* sending an advanced bootstrap client to the node: the bootstrap script.
 * mapping each node to an individual definition which describes the bootstrap steps specific to that node
 * defining configuration templates and actions which can be shared by multiple nodes - the actions can be customised using statically defined or dynamically generated attributes
 * implementing environment-specific actions which integrate with external systems
@@ -12,15 +13,22 @@ ZTPServer provides a number of features that extend beyond simply loading a conf
 
 ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML based. 
 
-**ZTPServer features:**
+**ZTPServer Highlights:**
 
-* automated configuration file generation and application
-* image and file system validation and standardization
-* connectivity validation and topology based auto-provisioning
-* configuration and device templates with resource allocation for dynamic deployments
+* Extends the basic capability of EOS ZTP to allow more robust provisioning activities
+* Extensible for easy integration into network operational environment
+* Can be run natively in EOS or on a separate server.
+* An Arista EOS+ led community open source project
+
+**ZTPServer Features:**
+
+* Automated configuration file generation and application
+* Image and file system validation and standardization
+* Connectivity validation and topology based auto-provisioning
+* Configuration and device templates with resource allocation for dynamic deployments
 * Zero Touch Replacement and upgrade capabilities
-* user extensible actions
-* email, XMPP, syslog based logging and accounting of all processes
+* User extensible actions
+* Email, XMPP, syslog based logging and accounting of all processes
 
 ZTPServer architecture
 ``````````````````````
@@ -29,9 +37,6 @@ There are 2 primary components of the ZTPServer implementation:
 
 * the **server** or ZTPS instance **AND**
 * the **client** or bootstrap (a process running on each node, which connects to the server in order to provision the node)
-
-.. image:: _static/ztpserver-seqdiag.png
-   :alt: Message Flow Diagram
 
 Server
 ``````
@@ -63,6 +68,16 @@ The client or **bootstrap file** is retrieved by the node via an HTTP GET reques
 
 Throughout the provisioning process the bootstrap client can log via both local and remote logging and XMPP.
 
+.. _message_flows:
+
+ZTP Client-Server Message Flows
+```````````````````````````````
+
+A high level view of the client - server message flows can be seen in the following diagram:
+
+.. image:: _static/ztpserver-seqdiag.png
+   :alt: Message Flow Diagram
+
 
 Topology Validation 
 ```````````````````
@@ -82,6 +97,8 @@ Topology-validation can be disabled:
 
 Operational modes
 `````````````````
+
+There are 4 operational modes for ZTPServer, explained below.  See :doc:`config_examples` to see how to use them.
 
 Statically defined node without topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
