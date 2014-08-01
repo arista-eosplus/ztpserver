@@ -46,15 +46,18 @@ from client_test_lib import print_action
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('install_image', 1)
+        self.basic_test('install_image',
+                        'missing attribute(\'url\')')
 
     def test_missing_version(self):
-        self.basic_test('install_image', 2,
+        self.basic_test('install_image',
+                        'missing attribute(\'version\')',
                         attributes={'url' :
                                         random_string()})
 
     def test_url_failure(self):
-        self.basic_test('install_image', 3,
+        self.basic_test('install_image',
+                        'unable to retrieve image file from URL',
                         attributes={'url' :
                                     random_string(),
                                     'version' :

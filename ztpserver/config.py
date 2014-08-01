@@ -264,7 +264,7 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(StrAttr(
     name='identifier',
-    choices=['systemmac', 'serialnum'],
+    choices=['systemmac', 'serialnumber'],
     default='systemmac'
 ))
 

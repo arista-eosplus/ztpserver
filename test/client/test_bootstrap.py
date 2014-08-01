@@ -448,48 +448,6 @@ class FileLogConfigTest(unittest.TestCase):
             bootstrap.end_test()
 
 
-class XmppConfigTest(unittest.TestCase):
-
-    def test_full(self):
-        self.xmpp_sanity_test({'server' : 'test-server',
-                               'port' : 112233,
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain',
-                               'nickname' : 'test-nickname',
-                               'rooms' : ['test-room-1', 'test-room-2']})
-
-
-    def test_partial(self):
-        self.xmpp_sanity_test({'rooms' : ['test-room-1'],
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain'})
-
-    def xmpp_sanity_test(self, xmpp):
-        log = '/tmp/ztps-log-%s-debug' % os.getpid()
-
-        bootstrap = Bootstrap()
-        bootstrap.ztps.set_config_response(logging=[
-                {'destination' : 'file:%s' % log,
-                 'level' : 'DEBUG'},],
-                                           xmpp=xmpp)
-        bootstrap.ztps.set_node_check_response()
-        bootstrap.ztps.set_definition_response()
-        bootstrap.start_test()
-
-        try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.missing_startup_config_failure())
-            self.failIf(bootstrap.error)
-            self.failIf('XmppClient' not in ''.join(file_log(log)))
-        except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
-            raise assertion
-        finally:
-            bootstrap.end_test()
-
 
 class ActionFailureTest(unittest.TestCase):
 
@@ -619,9 +577,9 @@ class ActionFailureTest(unittest.TestCase):
             self.failUnless(bootstrap.action_failure())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless('test_action:%s' % text_onstart in log)
-            self.failUnless('test_action:%s' % text_onsuccess not in log)
-            self.failUnless('test_action:%s' % text_onfailure in log)
+            self.failUnless('test_action: %s' % text_onstart in log)
+            self.failUnless('test_action: %s' % text_onsuccess not in log)
+            self.failUnless('test_action: %s' % text_onfailure in log)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
@@ -799,9 +757,9 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.failUnless(bootstrap.success())
             self.failIf(bootstrap.error)
             log = ''.join(file_log(log))
-            self.failUnless('startup_config_action:%s' % text_onstart in log)
-            self.failUnless('startup_config_action:%s' % text_onsuccess in log)
-            self.failUnless('startup_config_action:%s' % 
+            self.failUnless('startup_config_action: %s' % text_onstart in log)
+            self.failUnless('startup_config_action: %s' % text_onsuccess in log)
+            self.failUnless('startup_config_action: %s' % 
                             text_onfailure not in log)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output

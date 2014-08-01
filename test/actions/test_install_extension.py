@@ -45,10 +45,12 @@ from client_test_lib import startup_config_action, remove_file
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('install_extension', 1)
+        self.basic_test('install_extension',
+                        'missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('install_extension', 2,
+        self.basic_test('install_extension',
+                        'unable to retrieve extension from URL',
                         attributes={'url' :
                                     random_string()})
 

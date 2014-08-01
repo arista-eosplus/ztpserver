@@ -33,9 +33,8 @@
 # pylint: disable=R0904,C0103
 #
 import unittest
-import os
 
-from mock import patch, Mock
+from mock import patch
 
 from ztpserver.serializers import SerializerError
 
@@ -60,14 +59,12 @@ class FileObjectUnitTests(unittest.TestCase):
         obj = FileObject(random_string())
         self.assertRaises(FileObjectError, obj.read)
 
+    @classmethod
     @patch('ztpserver.serializers.dump')
-    def test_write_success(self, m_dump):
+    def test_write_success(cls, _):
         obj = FileObjectError(random_string())
-        try:
-            obj = FileObject(random_string())
-            obj.write(random_string())
-        except Exception as exc:
-            self.fail(exc)
+        obj = FileObject(random_string())
+        obj.write(random_string())
 
     @patch('ztpserver.serializers.dump')
     def test_write_failure(self, m_dump):
@@ -78,13 +75,11 @@ class FileObjectUnitTests(unittest.TestCase):
 
 class RepositoryUnitTests(unittest.TestCase):
 
+    @classmethod
     @patch('os.makedirs')
-    def test_add_folder_success(self, m_makedirs):
-        try:
-            store = Repository(random_string())
-            store.add_folder(random_string())
-        except Exception as exc:
-            self.fail(exc)
+    def test_add_folder_success(cls, _):
+        store = Repository(random_string())
+        store.add_folder(random_string())
 
     @patch('os.makedirs')
     def test_add_folder_failure(self, m_makedirs):
@@ -94,22 +89,16 @@ class RepositoryUnitTests(unittest.TestCase):
 
     @patch('ztpserver.repository.FileObject')
     def test_create_file_success(self, m_fileobj):
-        try:
-            store = Repository(random_string())
-            store.add_file(random_string())
-            self.assertFalse(m_fileobj.return_value.write.called)
-        except Exception as exc:
-            self.fail(exc)
+        store = Repository(random_string())
+        store.add_file(random_string())
+        self.assertFalse(m_fileobj.return_value.write.called)
 
     @patch('ztpserver.repository.FileObject')
     def test_create_file_with_contents_success(self, m_fileobj):
-        try:
-            store = Repository(random_string())
-            store.add_file(random_string(), random_string())
-            self.assertTrue(m_fileobj.return_value.write.called)
-        except Exception as exc:
-            self.fail(exc)
-
+        store = Repository(random_string())
+        store.add_file(random_string(), random_string())
+        self.assertTrue(m_fileobj.return_value.write.called)
+            
     @patch('ztpserver.repository.FileObject')
     def test_create_file_failure(self, m_fileobj):
         m_fileobj.return_value.write.side_effect = FileObjectError
@@ -118,7 +107,7 @@ class RepositoryUnitTests(unittest.TestCase):
                           random_string(), random_string())
 
     @patch('os.path.exists')
-    def test_exists_success(self, m_exists):
+    def test_exists_success(self, _):
         store = Repository(random_string())
         result = store.exists(random_string())
         self.assertTrue(result)
@@ -132,13 +121,10 @@ class RepositoryUnitTests(unittest.TestCase):
 
     @patch('os.path.exists')
     @patch('ztpserver.repository.FileObject')
-    def test_get_file_success(self, m_fileobj, m_exists):
-        try:
-            store = Repository(random_string())
-            store.get_file(random_string())
-            self.assertTrue(m_fileobj.called)
-        except Exception as exc:
-            self.fail(exc)
+    def test_get_file_success(self, m_fileobj, _):
+        store = Repository(random_string())
+        store.get_file(random_string())
+        self.assertTrue(m_fileobj.called)
 
     @patch('os.path.exists')
     @patch('ztpserver.repository.FileObject')
@@ -150,12 +136,9 @@ class RepositoryUnitTests(unittest.TestCase):
 
     @patch('os.remove')
     def test_delete_file_success(self, m_remove):
-        try:
-            store = Repository(random_string())
-            store.delete_file(random_string())
-            self.assertTrue(m_remove.called)
-        except Exception as exc:
-            self.fail(exc)
+        store = Repository(random_string())
+        store.delete_file(random_string())
+        self.assertTrue(m_remove.called)
 
     @patch('os.remove')
     def test_delete_file_failure(self, m_remove):

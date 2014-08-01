@@ -30,10 +30,11 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+    # pylint: disable=W0142
+
 import os
 import unittest
 import logging
-import argparse
 
 import yaml
 
@@ -43,7 +44,7 @@ from ztpserver.validators import TopologyValidator
 
 TEST_DIR = 'test/neighbordb'
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__) # pylint: disable=C0103
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
@@ -51,15 +52,16 @@ def enable_logging(level=None):
     logging_fmt = '%(levelname)s: [%(module)s:%(lineno)d] %(message)s'
     formatter = logging.Formatter(logging_fmt)
 
-    ch = logging.StreamHandler()
+    handler = logging.StreamHandler()
     level = level or 'DEBUG'
     level = str(level).upper()
     level = logging.getLevelName(level)
-    ch.setLevel(level)
-    ch.setFormatter(formatter)
-    log.addHandler(ch)
+    handler.setLevel(level)
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
 class NeighbordbTest(unittest.TestCase):
+    # pylint: disable=C0103
 
     def __init__(self, test_name, ndb, **kwargs):
         self.ndb = ndb
@@ -76,7 +78,7 @@ class NeighbordbTest(unittest.TestCase):
 
         self.failed_patterns = kwargs.get('failed_patterns')
 
-        self.longMessage = True
+        self.longMessage = True   
         self.maxDiff = None
 
         super(NeighbordbTest, self).__init__(test_name)
@@ -170,7 +172,7 @@ def get_test_list(filepath):
         test_list = [os.path.join(filepath, f) for f in test_list.split(',')]
     return test_list
 
-def load_tests(loader, tests, pattern):
+def load_tests(loader, tests, pattern):      # pylint: disable=W0613
     try:
         log.info('Start ndb tests')
 
@@ -188,9 +190,9 @@ def load_tests(loader, tests, pattern):
             tests = harness.get('tests', ['topology'])
 
             name = harness.get('ndb', 'neighbordb')
-            fn = name.split('/')[-1]
-            if fn in harness:
-                ndb = harness.get(fn)
+            filename = name.split('/')[-1]
+            if filename in harness:
+                ndb = harness.get(filename)
             else:
                 assert os.path.exists(name)
                 ndb = yaml.load(open(name))
@@ -198,7 +200,7 @@ def load_tests(loader, tests, pattern):
             kwargs = dict()
             kwargs['valid_patterns'] = harness.get('valid_patterns', dict())
             kwargs['failed_patterns'] = harness.get('failed_patterns')
-            kwargs['tag'] = harness.get('tag', fn)
+            kwargs['tag'] = harness.get('tag', filename)
             kwargs['filename'] = test
 
             for test in tests:
@@ -213,14 +215,16 @@ def load_tests(loader, tests, pattern):
                     entries = harness['nodes'][key]
                     if not entries is None:
                         for entry in entries:
-                            fn = entry['name'].split('/')[-1]
-                            kwargs['node'] = harness.get(fn, entry['name'])
+                            filename = entry['name'].split('/')[-1]
+                            kwargs['node'] = harness.get(filename, 
+                                                         entry['name'])
                             kwargs['match'] = entry.get('match')
-                            kwargs['tag'] = '%s:%s' % (harness.get('tag'), fn)
+                            kwargs['tag'] = '%s:%s' % (harness.get('tag'), 
+                                                       filename)
                             log.info('Adding node %s', name)
                             suite.addTest(NeighbordbTest(test, ndb, **kwargs))
 
-    except Exception:
+    except Exception:      # pylint: disable=W0703
         log.exception('Unexpected error trying to execute load_tests')
     else:
         return suite

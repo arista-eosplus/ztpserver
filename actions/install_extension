@@ -34,7 +34,6 @@ BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
 
 import ast
 import os
-import urlparse
 
 def main(attributes):
     '''Installs EOS extension.
@@ -50,22 +49,13 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('url')
-        2 - unable to retrieve extension from URL
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     url = attributes.get('url')
 
     if not url:
-        return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(node.server_address(), url)
+        return 'missing attribute(\'url\')'
 
     force = ast.literal_eval(
         str(attributes.get('force')))
@@ -80,7 +70,7 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % (EXTENSIONS_DIR, name))
     except:
-        return 2
+        return 'unable to retrieve extension from URL'
 
     line = name
     if force:
