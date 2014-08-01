@@ -3,7 +3,7 @@ Known Caveats
 
 .. contents:: Topics
 
-The authoritative state for any known issue can be found in `GitHub issues <>`_.
+The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
 
 * Currently, the management interfaces may not be used as valid local interface names in neighbordb. When creating patterns, use ``any`` instead.
 
