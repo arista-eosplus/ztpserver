@@ -1,20 +1,15 @@
-ZTP Server Documentation
+ZTPServer Documentation
 ========================
 
-Requirements
+[ZTPServer official documentation](http://http://ztpserver.readthedocs.org/) is built and hosted at (http://ReadTheDocs.org/).
+
+Contributing
 ------------
 
-The following packages must be installed to build the documentation::
+See CONTRIBUTING.md for information on maintaining documentation.
 
-    sudo pip install sphinx_rtd_theme
-    sudo pip install sphinxcontrib-napoleon
-    # httpdomain (for REST APIs)
-        hg clone https://bitbucket.org/birkenfeld/sphinx-contrib
-        cd sphinx-contrib/httpdomain/
-        sudo python setup.py install
-
-Building / Publishing Docs
---------------------------
+Building / Publishing Docs locally
+----------------------------------
 
 * `make` \(default make target is now `make html`\)
 * Open file://_build/html/index.html in your browser to view.
