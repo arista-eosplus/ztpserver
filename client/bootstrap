@@ -622,7 +622,7 @@ class Server(object):
         content = result.headers['content-type'].split(';')[0]
 
         if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_OTHER) or
+                 content == CONTENT_TYPE_JSON) or
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML) or
                 (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
