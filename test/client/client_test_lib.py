@@ -82,7 +82,7 @@ SYSTEM_MAC = '1234567890'
 
 def raise_exception(exception):
     # Uncomment the following line for debugging
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     raise exception
 

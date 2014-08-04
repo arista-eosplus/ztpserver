@@ -902,7 +902,7 @@ def _exit():
 
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
-    sys.exit(1)
+    os._exit(1)
 
 if __name__ == '__main__':
     try:
