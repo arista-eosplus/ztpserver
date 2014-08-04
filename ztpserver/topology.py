@@ -422,7 +422,7 @@ class Pattern(object):
 
     def match_node(self, node):
 
-        log.info('Attempting to match node (system MAC:%s, serial no.:%s)', 
+        log.info('Attempting to match node (system MAC:%s, serial no.:%s)' %
                  (node.systemmac, node.serialnumber))
 
         try:
