@@ -521,6 +521,8 @@ class Server(object):
                 log('WARNING: flash disk usage will exceeed %s%% after '
                     'saving %s to %s' % (percent, url, path))
 
+        log('Writing %s...' % path)
+
         # Save contents to file
         try:
             with open(path, 'wb') as result:
