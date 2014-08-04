@@ -107,6 +107,7 @@ class NeighbordbTest(unittest.TestCase):
         if p_all:
             valid_actual = sorted([p[1] for p in valid])
             valid_configured = sorted(p_all)
+
             self.assertEqual(valid_actual, valid_configured, tag)
 
         log.info('END: neighbordb_patterns')

@@ -45,9 +45,10 @@ OPTIONAL_PATTERN_ATTRIBUTES = ['definition', 'interfaces', 'node', 'variables']
 INTERFACE_PATTERN_KEYWORDS = ['any', 'none']
 ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
 VALID_INTERFACE_RE = re.compile(r'^Ethernet[1-9]\d*(?:\/\d+){0,2}$')
-KW_ANY_RE = re.compile(r'[any]')
-KW_NONE_RE = re.compile(r'[none]')
+KW_ANY_RE = re.compile(r' *any *')
+KW_NONE_RE = re.compile(r' *none *')
 WC_PORT_RE = re.compile(r'.*')
+
 
 INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_ANY_RE, KW_NONE_RE, KW_NONE_RE),
@@ -55,6 +56,7 @@ INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_ANY_RE, KW_NONE_RE, WC_PORT_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_ANY_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_NONE_RE),
+                              (KW_NONE_RE, KW_NONE_RE, WC_PORT_RE),
                               (KW_NONE_RE, KW_NONE_RE, KW_ANY_RE)]
 
 
@@ -235,6 +237,10 @@ class InterfacePatternValidator(Validator):
 
     def _validate_pattern(self, interface, device, port):
         # pylint: disable=R0201
+        if KW_NONE_RE.match(interface) and KW_NONE_RE.match(device) \
+                and KW_NONE_RE.match(port):
+            # no LLDP neighbors
+            return
 
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
