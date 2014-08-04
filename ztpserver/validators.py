@@ -99,11 +99,12 @@ class TopologyValidator(Validator):
         variables = self.data.get('variables')
         if variables is not None:
             if not hasattr(variables, '__iter__'):
-                raise ValidationError('invalid global variables value')
+                raise ValidationError('Invalid global variables value (%s)' %
+                                      variables)
 
     def validate_patterns(self):
         if not self.data.get('patterns'):
-            raise ValidationError('missing required \'patterns\' attribute')
+            raise ValidationError('Missing required \'patterns\' attribute')
 
         for index, entry in enumerate(self.data.get('patterns')):
             try:
@@ -158,7 +159,8 @@ class PatternValidator(Validator):
 
         for index, pattern in enumerate(self.data['interfaces']):
             if not isinstance(pattern, collections.Mapping):
-                raise ValidationError('invalid value for interfaces')
+                raise ValidationError('Invalid value for interfaces (%s)' %
+                                      pattern)
 
             validator = InterfacePatternValidator()
             if validator.validate(pattern):
@@ -198,7 +200,7 @@ class PatternValidator(Validator):
         if node is not None:
             node = str(node).replace(':', '').replace('.', '')
             if re.search(ANTINODE_PATTERN, str(node)) or len(node) != 12:
-                raise ValidationError('invalid node attribute')
+                raise ValidationError('Invalid node attribute (%s)' % node)
 
     def validate_variables(self):
         if 'variables' in self.data:
@@ -212,7 +214,7 @@ class InterfacePatternValidator(Validator):
 
         for interface, peer in self.data.items():
             if peer is None:
-                raise ValidationError('invalid peer')
+                raise ValidationError('Missing peer')
 
         try:
             (intf, device, port) = Pattern.parse_interface(interface, peer)
@@ -224,7 +226,7 @@ class InterfacePatternValidator(Validator):
                 try:
                     expand_range(interface)
                 except Exception:
-                    raise ValidationError('invalid interface name: %s' % intf)
+                    raise ValidationError('Invalid interface name (%s)' % intf)
 
         try:
             for entry in expand_range(intf):
@@ -237,7 +239,8 @@ class InterfacePatternValidator(Validator):
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
-                raise ValidationError('invalid interface pattern found')
+                raise ValidationError('Invalid interface pattern (%s, %s, %s)' %
+                                      (interface, device, port))
 
 
 def _validator(contents, cls):
