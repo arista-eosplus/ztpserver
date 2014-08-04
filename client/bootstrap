@@ -494,8 +494,8 @@ class Server(object):
 
             usage = flash_usage()
             if (metadata['size'] > usage.free):
-                raise ZtpError('Not enough memory on flash for saving %s(%s) '
-                               '(free: %sbytes, required:%sbytes)' % 
+                raise ZtpError('Not enough memory on flash for saving %s to %s '
+                               '(free: %s bytes, required: %s bytes)' % 
                                (url, path, usage.free, metadata['size']))
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
                 percent = (metadata['size'] + usage.used) * 100.0 / usage.total
