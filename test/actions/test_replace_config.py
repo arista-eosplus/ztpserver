@@ -45,7 +45,7 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
         self.basic_test('replace_config',
-                        'missing attribute(\'url\')')
+                        'Missing attribute(\'url\')')
 
     def test_url_failure(self):
         self.basic_test('replace_config',

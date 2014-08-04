@@ -48,7 +48,7 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'missing attribute(\'url\')'
+        return 'Missing attribute(\'url\')'
 
     try:
         node.retrieve_url(url, node.startup_config())

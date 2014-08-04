@@ -47,17 +47,17 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
         self.basic_test('install_image',
-                        'missing attribute(\'url\')')
+                        'Missing attribute(\'url\')')
 
     def test_missing_version(self):
         self.basic_test('install_image',
-                        'missing attribute(\'version\')',
+                        'Missing attribute(\'version\')',
                         attributes={'url' :
                                         random_string()})
 
     def test_url_failure(self):
         self.basic_test('install_image',
-                        'unable to retrieve image file from URL',
+                        'Unable to retrieve image file from URL',
                         attributes={'url' :
                                     random_string(),
                                     'version' :

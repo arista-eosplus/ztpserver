@@ -53,7 +53,7 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'missing attribute(\'url\')'
+        return 'Missing attribute(\'url\')'
 
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)

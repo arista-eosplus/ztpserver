@@ -77,11 +77,11 @@ def main(attributes):
     src_url = attributes.get('src_url')
 
     if not src_url:
-        return 'missing attribute(\'src_url\')'
+        return 'Missing attribute(\'src_url\')'
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
-        return 'missing attribute(\'dst_url\')'
+        return 'Missing attribute(\'dst_url\')'
 
     name = os.path.basename(src_url)
 
@@ -103,7 +103,7 @@ def main(attributes):
         elif overwrite == 'replace':
             pass
         else:
-            return 'erroneous \'overwrite\' value'
+            return 'Erroneous \'overwrite\' value'
 
         try:
             os.makedirs(dst_url)
@@ -133,7 +133,7 @@ def main(attributes):
         elif overwrite == 'replace':
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         else:
-            return 'erroneous \'overwrite\' value'
+            return 'Erroneous \'overwrite\' value'
 
         if mode:
             lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]

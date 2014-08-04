@@ -46,11 +46,11 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
         self.basic_test('install_extension',
-                        'missing attribute(\'url\')')
+                        'Missing attribute(\'url\')')
 
     def test_url_failure(self):
         self.basic_test('install_extension',
-                        'unable to retrieve extension from URL',
+                        'Unable to retrieve extension from URL',
                         attributes={'url' :
                                     random_string()})
 

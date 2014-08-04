@@ -47,11 +47,11 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
         self.basic_test('install_cli_plugin',
-                        'missing attribute(\'url\')')
+                        'Missing attribute(\'url\')')
 
     def test_url_failure(self):
         self.basic_test('install_cli_plugin',
-                        'unable to retrieve CliPlugin from URL',
+                        'Unable to retrieve CliPlugin from URL',
                         attributes={'url' :
                                     random_string()})
 

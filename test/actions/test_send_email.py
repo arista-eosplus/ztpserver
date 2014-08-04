@@ -43,16 +43,16 @@ class FailureTest(ActionFailureTest):
 
     def test_missing_smarthost(self):
         self.basic_test('send_email',
-                        'missing attribute(\'smarthost\')')
+                        'Missing attribute(\'smarthost\')')
 
     def test_missing_sender(self):
         self.basic_test('send_email',
-                        'missing attribute(\'sender\')',
+                        'Missing attribute(\'sender\')',
                         attributes={'smarthost' :
                                     random_string()})
     def test_missing_receivers(self):
         self.basic_test('send_email',
-                        'missing attribute(\'receivers\')',
+                        'Missing attribute(\'receivers\')',
                         attributes={'smarthost' :
                                     random_string(),
                                     'sender' :

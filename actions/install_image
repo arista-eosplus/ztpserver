@@ -54,11 +54,11 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'missing attribute(\'url\')'
+        return 'Missing attribute(\'url\')'
 
     version = attributes.get('version')
     if not version:
-        return 'missing attribute(\'version\')'
+        return 'Missing attribute(\'version\')'
     
     current_version = node.api_enable_cmds(['show version'])[0]['version']
     if current_version == version:
@@ -68,7 +68,7 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % (node.flash(), image))
     except:
-        return 'unable to retrieve image file from URL'
+        return 'Unable to retrieve image file from URL'
 
     boot_line = '! boot system flash:/%s' % image
     if node.has_startup_config():

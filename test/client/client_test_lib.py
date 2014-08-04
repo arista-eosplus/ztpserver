@@ -82,7 +82,7 @@ SYSTEM_MAC = '1234567890'
 
 def raise_exception(exception):
     # Uncomment the following line for debugging
-    # pdb.set_trace()
+    import pdb; pdb.set_trace()
 
     raise exception
 
@@ -681,6 +681,6 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
