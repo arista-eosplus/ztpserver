@@ -500,7 +500,7 @@ class Server(object):
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
                 percent = (metadata['size'] + usage.used) * 100.0 / usage.total
                 log('WARNING: flash disk usage will exceeed %s%% after '
-                    'saving %s to %s' % percent, url, contents)            
+                    'saving %s to %s' % (percent, url, contents))            
 
         # Save contents to file
         try:
