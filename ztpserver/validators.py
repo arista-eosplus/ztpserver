@@ -242,7 +242,9 @@ class InterfacePatternValidator(Validator):
                 raise ValidationError('Invalid interface pattern: (%s, %s, %s) '
                                       'matches (%s, %s, %s)'%
                                       (interface, device, port,
-                                       interface_re, device_re, port_re))
+                                       interface_re.pattern, 
+                                       device_re.pattern, 
+                                       port_re.pattern))
 
 
 def _validator(contents, cls):
