@@ -496,7 +496,7 @@ class Server(object):
             if (metadata['size'] > usage.free):
                 raise ZtpError('Not enough memory on flash for saving %s(%s) '
                                '(free: %sbytes, required:%sbytes)' % 
-                               (url, path, usage.free, metadata.size()))
+                               (url, path, usage.free, metadata['size']))
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
                 percent = (metadata['size'] + usage.used) * 100.0 / usage.total
                 log('WARNING: flash disk usage will exceeed %s%% after '

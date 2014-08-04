@@ -158,9 +158,9 @@ class MetaControllerUnitTests(unittest.TestCase):
     @patch('ztpserver.controller.create_repository')
     def test_bad_request_io_error(self, m_repository):
         cfg = random.choice([
-                {'return_value.get_file.return_value.name.hash.side_effect': 
+                {'return_value.get_file.return_value.hash.side_effect': 
                  IOError},
-                {'return_value.get_file.return_value.name.size.side_effect': 
+                {'return_value.get_file.return_value.size.side_effect': 
                  IOError}])
         m_repository.configure_mock(**cfg)
  
@@ -178,9 +178,9 @@ class MetaControllerUnitTests(unittest.TestCase):
     def test_success(self, m_repository):
         sha1 = random_string()
         size = random.randint(1, 1000000)
-        cfg = {'return_value.get_file.return_value.name.hash.return_value': 
+        cfg = {'return_value.get_file.return_value.hash.return_value': 
                sha1,
-               'return_value.get_file.return_value.name.size.return_value': 
+               'return_value.get_file.return_value.size.return_value': 
                size}
         m_repository.configure_mock(**cfg)
  
