@@ -55,8 +55,7 @@ INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_ANY_RE, KW_NONE_RE, WC_PORT_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_ANY_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_NONE_RE),
-                              (KW_NONE_RE, KW_NONE_RE, KW_ANY_RE),
-                              (KW_NONE_RE, KW_NONE_RE, WC_PORT_RE)]
+                              (KW_NONE_RE, KW_NONE_RE, KW_ANY_RE)]
 
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
@@ -236,11 +235,14 @@ class InterfacePatternValidator(Validator):
 
     def _validate_pattern(self, interface, device, port):
         # pylint: disable=R0201
+
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
-                raise ValidationError('Invalid interface pattern (%s, %s, %s)' %
-                                      (interface, device, port))
+                raise ValidationError('Invalid interface pattern: (%s, %s, %s) '
+                                      'matches (%s, %s, %s)'%
+                                      (interface, device, port,
+                                       interface_re, device_re, port_re))
 
 
 def _validator(contents, cls):
