@@ -911,7 +911,6 @@ if __name__ == '__main__':
         main()
     except ZtpError as exception:
         log('''Bootstrap process failed:
-
    %s''' % str(exception),
             error=True)
         _exit()
@@ -923,8 +922,7 @@ if __name__ == '__main__':
         _exit()
     except Exception, exception:
         log('''Bootstrap process failed because of unknown exception:
-
-    %s''' % 
+   %s''' % 
             exception, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
