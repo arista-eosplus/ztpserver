@@ -27,7 +27,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702,E1103
+#pylint: disable=W0703,E1103
 
 BACKUP_SUFFIX = '.backup'
 PERSISTENT_DIR = '/mnt/flash/.ztp-files'
@@ -77,11 +77,11 @@ def main(attributes):
     src_url = attributes.get('src_url')
 
     if not src_url:
-        return 'missing attribute(\'src_url\')'
+        return 'Missing attribute(\'src_url\')'
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
-        return 'missing attribute(\'dst_url\')'
+        return 'Missing attribute(\'dst_url\')'
 
     name = os.path.basename(src_url)
 
@@ -103,7 +103,7 @@ def main(attributes):
         elif overwrite == 'replace':
             pass
         else:
-            return 'erroneous \'overwrite\' value'
+            return 'Erroneous \'overwrite\' value'
 
         try:
             os.makedirs(dst_url)
@@ -115,8 +115,8 @@ def main(attributes):
             node.retrieve_url(src_url, dst_path)
             if mode is not None:
                 os.chmod(dst_path, int(mode, 8))
-        except:
-            return 'unable to retrieve file from URL'
+        except Exception as exc:
+            return 'Unable to retrieve file from URL (%s)' % exc
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
@@ -133,7 +133,7 @@ def main(attributes):
         elif overwrite == 'replace':
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         else:
-            return 'erroneous \'overwrite\' value'
+            return 'Erroneous \'overwrite\' value'
 
         if mode:
             lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
@@ -147,7 +147,7 @@ def main(attributes):
         try:
             file_path = '%s/%s' % (PERSISTENT_DIR, name)
             node.retrieve_url(src_url, file_path)
-        except:
-            return 'unable to retrieve file from URL'
+        except Exception as exc:
+            return 'Unable to retrieve file from URL (%s)' % exc
 
         node.append_rc_eos_lines(lines)

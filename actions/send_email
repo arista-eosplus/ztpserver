@@ -87,15 +87,15 @@ def main(attributes):
 
     smarthost = attributes.get('smarthost')
     if not smarthost:
-        return 'missing attribute(\'smarthost\')'
+        return 'Missing attribute(\'smarthost\')'
 
     sender = attributes.get('sender')
     if not sender:
-        return 'missing attribute(\'sender\')'
+        return 'Missing attribute(\'sender\')'
 
     receivers = attributes.get('receivers')
     if not receivers:
-        return 'missing attribute(\'receivers\')'
+        return 'Missing attribute(\'receivers\')'
 
     msg = MIMEMultipart.MIMEMultipart()
     msg['From'] = sender

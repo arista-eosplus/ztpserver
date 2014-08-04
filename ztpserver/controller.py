@@ -119,7 +119,7 @@ class FilesController(BaseController):
             log.debug('Requesting file: %s', resource)
             filepath = self.expand(resource)
             filename = self.repository.get_file(filepath).name
-            return FileApp(filename)
+            return FileApp(filename, content_type=CONTENT_TYPE_OTHER)
         except FileObjectNotFound:
             log.error('Requested file %s was not found', resource)
             return self.http_not_found()
@@ -663,14 +663,14 @@ class MetaController(BaseController):
 
         try:
             try:
-                filename = self.repository.get_file(filepath).name
+                file_resource = self.repository.get_file(filepath)
             except (FileObjectNotFound, IOError) as exc:
                 # IOError is filepath points to a folder
                 log.error(str(exc))
                 resp = self.http_not_found()
             else:
-                self.BODY['size'] = filename.size()
-                self.BODY['sha1'] = filename.hash()
+                self.BODY['size'] = file_resource.size()
+                self.BODY['sha1'] = file_resource.hash()
                 resp = dict(body=self.BODY, content_type=CONTENT_TYPE_JSON)
         except IOError as exc:
             log.error(str(exc))

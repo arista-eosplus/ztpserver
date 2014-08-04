@@ -37,19 +37,19 @@ from string import Template
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import STARTUP_CONFIG
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('add_config', 'missing attribute(\'url\')')
+        self.basic_test('add_config', 'Missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('add_config', 'unable to retrieve config from URL',
+        self.basic_test('add_config', 'Unable to retrieve config from URL',
                         attributes={'url' :
                                     random_string()})
 
@@ -57,7 +57,7 @@ class FailureTest(ActionFailureTest):
         url = random_string()
         contents = random_string()
         self.basic_test('add_config', 
-                        'unable to perform variable substitution - '
+                        'Unable to perform variable substitution - '
                         'invalid variables',
                         attributes={'url' : url,
                                     'variables' : random_string()},
@@ -67,7 +67,7 @@ class FailureTest(ActionFailureTest):
         url = random_string()
         contents = random_string() + ' $missing_var'
         self.basic_test('add_config', 
-                        'unable to perform variable substitution - '
+                        'Unable to perform variable substitution - '
                         'missing variable',
                         attributes={'url' : url,
                                     'substitution_mode': 'strict',
@@ -76,7 +76,7 @@ class FailureTest(ActionFailureTest):
 
     def test_invalid_substitution_mode(self):
         self.basic_test('add_config', 
-                        'invalid option specified for '
+                        'Invalid option specified for '
                         'substitution_mode attribute',
                         attributes={'url': random_string(),
                                     'substitution_mode': 'dummy'})
@@ -105,7 +105,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -129,7 +129,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -161,7 +161,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -197,7 +197,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -228,7 +228,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -259,7 +259,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 

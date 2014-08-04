@@ -38,6 +38,7 @@ import imp
 import json
 import jsonrpclib
 import logging
+import os
 import os.path
 import re
 import sleekxmpp
@@ -50,6 +51,7 @@ import traceback
 import urllib2
 import urlparse
 
+from collections import namedtuple
 from logging.handlers import SysLogHandler
 from subprocess import PIPE
 
@@ -72,29 +74,26 @@ COMMAND_API_USERNAME = 'ztps'
 COMMAND_API_PASSWORD = 'ztps-password'
 COMMAND_API_PROTOCOL = 'http'
 
-STATUS_OK = 200
-STATUS_CREATED = 201
-STATUS_BAD_REQUEST = 400
-STATUS_NOT_FOUND = 404
-STATUS_CONFLICT = 409
-
-STARTUP_CONFIG = '/mnt/flash/startup-config'
-RC_EOS = '/mnt/flash/rc.eos'
-BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
-BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'
+HTTP_STATUS_OK = 200
+HTTP_STATUS_CREATED = 201
+HTTP_STATUS_BAD_REQUEST = 400
+HTTP_STATUS_NOT_FOUND = 404
+HTTP_STATUS_CONFLICT = 409
+HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
 
 FLASH = '/mnt/flash'
 
+STARTUP_CONFIG = '%s/startup-config' % FLASH
+RC_EOS = '%s/rc.eos' % FLASH
+BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH
+BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH
+
 HTTP_TIMEOUT = 10
 
-REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
-
-XMPP_MSG_TYPE = None
-
-syslog_manager = None     #pylint: disable=C0103
-xmpp_client = None        #pylint: disable=C0103
-
+#pylint: disable=C0103
+syslog_manager = None
+xmpp_client = None
+#pylint: enable=C0103
 
 #---------------------------------XMPP------------------------
 # Uncomment this section in order to enable XMPP debug logging
@@ -110,24 +109,46 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
 
 
 # ------------------4.12.x support----------------------------
-def retrieve_url(url, path):
-    #pylint: disable=E1103
-    if not urlparse.urlsplit(url).scheme:
+def download_file(url, path):
+    if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
         url = urlparse.urljoin(SERVER, url)
 
-    log('Retrieving URL: %s' % url, xmpp=log_xmpp())
+    log('Retrieving URL: %s' % url)
 
     url = urllib2.urlopen(url)
     output_file = open(path, 'wb')
     output_file.write(url.read())
     output_file.close()
 
-def exit_bootstrap(code):
+#pylint: disable=C0103
+REQUESTS = 'requests-2.3.0'
+REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
+try:
+    import requests
+except ImportError:
+    requests_url = '/tmp/%s.tar.gz' % REQUESTS
+    download_file(REQUESTS_URL, requests_url)
+    cmd = 'sudo tar -xzvf %s -C /tmp;' \
+          'cd /tmp/%s;' \
+          'sudo python setup.py build;' \
+          'sudo python setup.py install' % \
+          (requests_url, REQUESTS)
+    res = os.system(cmd)
+    if res:
+        log('%s returned %s' % (cmd, res), error=True)
+        _exit(1)
+    import requests
+#pylint: enable=C0103
+# ------------------4.12.x support----------------------------    
+
+
+# ------------------Utilities----------------------------
+def _exit(code):
     #pylint: disable=W0702
 
     # Wait for XMPP messages to drain
     time.sleep(3)
-
+    
     if xmpp_client:
         try:
             xmpp_client.abort()
@@ -141,27 +162,15 @@ def exit_bootstrap(code):
     # Need to close background sleekxmpp threads as well
     os._exit(code)
 
-#pylint: disable=C0103
-try:
-    import requests
-except ImportError:
-    requests_url = '/tmp/%s.tar.gz' % REQUESTS
-    # removing extensions
-    retrieve_url(REQUESTS_URL, requests_url)
-    res = os.system('sudo tar -xzvf %s -C /tmp;'
-                    'cd /tmp/%s;'
-                    'sudo python setup.py build;'
-                    'sudo python setup.py install' %  
-                    (requests_url, REQUESTS))
-    if res:
-        exit_bootstrap(100)
-    import requests
-#pylint: enable=C0103
-# ------------------4.12.x support----------------------------    
-
-
 SYSTEM_ID = None
-def log(msg, error=False, xmpp=True):
+XMPP_MSG_TYPE = None
+def log_xmpp():
+    return XMPP_MSG_TYPE == 'debug'
+
+def log(msg, error=False, xmpp=None):
+    if xmpp is None:
+        xmpp = log_xmpp()
+
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     xmpp_msg = 'ZTPS:%s: %s%s' % (timestamp,
                                   'ERROR: ' if error else '',
@@ -186,19 +195,29 @@ def log(msg, error=False, xmpp=True):
         else:
             syslog_manager.log.info(syslog_msg)
 
-def log_xmpp():
-    return XMPP_MSG_TYPE == 'debug'
+#pylint: disable=C0103
+_ntuple_diskusage = namedtuple('usage', 'total used free')
+#pylint: enable=C0103
+def flash_usage():
+    """Return flash usage statistics.
 
-class ZtpBootstrapEapiError(Exception):
+    Returned value is a named tuple with attributes 'total', 'used' and
+    'free', which are the amount of total, used and free space, in bytes.
+    """
+    stats = os.statvfs(FLASH)
+    free = stats.f_bavail * stats.f_frsize
+    total = stats.f_blocks * stats.f_frsize
+    used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
+    return _ntuple_diskusage(total, used, free)
+# ------------------Utilities----------------------------
+
+class ZtpError(Exception):
     pass
 
-class ZtpConnectionError(Exception):
+class ZtpActionError(ZtpError):
     pass
 
-class ZtpInvalidDefinitionLocationError(Exception):
-    pass
-
-class ZtpActionError(Exception):
+class ZtpUnexpectedServerResponseError(ZtpError):
     pass
 
 
@@ -228,7 +247,9 @@ class Attributes(object):
 class Node(object):
      #pylint: disable=R0201
 
-    def __init__(self):
+    def __init__(self, server):
+        self.server = server
+
         Node._enable_api()
 
         url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
@@ -240,7 +261,7 @@ class Node(object):
         try:
             self.api_enable_cmds([])
         except socket.error:
-            raise ZtpBootstrapEapiError()
+            raise ZtpError('Unable to enable eAPI')
 
         # Workaround for BUG89374
         self.disable_copp()
@@ -250,9 +271,9 @@ class Node(object):
             self.api_enable_cmds(['show version'])[0]['serialNumber']
 
     @classmethod
-    def _cli_enable_cmd(cls, cmd):
-        cmd = ['FastCli', '-p', '15', '-A', '-c', cmd]
-        proc = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    def _cli_enable_cmd(cls, cli_cmd):
+        bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
+        proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         (out, err) = proc.communicate()
         code = proc.returncode             #pylint: disable=E1101
         return (code, out, err)
@@ -275,8 +296,7 @@ class Node(object):
                                         ' grep running')
         retries = 3
         while not out and retries:
-            log('Waiting for CommandAPI to be enabled...',
-                xmpp=log_xmpp())
+            log('Waiting for CommandAPI to be enabled...')
             time.sleep(1)
             retries = retries - 1
             _, out, _ = cls._cli_enable_cmd(
@@ -361,7 +381,7 @@ class Node(object):
         return STARTUP_CONFIG
 
     def retrieve_url(self, url, path):
-        retrieve_url(url, path)
+        self.server.get_resource(url, path)
 
     @classmethod
     def server_address(cls):
@@ -394,20 +414,17 @@ class SyslogManager(object):
         self.log.addHandler(handler)
 
     def _add_syslog_handler(self):
-        log('SyslogManager: adding localhost handler',
-            xmpp=log_xmpp())
+        log('SyslogManager: adding localhost handler')
         self._add_handler(SysLogHandler(address=SYSLOG))
 
     def _add_file_handler(self, filename, level=None):
         log('SyslogManager: adding file handler (%s - level:%s)' %
-            (filename, level),
-            xmpp=log_xmpp())
+            (filename, level))
         self._add_handler(logging.FileHandler(filename), level)
 
     def _add_remote_syslog_handler(self, host, port, level=None):
         log('SyslogManager: adding remote handler (%s:%s - level:%s)' %
-            (host, port, level),
-            xmpp=log_xmpp())
+            (host, port, level))
         self._add_handler(SysLogHandler(address=(host, port)), level)
 
     def add_handlers(self, handler_config):
@@ -431,11 +448,12 @@ class SyslogManager(object):
 
 class Server(object):
 
-    def __init__(self, url):
-        self.url = url
+    def __init__(self):
+        pass
 
-    def _http_request(self, path=None, method='get', headers=None,
-                      payload=None, files=None, path_is_local=True):
+    @classmethod
+    def _http_request(cls, path=None, method='get', headers=None,
+                      payload=None, files=None):
         if headers is None:
             headers = {}
         if files is None:
@@ -445,23 +463,21 @@ class Server(object):
         for entry in files:
             request_files[entry] = open(entry,'rb')
 
-        if path_is_local:
-            full_url = '%s/%s' % (self.url, path)
-        else:
+        if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
+            full_url = urlparse.urljoin(SERVER, path)
+        else: 
             full_url = path
 
         try:
             if method == 'get':
-                log('GET %s' % full_url,
-                    xmpp=log_xmpp())
+                log('GET %s' % full_url)
                 response = requests.get(full_url,
                                         data=json.dumps(payload),
                                         headers=headers,
                                         files=request_files,
                                         timeout=HTTP_TIMEOUT)
             elif method == 'post':
-                log('POST %s' % full_url,
-                    xmpp=log_xmpp())
+                log('POST %s' % full_url)
                 response = requests.post(full_url,
                                          data=json.dumps(payload),
                                          headers=headers,
@@ -471,20 +487,70 @@ class Server(object):
                 log('Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
-            raise ZtpConnectionError
-        except requests.exceptions.MissingSchema:
-            raise ZtpInvalidDefinitionLocationError
+            raise ZtpError('Server connection error')
+
         return response
+
+    def _get_request(self, url):
+        # resource or action
+        headers = {'content-type': CONTENT_TYPE_HTML}
+        result = self._http_request(url,
+                                    headers=headers)
+        log('Server response to GET request: status=%s' % result.status_code)
+
+        return (result.status_code,
+                result.headers['content-type'].split(';')[0],
+                result)
+
+    def _save_file_contents(self, contents, path, url=None):
+        if path.startswith('/mnt/flash'):
+            if not url:
+                raise ZtpError('Attempting to save file to %s, but cannot'
+                               'retrieve content metadata.')
+            
+            _, _, metadata = self.get_metadata(url)
+            metadata = metadata.json()
+
+            usage = flash_usage()
+            if (metadata['size'] > usage.free):
+                raise ZtpError('Not enough memory on flash for saving %s to %s '
+                               '(free: %s bytes, required: %s bytes)' % 
+                               (url, path, usage.free, metadata['size']))
+            elif (metadata['size'] + usage.used > 0.9 * usage.total):
+                percent = (metadata['size'] + usage.used) * 100.0 / usage.total
+                log('WARNING: flash disk usage will exceeed %s%% after '
+                    'saving %s to %s' % (percent, url, path))
+
+        log('Writing %s...' % path)
+
+        # Save contents to file
+        try:
+            with open(path, 'wb') as result:
+                for chunk in contents.iter_content(chunk_size=1024):
+                    if chunk:
+                        result.write(chunk)
+                result.close()
+        except IOError as err:
+            raise ZtpError('Unable to write %s: %s' % (path, err))
+
+        # Set permissions
+        os.chmod(path, 0777)
 
     def get_config(self):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
-        log('Server response to GET config: contents=%s' % result.json(),
-            xmpp=log_xmpp())
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0],
-                result)
+        log('Server response to GET config: contents=%s' % result.json())
+
+        status = result.status_code
+        content = result.headers['content-type'].split(';')[0]         
+        if(status != HTTP_STATUS_OK or
+           content != CONTENT_TYPE_JSON):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+
+        return (status, content, result)
 
     def post_nodes(self, node):
         headers = {'content-type': CONTENT_TYPE_JSON}
@@ -496,45 +562,128 @@ class Server(object):
             if 'location' in result.headers \
             else None
         log('Server response to POST nodes: status=%s, location=%s' %
-            (result.status_code, location),
-            xmpp=log_xmpp())
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0],
-                location)
+            (result.status_code, location))
+
+        status = result.status_code
+        content = result.headers['content-type'].split(';')[0] 
+        if(status not in [HTTP_STATUS_CREATED,
+                          HTTP_STATUS_BAD_REQUEST,
+                          HTTP_STATUS_CONFLICT] or
+           content != CONTENT_TYPE_HTML):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+        elif status == HTTP_STATUS_BAD_REQUEST:
+            raise ZtpError('Node not found on server (status=%s)' % status)
+
+        return (status, content, location)
 
     def get_definition(self, location):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request(location,
-                                    headers=headers,
-                                    path_is_local=False)
+                                    headers=headers)
 
-        if result.status_code == STATUS_OK:
+        if result.status_code == HTTP_STATUS_OK:
             log('Server response to GET definition: status=%s, contents=%s' %
-                (result.status_code, result.json()),
-                xmpp=log_xmpp())
+                (result.status_code, result.json()))
         else:
             log('Server response to GET definition: status=%s' % 
-                result.status_code, xmpp=log_xmpp())
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0],
-                result)
+                result.status_code)
+
+        status = result.status_code
+        content = result.headers['content-type'].split(';')[0] 
+        if not ((status == HTTP_STATUS_OK and
+                 content == CONTENT_TYPE_JSON) or
+                (status == HTTP_STATUS_BAD_REQUEST and
+                 content == CONTENT_TYPE_HTML)):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+        elif status == HTTP_STATUS_BAD_REQUEST:
+            raise ZtpError('Server-side topology check failed (status=%s)' % 
+                           status)
+
+        return (status, content, result)
 
     def get_action(self, action):
+        status, content, action_response = \
+            self._get_request('actions/%s' % action)
+
+        if not ((status == HTTP_STATUS_OK and
+                 content == CONTENT_TYPE_PYTHON) or
+                (status == HTTP_STATUS_NOT_FOUND and
+                 content == CONTENT_TYPE_HTML)):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+        elif status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError('Action not found on server (status=%s)' % status)
+
+        filename = os.path.join(TEMP, action)
+        self._save_file_contents(action_response, filename)
+        return filename
+
+    def get_metadata(self, url):
+        if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
+            aux = url.split('/')
+            if aux[3] != 'meta':
+                aux = aux[0:3] + ['meta'] + aux[3:]
+                url = '/'.join(aux)
+        else:
+            aux = [x for x in url.split('/') if x]
+            if aux[0] != 'meta':
+                url = '/'.join(['meta'] + aux)
+
         headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request('actions/%s' % action,
+        result = self._http_request(url,
                                     headers=headers)
-        log('Server response to GET action: status=%s' % result.status_code,
-            xmpp=log_xmpp())
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0],
-                result)
+        log('Server response to GET meta: contents=%s' % result.json())
+
+        status = result.status_code
+        content = result.headers['content-type'].split(';')[0]
+
+        if not ((status == HTTP_STATUS_OK and
+                 content == CONTENT_TYPE_JSON) or
+                (status == HTTP_STATUS_NOT_FOUND and
+                 content == CONTENT_TYPE_HTML) or
+                (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
+                 content == CONTENT_TYPE_HTML)):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+        elif status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError('Metadata not found on server (status=%s)' % 
+                           status)
+        elif status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
+            raise ZtpError(
+                'Unable to retrieve metadata from server (status=%s)' % 
+                status)
+
+        return (status, content, result)
+
+    def get_resource(self, url, path):
+        if not urlparse.urlsplit(url).scheme:     #pylint: disable=E1103
+            url = urlparse.urljoin(SERVER, url)
+
+        status, content, response = self._get_request(url)
+        if not ((status == HTTP_STATUS_OK and
+                 content == CONTENT_TYPE_OTHER) or
+                (status == HTTP_STATUS_NOT_FOUND and
+                 content == CONTENT_TYPE_HTML)):
+            raise ZtpUnexpectedServerResponseError(
+                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                (status, content))
+        elif status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError('Resource not found on server (status=%s)' % status)
+        
+        self._save_file_contents(response, path, url)
 
 
 class XmppClient(sleekxmpp.ClientXMPP):
     #pylint: disable=W0613, R0904, R0201, R0924
 
     def __init__(self, user, domain, password, rooms,
-                 nick, server, port):
+                 nick, xmpp_server, xmpp_port):
 
         self.xmpp_jid = '%s@%s' % (user, domain)
         self.connected = False
@@ -566,8 +715,8 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0030')
 
         log('XmppClient connecting to server...', xmpp=False)
-        if server != None:
-            self.connect((server, port), reattempt=False)
+        if xmpp_server != None:
+            self.connect((xmpp_server, xmpp_port), reattempt=False)
         else:
             self.connect(reattempt=False)
 
@@ -610,8 +759,10 @@ class XmppClient(sleekxmpp.ClientXMPP):
 def apply_config(config, node):
     global xmpp_client                      #pylint: disable=W0603
 
+    log('Applying server config')
+
+
     # XMPP not configured yet
-    log('Configuring XMPP', xmpp=False)
     xmpp_config = config.get('xmpp', {})
     
     global XMPP_MSG_TYPE                        #pylint: disable=W0603
@@ -622,6 +773,7 @@ def apply_config(config, node):
             xmpp=False)
     else:
         if xmpp_config:
+            log('Configuring XMPP', xmpp=False)
             if ('username' in xmpp_config and
                 'domain' in xmpp_config and
                 'password' in xmpp_config and
@@ -643,42 +795,16 @@ def apply_config(config, node):
                 log('XMPP configuration failed because server response '
                     'is missing config details', 
                     error=True, xmpp=False)
+        else:
+            log('No XMPP configuration received from server', xmpp=False)
 
-    log('Applying server config', xmpp=log_xmpp())
+    log_config = config.get('logging', [])
+    if log_config:
+        log('Configuring syslog')
+        syslog_manager.add_handlers(log_config)
+    else:
+        log('No XMPP configuration received from server')
 
-    log('Configuring syslog', xmpp=log_xmpp())
-    syslog_manager.add_handlers(config.get('logging', []))
-
-
-def download_action(server, action):
-    try:
-        status, content, action_response = server.get_action(action)
-        if not ((status == STATUS_OK and
-                 content == CONTENT_TYPE_PYTHON) or
-                (status == STATUS_NOT_FOUND and
-                 content == CONTENT_TYPE_HTML)):
-            log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content),
-                error=True)
-            exit_bootstrap(3)
-        elif status == STATUS_NOT_FOUND:
-            log('Bootstrap process failure - action not found on server '
-                '(status=%s)' % status, error=True)
-            exit_bootstrap(6)
-    except ZtpConnectionError:
-        log('Bootstrap process FAILURE - server connection error',
-            error=True)
-        exit_bootstrap(1)
-
-    filename = os.path.join(TEMP, action)
-    with open(filename, 'wb') as action_file:
-        for chunk in action_response.iter_content(chunk_size=1024):
-            if chunk:
-                action_file.write(chunk)
-        action_file.close()
-
-    os.chmod(filename, 0777)
-    return filename
 
 def execute_action(server, action_details, special_attr):
     action = action_details['action']
@@ -688,13 +814,13 @@ def execute_action(server, action_details, special_attr):
         description = '(%s)' % action_details['description']
 
     if action not in sys.modules:
-        log('Downloading action %s%s' % (action, description),
-            xmpp=log_xmpp())
-        filename = download_action(server, action)
+        log('Downloading action %s%s' % (action, description))
+        filename = server.get_action(action)
 
-    log('Executing action %s' % action, xmpp=log_xmpp())
+    log('Executing action %s' % action)
     if 'onstart' in action_details:
-        log('Action %s: %s' % (action, action_details['onstart']))
+        log('Action %s: %s' % (action, action_details['onstart']),
+            xmpp=True)
 
     try:
         if action in sys.modules:
@@ -708,15 +834,15 @@ def execute_action(server, action_details, special_attr):
         ret = module.main(Attributes(local_attr, special_attr))
         if ret:
             raise ZtpActionError('%s' % ret)
-        log('Action %s executed succesfully' % action,
-            xmpp=log_xmpp())
+        log('Action executed succesfully (%s)' % action)
         if 'onsuccess' in action_details:
-            log('Action %s: %s' % (action, action_details['onsuccess']))
+            log('Action %s: %s' % (action, action_details['onsuccess']),
+                xmpp=True)
     except Exception as err:                  #pylint: disable=W0703
-        log('Executing %s failed: %s' % (action, err), error=True)
         if 'onfailure' in action_details:
-            log('Action %s: %s' % (action, action_details['onfailure']))
-        exit_bootstrap(8)
+            log('Action %s: %s' % (action, action_details['onfailure']),
+                xmpp=True)
+        raise ZtpActionError('Executing action failed (%s): %s' % (action, err))
 
 def restore_factory_default():
     for filename in [RC_EOS, BOOT_EXTENSIONS]:
@@ -733,31 +859,15 @@ def main():
     restore_factory_default()
 
     syslog_manager = SyslogManager()
-    server = Server(SERVER)
+    server = Server()
 
     # Retrieve and apply logging/XMPP configuration from server
     # XMPP not configured yet
     log('Retrieving config from server', xmpp=False)
-    try:
-        status, content, config = server.get_config()
-        if(status != STATUS_OK or
-           content != CONTENT_TYPE_JSON):
-            log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content),
-                error=True)
-            exit_bootstrap(3)
-    except ZtpConnectionError:
-        log('Bootstrap process FAILURE - server connection error',
-            error=True)
-        exit_bootstrap(1)
+    _, _, config = server.get_config()
 
     # Creating node
-    try:
-        node = Node()
-    except ZtpBootstrapEapiError:
-        log('Bootstrap process FAILURE - unable to enable eAPI',
-            error=True)
-        exit_bootstrap(2)
+    node = Node(server)
 
     # XMPP not configured yet
     log('Config retrieved from server', xmpp=False)
@@ -766,62 +876,20 @@ def main():
     # Checking node on server
     # XMPP not configured yet
     log('Collecting node information', xmpp=False)
-    try:
-        status, content, location = server.post_nodes(node.details())
-        if(status not in [STATUS_CREATED,
-                          STATUS_BAD_REQUEST,
-                          STATUS_CONFLICT] or
-           content != CONTENT_TYPE_HTML):
-            log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content),
-                error=True)
-            exit_bootstrap(3)
-        elif status == STATUS_BAD_REQUEST:
-            log('Bootstrap process failure - node not found on server '
-                '(status=%s)' % status, error=True)
-            exit_bootstrap(4)
-    except ZtpConnectionError:
-        log('Bootstrap process FAILURE - server connection error',
-            error=True)
-        exit_bootstrap(1)
+    _, _, location = server.post_nodes(node.details())
 
     # Get definition
-    try:
-        status, content, definition = server.get_definition(location)
-        if not ((status == STATUS_OK and
-                 content == CONTENT_TYPE_JSON) or
-                (status == STATUS_BAD_REQUEST and
-                 content == CONTENT_TYPE_HTML)):
-            log('Bootstrap process failure - unexpected reponse from server '
-                '(status=%s; content-type=%s)' % (status, content),
-                error=True)
-            exit_bootstrap(3)
-        elif status == STATUS_BAD_REQUEST:
-            log('Bootstrap process failure - server-side topology check '
-                'failed (status=%s)' % status, error=True)
-            exit_bootstrap(5)
-    except ZtpConnectionError:
-        log('Bootstrap process FAILURE - server connection error',
-            error=True)
-        exit_bootstrap(1)
-    except ZtpInvalidDefinitionLocationError:
-        log('Bootstrap process FAILURE - invalid definition location '
-            'received from server',
-            error=True)
-        exit_bootstrap(10)
+    _, _, definition = server.get_definition(location)
 
     # Execute actions
     definition = definition.json()
 
     for attr in ['name', 'actions']:
         if attr not in definition:
-            log('Bootstrap process FAILURE - \'%s\' section missing '
-                'from definition' % attr, error=True)
-            exit_bootstrap(9)
+            raise ZtpError('\'%s\' section missing from definition' % attr)
 
     definition_name = definition['name']
-    log('Applying definition %s' % definition_name,
-        xmpp=log_xmpp())
+    log('Applying definition %s' % definition_name)
 
     
     special_attr = {}
@@ -829,27 +897,36 @@ def main():
     for details in definition['actions']:
         execute_action(server, details, special_attr)
 
-    log('Definition %s applied successfully' % definition_name,
-        xmpp=log_xmpp())
+    log('Definition %s applied successfully' % definition_name)
 
     # Check for startup-config
     if not node.has_startup_config():
-        log('Startup configuration is missing at the end of the '
-            'bootstrap process', error=True)
-        exit_bootstrap(7)
+        raise ZtpError('Startup configuration is missing at the end of the '
+                       'bootstrap process')
 
-    log('ZTP bootstrap completed successfully!',
-        xmpp=log_xmpp())
-    exit_bootstrap(0)
+    log('ZTP bootstrap completed successfully!')
+
+    _exit(0)
+
 
 if __name__ == '__main__':
     try:
         main()
+    except ZtpError as exception:
+        log('''Bootstrap process failed:
+   %s''' % str(exception),
+            error=True)
+        _exit(1)
     except KeyboardInterrupt:
-        exit_bootstrap(0)
-    except Exception, exception:
-        log('Bootstrap process FAILURE: %s' % exception,
+        log('Bootstrap process keyboard-interrupted',
             error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        exit_bootstrap(11)
+        _exit(1)
+    except Exception, exception:
+        log('''Bootstrap process failed because of unknown exception:
+   %s''' % 
+            exception, error=True)
+        log(sys.exc_info()[0])
+        log(traceback.format_exc())
+        _exit(1)

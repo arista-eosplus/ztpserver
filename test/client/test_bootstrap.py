@@ -36,13 +36,13 @@ import unittest
 from client_test_lib import BOOT_EXTENSIONS, BOOT_EXTENSIONS_FOLDER
 from client_test_lib import RC_EOS
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap
 from client_test_lib import cli_log, file_log, remove_file
 from client_test_lib import startup_config_action
 from client_test_lib import fail_action, print_action, random_string
 from client_test_lib import erroneous_action, missing_main_action
 from client_test_lib import wrong_signature_action, exception_action
+from client_test_lib import raise_exception
 
 
 class ServerNotRunningTest(unittest.TestCase):
@@ -58,7 +58,7 @@ class ServerNotRunningTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -77,7 +77,7 @@ class ConfigRequestErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -93,7 +93,7 @@ class ConfigRequestErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -111,7 +111,7 @@ class ConfigRequestErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -130,7 +130,7 @@ class EAPIErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -150,7 +150,7 @@ class CheckNodeErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -168,7 +168,7 @@ class CheckNodeErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -187,7 +187,7 @@ class CheckNodeErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -204,7 +204,7 @@ class CheckNodeErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -217,12 +217,12 @@ class CheckNodeErrorTest(unittest.TestCase):
 
         try:
             self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.invalid_definition_location_failure())
+            self.failUnless(bootstrap.server_connection_failure())
             self.failIf(bootstrap.error)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -242,7 +242,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -261,7 +261,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -280,7 +280,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -300,7 +300,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -318,7 +318,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -338,7 +338,7 @@ class DefinitionErrorTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -359,7 +359,7 @@ class MissingStartupConfigTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -389,7 +389,7 @@ class FactoryDefaultTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -443,7 +443,7 @@ class FileLogConfigTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -467,7 +467,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -503,7 +503,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -524,7 +524,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -546,7 +546,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -583,7 +583,7 @@ class ActionFailureTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -607,7 +607,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -639,7 +639,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -671,7 +671,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -699,7 +699,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -726,7 +726,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -764,7 +764,7 @@ class BootstrapSuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 

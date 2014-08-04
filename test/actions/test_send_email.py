@@ -34,25 +34,25 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import get_action, random_string
 from client_test_lib import startup_config_action
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_smarthost(self):
         self.basic_test('send_email',
-                        'missing attribute(\'smarthost\')')
+                        'Missing attribute(\'smarthost\')')
 
     def test_missing_sender(self):
         self.basic_test('send_email',
-                        'missing attribute(\'sender\')',
+                        'Missing attribute(\'sender\')',
                         attributes={'smarthost' :
                                     random_string()})
     def test_missing_receivers(self):
         self.basic_test('send_email',
-                        'missing attribute(\'receivers\')',
+                        'Missing attribute(\'receivers\')',
                         attributes={'smarthost' :
                                     random_string(),
                                     'sender' :
@@ -85,8 +85,10 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
         try:
             self.failUnless(bootstrap.success())
-        except Exception:
-            raise
+        except Exception as exception: #pylint: disable=W0703
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(exception)
         finally:
             bootstrap.end_test()
 

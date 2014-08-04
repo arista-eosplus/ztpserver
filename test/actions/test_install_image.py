@@ -36,28 +36,28 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import FLASH, STARTUP_CONFIG
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, remove_file, get_action
 from client_test_lib import startup_config_action, random_string
 from client_test_lib import print_action
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
         self.basic_test('install_image',
-                        'missing attribute(\'url\')')
+                        'Missing attribute(\'url\')')
 
     def test_missing_version(self):
         self.basic_test('install_image',
-                        'missing attribute(\'version\')',
+                        'Missing attribute(\'version\')',
                         attributes={'url' :
                                         random_string()})
 
     def test_url_failure(self):
         self.basic_test('install_image',
-                        'unable to retrieve image file from URL',
+                        'Unable to retrieve image file from URL',
                         attributes={'url' :
                                     random_string(),
                                     'version' :
@@ -84,8 +84,10 @@ class SuccessTest(unittest.TestCase):
 
         try:
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -117,8 +119,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(['SWI=flash:/%s.swi' % version] ==
                             file_log(boot_file))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(image_file)
             remove_file(boot_file)
@@ -160,8 +164,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(['SWI=flash:/%s.swi' % version] ==
                             file_log(boot_file))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(image_file)
             remove_file(boot_file)

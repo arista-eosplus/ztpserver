@@ -27,7 +27,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702
+#pylint: disable=W0703
 
 import re
 
@@ -54,11 +54,11 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'missing attribute(\'url\')'
+        return 'Missing attribute(\'url\')'
 
     version = attributes.get('version')
     if not version:
-        return 'missing attribute(\'version\')'
+        return 'Missing attribute(\'version\')'
     
     current_version = node.api_enable_cmds(['show version'])[0]['version']
     if current_version == version:
@@ -67,8 +67,8 @@ def main(attributes):
     image = '%s.swi' % version
     try:
         node.retrieve_url(url, '%s/%s' % (node.flash(), image))
-    except:
-        return 'unable to retrieve image file from URL'
+    except Exception as exc:
+        return 'Unable to retrieve image file from URL (%s)' % exc
 
     boot_line = '! boot system flash:/%s' % image
     if node.has_startup_config():
