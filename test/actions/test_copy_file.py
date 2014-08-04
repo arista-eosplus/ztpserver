@@ -40,12 +40,11 @@ from stat import ST_MODE
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action, remove_file
-
+from client_test_lib import raise_exception
 
 def random_permissions():
     return '7%s%s' % ((random.choice([1, 2, 3, 4, 5, 6, 7]),
@@ -130,8 +129,10 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
                             file_log(destination_path))
             self.failIf(os.path.isfile(RC_EOS))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             shutil.rmtree(destination)
@@ -176,8 +177,10 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
                             file_log(destination_path))
             self.failIf(os.path.isfile(RC_EOS))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             shutil.rmtree(destination)
@@ -226,8 +229,10 @@ class SuccessPersistentTest(unittest.TestCase):
                             file_log(destination_path))
             self.failIf(os.path.isfile(RC_EOS))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             shutil.rmtree(destination)
@@ -284,8 +289,10 @@ class SuccessPersistentTest(unittest.TestCase):
                 self.failUnless(mode ==
                                 oct(os.stat(destination_path)[ST_MODE])[-3:])
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             shutil.rmtree(destination)
@@ -336,8 +343,10 @@ class SuccessPersistentTest(unittest.TestCase):
 
             self.failIf(os.path.isfile(RC_EOS))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             shutil.rmtree(destination)
@@ -393,8 +402,10 @@ class SuccessPersistentTest(unittest.TestCase):
 
             self.failIf(os.path.isfile(RC_EOS))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             remove_file(backup_path)
@@ -444,8 +455,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.failUnless('sudo cp %s %s' %
                             (destination_path, destination) in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             bootstrap.end_test()
@@ -504,8 +517,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
                 self.failUnless('sudo chmod %s %s' %
                                 (mode, destination) in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             bootstrap.end_test()
@@ -552,8 +567,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
                             (destination, destination_path,
                              destination) in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             bootstrap.end_test()
@@ -602,8 +619,10 @@ class SuccessNonPersistentTest(unittest.TestCase):
                             (destination, destination,
                              destination) in log)
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             remove_file(destination_path)
             bootstrap.end_test()

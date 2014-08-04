@@ -31,8 +31,9 @@
 
 import unittest
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap
+from client_test_lib import raise_exception
+
 
 class XmppConfigTest(unittest.TestCase):
 
@@ -56,7 +57,7 @@ class XmppConfigTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -111,7 +112,7 @@ class XmppConfigTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 

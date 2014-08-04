@@ -32,7 +32,6 @@ import imp
 import json
 import re
 import os
-import pdb
 import random
 import subprocess
 import string                        #pylint: disable=W0402
@@ -65,12 +64,12 @@ BOOTSTRAP_FILE = 'client/bootstrap'
 CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
 
-STARTUP_CONFIG = '/tmp/startup-config-%s' % os.getpid()
-RC_EOS = '/tmp/rc.eos-%s' % os.getpid()
-BOOT_EXTENSIONS = '/tmp/boot-extensions-%s' % os.getpid()
-BOOT_EXTENSIONS_FOLDER = '/tmp/.extensions-%s' % os.getpid()
-
 FLASH = '/tmp'
+
+STARTUP_CONFIG = '%s/startup-config-%s' % (FLASH, os.getpid())
+RC_EOS = '%s/rc.eos-%s' % (FLASH, os.getpid())
+BOOT_EXTENSIONS = '%s/boot-extensions-%s' % (FLASH, os.getpid())
+BOOT_EXTENSIONS_FOLDER = '%s/.extensions-%s' % (FLASH, os.getpid())
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -80,8 +79,12 @@ STATUS_CONFLICT = 409
 
 SYSTEM_MAC = '1234567890'
 
-def debug():
-    pdb.set_trace()
+
+def raise_exception(exception):
+    # Uncomment the following line for debugging
+    # pdb.set_trace()
+
+    raise exception
 
 ztps = None    #pylint: disable=C0103
 def start_ztp_server():
@@ -289,18 +292,20 @@ class Bootstrap(object):
             line = line.replace("COMMAND_API_SERVER = 'localhost'",
                                 "COMMAND_API_SERVER = 'localhost:%s'" %
                                 self.eapi_port)
-            line = line.replace("STARTUP_CONFIG = '/mnt/flash/startup-config'",
-                                "STARTUP_CONFIG = '%s'" % STARTUP_CONFIG)
+            line = line.replace("STARTUP_CONFIG = '%s/startup-config' % FLASH",
+                                "STARTUP_CONFIG = '%s'" % 
+                                STARTUP_CONFIG)
             line = line.replace("FLASH = '/mnt/flash'",
                                 "FLASH = '%s'" % FLASH)
-            line = line.replace("RC_EOS = '/mnt/flash/rc.eos'",
+            line = line.replace("RC_EOS = '%s/rc.eos' % FLASH",
                                 "RC_EOS = '%s'" % RC_EOS)
             line = line.replace(
-                "BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'",
+                "BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH",
                 "BOOT_EXTENSIONS = '%s'" % BOOT_EXTENSIONS)
             line = line.replace(
-                "BOOT_EXTENSIONS_FOLDER = '/mnt/flash/.extensions'",
-                "BOOT_EXTENSIONS_FOLDER = '%s'" % BOOT_EXTENSIONS_FOLDER)
+                "BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH",
+                "BOOT_EXTENSIONS_FOLDER = '%s'" % 
+                BOOT_EXTENSIONS_FOLDER)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -369,37 +374,49 @@ class Bootstrap(object):
         return self.eapi_configured() and self.node_information_collected()
 
     def server_connection_failure(self):
-        return self.return_code == 1
+        return 'Server connection error' in self.output and \
+               self.return_code
 
     def eapi_failure(self):
-        return self.return_code == 2
+        return 'Unable to enable eAPI' in self.output and \
+               self.return_code
 
     def unexpected_response_failure(self):
-        return self.return_code == 3
+        return 'Unexpected reponse from server' in self.output and \
+               self.return_code
 
     def node_not_found_failure(self):
-        return self.return_code == 4
+        return 'Node not found on server' in self.output and \
+               self.return_code
 
     def toplogy_check_failure(self):
-        return self.return_code == 5
+        return 'Server-side topology check failed' in self.output and \
+               self.return_code
 
     def action_not_found_failure(self):
-        return self.return_code == 6
+        return 'Action not found on server' in self.output and \
+               self.return_code
 
     def missing_startup_config_failure(self):
-        return self.return_code == 7
+        return 'Startup configuration is missing' in self.output and \
+               self.return_code
 
     def action_failure(self):
-        return self.return_code == 8
+        return 'Executing action failed' in self.output and \
+               self.return_code
 
     def invalid_definition_format(self):
-        return self.return_code == 9
+        return 'section missing from definition' in self.output and \
+               self.return_code
 
     def invalid_definition_location_failure(self):
-        return self.return_code == 10
+        return 'Invalid definition location received ' \
+               'from server' in self.output and \
+               self.return_code
 
     def success(self):
-        return self.return_code == 0
+        return 'ZTP bootstrap completed successfully!' in self.output and \
+               not self.return_code
 
 
 class EAPIServer(object):
@@ -478,7 +495,7 @@ class ZTPServer(object):
         self.responses = {}
 
     def set_file_response(self, filename, output,
-                          content_type='application/octet-stream',
+                          content_type='text/plain',
                           status=STATUS_OK):
         self.responses['/%s' % filename ] = Response(
             content_type, status,

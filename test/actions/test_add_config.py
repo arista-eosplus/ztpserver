@@ -37,11 +37,11 @@ from string import Template
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import STARTUP_CONFIG
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
@@ -105,7 +105,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -129,7 +129,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -161,7 +161,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -197,7 +197,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -228,7 +228,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -259,7 +259,7 @@ class SuccessTest(unittest.TestCase):
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
-            raise assertion
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 

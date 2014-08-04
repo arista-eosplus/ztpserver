@@ -37,10 +37,10 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action, remove_file
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
@@ -115,8 +115,10 @@ class SuccessTest(unittest.TestCase):
                             file_log(boot_extensions))
 
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
             remove_file(boot_extensions)
@@ -180,8 +182,10 @@ class SuccessTest(unittest.TestCase):
                             file_log(boot_extensions))
 
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
             remove_file(boot_extensions)

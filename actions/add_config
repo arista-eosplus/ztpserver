@@ -27,7 +27,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702,W0402,E1103
+#pylint: disable=W0703,W0402,E1103
 
 import os
 from string import Template
@@ -61,8 +61,8 @@ def main(attributes):
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
-    except:
-        return 'unable to retrieve config from URL'
+    except Exception as exc:
+        return 'Unable to retrieve config from URL (%s)' % exc
 
     contents = open(TEMP_CONFIG, 'r').read()
 
