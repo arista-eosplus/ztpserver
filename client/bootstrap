@@ -910,7 +910,9 @@ if __name__ == '__main__':
     try:
         main()
     except ZtpError as exception:
-        log('Bootstrap process failed: %s' % str(exception),
+        log('''Bootstrap process failed:
+
+   %s''' % str(exception),
             error=True)
         _exit()
     except KeyboardInterrupt:
@@ -920,7 +922,9 @@ if __name__ == '__main__':
         log(traceback.format_exc())
         _exit()
     except Exception, exception:
-        log('Bootstrap process failed because of unknown exception: %s' % 
+        log('''Bootstrap process failed because of unknown exception:
+
+    %s''' % 
             exception, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
