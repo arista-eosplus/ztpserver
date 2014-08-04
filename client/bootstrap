@@ -136,13 +136,32 @@ except ImportError:
     res = os.system(cmd)
     if res:
         log('%s returned %s' % (cmd, res), error=True)
-        _exit()
+        _exit(1)
     import requests
 #pylint: enable=C0103
 # ------------------4.12.x support----------------------------    
 
 
 # ------------------Utilities----------------------------
+def _exit(code):
+    #pylint: disable=W0702
+
+    # Wait for XMPP messages to drain
+    time.sleep(3)
+    
+    if xmpp_client:
+        try:
+            xmpp_client.abort()
+        except:
+            pass
+        
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    #pylint: disable=W0212
+    # Need to close background sleekxmpp threads as well
+    os._exit(code)
+
 SYSTEM_ID = None
 XMPP_MSG_TYPE = None
 def log_xmpp():
@@ -885,26 +904,8 @@ def main():
 
     log('ZTP bootstrap completed successfully!')
 
-    os._exit(0)
+    _exit(0)
 
-def _exit():
-    #pylint: disable=W0702
-
-    # Wait for XMPP messages to drain
-    time.sleep(3)
-    
-    if xmpp_client:
-        try:
-            xmpp_client.abort()
-        except:
-            pass
-        
-    sys.stdout.flush()
-    sys.stderr.flush()
-
-    #pylint: disable=W0212
-    # Need to close background sleekxmpp threads as well
-    os._exit(1)
 
 if __name__ == '__main__':
     try:
@@ -913,17 +914,17 @@ if __name__ == '__main__':
         log('''Bootstrap process failed:
    %s''' % str(exception),
             error=True)
-        _exit()
+        _exit(1)
     except KeyboardInterrupt:
         log('Bootstrap process keyboard-interrupted',
             error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        _exit()
+        _exit(1)
     except Exception, exception:
         log('''Bootstrap process failed because of unknown exception:
    %s''' % 
             exception, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        _exit()
+        _exit(1)

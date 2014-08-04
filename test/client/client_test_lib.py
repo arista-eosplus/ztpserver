@@ -81,10 +81,12 @@ SYSTEM_MAC = '1234567890'
 
 
 def raise_exception(exception):
+    #pylint: disable=C0301, C0321
+
     # Uncomment the following line for debugging
     # import pdb; pdb.set_trace()
 
-    raise exception
+    raise exception, 'Uncomment line in client_tes_lib.py:raise exception for debugging'
 
 ztps = None    #pylint: disable=C0103
 def start_ztp_server():
