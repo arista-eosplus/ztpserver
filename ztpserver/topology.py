@@ -422,44 +422,51 @@ class Pattern(object):
 
     def match_node(self, node):
 
-        log.info('Attempting to match node %s', node.systemmac)
+        log.info('Attempting to match node (system MAC:%s, serial no.:%s)', 
+                 (node.systemmac, node.serialnumber))
 
         try:
             patterns = list()
             for entry in self.interfaces:
                 for pattern in entry['patterns']:
                     patterns.append(pattern)
-            matches = list()
+
+            log.info('Patterns: %s' % str(patterns))
 
             for interface, neighbors in node.neighbors.items():
-                matched_index = None
+                log.info('Attepting to match interface %s(%s)' % 
+                         (interface, str(neighbors)))                
+
+                match = False
                 for index, pattern in enumerate(patterns):
+                    log.info('Pattern: %s' % pattern)
                     try:
                         if pattern.match(interface, neighbors):
-                            matched_index = index
+                            log.info('Pattern matched')
+                            del patterns[index]
+                            match = True
                             break
+                        else:
+                            log.warning('Pattern did not match')
                     except InterfacePatternError:
-                        log.warning('Interface %s matched but neighbors were '
-                                    'invalid', interface)
+                        log.warning('Interface %s matched %s but neighbors '
+                                    'were invalid', (interface, pattern))
                         return False
 
-                if matched_index is not None:
-                    log.debug('Removing pattern %r from available patterns',
-                              patterns[matched_index])
-                    matches.append(patterns[matched_index])
-                    del patterns[matched_index]
-                if matched_index is None:
-                    log.warning('Pattern was not matched')
+                if not match:
+                    log.warning('Interface %s did not match any patterns', 
+                                interface)
 
             for pattern in patterns:
-                log.debug('Checking remaining patterns for positive contraint')
-                if not pattern.is_wildcard():
-                    log.debug('pattern %s has positive contraint', pattern)
+                if pattern.is_positive_constraint():
+                    log.debug('Pattern %s did not match any interface!', 
+                              pattern)
                     return False
             return True
 
-        except Exception:
-            log.exception('Unexpected exception during match_node')
+        except Exception as exc:
+            log.exception('Unexpected exception during match_node (%s)' % 
+                          exc)
             raise PatternError
 
 
