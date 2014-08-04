@@ -56,7 +56,6 @@ INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_ANY_RE),
                               (KW_NONE_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_NONE_RE, KW_NONE_RE, KW_ANY_RE),
-                              (KW_NONE_RE, KW_NONE_RE, KW_NONE_RE),
                               (KW_NONE_RE, KW_NONE_RE, WC_PORT_RE)]
 
 
