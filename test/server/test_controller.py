@@ -152,7 +152,7 @@ class MetaControllerUnitTests(unittest.TestCase):
                                    path_info=path)
 
         self.assertEqual(resp['body'], '')
-        self.assertEqual(resp['content_type'], 'text/html')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_HTML)
         self.assertEqual(resp['status'], constants.HTTP_STATUS_NOT_FOUND)
 
     @patch('ztpserver.controller.create_repository')
@@ -170,7 +170,7 @@ class MetaControllerUnitTests(unittest.TestCase):
                                    path_info=random_string())
 
         self.assertEqual(resp['body'], '')
-        self.assertEqual(resp['content_type'], 'text/html')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_HTML)
         self.assertEqual(resp['status'],
                          constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
@@ -190,7 +190,7 @@ class MetaControllerUnitTests(unittest.TestCase):
                                    path_info=random_string())
 
         self.assertEqual(resp['body'], {'sha1': sha1, 'size': size})
-        self.assertEqual(resp['content_type'], 'application/json')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
 
 
 class BootstrapControllerUnitTests(unittest.TestCase):
@@ -204,7 +204,7 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         resp = controller.index(None)
 
         self.assertTrue(m_substitute.called)
-        self.assertEqual(resp['content_type'], 'text/x-python')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_PYTHON)
         self.assertEqual(resp['body'], m_substitute.return_value)
 
     @patch('ztpserver.controller.create_repository')
@@ -242,7 +242,7 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         resp = controller.config(None)
 
         self.assertEqual(resp['body'], config.as_dict())
-        self.assertEqual(resp['content_type'], 'application/json')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
 
     @patch('ztpserver.controller.create_repository')
     def test_config_defaults(self, m_repository):
@@ -253,7 +253,7 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         resp = controller.config(None)
 
         self.assertEqual(resp['body'], controller.DEFAULTCONFIG)
-        self.assertEqual(resp['content_type'], 'application/json')
+        self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
 
     @patch('ztpserver.controller.create_repository')
     def test_config_failure(self, m_repository):
@@ -282,7 +282,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'text/x-python')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_PYTHON)
         self.assertEqual(resp.body, contents)
 
     def test_get_bootstrap_missing(self):
@@ -293,7 +293,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
-        self.assertEqual(resp.content_type, 'text/html')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
 
     @patch('string.Template.substitute')
     def test_get_bootstrap_misconfigured(self, m_substitute):
@@ -303,7 +303,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
-        self.assertEqual(resp.content_type, 'text/html')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
 
     def test_get_bootstrap_inaccessible(self):
         cfg = {'return_value.get_file.side_effect': FileObjectError}
@@ -313,7 +313,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
-        self.assertEqual(resp.content_type, 'text/html')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
 
     def test_get_bootstrap_config_success(self):
         config = create_bootstrap_conf()
@@ -327,7 +327,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertEqual(json.loads(resp.body), config.as_dict())
 
     def test_get_bootstrap_config_defaults(self):
@@ -340,7 +340,7 @@ class BootstrapControllerIntegrationTests(unittest.TestCase):
         defaultconfig = {'logging': list(), 'xmpp': dict()}
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertEqual(json.loads(resp.body), defaultconfig)
 
 class FilesControllerIntegrationTests(unittest.TestCase):
@@ -361,6 +361,7 @@ class FilesControllerIntegrationTests(unittest.TestCase):
 
         m_repository.return_value.get_file.assert_called_with(filepath)
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_OTHER)
         self.assertEqual(resp.body, contents)
 
 
@@ -397,7 +398,7 @@ class ActionsControllerIntegrationTests(unittest.TestCase):
 
         m_repository.return_value.get_file.assert_called_with(url[1:])
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'text/x-python')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_PYTHON)
         self.assertEqual(resp.body, contents)
 
     @patch('ztpserver.controller.create_repository')
@@ -848,7 +849,7 @@ class NodesControllerUnitTests(unittest.TestCase):
     def test_do_put_config_success(self):
         resource = random_string()
         body = random_string()
-        request = Mock(content_type='text/plain', body=body)
+        request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.do_put_config(dict(), resource=resource,
@@ -989,7 +990,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertIsInstance(json.loads(resp.body), dict)
 
     @patch('ztpserver.neighbordb.create_node')
@@ -1029,7 +1030,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertIsInstance(json.loads(resp.body), dict)
 
     @patch('ztpserver.controller.create_repository')
@@ -1065,7 +1066,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
-        self.assertEqual(resp.content_type, 'text/html')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
         self.assertEqual(resp.body, str())
 
     @patch('ztpserver.controller.create_repository')
@@ -1097,7 +1098,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertIsInstance(json.loads(resp.body), dict)
 
     @patch('ztpserver.controller.create_repository')
@@ -1130,7 +1131,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertIsInstance(json.loads(resp.body), dict)
 
 
@@ -1162,7 +1163,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
-        self.assertEqual(resp.content_type, 'text/html')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
         self.assertEqual(resp.body, str())
 
     @patch('ztpserver.controller.create_repository')
@@ -1206,7 +1207,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         #import pdb; pdb.set_trace()
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
-        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
 
         attrs = resp.json['actions'][0]['attributes']
         self.assertFalse('variables' in attrs)

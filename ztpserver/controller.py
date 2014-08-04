@@ -119,7 +119,7 @@ class FilesController(BaseController):
             log.debug('Requesting file: %s', resource)
             filepath = self.expand(resource)
             filename = self.repository.get_file(filepath).name
-            return FileApp(filename)
+            return FileApp(filename, content_type=CONTENT_TYPE_OTHER)
         except FileObjectNotFound:
             log.error('Requested file %s was not found', resource)
             return self.http_not_found()
