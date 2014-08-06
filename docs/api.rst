@@ -159,22 +159,10 @@ Request definition from the server.
 
     .. sourcecode:: http
 
-        Content-Type: application/json
-        {
-            “model”*:             <MODEL_NAME>, 
-            “serialnumber”*:      <SERIAL_NUMBER>, 
-            “systemmac”*:         <SYSTEM_MAC>,
-            “version”*:           <INTERNAL_VERSION>, 
-
-            “neighbors”*: {
-                <INTERFACE_NAME(LOCAL)>: [ {
-                    'device':             <DEVICE_NAME>, 
-                    'remote_interface':   <INTERFACE_NAME(REMOTE)>
-                } ]
-            }, 
-        }
-
-    **Note**: \* Items are mandatory (even if value is empty list/dict)
+        GET /nodes/{ID} HTTP/1.1
+        Host: 
+        Accept: applicatino/json
+        Content-Type: text/html
 
     **Response**
 
