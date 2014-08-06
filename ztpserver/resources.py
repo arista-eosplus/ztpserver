@@ -106,5 +106,3 @@ class ResourcePool(object):
             log.exception('An error occurred trying to lookup existing '
                           'resource for node %s', node.systemmac)
             raise ResourcePoolError
-
-
