@@ -63,6 +63,7 @@ setup(
         ('%s/definitions' % INSTALL_PATH, []),
         ('%s/files' % INSTALL_PATH, []),
         ('%s/resources' % INSTALL_PATH, []),
+        ('%s' % INSTALL_PATH, ['conf/neighbordb']),
 
         # 4.12.x support
         ('%s/files/lib' % INSTALL_PATH, ['client/lib/requests-2.3.0.tar.gz']),
