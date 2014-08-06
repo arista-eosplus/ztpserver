@@ -560,7 +560,7 @@ class InterfacePattern(object):
                     return False
                 elif self.remote_interface == 'none':
                     # no LLDP capable neighbors
-                    return None
+                    return False
                 else:
                     # bogus
                     return False
