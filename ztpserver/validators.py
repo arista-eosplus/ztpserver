@@ -81,6 +81,8 @@ class Validator(object):
                 try:
                     getattr(self, name[0])()
                 except ValidationError as exc:
+                    cls = str(self.__class__).split('\'')[1].split('.')[-1]
+                    log.info('%s validation error: %s' % (cls, exc))
                     self.error(exc)
         return not self.fail
 
@@ -108,11 +110,7 @@ class TopologyValidator(Validator):
             raise ValidationError('Missing required \'patterns\' attribute')
 
         for index, entry in enumerate(self.data.get('patterns')):
-            try:
-                name = entry.get('name')
-                hash(name)
-            except TypeError:
-                name = str(name)
+            name = str(entry.get('name'))
 
             validator = PatternValidator()
 
@@ -120,10 +118,9 @@ class TopologyValidator(Validator):
                 log.info('Add pattern %s to valid patterns', name)
                 self.valid_patterns.add((index, name))
             else:
-                log.info('Add pattern %s to failed patterns', name)
-                self.error('Unable to validate pattern %s (%d)', name, index)
+                log.info('Unable to validate pattern %s (%d)' % (name, index))
+                self.error('Unable to validate pattern %s (%d)' % (name, index))
                 self.failed_patterns.add((index, name))
-
 
 class PatternValidator(Validator):
 
@@ -135,28 +132,28 @@ class PatternValidator(Validator):
     def validate_attributes(self):
         for attr in REQUIRED_PATTERN_ATTRIBUTES:
             if attr not in self.data:
-                raise ValidationError('missing required attribute: %s' % attr)
+                raise ValidationError('Missing required attribute: %s' % attr)
 
         for attr in OPTIONAL_PATTERN_ATTRIBUTES:
             if attr not in self.data:
-                log.warning('pattern missing optional attribute: %s', attr)
+                log.warning('Pattern missing optional attribute: %s', attr)
 
     def validate_name(self):
         if 'name' not in self.data:
-            raise ValidationError('name attribute missing')
+            raise ValidationError('Name attribute missing')
 
         if self.data is None or self.data['name'] is None:
-            raise ValidationError('name attribute cannot be none')
+            raise ValidationError('Name attribute cannot be none')
 
         if not isinstance(self.data['name'], (int, basestring)):
-            raise ValidationError('name attribute must be a string')
+            raise ValidationError('Name attribute must be a string')
 
     def validate_interfaces(self):
         if 'interfaces' not in self.data:
             return
 
         if not isinstance(self.data['interfaces'], collections.Iterable):
-            raise ValidationError('interface attribute is not iterable')
+            raise ValidationError('Interface attribute is not iterable')
 
         for index, pattern in enumerate(self.data['interfaces']):
             if not isinstance(pattern, collections.Mapping):
@@ -164,26 +161,31 @@ class PatternValidator(Validator):
                                       pattern)
 
             validator = InterfacePatternValidator()
+
             if validator.validate(pattern):
-                log.info('Interface pattern at index %d passed', index)
+                log.info('Interface pattern %s passed validation', 
+                         repr(pattern))
                 self.passed_interface_patterns.add((index, repr(pattern)))
             else:
-                self.error('Interface pattern at index %d failed', index)
+                log.info('Interface pattern %s failed validation', 
+                         repr(pattern))
                 self.failed_interface_patterns.add((index, repr(pattern)))
+                raise ValidationError('Interface pattern %s failed validation', 
+                                      repr(pattern))
 
     def validate_definition(self):
         if 'definition' not in self.data:
             return
 
         if self.data is None or self.data['definition'] is None:
-            raise ValidationError('definition attribute cannot be none')
+            raise ValidationError('Definition attribute cannot be none')
 
         if not isinstance(self.data['definition'], basestring):
-            raise ValidationError('definition attribute must be a string')
+            raise ValidationError('Definition attribute must be a string')
 
         for wspc in string.whitespace:
             if wspc in self.data['definition']:
-                raise ValidationError('whitespace not allowed in definition')
+                raise ValidationError('Whitespace not allowed in definition')
 
     def validate_pattern(self):
         name = self.data.get('name')
@@ -217,23 +219,25 @@ class InterfacePatternValidator(Validator):
             if peer is None:
                 raise ValidationError('Missing peer')
 
-        try:
-            (intf, device, port) = Pattern.parse_interface(interface, peer)
-        except PatternError:
-            raise ValidationError('Validation failed due to PatternError')
+            try:
+                (device, port) = Pattern.parse_interface(peer)
+            except PatternError as err:
+                raise ValidationError('Validation failed due to '
+                                      'PatternError (%s)' % err)
 
-        if not VALID_INTERFACE_RE.match(interface):
-            if interface not in INTERFACE_PATTERN_KEYWORDS:
-                try:
-                    expand_range(interface)
-                except Exception:
-                    raise ValidationError('Invalid interface name (%s)' % intf)
+            if not VALID_INTERFACE_RE.match(interface):
+                if interface not in INTERFACE_PATTERN_KEYWORDS:
+                    try:
+                        expand_range(interface)
+                    except Exception:
+                        raise ValidationError('Invalid interface name (%s)' % 
+                                              interface)
 
-        try:
-            for entry in expand_range(intf):
-                self._validate_pattern(entry, device, port)
-        except TypeError:
-            self._validate_pattern(intf, device, port)
+            try:
+                for entry in expand_range(interface):
+                    self._validate_pattern(entry, device, port)
+            except TypeError:
+                self._validate_pattern(interface, device, port)
 
     def _validate_pattern(self, interface, device, port):
         # pylint: disable=R0201

@@ -59,17 +59,25 @@ log.addHandler(logging.NullHandler())
 
 def enable_handler_console(level=None):
     """ Enables logging to stdout """
-
+    
     logging_fmt = ztpserver.config.runtime.default.console_logging_format
     formatter = logging.Formatter(logging_fmt)
 
     ch = logging.StreamHandler()
     ch.tag = 'console'
+
+    
+    for handler in log.handlers:
+        if 'tag' in handler.__dict__ and handler.tag == ch.tag:
+            # Handler previously added
+            return
+
     level = level or 'DEBUG'
     level = str(level).upper()
     level = logging.getLevelName(level)
     ch.setLevel(level)
     ch.setFormatter(formatter)
+
     log.addHandler(ch)
 
 def disable_handler(tag):
