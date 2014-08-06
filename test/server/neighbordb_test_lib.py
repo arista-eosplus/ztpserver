@@ -30,6 +30,8 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+    #pylint: disable=E1121
+
 import unittest
 
 from ztpserver.neighbordb import load_topology, create_node
@@ -101,11 +103,11 @@ class NeighbordbTest(unittest.TestCase):
         if self.result.get('nodes', None):
             self.assertEqual(
                 sorted(self.result['nodes']),
-                self.topology.get_patterns(self.topology.isnodepattern),
+                self.topology.get_patterns(self.topology.is_node_pattern),
                 'failed to match node patterns [%s]' % self.name)
 
         if self.result.get('globals', None):
             self.assertEqual(
                 sorted(self.result['globals']),
-                self.topology.get_patterns(self.topology.isglobalpattern),
+                self.topology.get_patterns(self.topology.is_global_pattern),
                 'failed to match global patterns [%s]' % self.name)

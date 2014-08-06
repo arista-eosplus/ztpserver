@@ -1216,8 +1216,6 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
-        #import pdb; pdb.set_trace()
-
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
         self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
 

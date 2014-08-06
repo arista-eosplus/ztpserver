@@ -7,6 +7,7 @@ valid_patterns:
   nodes:
     - sample node template 1
     - sample node template 2
+    - negative constraints 1
   globals:
     - sample global template 1
     - sample global template 2
@@ -90,6 +91,12 @@ neighbordb:
 
   patterns:
 
+    - name: negative constraints 1
+      definition: test
+      node: 000c29f51111
+      interfaces:
+        - none: spine4:any
+
     - name: sample node template 1
       definition: test
       node: 000c29f5d27d
@@ -131,7 +138,6 @@ neighbordb:
         - Ethernet50:
             device: includes('localhost')
             port: Ethernet50
-
 
     - name: sample global template 2
       definition: mlag_leaf_template

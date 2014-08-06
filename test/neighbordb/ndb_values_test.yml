@@ -48,6 +48,7 @@ valid_patterns:
     - intf range 2
     - intf range 3
     - intf range 4
+    - intf range 5
   nodes:
     - correct system mac 1
     - correct system mac 2
@@ -67,7 +68,7 @@ neighbordb:
         - Ethernet1: localhost:Ethernet2
 
 
-    # # Single character
+    # Single character
     - name: $
       definition: test
       interfaces:
@@ -485,23 +486,23 @@ neighbordb:
       interfaces:
         - test: hostname:Ethernet1/2/3
 
-    # # Not provisioned
-    # - name: erroneous intf range 2
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1/2/3/4: hostname:Ethernet1/2/3
+    # Not provisioned
+    - name: erroneous intf range 2
+      definition: test
+      interfaces:
+        - Ethernet1/2/3/4: hostname:Ethernet1/2/3
 
-    # # Not provisioned
-    # - name: erroneous intf range 3
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1/a: hostname:Ethernet1/2/3
+    # Not provisioned
+    - name: erroneous intf range 3
+      definition: test
+      interfaces:
+        - Ethernet1/a: hostname:Ethernet1/2/3
 
-    # # Not provisioned
-    # - name: erroneous intf range 4
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1/: hostname:Ethernet1/2/3
+    # Not provisioned
+    - name: erroneous intf range 4
+      definition: test
+      interfaces:
+        - Ethernet1/: hostname:Ethernet1/2/3
 
     # Not provisioned
     - name: erroneous intf range 5
@@ -509,20 +510,20 @@ neighbordb:
       interfaces:
         - Ethernet-1: hostname:Ethernet1/2/3
 
-    # # Not provisioned
-    # - name: erroneous intf range 6
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet1/-1: hostname:Ethernet1/2/3
-
-    # # Not provisioned
-    # - name: erroneous intf range 7
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet0: hostname:Ethernet1/2/3
+    # Not provisioned
+    - name: erroneous intf range 6
+      definition: test
+      interfaces:
+        - Ethernet1/-1: hostname:Ethernet1/2/3
 
     # Not provisioned
     - name: erroneous intf range 7
+      definition: test
+      interfaces:
+        - Ethernet0: hostname:Ethernet1/2/3
+
+    # Not provisioned
+    - name: erroneous intf range 8
       definition: test
       interfaces:
         - EthernetZ: hostname:Ethernet1/2/3
@@ -547,33 +548,29 @@ neighbordb:
       interfaces:
         - Ethernet4-4: none:none
 
-    # # Not provisioned
-    # - name: intf range error 1
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet0,2: none:none
+    - name: intf range 5
+      definition: test
+      interfaces:
+        - Ethernet5,Ethernet2-7: none:none
 
-    # # Not provisioned
-    # - name: intf range error 2
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet5-2: none:none
+    # Not provisioned
+    - name: intf range error 1
+      definition: test
+      interfaces:
+        - Ethernet5-2: none:none
 
-    # # Not provisioned
-    # - name: intf range error 3
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet5,Ethernet2-7: none:none
+    - name: intf range error 2
+      definition: test
+      interfaces:
+        - Ethernet2,a,3: none:none
 
-    # # Not provisioned
-    # - name: intf range error 4
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet2,a,3: none:none
+    - name: intf range error 3
+      definition: test
+      interfaces:
+        - Ethernet2-a: none:none
 
-    # # Not provisioned
-    # - name: intf range error 5
-    #   definition: test
-    #   interfaces:
-    #     - Ethernet2-a: none:none
+    - name: intf range error 4
+      definition: test
+      interfaces:
+        - Ethernet0,2: none:none
 

@@ -5,6 +5,7 @@ tests:
 valid_patterns:
   globals:
     - good pattern
+    - no LLDP neighbors
 
 neighbordb:
 
@@ -48,66 +49,60 @@ neighbordb:
     - name: bogus pattern 8
       definition: test
       interfaces:
-        - none: none:none
-
-    - name: bogus pattern 9
-      definition: test
-      interfaces:
         - none: none:PORT
 
-    - name: bogus pattern 10
+    - name: bogus pattern 9
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - any: any:none
 
-    - name: bogus pattern 11
+    - name: bogus pattern 10
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - any: none:none
 
-    - name: bogus pattern 12
+    - name: bogus pattern 11
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - any: none:any
 
-    - name: bogus pattern 13
+    - name: bogus pattern 12
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - any: none:PORT
 
-    - name: bogus pattern 14
+    - name: bogus pattern 13
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - none: any:any
 
-    - name: bogus pattern 15
+    - name: bogus pattern 14
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - none: any:none
 
-    - name: bogus pattern 16
+    - name: bogus pattern 15
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - none: none:any
 
-    - name: bogus pattern 17
-      definition: test
-      interfaces:
-        - Ethernet1: hostname:Ethernet2
-        - none: none:none
-
-    - name: bogus pattern 18
+    - name: bogus pattern 16
       definition: test
       interfaces:
         - Ethernet1: hostname:Ethernet2
         - none: none:PORT
+
+    - name: no LLDP neighbors
+      definition: test
+      interfaces:
+        - none: none:none
 
     - name: good pattern
       definition: test

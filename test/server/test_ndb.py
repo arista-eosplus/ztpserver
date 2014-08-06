@@ -30,12 +30,12 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-    # pylint: disable=W0142
+# pylint: disable=W0142
 
 import os
 import unittest
 import logging
-
+import traceback
 import yaml
 
 from ztpserver.app import enable_handler_console
@@ -47,6 +47,12 @@ TEST_DIR = 'test/neighbordb'
 log = logging.getLogger(__name__) # pylint: disable=C0103
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
+
+def debug(exc):
+    # Uncomment line for debugging
+    # import pdb; pdb.set_trace()
+    
+    raise exc
 
 def enable_logging(level=None):
     logging_fmt = '%(levelname)s: [%(module)s:%(lineno)d] %(message)s'
@@ -92,75 +98,101 @@ class NeighbordbTest(unittest.TestCase):
         return (validator.valid_patterns, validator.failed_patterns)
 
     def neighbordb_pattern(self):
-        log.info('START: neighbordb_patterns')
-        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
+        try:
+            log.info('START: neighbordb_patterns')
+            tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
-        (valid, failed) = self._validate_topology()
+            (valid, failed) = self._validate_topology()
 
-        if self.failed_patterns:
-            failed_names = sorted([p[1] for p in failed])
-            self.assertEqual(failed_names, sorted(self.failed_patterns), tag)
-            self.assertEqual(len(failed), len(self.failed_patterns), tag)
+            if self.failed_patterns:
+                failed_names = sorted([p[1] for p in failed])
+                self.assertEqual(failed_names, 
+                                 sorted(self.failed_patterns),
+                                 tag)
+                self.assertEqual(len(failed), len(self.failed_patterns), tag)
 
-        p_all = self.valid_patterns.get('nodes') + \
-                self.valid_patterns.get('globals')
-        if p_all:
-            valid_actual = sorted([p[1] for p in valid])
-            valid_configured = sorted(p_all)
-            self.assertEqual(valid_actual, valid_configured, tag)
+            p_all = self.valid_patterns.get('nodes') + \
+                    self.valid_patterns.get('globals')
+            if p_all:
+                valid_actual = sorted([str(p[1]) for p in valid])
+                valid_configured = sorted([str(x) for x in p_all])
 
-        log.info('END: neighbordb_patterns')
+                self.assertEqual(valid_actual, valid_configured, tag)
+
+            log.info('END: neighbordb_patterns')
+        except AssertionError as exc:
+            print exc
+            print traceback.format_exc()
+            debug(exc)
 
     def neighbordb_topology(self):
-        log.info('START: neighbordb_topology')
-        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
+        try:
+            log.info('START: neighbordb_topology')
+            tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
-        topo = self._load_topology()
-        self.assertIsNotNone(topo, tag)
+            topo = self._load_topology()
+            self.assertIsNotNone(topo, tag)
 
-        p_nodes = [p.name for p in topo.get_patterns(topo.isnodepattern)]
-        p_globals = [p.name for p in topo.get_patterns(topo.isglobalpattern)]
+            p_nodes = [p.name for p in topo.get_patterns() 
+                       if topo.is_node_pattern(p)]
+            p_globals = [p.name for p in topo.get_patterns()
+                         if topo.is_global_pattern(p)]
 
-        self.assertEqual(sorted(self.valid_patterns['nodes']),
-                         sorted(p_nodes),
-                         tag)
-        self.assertEqual(sorted(self.valid_patterns['globals']),
-                         sorted(p_globals),
-                         tag)
+            self.assertEqual(sorted(self.valid_patterns['nodes']),
+                             sorted(p_nodes),
+                             tag)
+            self.assertEqual(sorted(self.valid_patterns['globals']),
+                             sorted(p_globals),
+                             tag)
 
-        log.info('END: neighbordb_topology')
-        return topo
+            log.info('END: neighbordb_topology')
+            return topo
+        except AssertionError as exc:
+            print exc
+            print traceback.format_exc()
+            debug(exc)
 
     def node_pass(self):
-        log.info('START: node_pass')
-        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
-
-        node = load_node(self.node)
-        self.assertIsNotNone(node, tag)
-
-        topology = self._load_topology()
-        self.assertIsNotNone(topology, tag)
-        result = topology.match_node(node)
-
-        self.assertEqual(result[0].name, self.match, tag)
-        self.assertTrue(result, tag)
-
-        log.info('END: node_pass')
+        try:
+            log.info('START: node_pass')
+            tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
+            
+            node = load_node(self.node)
+            self.assertIsNotNone(node, tag)
+            
+            topology = self._load_topology()
+            self.assertIsNotNone(topology, tag)
+            result = topology.match_node(node)
+            
+            self.assertTrue(result, tag)
+            self.assertEqual(result[0].name, self.match, tag)
+            log.info('END: node_pass')
+        except AssertionError as exc:
+            print exc
+            print traceback.format_exc()
+            debug(exc)
 
     def node_fail(self):
-        log.info('START: node_fail')
-        tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
+        try:
+            log.info('START: node_fail')
+            tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
-        node = load_node(self.node)
-        self.assertIsNotNone(node, tag)
+            node = load_node(self.node)
+            self.assertIsNotNone(node, tag)
 
-        topology = self._load_topology()
-        self.assertIsNotNone(topology, tag)
+            topology = self._load_topology()
+            self.assertIsNotNone(topology, tag)
 
-        result = topology.match_node(node)
-        self.assertFalse(result, tag)
+            result = topology.match_node(node)
 
-        log.info('END: node_fail')
+            self.assertFalse(result, tag)
+            log.info('END: node_fail')
+        except AssertionError as exc:
+            print exc
+            print traceback.format_exc()
+            debug(exc)
+
+
 
 def get_test_list(filepath):
     test_list = os.environ.get('TESTS', None)

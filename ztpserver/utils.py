@@ -37,42 +37,41 @@ def atoi(text):
 def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
-def expand_range(text, match_prefix=None, replace_prefix=None):
+def expand_range(text):
     ''' Returns a naturally sorted list of items expanded from text. '''
 
-    match_prefix = match_prefix or '[a-zA-Z]'
-    prefix_match_re = r'^(?P<prefix>%s+)(?=\d)' % match_prefix
-    match = re.match(prefix_match_re, text)
+    match = re.match(r'^(((E(t(h)?)?(ernet)?)?(\d+)(([\/\-\,])?(\d+))*)'
+                     '(,)?)+$', 
+                     text)
 
     if not match:
-        raise TypeError('unable to match prefix: %s' % text)
-    elif match and not replace_prefix:
-        prefix = match.group('prefix')
-    elif match and replace_prefix:
-        prefix = replace_prefix
+        raise TypeError('Unable to expand interface range: %s' % text)
+    
 
-    indicies_re = re.compile(r'\d+')
-
-    indicies_re = re.compile(r'[Ethernet|,](\d+)(?!-)')
+    prefix = match.groups()[2]
+    indicies_re = re.compile(r'[Ethernet|,]((\d(\/)?)+)(?!-)')
     range_re = re.compile(r'(\d+)\-(\d+)')
 
-    indicies = indicies_re.findall(text)
+    indicies = [x[0] for x in indicies_re.findall(text)]
     ranges = range_re.findall(text)
 
     items = set()
-
     for start, end in ranges:
         start = int(start)
         end = int(end) + 1
+        if end < start:
+            raise TypeError('Unable to expand interface range: %s' % 
+                            text)            
         for index in range(start, end):
             items.add('%s%s' % (prefix, index))
 
     for index in indicies:
+        if index == '0' or len(index.split('/')) > 3:
+            raise TypeError('Unable to expand interface range: %s' % 
+                            text)            
         items.add('%s%s' % (prefix, index))
 
     items = list(items)
     items.sort(key=natural_keys)
+
     return items
-
-
-

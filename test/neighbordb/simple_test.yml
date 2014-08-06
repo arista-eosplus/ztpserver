@@ -4,6 +4,7 @@ tests:
   - topology
 valid_patterns:
   globals:
+    - no LLDP-capable neighbors
     - simple pattern 1
     - simple pattern 2
     - simple pattern 3
@@ -16,6 +17,9 @@ nodes:
   pass:
     - name: 2b3c
       match: simple pattern 1
+
+    - name: 2b3d
+      match: no LLDP-capable neighbors
 
 2b3c:
   systemmac: 00:1c:73:1a:2b:3c
@@ -33,9 +37,17 @@ nodes:
       - device: localhost
         port: Ethernet1
 
+2b3d:
+  systemmac: 00:1c:73:1a:2b:3d
+
 neighbordb:
 
   patterns:
+    - name: no LLDP-capable neighbors
+      definition: test
+      interfaces:
+        - none: none:none
+
     - name: simple pattern 1
       definition: test
       interfaces:
