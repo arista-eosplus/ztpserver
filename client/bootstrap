@@ -108,40 +108,6 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
 #---------------------------------XMPP------------------------
 
 
-# ------------------4.12.x support----------------------------
-def download_file(url, path):
-    if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
-        url = urlparse.urljoin(SERVER, url)
-
-    log('Retrieving URL: %s' % url)
-
-    url = urllib2.urlopen(url)
-    output_file = open(path, 'wb')
-    output_file.write(url.read())
-    output_file.close()
-
-#pylint: disable=C0103
-REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
-try:
-    import requests
-except ImportError:
-    requests_url = '/tmp/%s.tar.gz' % REQUESTS
-    download_file(REQUESTS_URL, requests_url)
-    cmd = 'sudo tar -xzvf %s -C /tmp;' \
-          'cd /tmp/%s;' \
-          'sudo python setup.py build;' \
-          'sudo python setup.py install' % \
-          (requests_url, REQUESTS)
-    res = os.system(cmd)
-    if res:
-        log('%s returned %s' % (cmd, res), error=True)
-        _exit(1)
-    import requests
-#pylint: enable=C0103
-# ------------------4.12.x support----------------------------    
-
-
 # ------------------Utilities----------------------------
 def _exit(code):
     #pylint: disable=W0702
@@ -211,6 +177,41 @@ def flash_usage():
     return _ntuple_diskusage(total, used, free)
 # ------------------Utilities----------------------------
 
+
+# ------------------4.12.x support----------------------------
+def download_file(url, path):
+    if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
+        url = urlparse.urljoin(SERVER, url)
+
+    log('Retrieving URL: %s' % url)
+
+    url = urllib2.urlopen(url)
+    output_file = open(path, 'wb')
+    output_file.write(url.read())
+    output_file.close()
+
+#pylint: disable=C0103
+REQUESTS = 'requests-2.3.0'
+REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
+try:
+    import requests
+except ImportError:
+    requests_url = '/tmp/%s.tar.gz' % REQUESTS
+    download_file(REQUESTS_URL, requests_url)
+    cmd = 'sudo tar -xzvf %s -C /tmp;' \
+          'cd /tmp/%s;' \
+          'sudo python setup.py build;' \
+          'sudo python setup.py install' % \
+          (requests_url, REQUESTS)
+    res = os.system(cmd)
+    if res:
+        log('%s returned %s' % (cmd, res), error=True)
+        _exit(1)
+    import requests
+#pylint: enable=C0103
+# ------------------4.12.x support----------------------------    
+
+
 class ZtpError(Exception):
     pass
 
@@ -264,7 +265,10 @@ class Node(object):
             raise ZtpError('Unable to enable eAPI')
 
         # Workaround for BUG89374
-        self.disable_copp()
+        try:
+            self.disable_copp()
+        except jsonrpclib.jsonrpc.ProtocolError as err:
+            log('unable to disable COPP: %s' % err, error=True)
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
