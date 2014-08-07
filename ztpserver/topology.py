@@ -257,6 +257,8 @@ class Topology(object):
     def find_patterns(self, node):
         log.info('Searching for eligible patterns for node %s' % str(node))
         pattern = self.patterns['nodes'].get(node.systemmac, None)
+        if not pattern:
+            pattern = self.patterns['nodes'].get(node.serialnumber, None)
         if pattern:
             log.info('Eligible pattern: %s' % pattern.name)
             return [pattern]
