@@ -656,7 +656,7 @@ class MetaController(BaseController):
         return 'MetaController(folder=%s)' % self.FOLDER
 
     def metadata(self, request, **kwargs):
-        ''' Handles GET /meta/[actions|files]/<PATH_INFO> '''
+        ''' Handles GET /meta/[actions|files|nodes]/<PATH_INFO> '''
 
         filepath = '%s/%s' % (kwargs['type'], kwargs['path_info'])
 
@@ -713,7 +713,8 @@ class Router(WSGIRouter):
 
             # configure /meta
             router_mapper.connect('meta', 
-                                  '/meta/{type:actions|files}/{path_info:.*}',
+                                  '/meta/{type:actions|files|nodes}/'
+                                  '{path_info:.*}',
                                   controller=MetaController,
                                   action='metadata',
                                   conditions=dict(method=['GET']))
