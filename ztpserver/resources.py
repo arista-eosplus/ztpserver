@@ -70,6 +70,8 @@ class ResourcePool(object):
         dump(self, filepath, CONTENT_TYPE_YAML)
 
     def allocate(self, pool, node):
+        identifier = ztpserver.config.runtime.default.identifier
+        node_id = getattr(node, identifier)
         try:
             match = self.lookup(pool, node)
             if match:
@@ -80,9 +82,9 @@ class ResourcePool(object):
             key = next(x[0] for x in self.data.items() if x[1] is None)
 
             log.info('Assigning %s from pool %s to node %s',
-                     key, pool, node.systemmac)
+                     key, pool, node_id)
 
-            self.data[key] = node.systemmac
+            self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
             log.warning('No resources available in pool %s', pool)
@@ -94,17 +96,16 @@ class ResourcePool(object):
 
     def lookup(self, pool, node):
         ''' Return an existing allocated resource if one exists '''
-
+        identifier = ztpserver.config.runtime.default.identifier
+        node_id = getattr(node, identifier)
         try:
-            log.info('Looking up resource for node %s', node.systemmac)
+            log.info('Looking up resource for node %s', node_id)
             self.load(pool)
             matches = [m[0] for m in self.data.iteritems()
-                       if m[1] == node.systemmac]
+                       if m[1] == node_id]
             key = matches[0] if matches else None
             return key
         except Exception:
             log.exception('An error occurred trying to lookup existing '
-                          'resource for node %s', node.systemmac)
+                          'resource for node %s', node_id)
             raise ResourcePoolError
-
-

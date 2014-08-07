@@ -315,8 +315,9 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
             fobj = self.repository.add_file(filename)
-        except Exception:
-            log.error('Unexpected error trying to execute dump_node')
+        except Exception as err:
+            log.error('Unexpected error trying to execute dump_node: %s' %
+                      err)
             raise
         finally:
             fobj.write(contents, CONTENT_TYPE_JSON)
@@ -411,8 +412,9 @@ class NodesController(BaseController):
         except FileObjectNotFound as exc:
             log.error('Unable to find file %s', exc.message)
             raise
-        except Exception:
-            log.error('Unexpected error trying to execute post_node')
+        except Exception as err:
+            log.error('Unexpected error trying to execute post_node: %s' %
+                      err)
             raise
         return (response, 'dump_node')
 
@@ -434,8 +436,9 @@ class NodesController(BaseController):
         try:
             nodeid = kwargs.get('nodeid')
             response['location'] = self.expand(nodeid)
-        except Exception:
-            log.error('Unexpected error trying to execute set_location')
+        except Exception as err:
+            log.error('Unexpected error trying to execute set_location: %s' %
+                      err)
             raise
         return (response, None)
 
@@ -510,8 +513,9 @@ class NodesController(BaseController):
                 log.info('Node pattern is valid')
             else:
                 log.warning('Topology validation is disabled')
-        except Exception:
-            log.error('Unexpected error trying to execute do_validation')
+        except Exception as err:
+            log.error('Unexpected error trying to execute do_validation: %s' %
+                      err)
             raise
         return (response, 'get_startup_config')
 
@@ -657,7 +661,7 @@ class MetaController(BaseController):
         return 'MetaController(folder=%s)' % self.FOLDER
 
     def metadata(self, request, **kwargs):
-        ''' Handles GET /meta/[actions|files]/<PATH_INFO> '''
+        ''' Handles GET /meta/[actions|files|nodes]/<PATH_INFO> '''
 
         filepath = '%s/%s' % (kwargs['type'], kwargs['path_info'])
 
@@ -714,7 +718,8 @@ class Router(WSGIRouter):
 
             # configure /meta
             router_mapper.connect('meta', 
-                                  '/meta/{type:actions|files}/{path_info:.*}',
+                                  '/meta/{type:actions|files|nodes}/'
+                                  '{path_info:.*}',
                                   controller=MetaController,
                                   action='metadata',
                                   conditions=dict(method=['GET']))

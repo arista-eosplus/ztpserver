@@ -36,9 +36,9 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import FLASH, STARTUP_CONFIG
+from client_test_lib import FLASH
 from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import file_log, remove_file, get_action
+from client_test_lib import eapi_log, remove_file, get_action
 from client_test_lib import startup_config_action, random_string
 from client_test_lib import print_action
 from client_test_lib import raise_exception
@@ -100,79 +100,30 @@ class SuccessTest(unittest.TestCase):
             actions=[{'action' : 'test_action',
                       'attributes' : {
                         'url' : url,
-                        'version' : version}}])
+                        'version' : version}},
+                     {'action' :'startup_config_action'}])
 
-        boot_file = '/tmp/boot-config'
         action = get_action('install_image')
-        action = action.replace('/mnt/flash/boot-config',
-                                boot_file)
         bootstrap.ztps.set_action_response('test_action',
                                            action)
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
         bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
-        image_file = '%s/%s.swi' % (FLASH, version)
+        image_file = '%s/EOS-%s.swi' % (FLASH, version)
         try:
-            self.failUnless('! boot system flash:/%s.swi' % version
-                            in file_log(STARTUP_CONFIG))
             self.failUnless(os.path.isfile(image_file))
-            self.failUnless(['SWI=flash:/%s.swi' % version] ==
-                            file_log(boot_file))
             self.failUnless(bootstrap.success())
+            self.failUnless(eapi_log()[-1] == 
+                            'install source flash:EOS-%s.swi' % version)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
             raise_exception(assertion)
         finally:
             remove_file(image_file)
-            remove_file(boot_file)
             bootstrap.end_test()
-
-    def test_startup_config(self):
-        bootstrap = Bootstrap(ztps_default_config=True)
-        version = random_string()
-        image = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, image)
-        bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes' : {
-                        'url' : url,
-                        'version' : version}}])
-        wrong_version = '%s_test' % version
-        bootstrap.ztps.set_action_response(
-            'startup_config_action',
-            startup_config_action(lines=['! boot system flash:/%s.swi' %
-                                         wrong_version]))
-
-        boot_file = '/tmp/boot-config'
-        action = get_action('install_image')
-        action = action.replace('/mnt/flash/boot-config',
-                                boot_file)
-        bootstrap.ztps.set_action_response('test_action',
-                                           action)
-        bootstrap.ztps.set_file_response(image, print_action())
-        bootstrap.start_test()
-
-        image_file = '%s/%s.swi' % (FLASH, version)
-        try:
-            self.failUnless('! boot system flash:/%s.swi' % version
-                            in file_log(STARTUP_CONFIG))
-            self.failUnless('! boot system flash:/%s.swi' % wrong_version
-                            not in file_log(STARTUP_CONFIG))
-            self.failUnless(os.path.isfile(image_file))
-            self.failUnless(['SWI=flash:/%s.swi' % version] ==
-                            file_log(boot_file))
-            self.failUnless(bootstrap.success())
-        except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
-            raise_exception(assertion)
-        finally:
-            remove_file(image_file)
-            remove_file(boot_file)
-            bootstrap.end_test()
-
 
 if __name__ == '__main__':
     unittest.main()
