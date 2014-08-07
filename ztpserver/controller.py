@@ -551,20 +551,21 @@ class NodesController(BaseController):
             for action in definition['actions']:
                 log.info('Analyzing action: %s', action.get('name'))
                 _attributes = dict()
-                for key, value in action.get('attributes').items():
-                    try:
-                        update = dict()
-                        for _key, _value in value.items():
-                            if str(_value).startswith('$'):
-                                _value = lookup(_value[1:])
-                            update[_key] = _value
-                    except AttributeError:
-                        if str(value).startswith('$'):
-                            value = lookup(value[1:])
-                        update = value
-                    finally:
-                        log.debug('%s=%s', key, update)
-                        _attributes[key] = update
+                if action.get('attributes'):
+                    for key, value in action.get('attributes').items():
+                        try:
+                            update = dict()
+                            for _key, _value in value.items():
+                                if str(_value).startswith('$'):
+                                    _value = lookup(_value[1:])
+                                update[_key] = _value
+                        except AttributeError:
+                            if str(value).startswith('$'):
+                                value = lookup(value[1:])
+                            update = value
+                        finally:
+                            log.debug('%s=%s', key, update)
+                            _attributes[key] = update
                 action['attributes'] = _attributes
                 _actions.append(action)
             definition['actions'] = _actions
