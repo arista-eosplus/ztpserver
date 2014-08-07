@@ -315,6 +315,9 @@ class Node(object):
         else:
             return result
 
+    def api_config_cmds(self, cmds):
+        self.api_enable_cmds(['configure'] + cmds)
+
     def disable_copp(self):
         # COPP does not apply to vEOS
         if self.system()['model'] != 'vEOS':
