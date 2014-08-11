@@ -72,4 +72,4 @@ def main(attributes):
     except Exception as exc:
         return 'Unable to retrieve image file from URL (%s)' % exc
 
-    node.api_config_cmds(['install source flash:%s' % image])
+    node.api_enable_cmds(['install source flash:%s' % image])

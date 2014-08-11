@@ -309,21 +309,19 @@ class Node(object):
 
     def api_enable_cmds(self, cmds, text_format=False):
         req_format = 'text' if text_format else 'json'
-        result = self.client.runCmds(1, cmds, req_format)
+        result = self.client.runCmds(1, ['enable'] + cmds, req_format)
         if text_format:
-            return [x.values()[0] for x in result]
+            return [x.values()[0] for x in result][1:]
         else:
-            return result
+            return result[1:]
 
     def api_config_cmds(self, cmds):
-        self.api_enable_cmds(['configure'] + cmds)
+        return self.api_enable_cmds(['configure'] + cmds)[1:]
 
     def disable_copp(self):
         # COPP does not apply to vEOS
         if self.system()['model'] != 'vEOS':
-            self.api_enable_cmds(['enable',
-                                  'configure',
-                                  'control-plane',
+            self.api_config_cmds(['control-plane',
                                   'no service-policy input copp-system-policy'])
 
     def system(self):
@@ -937,3 +935,4 @@ if __name__ == '__main__':
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
+
