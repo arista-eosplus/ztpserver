@@ -36,6 +36,7 @@ import collections
 import logging
 import re
 import string # pylint: disable=W0402
+import ztpserver
 
 from ztpserver.serializers import Serializer
 from ztpserver.utils import expand_range
@@ -131,24 +132,29 @@ class Node(object):
         return 'Node(serialnumber=%s, systemmac=%s, neighbors=%s)' % \
                (self.serialnumber, self.systemmac, self.neighbors)
 
+    def identifier(self):
+        identifier = ztpserver.config.runtime.default.identifier
+        return getattr(self, identifier)
+
     def add_neighbor(self, interface, peers):
         try:
             if self.neighbors.get(interface):
-                raise NodeError('Interface \'%s\' already added to node' % 
-                                interface)
+                raise NodeError('%s: interface \'%s\' already added to node' % 
+                                (self.identifier(), interface))
 
             _neighbors = list()
             for peer in peers:
-                log.debug('Creating neighbor %s:%s for interface %s',
-                          peer['device'], peer['port'], interface)
+                log.debug('%s: creating neighbor %s:%s for interface %s' %
+                          ( self.identifier(), peer['device'], 
+                            peer['port'], interface))
                 _neighbors.append(Neighbor(peer['device'],
                                            peer['port']))
             self.neighbors[interface] = _neighbors
         except KeyError as err:
-            log.error('Unable to add neighbor because of KeyError: %s' 
-                      % str(err))
-            raise NodeError('Unable to add neighbor because of KeyError:: %s' % 
-                            err)
+            log.error('%s: failed to neighbor because of missing key (%s)' % 
+                      (self.identifier(), str(err)))
+            raise NodeError('%s: failed to neighbor because of KeyError (%s)' % 
+                      (self.identifier(), str(err)))
 
     def add_neighbors(self, neighbors):
         for interface, peers in neighbors.items():
@@ -188,19 +194,24 @@ class Topology(object):
 
     def add_variable(self, key, value, overwrite=False):
         if key in self.RESERVED_VARIABLES:
-            log.error('Variable name \'%s\' is reserved' % key)
-            raise TopologyError('Variable name \'%s\' is reserved' % key)
+            log.error('Failed to add variable: %s (reserved keyword)' % 
+                      key)
+            raise TopologyError('Failed to add variable: %s '
+                                '(reserved keyword)' % key)
         elif key in self.variables and not overwrite:
-            log.error('Global variable \'%s\' already exists' % key)
-            raise TopologyError('Global variable \'%s\' already exists' % key)
+            log.error('Failed to add variable: %s (duplicate)' % 
+                      key)
+            raise TopologyError('Failed to add variable %s '
+                                '(duplicate)' % key)
 
         self.variables[key] = value
 
     def add_variables(self, variables):
         if not hasattr(variables, 'items'):
-            log.error('Missing attribute (\'items\') from %s' % variables)
-            raise TopologyError('Missing attribute (\'items\') from %s' % 
-                                variables)
+            log.error('Failed to add variables: missing attribute '
+                      '\'items\' (%s)' % variables)
+            raise TopologyError('Failed to add variables: missing attribute '
+                      '\'items\' (%s)' % variables)
 
         for key, value in variables.items():
             self.add_variable(key, value)
@@ -218,8 +229,7 @@ class Topology(object):
 
             pattern = Pattern(name, **kwargs)
 
-            log.info('Pattern \'%s\' parsed successfully', pattern.name)
-            log.debug('%r', pattern)
+            log.debug('Pattern \'%r\' parsed successfully' % pattern)
 
             # Add pattern to topology
             if kwargs['node']:
@@ -227,21 +237,21 @@ class Topology(object):
             else:
                 self.patterns['globals'].append(pattern)
         except KeyError as err:
-            log.error('Unable to add pattern \'%s\': %s' % (name, err))
-            raise TopologyError('Unable to add pattern \'%s\': %s' % 
-                                (name, err))
-        except PatternError as err:
-            log.warning('Failed to add pattern \'%s\': %s' % (name, err))
-            raise TopologyError('Unable to add pattern \'%s\': %s' % 
-                                (name, err))
+            log.error('Failed to add pattern \'%s\' because of '
+                      'missing key (%s)' % (name, str(err)))
+            raise TopologyError('Failed to pattern \'%s\' because of '
+                                'missing key (%s)' % (name, str(err)))
+        except PatternError:
+            log.error('Failed to add pattern \'%s\'' % name)
+            raise TopologyError('Failed to add pattern \'%s\'' % name)
 
     def add_patterns(self, patterns):
         try:
             for pattern in patterns:
                 self.add_pattern(**pattern)
-        except TypeError as err:
-            log.error('Failed to add interfaces: %s' % err)
-            raise TopologyError('Failed to add patterns: %s' % err)
+        except TypeError:
+            log.error('Failed to add patterns %s' % patterns)
+            raise TopologyError('Failed to add patterns %s' % patterns)
 
     def is_node_pattern(self, pattern):
         #pylint: disable=R0201
@@ -255,24 +265,32 @@ class Topology(object):
         return self.patterns['nodes'].values() + self.patterns['globals']
 
     def find_patterns(self, node):
-        log.info('Searching for eligible patterns for node %s' % str(node))
+        log.debug('%s: searching for eligible patterns' % 
+                  str(node.identifier()))
         pattern = self.patterns['nodes'].get(node.systemmac, None)
+        if not pattern:
+            pattern = self.patterns['nodes'].get(node.serialnumber, None)
         if pattern:
-            log.info('Eligible pattern: %s' % pattern.name)
+            log.debug('%s: eligible pattern: %s' % (node.identifier(), 
+                                                    pattern.name))
             return [pattern]
         else:
-            log.info('Eligible patterns: all global patterns')
+            log.debug('%s: eligible patterns: all global patterns' %
+                      node.identifier())
             return self.patterns['globals']
 
     def match_node(self, node):
         result = list()
         for pattern in self.find_patterns(node):
-            log.info('Attempting to match pattern %s', pattern.name)
+            log.debug('%s: attempting to match pattern %s' % 
+                      (node.identifier(), pattern.name))
             if pattern.match_node(node):
-                log.info('Match for pattern %s succeeded', pattern.name)
+                log.debug('%s: pattern %s matched' % 
+                          (node.identifier(), pattern.name))
                 result.append(pattern)
             else:
-                log.info('Match for pattern %s failed', pattern.name)
+                log.debug('%s: pattern %s match failed' % 
+                          (node.identifier, pattern.name))
         return result
 
 
@@ -298,7 +316,8 @@ class Pattern(object):
 
     def variable_substitution(self):
         try:
-            log.info('Checking pattern entries for variable substitution')
+            log.debug('Checking pattern \'%s\' entries for variable '
+                      'substitution' % self.name)
             for entry in self.interfaces:
                 for item in entry['patterns']:
                     for attr in ['remote_device', 'remote_interface']:
@@ -307,11 +326,13 @@ class Pattern(object):
                             newvalue = self.variables[value[1:]]
                             setattr(item, attr, newvalue)
                     item.refresh()
-            log.info('Variable substitution is complete')
-        except KeyError:
-            log.error('Variable substitution failed due to unknown variable')
-            raise PatternError('Variable substitution failed due to '
-                               'unknown variable')
+            log.debug('Pattern \'%s\' variable substitution complete' %
+                      self.name)
+        except KeyError as exc:
+            log.debug('Pattern \'%s\' variable substitution failed: %s' %
+                      (self.name, str(exc)))
+            raise PatternError('Pattern \'%s\' variable substitution '
+                               'failed: %s' % (self.name, str(exc)))
 
     def serialize(self):
         data = dict(name=self.name, definition=self.definition)
@@ -348,27 +369,34 @@ class Pattern(object):
 
             remote_device = str(remote_device).strip()
             if len(remote_device.split()) != 1:
-                log.error('Invalid peer device: %s' % remote_device)
-                raise PatternError('Invalid peer device: %s' % remote_device)
-
+                log.error('Interface parse error: invalid peer device %s' % 
+                          remote_device)
+                raise PatternError('Interface parse error: invalid peer '
+                                   'device %s' % remote_device)
+            
             remote_interface = str(remote_interface).strip()
             if len(remote_interface.split()) != 1:
-                log.error('Invalid peer interface: %s' % remote_interface)
-                raise PatternError('Invalid peer interface: %s' % 
-                                   remote_interface)
+                log.error('Interface parse error: invalid peer interface %s' % 
+                          remote_interface)
+                raise PatternError('Interface parse error: invalid peer '
+                                   'interface %s' % remote_interface)
 
             return (remote_device, remote_interface)
         except KeyError as err:
-            log.error('Missing required attribute from neighbor: %s' % err)
-            raise PatternError('Missing required attribute from neighbor: %s' %
-                               err)
+            log.error('Interface parse error: missing attribute (%s)' % 
+                      str(err))
+            raise PatternError('Interface parse error: missing '
+                               'attribute (%s)' % str(err))
 
     def add_interface(self, interface):
         try:
             if not hasattr(interface, 'items'):
-                log.error('\'interface\' argument has no attribute \'items\'')
-                raise PatternError('\'interface\' argument has no attribute '
-                                   '\'items\'')
+                log.error('Pattern \'%s\' - failed to add interface %s: '
+                          'missing attribute (items)' %
+                          (self.name, interface))
+                raise PatternError('Pattern \'%s\' - failed to add '
+                                   'interface %s: missing attribute (items)' %
+                                   (self.name, interface))
 
             for intf, neighbors in interface.items():
                 (remote_device, remote_interface) = \
@@ -387,62 +415,64 @@ class Pattern(object):
                         patterns.append(pattern)
                 self.interfaces.append(dict(metadata=metadata,
                                             patterns=patterns))
-        except InterfacePatternError as exc:
-            log.exception('Unable add interface pattern \'%s\': %s', 
-                          (interface, exc))
-            raise PatternError('Unable add interface pattern \'%s\': %s', 
-                               (interface, exc))
+        except InterfacePatternError:
+            log.error('Pattern \'%s\' - failed to add interface %s' %
+                      (self.name, interface))
+            raise PatternError('Pattern \'%s\' - failed to add interface %s' %
+                      (self.name, interface))
 
     def add_interfaces(self, interfaces):
         try:
             for interface in interfaces:
                 self.add_interface(interface)
-        except TypeError as err:
-            log.error('Failed to add interfaces: %s' % err)
-            raise PatternError('Failed to add interfaces: %s' % err)
-
+        except TypeError:
+            log.error('Pattern \'%s\' - failed to add interfaces %s' %
+                      (self.name, interface))
+            raise PatternError('Pattern \'%s\' - failed to add interfaces %s' %
+                      (self.name, interface))
 
     def match_node(self, node):
 
-        log.info('Attempting to match node (%s)' % str(node))
+        log.debug('Pattern \'%s\' - attempting to match node (%r)' % 
+                  (self.name, str(node)))
 
         patterns = list()
         for entry in self.interfaces:
             for pattern in entry['patterns']:
                 patterns.append(pattern)
 
-        log.info('Patterns: %s' % str(patterns))
-
         for interface, neighbors in node.neighbors.items():
-            log.info('Attepting to match interface %s(%s)' % 
-                     (interface, str(neighbors)))                
+            log.debug('Pattern \'%s\' - attempting to match interface %s(%s)' %
+                      (self.name, interface, str(neighbors)))
 
             match = False
             for index, pattern in enumerate(patterns):
-                log.info('Checking pattern: %s' % pattern)
+                log.debug('Pattern \'%s\' - checking interface pattern '
+                          'for %s: %s' % (self.name, interface, pattern))
                 result = pattern.match(interface, neighbors)
 
                 # True, False, None
                 if result is True:
-                    log.info('Pattern %s matched successfully' %
-                             pattern)
+                    log.debug('Pattern \'%s\' - interface pattern match '
+                              'for %s: %s' % (self.name, interface, pattern))
                     del patterns[index]
                     match = True
                     break
                 elif result is False:
-                    log.info('Failed to match node: interface %s does not '
-                             'comply with %s'  % 
-                             (interface, str(pattern)))
+                    log.debug('Pattern \'%s\' - interface pattern match '
+                              'failure for %s: %s' % 
+                              (self.name, interface, pattern))
                     return False
 
             if not match:
-                log.info('Interface %s did not match any patterns', 
-                         interface)
+                log.debug('Pattern \'%s\' - interface %s did not match '
+                          'any interface patterns' % (self.name, interface))
 
         for pattern in patterns:
             if pattern.is_positive_constraint():
-                log.warning('Pattern %s did not match any interface', 
-                          pattern)
+                log.warning('Pattern \'%s\' - interface pattern %s did '
+                            'not match any interface' % 
+                            (self.name, pattern))
                 return False
         return True
 
@@ -490,12 +520,12 @@ class InterfacePattern(object):
             if match:
                 function = match.group('function')
                 arg = match.group('arg')
-                log.debug('Found function %s with arg %s', function, arg)
                 return self.FUNCTIONS[function](arg)
             else:
                 return ExactFunction(value)
-        except KeyError:
-            log.error('Unknown function \'%s\'', function)
+        except KeyError as exc:
+            log.error('Compile error: unknown function \'%s\' (%s)' % 
+                      (function, str(exc)))
             raise InterfacePatternError
 
     def match(self, interface, neighbors):
@@ -509,8 +539,8 @@ class InterfacePattern(object):
 
     def match_neighbor(self, interface, neighbor):
         # pylint: disable=R0911,R0912
-        log.info('Attempting to match %s(%s) against %r' % 
-                 (interface, neighbor, self))
+        log.debug('Attempting to match %s(%s) against interface pattern %r' % 
+                  (interface, neighbor, self))
         
         if self.interface == 'any':
             if self.remote_device == 'any':

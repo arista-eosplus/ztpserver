@@ -355,13 +355,13 @@ class Bootstrap(object):
         finally:
             os.remove(self.filename)
 
-        self.return_code = proc.returncode             #pylint: disable=E1101
+        self.return_code = proc.returncode         #pylint: disable=E1101
 
     def node_information_collected(self):
         cmds = ['show version',          # Collect system MAC for logging
                 'show version',
                 'show lldp neighbors']
-        return eapi_log()[-3:] == cmds
+        return [x for x in eapi_log()[-6:] if x != 'enable'] == cmds
 
     def eapi_configured(self):
         cmds = ['configure',
@@ -456,19 +456,21 @@ class EAPIServer(object):
                 if req.path == '/command-api':
                     req.send_header('Content-type', 'application/json')
                     req.end_headers()
-                    if cmds == ['show version']:
+                    if cmds == ['enable', 'show version']:
                         req.wfile.write(json.dumps(
                                 {'result' :
-                                 [{'modelName' : self.model,
+                                 [{},
+                                  {'modelName' : self.model,
                                    'version' : self.version,
                                    'serialNumber' : self.serial_number,
                                    'systemMacAddress' : self.mac}]}))
-                    elif cmds == ['show lldp neighbors']:
+                    elif cmds == ['enable', 'show lldp neighbors']:
                         req.wfile.write(json.dumps({'result' :
-                                                  [{'lldpNeighbors': []}]}))
+                                                  [{},
+                                                   {'lldpNeighbors': []}]}))
                     else:
-                        req.wfile.write(json.dumps({'result' : []}))
-                    print 'EAPIServer: RESPONSE: {}'
+                        req.wfile.write(json.dumps({'result' : [{}]}))
+                    print 'EAPIServer: RESPONSE: [{}]'
                 else:
                     print 'EAPIServer: No RESPONSE'
 

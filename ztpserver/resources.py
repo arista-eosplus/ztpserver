@@ -70,41 +70,46 @@ class ResourcePool(object):
         dump(self, filepath, CONTENT_TYPE_YAML)
 
     def allocate(self, pool, node):
+        node_id = node.identifier()
+        log.debug('Allocating resource for node %s' % node_id)
         try:
             match = self.lookup(pool, node)
             if match:
-                log.info('Found allocated resource, returning %s', match)
+                log.debug('Resource for node %r already allocated: %s' % 
+                         (node_id, match))
                 return match
 
             self.load(pool)
             key = next(x[0] for x in self.data.items() if x[1] is None)
 
-            log.info('Assigning %s from pool %s to node %s',
-                     key, pool, node.systemmac)
+            log.debug('Allocating %s from pool %s to node %s' %
+                      (key, pool, node_id))
 
-            self.data[key] = node.systemmac
+            self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
-            log.warning('No resources available in pool %s', pool)
+            log.warning('No resources available in pool %s for %s' % 
+                        (pool, node_id))
             raise ResourcePoolError
-        except Exception:
-            log.exception('Unable to allocate resource')
-            raise ResourcePoolError
+        except Exception as exc:
+            log.error('Failed to allocate resource for node %s: %s' % 
+                      (node_id, exc))
+            raise ResourcePoolError('Failed to allocate resource '
+                                    'for node %s: %s' % (node_id, exc))
         return key
 
     def lookup(self, pool, node):
         ''' Return an existing allocated resource if one exists '''
-
+        node_id = node.identifier()
+        log.debug('Looking up resource for node %s' % node_id)
         try:
-            log.info('Looking up resource for node %s', node.systemmac)
             self.load(pool)
             matches = [m[0] for m in self.data.iteritems()
-                       if m[1] == node.systemmac]
+                       if m[1] == node_id]
             key = matches[0] if matches else None
             return key
-        except Exception:
-            log.exception('An error occurred trying to lookup existing '
-                          'resource for node %s', node.systemmac)
-            raise ResourcePoolError
-
-
+        except Exception as exc:
+            log.error('Failed to lookup resource for node %s: %s' % 
+                      (node_id, exc))
+            raise ResourcePoolError('Failed to lookup resource '
+                                    'for node %s: %s' % (node_id, exc))

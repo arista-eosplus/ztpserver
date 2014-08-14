@@ -51,12 +51,13 @@ from ztpserver.controller import DEFINITION_FN, PATTERN_FN
 
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 
-from server_test_lib import remove_all, random_string
+from server_test_lib import enable_logging, remove_all, random_string
 from server_test_lib import ztp_headers, write_file
 from server_test_lib import create_definition, create_attributes, create_node
 from server_test_lib import create_bootstrap_conf
 
 import ztpserver.constants as constants
+
 
 class RouterUnitTests(unittest.TestCase):
 
@@ -421,13 +422,12 @@ class NodesControllerUnitTests(unittest.TestCase):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', False, 'default')
         ztpserver.config.runtime.set_value(\
-            'identifier', 'systemmac', 'default')
+            'identifier', 'serialnumber', 'default')
 
     @patch('ztpserver.controller.create_repository')
     def test_create_using_systemmac(self, m_repository):
         node = Mock(systemmac=random_string(), serialnumber=random_string())
         body = dict(systemmac=node.systemmac, serialnumber=node.serialnumber)
-
 
         request = Request.blank('/nodes')
         request.body = json.dumps(body)
@@ -435,7 +435,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.NodesController()
         with patch.object(controller, 'fsm') as m_fsm:
             controller.create(request)
-            self.assertEqual(node.systemmac, m_fsm.call_args[1]['nodeid'])
+            self.assertEqual(node.serialnumber, m_fsm.call_args[1]['node_id'])
 
     @patch('ztpserver.controller.create_repository')
     def test_create_using_serialnumber(self, m_repository):
@@ -451,7 +451,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.NodesController()
         with patch.object(controller, 'fsm') as m_fsm:
             controller.create(request)
-            self.assertEqual(node.serialnumber, m_fsm.call_args[1]['nodeid'])
+            self.assertEqual(node.serialnumber, m_fsm.call_args[1]['node_id'])
 
     @patch('ztpserver.controller.create_repository')
     def test_create_missing_identifier(self, m_repository):
@@ -470,11 +470,11 @@ class NodesControllerUnitTests(unittest.TestCase):
     def test_node_exists_success(self, m_repository):
         m_repository.return_value.exists.return_value = True
 
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node,
-                                               nodeid=node.systemmac)
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
@@ -495,7 +495,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node,
-                                               nodeid=node.systemmac)
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
         self.assertEqual(resp['status'], 409)
@@ -515,7 +515,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node,
-                                               nodeid=node.systemmac)
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
         self.assertEqual(resp['status'], 409)
@@ -526,7 +526,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         cfg = dict()
 
         def m_exists(arg):
-            if arg.endswith(node.systemmac):
+            if arg.endswith(node.serialnumber):
                 return True
             return False
         cfg['return_value.exists.side_effect'] = m_exists
@@ -535,7 +535,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node,
-                                               nodeid=node.systemmac)
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'post_config')
         self.assertTrue('status' not in resp)
@@ -544,10 +544,10 @@ class NodesControllerUnitTests(unittest.TestCase):
     def test_node_exists_failure(self, m_repository):
         m_repository.return_value.exists.return_value = False
 
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.node_exists(dict(), node=node,
-                                               nodeid=node.systemmac)
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'post_config')
         self.assertIsInstance(resp, dict)
@@ -555,7 +555,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
     def test_dump_node_success(self, m_repository):
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         cfg = dict()
         cfg['return_value.get_file'] = Mock()
@@ -563,7 +563,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.dump_node(dict(), node=node,
-                                             nodeid=node.systemmac)
+                                             node_id=node.serialnumber)
 
         self.assertEqual(state, 'set_location')
         self.assertIsInstance(resp, dict)
@@ -576,22 +576,22 @@ class NodesControllerUnitTests(unittest.TestCase):
                ztpserver.repository.FileObjectError}
         m_repository.configure_mock(**cfg)
 
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(ztpserver.repository.FileObjectError,
                           controller.dump_node,
                           dict(),
                           node=node,
-                          nodeid=node.systemmac)
+                          node_id=node.serialnumber)
 
     def test_set_location_success(self):
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.set_location(dict(), node=node,
-                                                nodeid=node.systemmac)
+                                                node_id=node.serialnumber)
 
-        location = 'nodes/%s' % node.systemmac
+        location = 'nodes/%s' % node.serialnumber
         self.assertIsNone(state)
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['location'], location)
@@ -603,11 +603,12 @@ class NodesControllerUnitTests(unittest.TestCase):
 
     def test_post_config_success(self):
         request = Mock(json=dict(config=random_string()))
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_config(dict(), request=request,
-                                               node=node, nodeid=node.systemmac)
+                                               node=node, 
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'set_location')
         self.assertIsInstance(resp, dict)
@@ -615,7 +616,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
     def test_post_config_key_error_failure(self):
         request = Mock(json=dict())
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_config(dict(), request=request,
@@ -632,14 +633,14 @@ class NodesControllerUnitTests(unittest.TestCase):
     @patch('ztpserver.neighbordb.load_topology')
     def test_post_node_success_single_match(self, m_load_topology):
         request = Mock(json=dict(neighbors=dict()))
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         m_load_topology.return_value.match_node.return_value = [Mock()]
 
         controller = ztpserver.controller.NodesController()
 
         (resp, state) = controller.post_node(dict(), request=request, node=node,
-                                             nodeid=node.systemmac)
+                                             node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
@@ -648,7 +649,7 @@ class NodesControllerUnitTests(unittest.TestCase):
     @patch('ztpserver.neighbordb.load_topology')
     def test_post_node_success_multiple_matches(self, m_load_topology):
         request = Mock(json=dict(neighbors=dict()))
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         m_load_topology.return_value.match_node.return_value = [Mock(),
                                                                 Mock(),
@@ -656,7 +657,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_node(dict(), request=request, node=node,
-                                             nodeid=node.systemmac)
+                                             node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
         self.assertIsInstance(resp, dict)
@@ -665,19 +666,19 @@ class NodesControllerUnitTests(unittest.TestCase):
     @patch('ztpserver.neighbordb.load_topology')
     def test_post_node_failure_no_matches(self, m_load_topology):
         request = Mock(json=dict(neighbors=dict()))
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         m_load_topology.return_value.match_node.return_value = list()
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(IndexError, controller.post_node, dict(),
-                          request=request, node=node, nodeid=node.systemmac)
+                          request=request, node=node, node_id=node.serialnumber)
 
 
     @patch('ztpserver.neighbordb.load_topology')
     def test_post_node_no_definition_in_pattern(self, m_load_topology):
         request = Mock(json=dict(neighbors=dict()))
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
 
         pattern = Mock()
         del pattern.definition
@@ -686,7 +687,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.post_node, dict(),
-                          request=request, node=node, nodeid=node.systemmac)
+                          request=request, node=node, node_id=node.serialnumber)
 
     @patch('ztpserver.controller.create_repository')
     def test_get_definition_success(self, m_repository):
@@ -734,7 +735,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertTrue(resp['definition'], 'Autogenerated definition')
         self.assertEqual(resp['definition']['actions'][0]['name'], action_name)
 
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_do_validation_success(self, m_load_pattern):
 
         cfg = {'return_value.match_node.return_value': True}
@@ -781,7 +782,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_attributes(dict(),
-                                                  resource=node.systemmac)
+                                                  resource=node.serialnumber)
 
         self.assertEqual(state, 'do_substitution')
         self.assertIsInstance(resp, dict)
@@ -858,14 +859,15 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, var_foo)
 
-    def test_do_put_config_success(self):
+    def test_put_config_success(self):
         resource = random_string()
         body = random_string()
         request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.do_put_config(dict(), resource=resource,
-                                                 request=request)
+        (resp, state) = controller.put_config(list(),
+                                              resource=resource,
+                                              request=request)
 
         self.assertIsNone(state)
         self.assertEqual(resp, dict())
@@ -890,16 +892,18 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
     @patch('ztpserver.controller.create_repository')
     def test_node_exists(self, m_repository):
         url = '/nodes'
-        systemmac = random_string()
-        body = json.dumps(dict(systemmac=systemmac))
+        serialnumber = random_string()
+        body = json.dumps(dict(serialnumber=serialnumber))
 
         m_repository.return_value.exists.return_value = True
 
         request = Request.blank(url, body=body, method='POST',
                                 headers=ztp_headers())
+
         resp = request.get_response(ztpserver.controller.Router())
 
-        location = 'http://localhost/nodes/%s' % systemmac
+        location = 'http://localhost/nodes/%s' % serialnumber
+
 
         self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.location, location)
@@ -907,9 +911,9 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
     @patch('ztpserver.controller.create_repository')
     def test_post_config(self, m_repository):
         url = '/nodes'
-        systemmac = random_string()
+        serialnumber = random_string()
         config = random_string()
-        body = json.dumps(dict(systemmac=systemmac, config=config))
+        body = json.dumps(dict(serialnumber=serialnumber, config=config))
 
         m_repository.return_value.exists.return_value = False
 
@@ -917,7 +921,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
                                 headers=ztp_headers())
         resp = request.get_response(ztpserver.controller.Router())
 
-        location = 'http://localhost/nodes/%s' % systemmac
+        location = 'http://localhost/nodes/%s' % serialnumber
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_CREATED)
         self.assertEqual(resp.location, location)
 
@@ -940,13 +944,13 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         resp = request.get_response(ztpserver.controller.Router())
 
         args_list = list()
-        args_list.append('nodes/%s/%s' % (node.systemmac, DEFINITION_FN))
-        args_list.append('nodes/%s/%s' % (node.systemmac, PATTERN_FN))
+        args_list.append('nodes/%s/%s' % (node.serialnumber, DEFINITION_FN))
+        args_list.append('nodes/%s/%s' % (node.serialnumber, PATTERN_FN))
 
         for arg in args_list:
             m_repository.return_value.add_file.assert_any_call(arg)
 
-        location = 'http://localhost/nodes/%s' % node.systemmac
+        location = 'http://localhost/nodes/%s' % node.serialnumber
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_CREATED)
         self.assertEqual(resp.location, location)
 
@@ -969,9 +973,9 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
 
-    @patch('ztpserver.neighbordb.create_node')
+    @patch('ztpserver.controller.create_node')
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_get_startup_config_wo_validation(self, m_load_pattern,
                                               m_repository, m_create_node):
 
@@ -997,7 +1001,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
         m_repository.configure_mock(**cfg)
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1005,9 +1009,9 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)
         self.assertIsInstance(json.loads(resp.body), dict)
 
-    @patch('ztpserver.neighbordb.create_node')
+    @patch('ztpserver.controller.load_pattern')
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.neighbordb.create_node')
     def test_get_startup_config_w_validation_success(self,
                                                      m_load_pattern,
                                                      m_repository,
@@ -1030,6 +1034,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
             else:
                 raise ztpserver.repository.FileObjectNotFound
             return fileobj
+
         cfg['return_value.get_file'] = Mock(side_effect=m_get_file)
 
         m_repository.configure_mock(**cfg)
@@ -1037,7 +1042,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         cfg = {'return_value.match_node.return_value': True}
         m_load_pattern.configure_mock(**cfg)
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1046,7 +1051,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertIsInstance(json.loads(resp.body), dict)
 
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_get_startup_config_w_validation_failure(self, m_load_pattern,
                                                      m_repository):
 
@@ -1073,7 +1078,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
         m_repository.configure_mock(**cfg)
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1089,7 +1094,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file = create_definition()
         definitions_file.add_action()
 
-        node = Mock(systemmac=random_string())
+        node = Mock(serialnumber=random_string())
         cfg = dict()
 
         def m_get_file(arg):
@@ -1105,7 +1110,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         cfg['return_value.get_file.side_effect'] = m_get_file
         m_repository.configure_mock(**cfg)
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1114,7 +1119,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertIsInstance(json.loads(resp.body), dict)
 
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_get_definition_w_validation_success(self, m_load_pattern, 
                                                  m_repository):
         node = create_node()
@@ -1138,7 +1143,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
         m_load_pattern.return_value.match_node.return_value = Mock()
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1148,7 +1153,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
 
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_get_definition_w_validation_failure(self, m_load_pattern, 
                                                  m_repository):
         definitions_file = create_definition()
@@ -1170,7 +1175,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
         m_load_pattern.return_value.match_node.return_value = [Mock()]
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
         resp = request.get_response(ztpserver.controller.Router())
 
@@ -1179,11 +1184,13 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.body, str())
 
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.neighbordb.load_pattern')
+    @patch('ztpserver.controller.load_pattern')
     def test_get_definition_w_attributes_no_substitution(self, m_load_pattern,
                                                          m_repository):
 
-        node = Mock(systemmac=random_string())
+        serialnumber = random_string()
+        node = Mock(serialnumber=serialnumber)
+        node.identifier.return_value = serialnumber
 
         g_attr_foo = random_string()
         attributes_file = create_attributes()
@@ -1212,8 +1219,9 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         cfg['return_value.match_node.return_value'] = True
         m_repository.configure_mock(**cfg)
 
-        url = '/nodes/%s' % node.systemmac
+        url = '/nodes/%s' % node.serialnumber
         request = Request.blank(url, method='GET')
+
         resp = request.get_response(ztpserver.controller.Router())
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
@@ -1225,4 +1233,5 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(attrs['url'], l_attr_url)
 
 if __name__ == '__main__':
+    enable_logging()
     unittest.main()

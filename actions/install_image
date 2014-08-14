@@ -29,17 +29,19 @@
 
 #pylint: disable=W0703
 
-import re
-
 BOOT_CONFIG = '/mnt/flash/boot-config'
 
 def main(attributes): 
     '''Installs software image on the switch.
 
-    If the current software image is the same as the  
-    'version' attribute value, then this action
-    is a no-op.  Otherwise, the action will replace the existing software 
-    image.
+    If the current software image is the same as the 'version'
+    attribute value, then this action is a no-op.  Otherwise, the
+    action will replace the existing software image.
+
+    For dual supervisor systems, the image on the active supervisor is
+    used as reference.
+
+    This action is dual-supervisor compatible.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -64,29 +66,10 @@ def main(attributes):
     if current_version == version:
         return
 
-    image = '%s.swi' % version
+    image = 'EOS-%s.swi' % version
     try:
         node.retrieve_url(url, '%s/%s' % (node.flash(), image))
     except Exception as exc:
         return 'Unable to retrieve image file from URL (%s)' % exc
 
-    boot_line = '! boot system flash:/%s' % image
-    if node.has_startup_config():
-        startup_config = open(node.startup_config(), 'r')
-        lines = startup_config.readlines()
-        startup_config.close()
-        
-        startup_config = open(node.startup_config(), 'w')
-        for line in lines:
-            if re.search('! boot system', line):
-                startup_config.write(boot_line)
-            else:
-                startup_config.write(line)                    
-        startup_config.close()
-    else:
-        node.append_startup_config_lines([boot_line])
-
-    boot_line = 'SWI=flash:/%s\n' % image
-    boot_file = open(BOOT_CONFIG, 'w')
-    boot_file.write(boot_line)
-    boot_file.close()
+    node.api_enable_cmds(['install source flash:%s' % image])

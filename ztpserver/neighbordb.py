@@ -71,7 +71,7 @@ def load_file(filename, content_type):
     try:
         return load(filename, content_type)
     except SerializerError:
-        log.exception('Unable to load file %s', filename)
+        log.error('Failed to load file: %s' % filename)
 
 def load_topology(filename=None, contents=None):
     try:
@@ -83,7 +83,7 @@ def load_topology(filename=None, contents=None):
             log.warning('Creating empty topology object')
 
         if not validate_topology(contents):
-            log.info('Unable to load neighbordb due to validation failure')
+            log.error('Failed to validate topology')
             return
 
         topology = Topology()
@@ -93,26 +93,24 @@ def load_topology(filename=None, contents=None):
 
         topology.add_patterns(contents['patterns'])
 
-        log.info('Loaded topology: %r', topology)
+        log.info('Loaded topology: %s' % topology)
         return topology
-    except TopologyError:
-        log.warning('Unable to load neighbordb from %s', filename)
-    except SerializerError:
-        log.error('Unable to load topology file %s', filename)
+    except (TopologyError, SerializerError):
+        log.error('Failed to load topology: %s', filename)
 
-def load_pattern(kwargs, content_type=CONTENT_TYPE_YAML):
+def load_pattern(name, content_type=CONTENT_TYPE_YAML):
     """ Returns an instance of Pattern """
     try:
-        if not isinstance(kwargs, collections.Mapping):
-            kwargs = load_file(kwargs, content_type)
+        if not isinstance(name, collections.Mapping):
+            name = load_file(name, content_type)
 
-        if not validate_pattern(kwargs):
-            log.error('unable to validate pattern attributes')
+        if not validate_pattern(name):
+            log.error('Failed to validate pattern attributes')
             return
 
-        return Pattern(**kwargs)
+        return Pattern(**name)
     except TypeError:
-        log.error('Unable to load pattern object')
+        log.error('Failed to load pattern \'%s\'' % name)
 
 def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
     try:
@@ -122,9 +120,9 @@ def load_node(kwargs, content_type=CONTENT_TYPE_YAML):
             kwargs['systemmac'] = str(kwargs['systemmac']).replace(symbol, '')
         return Node(**kwargs)
     except TypeError:
-        log.error('Unable to load node object')
-    except KeyError:
-        log.error('Missing required attribute(s)')
+        log.error('Failed to load node')
+    except KeyError as err:
+        log.error('Failed to load node - missing attribute: %s' % err)
 
 
 def create_node(nodeattrs):
@@ -135,13 +133,14 @@ def create_node(nodeattrs):
                 _systemmac = str(_systemmac).replace(symbol, '')
             nodeattrs['systemmac'] = _systemmac
         node = Node(**nodeattrs)
-        log.debug('Created node object %r', node)
+        log.debug('Created node object %r' % node)
         return node
-    except KeyError:
-        log.warning("Unable to create node, missing required attribute(s)")
+    except KeyError as err:
+        log.error('Failed to create node - missing attribute: %s' % err)
 
 def resources(attributes, node):
-    log.debug('Start processing resources with attributes: %s', attributes)
+    log.debug('Computing resources for node %r (attr=%s)' % 
+              (node, attributes))
 
     _attributes = dict()
     _resources = ResourcePool()
@@ -164,14 +163,12 @@ def resources(attributes, node):
             if match:
                 method = getattr(_resources, match.group('function'))
                 value = method(match.group('arg'), node)
-                log.debug('Allocated value %s for attribute %s from pool %s',
-                          value, key, match.group('arg'))
-        log.debug('Setting %s to %s', key, value)
         _attributes[key] = value
+    log.debug('Resources for node %r: %s' % (node, _attributes))
     return _attributes
 
 def replace_config_action(resource, filename=None):
-    ''' manually build a definition with a single action replace_config '''
+    ''' Builds a definition with a single action replace_config '''
 
     filename = filename or 'startup-config'
     server_url = ztpserver.config.runtime.default.server_url
@@ -216,4 +213,3 @@ def create_node_definition(definition, node):
 
     # return the node specific definition
     return definition
-

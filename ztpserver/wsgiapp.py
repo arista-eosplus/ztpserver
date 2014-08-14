@@ -79,8 +79,8 @@ class WSGIController(object):
             method = getattr(self, action)    #pylint: disable=R0921
             result = method(request, **request.urlvars)
 
-        except Exception:
-            log.exception('An unrecoverable error was detected')
+        except Exception as exc:
+            log.error('Unrecoverable error detected: %s' % exc)
             raise webob.exc.HTTPInternalServerError()
 
         if result is None:
@@ -117,12 +117,10 @@ class WSGIRouter(object):
     def route(self, request):
         ''' Routes the incoming request to the appropriate controller '''
 
-        try:
-            controller = request.urlvars['controller']
-            return controller()
-        except KeyError:
-            log.debug('WSGIRouter: controller not found, returning 404')
-            return webob.exc.HTTPNotFound()
+        if 'controller' not in request.urlvars:
+            log.debug('WSGIRouter: missing controller (request=%s)' % 
+                      request)
+            return webob.exc.HTTPNotFound()            
 
-
-
+        controller = request.urlvars['controller']
+        return controller()

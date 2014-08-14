@@ -62,9 +62,11 @@ INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
+
 class ValidationError(Exception):
     ''' Base error class for validation failures '''
     pass
+
 
 class Validator(object):
 
@@ -78,23 +80,32 @@ class Validator(object):
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name in methods:
             if name[0].startswith('validate_'):
+                if 'name' not in data:
+                    name_string  = ''
+                else:
+                    name_string  = 'for \'%s\'' % self.data['name']
+
+                log.debug('Running %s.%s %s' % 
+                          (self.__class__.__name__,
+                           name[0], name_string))
                 try:
                     getattr(self, name[0])()
-                except ValidationError as exc:
-                    cls = str(self.__class__).split('\'')[1].split('.')[-1]
-                    log.info('%s validation error: %s' % (cls, exc))
-                    self.error(exc)
+                except ValidationError as err:
+                    self.error(err)
         return not self.fail
 
-    def error(self, msg, *args, **kwargs):
+    def error(self, err, *args, **kwargs):
         #pylint: disable=W0613
-        log.error(msg, *args)
+        cls = str(self.__class__).split('\'')[1].split('.')[-1]
+        log.error('%s validation error: %s' % 
+                  (cls, err))
         self.fail = True
+
 
 class TopologyValidator(Validator):
 
     def __init__(self):
-        self.failed_patterns = set()
+        self.invalid_patterns = set()
         self.valid_patterns = set()
         super(TopologyValidator, self).__init__()
 
@@ -102,12 +113,12 @@ class TopologyValidator(Validator):
         variables = self.data.get('variables')
         if variables is not None:
             if not hasattr(variables, '__iter__'):
-                raise ValidationError('Invalid global variables value (%s)' %
+                raise ValidationError('invalid global variables value (%s)' %
                                       variables)
 
     def validate_patterns(self):
         if not self.data.get('patterns'):
-            raise ValidationError('Missing required \'patterns\' attribute')
+            raise ValidationError('missing attribute: \'patterns\'')
 
         for index, entry in enumerate(self.data.get('patterns')):
             name = str(entry.get('name'))
@@ -115,100 +126,119 @@ class TopologyValidator(Validator):
             validator = PatternValidator()
 
             if validator.validate(entry):
-                log.info('Add pattern %s to valid patterns', name)
+                log.info('Adding pattern \'%s\' (%s) to valid patterns' % 
+                         (name, entry))
                 self.valid_patterns.add((index, name))
             else:
-                log.info('Unable to validate pattern %s (%d)' % (name, index))
-                self.error('Unable to validate pattern %s (%d)' % (name, index))
-                self.failed_patterns.add((index, name))
+                log.info('Adding pattern \'%s\' (%s) to invalid patterns' % 
+                         (name, entry))
+                self.invalid_patterns.add((index, name))
+        
+        if self.invalid_patterns:
+            raise ValidationError('invalid patterns: %s' % 
+                                  self.invalid_patterns)
+
 
 class PatternValidator(Validator):
 
     def __init__(self):
-        self.failed_interface_patterns = set()
-        self.passed_interface_patterns = set()
+        self.invalid_interface_patterns = set()
+        self.valid_interface_patterns = set()
         super(PatternValidator, self).__init__()
 
     def validate_attributes(self):
         for attr in REQUIRED_PATTERN_ATTRIBUTES:
             if attr not in self.data:
-                raise ValidationError('Missing required attribute: %s' % attr)
+                raise ValidationError('missing attribute: %s' % attr)
 
         for attr in OPTIONAL_PATTERN_ATTRIBUTES:
             if attr not in self.data:
-                log.warning('Pattern missing optional attribute: %s', attr)
+                log.warning('PatternValidator warning: \'%s\' is missing '
+                            'optional attribute (%s)' % 
+                            (self.data['name'], attr))
 
     def validate_name(self):
-        if 'name' not in self.data:
-            raise ValidationError('Name attribute missing')
+        if not self.data or 'name' not in self.data:
+            raise ValidationError('missing attribute: \'name\'')
 
-        if self.data is None or self.data['name'] is None:
-            raise ValidationError('Name attribute cannot be none')
-
-        if not isinstance(self.data['name'], (int, basestring)):
-            raise ValidationError('Name attribute must be a string')
+        if  self.data['name'] is None or not isinstance(self.data['name'], 
+                                                        (int, basestring)):
+            raise ValidationError('invalid value for \'name\' (%s)' %
+                                  self.data['name'])
 
     def validate_interfaces(self):
+        if not self.data:
+            return
+
         if 'interfaces' not in self.data:
             return
 
-        if not isinstance(self.data['interfaces'], collections.Iterable):
-            raise ValidationError('Interface attribute is not iterable')
+        if not isinstance(self.data['interfaces'], 
+                          collections.Iterable):
+            raise ValidationError('\'interfaces\' is not iterable (%s)' %
+                                  self.data['interfaces'])
 
         for index, pattern in enumerate(self.data['interfaces']):
             if not isinstance(pattern, collections.Mapping):
-                raise ValidationError('Invalid value for interfaces (%s)' %
-                                      pattern)
+                raise ValidationError('invalid value for interface pattern '
+                                      '(%s)' % pattern)
 
             validator = InterfacePatternValidator()
 
             if validator.validate(pattern):
-                log.info('Interface pattern %s passed validation', 
-                         repr(pattern))
-                self.passed_interface_patterns.add((index, repr(pattern)))
+                log.info('Adding interface pattern \'%s\' to valid interface '
+                         'patterns' % repr(pattern))
+                self.valid_interface_patterns.add((index, repr(pattern)))
             else:
-                log.info('Interface pattern %s failed validation', 
-                         repr(pattern))
-                self.failed_interface_patterns.add((index, repr(pattern)))
-                raise ValidationError('Interface pattern %s failed validation', 
-                                      repr(pattern))
+                log.info('Adding interface pattern \'%s\' to invalid interface '
+                         'patterns' % repr(pattern))
+                self.invalid_interface_patterns.add((index, repr(pattern)))
+
+        if self.invalid_interface_patterns:
+            raise ValidationError('invalid interface patterns: %s' %
+                                  self.invalid_interface_patterns)
 
     def validate_definition(self):
+        if not self.data:
+            return
+
         if 'definition' not in self.data:
             return
 
-        if self.data is None or self.data['definition'] is None:
-            raise ValidationError('Definition attribute cannot be none')
-
-        if not isinstance(self.data['definition'], basestring):
-            raise ValidationError('Definition attribute must be a string')
+        if not isinstance(self.data['definition'], (int, basestring)):
+            raise ValidationError('invalid value for \'definition\' (%s)' %
+                                  self.data['definition'])
 
         for wspc in string.whitespace:
             if wspc in self.data['definition']:
-                raise ValidationError('Whitespace not allowed in definition')
-
-    def validate_pattern(self):
-        name = self.data.get('name')
-
-        if name is None:
-            self.error('Pattern validation failed due to missing '
-                       '\'name\' attribute')
-
-        if not set(REQUIRED_PATTERN_ATTRIBUTES).issubset(self.data.keys()):
-            self.error('Pattern validation failed due to missing one or more '
-                       'required attributes')
+                raise ValidationError('invalid value for \'definition\' (%s) - '
+                                      '\'%s\' not allowed' % 
+                                      (self.data['definition'], wspc))
 
     def validate_node(self):
-        node = self.data.get('node')
-        if node is not None:
-            node = str(node).replace(':', '').replace('.', '')
-            if re.search(ANTINODE_PATTERN, str(node)) or len(node) != 12:
-                raise ValidationError('Invalid node attribute (%s)' % node)
+        if not self.data:
+            return
+
+        if 'node' not in self.data:
+            return
+
+        node = str(self.data['node']).replace(':', '').replace('.', '')
+        if re.search(ANTINODE_PATTERN, node):
+            raise ValidationError('invalid value for \'node\' (%s)' %
+                                  self.data['node'])
 
     def validate_variables(self):
+        if not self.data:
+            return
+
+        if 'variables' not in self.data:
+            return
+
         if 'variables' in self.data:
             if not hasattr(self.data['variables'], '__iter__'):
-                raise ValidationError('variable attribute is not iterable')
+                raise ValidationError('invalid value for \'variables\' ('
+                                      'expecting iterable object, got: %s)' % 
+                                      self.data['variables'])
 
 
 class InterfacePatternValidator(Validator):
@@ -217,21 +247,21 @@ class InterfacePatternValidator(Validator):
 
         for interface, peer in self.data.items():
             if peer is None:
-                raise ValidationError('Missing peer')
+                raise ValidationError('missing peer for interface %s' % 
+                                      interface)
 
             try:
                 (device, port) = Pattern.parse_interface(peer)
             except PatternError as err:
-                raise ValidationError('Validation failed due to '
-                                      'PatternError (%s)' % err)
+                raise ValidationError('PatternError: %s' % err)
 
             if not VALID_INTERFACE_RE.match(interface):
                 if interface not in INTERFACE_PATTERN_KEYWORDS:
                     try:
                         expand_range(interface)
-                    except Exception:
-                        raise ValidationError('Invalid interface name (%s)' % 
-                                              interface)
+                    except Exception as err:
+                        raise ValidationError('invalid interface %s (%s)' % 
+                                              (interface, err))
 
             try:
                 for entry in expand_range(interface):
@@ -249,7 +279,7 @@ class InterfacePatternValidator(Validator):
         for interface_re, device_re, port_re in INVALID_INTERFACE_PATTERNS:
             if interface_re.match(interface) and device_re.match(device) \
                and port_re.match(port):
-                raise ValidationError('Invalid interface pattern: (%s, %s, %s) '
+                raise ValidationError('invalid interface pattern: (%s, %s, %s) '
                                       'matches (%s, %s, %s)'%
                                       (interface, device, port,
                                        interface_re.pattern, 
@@ -262,12 +292,16 @@ def _validator(contents, cls):
         validator = cls()
         result = validator.validate(contents)
         if result:
-            log.info('Validation was successful')
+            log.debug('%s: validation successful' % 
+                      validator.__class__.__name__)
         else:
-            log.info('Validation failed')
+            log.debug('%s: validation failed' % 
+                      validator.__class__.__name__)
+
         return result
-    except Exception:
-        log.exception('Unrecoverable error occured trying to run validator')
+    except Exception as exc:
+        log.error('Failed to run validator %s(%s): %s' %
+                  (cls.__name__, contents, repr(exc)))
         raise
 
 def validate_topology(contents):
@@ -275,4 +309,3 @@ def validate_topology(contents):
 
 def validate_pattern(contents):
     return _validator(contents, PatternValidator)
-

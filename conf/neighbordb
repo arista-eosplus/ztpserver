@@ -1,0 +1,25 @@
+# SYNTAX:
+#
+# variables:
+#   <VARIABLE_NAME>: <FUNCTION>
+#   <VARIABLE_NAME>: <VALUE>
+#   ...
+# patterns:
+#    - name: <DESCRIPTION>
+#      definition: <URL>
+#      node: <SYSTEM_MAC>                          // Optional
+#      variables:
+#        <VARIABLE_NAME>: <FUNCTION>               // Optional
+#        <VARIABLE_NAME>: <VALUE>                  // Optional
+#        ...
+#      interfaces:
+#        - <LOCAL_INTERFACE>: <REMOTE_DEVICE>:<REMOTE_INTERFACE>
+#        - <LOCAL_INTERFACE>: <REMOTE_DEVICE>
+#        - <LOCAL_INTERFACE>:
+#            device: <REMOTE_DEVICE>
+#            port: <REMOTE_INTERFACE>              // Optional
+#            ...
+#     ...
+#
+# See documentation for the detailed list of possible values.
+
