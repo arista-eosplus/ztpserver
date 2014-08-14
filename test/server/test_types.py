@@ -112,22 +112,22 @@ class TestTypes(unittest.TestCase):
     def test_create_integer_defaults(self):
         obj = ztpserver.types.Integer()
         self.assertIsInstance(obj, ztpserver.types.Integer)
-        self.assertEqual(repr(obj), "Integer(minvalue=None, maxvalue=None)")
+        self.assertEqual(repr(obj), "Integer(min_value=None, max_value=None)")
 
     def test_create_integer_min_value(self):
-        obj = ztpserver.types.Integer(minvalue=1)
-        self.assertEqual(obj.minvalue, 1)
-        self.assertIsNone(obj.maxvalue)
+        obj = ztpserver.types.Integer(min_value=1)
+        self.assertEqual(obj.min_value, 1)
+        self.assertIsNone(obj.max_value)
 
     def test_create_integer_max_value(self):
-        obj = ztpserver.types.Integer(maxvalue=1)
-        self.assertEqual(obj.maxvalue, 1)
-        self.assertIsNone(obj.minvalue)
+        obj = ztpserver.types.Integer(max_value=1)
+        self.assertEqual(obj.max_value, 1)
+        self.assertIsNone(obj.min_value)
 
     def test_create_integer_range(self):
-        obj = ztpserver.types.Integer(minvalue=1, maxvalue=1)
-        self.assertEqual(obj.minvalue, 1)
-        self.assertEqual(obj.maxvalue, 1)
+        obj = ztpserver.types.Integer(min_value=1, max_value=1)
+        self.assertEqual(obj.min_value, 1)
+        self.assertEqual(obj.max_value, 1)
 
     def test_call_integer_defaults_valid(self): #pylint: disable=R0201
         obj = ztpserver.types.Integer()
@@ -140,31 +140,31 @@ class TestTypes(unittest.TestCase):
         self.assertRaises(TypeError, obj, [1, 2])
 
     def test_call_integer_min_value_valid(self):
-        obj = ztpserver.types.Integer(minvalue=1)
+        obj = ztpserver.types.Integer(min_value=1)
         self.assertEqual(obj(1), 1)
         self.assertEqual(obj('1'), 1)
 
     def test_call_integer_min_value_invalid(self):
-        obj = ztpserver.types.Integer(minvalue=1)
+        obj = ztpserver.types.Integer(min_value=1)
         self.assertRaises(ValueError, obj, 0)
         self.assertRaises(ValueError, obj, '0')
 
     def test_call_integer_max_value_valid(self):
-        obj = ztpserver.types.Integer(maxvalue=1)
+        obj = ztpserver.types.Integer(max_value=1)
         self.assertEqual(obj(1), 1)
         self.assertEqual(obj('1'), 1)
 
     def test_call_integer_max_value_invalid(self):
-        obj = ztpserver.types.Integer(maxvalue=1)
+        obj = ztpserver.types.Integer(max_value=1)
         self.assertRaises(ValueError, obj, 2)
         self.assertRaises(ValueError, obj, '2')
 
     def test_call_integer_range_valid(self):
-        obj = ztpserver.types.Integer(minvalue=1, maxvalue=2)
+        obj = ztpserver.types.Integer(min_value=1, max_value=2)
         self.assertEqual(obj(1), 1)
 
     def test_call_integer_range_invalid(self):
-        obj = ztpserver.types.Integer(minvalue=1, maxvalue=2)
+        obj = ztpserver.types.Integer(min_value=1, max_value=2)
         self.assertRaises(ValueError, obj, 3)
 
     def test_create_list_defaults(self):

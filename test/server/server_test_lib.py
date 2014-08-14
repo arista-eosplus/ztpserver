@@ -49,9 +49,8 @@ log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-def debug():
+def enable_logging():
     enable_handler_console()
-
 
 def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits)

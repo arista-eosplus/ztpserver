@@ -206,41 +206,6 @@ neighbordb:
       interfaces:
         - Ethernet1: localhost:Ethernet1
 
-    # Not provisioned - 'z'
-    - name: wrong system mac 1
-      node: 12:FB:56:78:90:az
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
-    # Not provisioned - bogus
-    - name: wrong system mac 2
-      node: azzx
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
-    # Not provisioned - '?'
-    - name: wrong system mac 3
-      node: 1234567890??
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
-    # Not provisioned - too long
-    - name: wrong system mac 4
-      node: 1234567890aba
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
-    # Not provisioned - too short
-    - name: wrong system mac 5
-      node: 1234567890aba
-      definition: test
-      interfaces:
-        - Ethernet1: localhost:Ethernet1
-
     # List - will not be provisioned
     - name: node - list
       node:

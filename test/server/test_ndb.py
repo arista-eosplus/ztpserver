@@ -34,7 +34,6 @@
 
 import os
 import unittest
-import logging
 import traceback
 import yaml
 
@@ -42,29 +41,16 @@ from ztpserver.app import enable_handler_console
 from ztpserver.neighbordb import load_topology, load_node
 from ztpserver.validators import TopologyValidator
 
-TEST_DIR = 'test/neighbordb'
+from server_test_lib import enable_logging, log
 
-log = logging.getLogger(__name__) # pylint: disable=C0103
-log.setLevel(logging.DEBUG)
-log.addHandler(logging.NullHandler())
+
+TEST_DIR = 'test/neighbordb'
 
 def debug(exc):
     # Uncomment line for debugging
     # import pdb; pdb.set_trace()
     
     raise exc
-
-def enable_logging(level=None):
-    logging_fmt = '%(levelname)s: [%(module)s:%(lineno)d] %(message)s'
-    formatter = logging.Formatter(logging_fmt)
-
-    handler = logging.StreamHandler()
-    level = level or 'DEBUG'
-    level = str(level).upper()
-    level = logging.getLevelName(level)
-    handler.setLevel(level)
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
 
 class NeighbordbTest(unittest.TestCase):
     # pylint: disable=C0103
@@ -82,7 +68,7 @@ class NeighbordbTest(unittest.TestCase):
         if not self.valid_patterns.get('globals'):
             self.valid_patterns['globals'] = list()
 
-        self.failed_patterns = kwargs.get('failed_patterns')
+        self.invalid_patterns = kwargs.get('invalid_patterns')
 
         self.longMessage = True   
         self.maxDiff = None
@@ -95,7 +81,7 @@ class NeighbordbTest(unittest.TestCase):
     def _validate_topology(self):
         validator = TopologyValidator()
         validator.validate(self.ndb)
-        return (validator.valid_patterns, validator.failed_patterns)
+        return (validator.valid_patterns, validator.invalid_patterns)
 
     def neighbordb_pattern(self):
         try:
@@ -104,12 +90,12 @@ class NeighbordbTest(unittest.TestCase):
 
             (valid, failed) = self._validate_topology()
 
-            if self.failed_patterns:
+            if self.invalid_patterns:
                 failed_names = sorted([p[1] for p in failed])
                 self.assertEqual(failed_names, 
-                                 sorted(self.failed_patterns),
+                                 sorted(self.invalid_patterns),
                                  tag)
-                self.assertEqual(len(failed), len(self.failed_patterns), tag)
+                self.assertEqual(len(failed), len(self.invalid_patterns), tag)
 
             p_all = self.valid_patterns.get('nodes') + \
                     self.valid_patterns.get('globals')
@@ -231,7 +217,7 @@ def load_tests(loader, tests, pattern):      # pylint: disable=W0613
 
             kwargs = dict()
             kwargs['valid_patterns'] = harness.get('valid_patterns', dict())
-            kwargs['failed_patterns'] = harness.get('failed_patterns')
+            kwargs['invalid_patterns'] = harness.get('invalid_patterns')
             kwargs['tag'] = harness.get('tag', filename)
             kwargs['filename'] = test
 

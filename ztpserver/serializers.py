@@ -32,7 +32,6 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=R0201
 #
-import warnings
 import collections
 import logging
 import json
@@ -51,7 +50,8 @@ class SerializerError(Exception):
     ''' base error raised by serialization functions '''
     pass
 
-class SerializerMixin(object):
+
+class BaseSerializer(object):
     ''' Base serializer object '''
 
     def serialize(self, data, **kwargs):
@@ -62,7 +62,8 @@ class SerializerMixin(object):
         ''' Deserialize an object to dict '''
         raise NotImplementedError
 
-class TextSerializer(SerializerMixin):
+
+class TextSerializer(BaseSerializer):
 
     def deserialize(self, data, **kwargs):
         ''' Deserialize a text object and return a dict '''
@@ -73,11 +74,11 @@ class TextSerializer(SerializerMixin):
         return str(data)
 
 
-class YAMLSerializer(SerializerMixin):
+class YAMLSerializer(BaseSerializer):
 
     def __new__(cls):
         if not YAML_AVAILABLE:
-            warnings.warn('Unable to import YAML', RuntimeWarning)
+            log.error('Unable to import YAML')
             return None
         else:
             return super(YAMLSerializer, cls).__new__(cls)
@@ -87,8 +88,9 @@ class YAMLSerializer(SerializerMixin):
 
         try:
             return yaml.safe_load(data)
-        except yaml.YAMLError:
-            log.exception('Unable to deserialize YAML data')
+        except yaml.YAMLError as err:
+            log.error('Unable to deserialize YAML data %s (%s)' % 
+                      (data, err))
             raise
 
     def serialize(self, data, safe_dump=False, **kwargs):
@@ -98,19 +100,22 @@ class YAMLSerializer(SerializerMixin):
             if safe_dump:
                 return yaml.safe_dump(data, default_flow_style=False)
             return yaml.dump(data, default_flow_style=False)
-        except yaml.YAMLError:
-            log.exception('Unable to serialize YAML data')
+        except yaml.YAMLError as err:
+            log.error('Unable to serialize YAML data %s (%s)' % 
+                      (data, err))
             raise
 
-class JSONSerializer(SerializerMixin):
+
+class JSONSerializer(BaseSerializer):
 
     def deserialize(self, data, **kwargs):
         ''' Deserialize a JSON object and return a dict '''
 
         try:
             return json.loads(data)
-        except:
-            log.exception('Unable to deserialize JSON data')
+        except Exception as err:
+            log.error('Unable to deserialize JSON data %s (%s)' %
+                      (data, err))
             raise
 
     def serialize(self, data, **kwargs):
@@ -118,8 +123,9 @@ class JSONSerializer(SerializerMixin):
 
         try:
             return json.dumps(data)
-        except:
-            log.exception('Unable to serialize JSON data')
+        except Exception as err:
+            log.error('Unable to deserialize JSON data %s (%s)' %
+                      (data, err))
             raise
 
 
@@ -147,10 +153,12 @@ class Serializer(object):
         try:
             handler = self.handlers.get(content_type, TextSerializer())
             return handler.serialize(obj, **kwargs)
-        except:
-            log.exception('Unable to serialize data')
-            raise SerializerError
-
+        except Exception as err:
+            log.error('Unable to serialize obj:%s, content_type:%s (%s)' %
+                      (obj, content_type, err))
+            raise SerializerError('Unable to serialize obj:%s, content_type:%s '
+                                  '(%s)' % (obj, content_type, err))
+        
     def deserialize(self, obj, content_type=None, cls=None, **kwargs):
         ''' Deserialize the data based on the content_type '''
 
@@ -160,58 +168,52 @@ class Serializer(object):
             if cls:
                 obj = cls(**obj)    #pylint: disable=W0142
             return obj
-        except:
-            log.exception('Unable to deserialize data')
-            raise SerializerError
+        except Exception as err:
+            log.error('Unable to deserailize obj:%s, content_type:%s, cls:%s '
+                      '(%s)' % (obj, content_type, cls, err))
+            raise SerializerError('Unable to deserailize obj:%s, '
+                                  'content_type:%s, cls:%s (%s)' % 
+                                  (obj, content_type, cls, err))
 
     @staticmethod
     def _convert_from_unicode(data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([Serializer._convert_from_unicode(x) \
+            return dict([Serializer._convert_from_unicode(x)
                          for x in data.items()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([Serializer._convert_from_unicode(x) \
-                              for x in data])
+            return type(data)([Serializer._convert_from_unicode(x)
+                               for x in data])
         else:
             return data
 
 
 def loads(obj, content_type=None, cls=None, **kwargs):
-    try:
-        serializer = Serializer()
-        return serializer.deserialize(obj, content_type, cls=cls, **kwargs)
-    except SerializerError:
-        log.error('Unable to deserialize object with content-type %s',
-                  content_type)
-        raise
+    serializer = Serializer()
+    return serializer.deserialize(obj, content_type, cls=cls, **kwargs)
 
-def load(filepath, content_type=None, cls=None, **kwargs):
+def load(file_path, content_type=None, cls=None, **kwargs):
     try:
-        contents = open(filepath).read()
+        contents = open(file_path).read()
         return loads(contents, content_type, cls=cls, **kwargs)
-    except (OSError, IOError):
-        log.error('Unable to load file from %s', filepath)
-        raise
+    except (OSError, IOError) as err:
+        log.error('Failed to load file from %s (%s)' % 
+                  (file_path, err))
+        raise SerializerError('Failed to load file from %s (%s)' % 
+                              (file_path, err))
 
 def dumps(obj, content_type=None, cls=None, **kwargs):
-    try:
-        serializer = Serializer()
-        if hasattr(obj, 'serialize'):
-            obj = obj.serialize()
-        return serializer.serialize(obj, content_type, cls=cls, **kwargs)
-    except SerializerError:
-        log.error('Unable to serialize object with content-type %s',
-                  content_type)
-        raise
+    serializer = Serializer()
+    if hasattr(obj, 'serialize'):
+        obj = obj.serialize()
+    return serializer.serialize(obj, content_type, cls=cls, **kwargs)
 
-def dump(obj, filepath, content_type=None, cls=None, **kwargs):
+def dump(obj, file_path, content_type=None, cls=None, **kwargs):
     try:
-        with open(filepath, 'w') as fhandler:
+        with open(file_path, 'w') as fhandler:
             fhandler.write(dumps(obj, content_type, cls=cls, **kwargs))
-    except (OSError, IOError):
-        log.error('Unable to write to file %s', filepath)
+    except (OSError, IOError) as err:
+        log.error('Failed to write file to %s (%s)' % 
+                  (file_path, err))
         raise
-
-

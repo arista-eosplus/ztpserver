@@ -54,11 +54,20 @@ import logging
 import mimetypes
 import os
 
-
-import ztpserver.config
 import ztpserver.serializers
 
+from ztpserver.serializers import SerializerError
+
 log = logging.getLogger(__name__)   #pylint: disable=C0103
+
+
+
+def create_repository(path):
+    if not os.path.exists(path):
+        raise RepositoryError
+    return Repository(path)
+
+
 
 class RepositoryError(Exception):
     ''' Base exception class for :py:class:`Repository` '''
@@ -73,6 +82,8 @@ class FileObjectNotFound(RepositoryError):
     exception is a subclass of :py:class:`RespositoryError`
     '''
     pass
+
+
 
 class FileObject(object):
     ''' The :py:class:`FileObject` represents a single file entity in the
@@ -100,7 +111,8 @@ class FileObject(object):
         self.content_type = kwargs.get('content_type')
 
     def __repr__(self):
-        return 'FileObject(name=%s)' % self.name
+        return 'FileObject(name=%s, type=%s, encoding=%s, content_type=%s)' % \
+               (self.name, self.type, self.encoding, self.content_type)
 
     def read(self, content_type=None, cls=None):
         ''' Reads the contents from the file system
@@ -124,9 +136,9 @@ class FileObject(object):
         try:
             self.content_type = content_type
             return ztpserver.serializers.load(self.name, content_type, cls)
-        except ztpserver.serializers.SerializerError:
-            log.error('Could not access file %s', self.name)
-            raise FileObjectError
+        except SerializerError:
+            log.error('Failed to read file %s' % self.name)
+            raise FileObjectError('Failed to read file %s' % self.name)
 
     def write(self, contents, content_type=None):
         ''' Writes the contents to the file
@@ -150,9 +162,9 @@ class FileObject(object):
         try:
             ztpserver.serializers.dump(contents, self.name, content_type)
             self.content_type = content_type
-        except ztpserver.serializers.SerializerError:
-            log.error('Unable to write file %s', self.name)
-            raise FileObjectError
+        except SerializerError:
+            log.error('Failed to write file %s' % self.name)
+            raise FileObjectError('Failed to write file %s' % self.name)
 
     def size(self):
         ''' Returns the size of the object in bytes.
@@ -190,46 +202,48 @@ class Repository(object):
     def __repr__(self):
         return "Repository(path=%s)" % self.path
 
-    def expand(self, filepath):
-        ''' Expands a filepath to the full path to a file object
+    def expand(self, file_path):
+        ''' Expands a file_path to the full path to a file object
 
-        :param filepath: the file path to expand
-        :type filepath: str
+        :param file_path: the file path to expand
+        :type file_path: str
         :returns: str -- the full path to the file
 
         This method is used to transform a relative file path into an
         absolute file path for identifying a file object resource
 
         '''
-        if filepath == '/':
-            filepath = self.path
-        elif not str(filepath).startswith(self.path):
-            filepath = filepath[1:] if filepath[0] == '/' else filepath
-            filepath = os.path.join(self.path, filepath)
-        return filepath
+        if file_path == '/':
+            file_path = self.path
+        elif not str(file_path).startswith(self.path):
+            file_path = file_path[1:] if file_path[0] == '/' else file_path
+            file_path = os.path.join(self.path, file_path)
+        return file_path
 
-    def add_folder(self, folderpath):
+    def add_folder(self, folder_path):
         ''' Add a new folder to the repository
 
-        :param folderpath: the full path of the folder to add
-        :type folderpath: str
+        :param folder_path: the full path of the folder to add
+        :type folder_path: str
         :returns: str -- the full path to the new folder
         :raises: RespositoryError
 
         '''
         try:
-            folderpath = self.expand(folderpath)
-            os.makedirs(folderpath)
-            return folderpath
-        except OSError:
-            log.error('Unable to add folder %s', folderpath)
-            raise RepositoryError
+            folder_path = self.expand(folder_path)
+            os.makedirs(folder_path)
+            return folder_path
+        except OSError as err:
+            log.error('Failed to add folder %s (%s)' % 
+                      (folder_path, err))
+            raise RepositoryError('Failed to add folder %s (%s)' % 
+                                  (folder_path, err))
 
-    def add_file(self, filepath, contents=None, content_type=None):
+    def add_file(self, file_path, contents=None, content_type=None):
         ''' Adds a new :py:class:`FileObject` to the repository
 
-        :param filepath: the full path of the file to add
-        :type filepath: str
+        :param file_path: the full path of the file to add
+        :type file_path: str
         :param contents: the contents to write to the file
         :type contents: str
         :param content_type: specifies the serialization to use for the file
@@ -246,30 +260,31 @@ class Repository(object):
 
         '''
         try:
-            filepath = self.expand(filepath)
-            obj = FileObject(filepath)
+            file_path = self.expand(file_path)
+            obj = FileObject(file_path)
             if contents:
                 obj.write(contents, content_type)
             return obj
         except FileObjectError:
-            raise RepositoryError
+            log.error('Failed to add file %s' % file_path)
+            raise RepositoryError('Failed to add file %s' % file_path)
 
-    def exists(self, filepath):
-        ''' Returns boolean if the filepath exists in the repository
+    def exists(self, file_path):
+        ''' Returns boolean if the file_path exists in the repository
 
-        :param filepath: the filepath to check for existence
-        :type filepath: str
+        :param file_path: the file_path to check for existence
+        :type file_path: str
         :returns: boolean -- True if it exists otherwise False
 
         '''
-        filepath = self.expand(filepath)
-        return os.path.exists(filepath)
+        file_path = self.expand(file_path)
+        return os.path.exists(file_path)
 
-    def get_file(self, filepath):
+    def get_file(self, file_path):
         ''' Returns an intance of :py:class:`FileObject` if it exists
 
-        :param filepath: the file path of the instance to return
-        :type filepath: str
+        :param file_path: the file path of the instance to return
+        :type file_path: str
         :returns: instance of :py:class:`FileObject`
         :raises: FileObjectNotFound
 
@@ -277,46 +292,26 @@ class Repository(object):
         repository.  If the file does not exist then an error is raised
 
         '''
-        filepath = self.expand(filepath)
-        if not self.exists(filepath):
-            raise FileObjectNotFound(filepath)
-        return FileObject(filepath)
+        file_path = self.expand(file_path)
+        if not self.exists(file_path):
+            log.error('File not found: %s' % file_path)
+            raise FileObjectNotFound('File not found: %s' % file_path)
+        return FileObject(file_path)
 
-    def delete_file(self, filepath):
+    def delete_file(self, file_path):
         ''' Deletes an existing file in the respository
 
-        :param filepath: the file path of the instance to delete
-        :type filepath: str
+        :param file_path: the file path of the instance to delete
+        :type file_path: str
         :returns: None
         :raises: RepositoryError
 
         '''
         try:
-            filepath = self.expand(filepath)
-            os.remove(filepath)
-        except (OSError, IOError):
-            log.exception('Unable to delete file %s', filepath)
-            raise RepositoryError
-
-
-
-def create_repository(path):
-    if not os.path.exists(path):
-        raise RepositoryError
-    return Repository(path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            file_path = self.expand(file_path)
+            os.remove(file_path)
+        except (OSError, IOError) as err:
+            log.error('Failed to delete file %s (%s)' % 
+                      (file_path, err))
+            raise RepositoryError('Failed to delete file %s (%s)' % 
+                                  (file_path, err))

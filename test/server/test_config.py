@@ -88,20 +88,20 @@ class TestAttributes(unittest.TestCase):
         obj = ztpserver.config.IntAttr('test')
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
 
-    def test_intattr_with_minvalue(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1)
+    def test_intattr_with_min_value(self):
+        obj = ztpserver.config.IntAttr('test', min_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=None)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=1, max_value=None)")
 
-    def test_intattr_with_maxvalue(self):
-        obj = ztpserver.config.IntAttr('test', maxvalue=1)
+    def test_intattr_with_max_value(self):
+        obj = ztpserver.config.IntAttr('test', max_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=None, maxvalue=1)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=None, max_value=1)")
 
     def test_intattr_with_min_and_max_value(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1)
+        obj = ztpserver.config.IntAttr('test', min_value=1, max_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=1)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=1, max_value=1)")
 
     def test_intattr_with_default(self):
         obj = ztpserver.config.IntAttr('test', default=1)
@@ -109,55 +109,55 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_min_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, default=1)
+        obj = ztpserver.config.IntAttr('test', min_value=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_max_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', maxvalue=1, default=1)
+        obj = ztpserver.config.IntAttr('test', max_value=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_range_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1,
+        obj = ztpserver.config.IntAttr('test', min_value=1, max_value=1,
             default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_min_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, default=-1)
+            'test', min_value=0, default=-1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, default=0)
+            'test', min_value=1, default=0)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, default=1)
+            'test', min_value=2, default=1)
 
     def test_intattr_with_max_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=0, default=1)
+            'test', max_value=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=1, default=2)
+            'test', max_value=1, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=2, default=3)
+            'test', max_value=2, default=3)
 
     def test_intattr_with_range_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, maxvalue=0, default=1)
+            'test', min_value=0, max_value=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=0, default=2)
+            'test', min_value=1, max_value=0, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=0, default=2)
+            'test', min_value=1, max_value=0, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=1, default=2)
+            'test', min_value=1, max_value=1, default=2)
 
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=0, default=3)
+            'test', min_value=2, max_value=0, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, maxvalue=2, default=3)
+            'test', min_value=0, max_value=2, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=2, default=3)
+            'test', min_value=2, max_value=2, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=3, default=4)
+            'test', min_value=2, max_value=3, default=4)
 
     def test_intattr_with_group(self):
         obj = ztpserver.config.IntAttr('test', group='test')
