@@ -267,7 +267,8 @@ class NodesController(BaseController):
                       (kwargs['node_id'], prev_state, err))
             response = self.http_bad_request()
 
-        log.debug('FSM response to %s: %s' % (prev_state, response))
+        log.debug('%s: response to %s: %s' % 
+                  (kwargs['node_id'], prev_state, response))
         return response                     # pylint: disable=W0150
 
     def node_exists(self, response, *args, **kwargs):
