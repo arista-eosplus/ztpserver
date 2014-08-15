@@ -1159,13 +1159,16 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file = create_definition()
         definitions_file.add_action()
 
-        node = create_node()
+        serialnumber = random_string()
+        node = Mock(serialnumber=serialnumber)
+        node.identifier.return_value = serialnumber
+
         cfg = dict()
 
         def m_get_file(arg):
             m_file_object = Mock()
             if arg.endswith('.node'):
-                m_file_object.read.return_value = node.as_dict()
+                m_file_object.read.return_value = node
             elif arg.endswith('definition'):
                 m_file_object.read.return_value = definitions_file.as_dict()
             return m_file_object

@@ -108,7 +108,7 @@ class FilesController(BaseController):
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /files/{resource} '''
-        log.debug('File request: %s (%s)' % (resource, request))
+        log.debug('\n%s\nResource: %s\n' % (request, resource))
 
         try:
             urlvars = request.urlvars
@@ -131,7 +131,7 @@ class ActionsController(BaseController):
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /actions/{resource} '''
-        log.debug('Action request: %s (%s)' % (resource, request))
+        log.debug('\n%s\nResource: %s\n' % (request, resource))
 
         try:
             file_path = self.expand(resource)
@@ -165,7 +165,7 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('Node query request: %s' % request)
+        log.debug('\n%s\n' % request)
 
         try:
             node = create_node(request.json)
@@ -196,12 +196,11 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('Node resource request: %s (%s)' % (resource, request))
+        log.debug('\n%s\nResource: %s\n' % (request, resource))
 
         try:
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = fobj.read(CONTENT_TYPE_JSON, Node)
-            log.info(node.identifier())
         except Exception as err:           # pylint: disable=W0703
             log.error('Unable to read file resource: %s' % err)
             response = self.http_bad_request()
@@ -209,7 +208,6 @@ class NodesController(BaseController):
 
         node_id = node.identifier()
         if not node_id:
-            log.info(node.identifier())
             log.error('Missing node identifier: %s (request=%s)' % 
                       (node, request))
             response = self.http_bad_request()
@@ -218,6 +216,9 @@ class NodesController(BaseController):
         return self.fsm('get_definition', resource=resource, node=node)
 
     def get_config(self, request, resource, **kwargs):
+        log.debug('%s: node resource GET request: \n%s\n' % 
+                  (resource, request))
+
         response = dict()
         try:
             filename = self.expand(resource, STARTUP_CONFIG_FN)
@@ -230,6 +231,9 @@ class NodesController(BaseController):
         return (response, None)
 
     def put_config(self, *args, **kwargs):
+        log.debug('%s: node resource PUT request: \n%s\n' % 
+                  (kwargs['resource'], kwargs['request']))
+
         response = dict()
         try:
             body = str(kwargs['request'].body)
@@ -246,14 +250,15 @@ class NodesController(BaseController):
     def fsm(self, state, **kwargs):
         ''' Execute the FSM for the request '''
 
-        log.debug('FSM: %s' % state)
+        log.debug('FSM: %s (%s)' % (state, kwargs))
         response = dict()
         try:
             while state != None:
                 method = getattr(self, state)
+                prev_state = state
                 (response, state) = method(response, **kwargs)
         except Exception as err:            # pylint: disable=W0703
-            log.error('FSM error in %s: %s' % (state, err))
+            log.error('FSM error in %s: %s' % (prev_state, err))
             response = self.http_bad_request()
 
         log.debug('FSM response to %s: %s' % (state, response))
@@ -428,12 +433,12 @@ class NodesController(BaseController):
 
         try:
             filename = self.expand(kwargs['resource'], DEFINITION_FN)
-            log.debug('defintion filename is %s', filename)
             fobj = self.repository.get_file(filename)
             definition = fobj.read(CONTENT_TYPE_YAML)
             response['definition'] = definition
-            log.debug('loaded definition from file with %d actions',
-                      len(definition['actions']))
+            log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
+                                                    filename,
+                                                    definition['actions']))
         except FileObjectNotFound as err:
             log.warning('Missing definition %s: %s' % (filename, err))
         return (response, 'do_validation')
@@ -483,12 +488,14 @@ class NodesController(BaseController):
 
             pattern = load_pattern(fobj.name)
             if not pattern.match_node(kwargs['node']):
-                log.error('Node failed pattern validation (%s)' % filename)
-                raise Exception('Node failed pattern validation (%s)' % 
-                                filename)
-            log.debug('Node passed pattern validation: %s' % filename)
+                log.error('%s: node failed pattern validation (%s)' % 
+                          (kwargs['resource'], filename))
+                raise Exception('%s: node failed pattern validation (%s)' % 
+                                (kwargs['resource'], filename))
+            log.debug('%s: node passed pattern validation (%s)' % 
+                      (kwargs['resource'], filename))
         else:
-            log.warning('Topology validation is disabled')
+            log.warning('topology validation is disabled')
         return (response, 'get_startup_config')
 
     def get_attributes(self, response, *args, **kwargs):

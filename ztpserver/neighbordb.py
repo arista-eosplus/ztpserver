@@ -133,7 +133,7 @@ def create_node(nodeattrs):
                 _systemmac = str(_systemmac).replace(symbol, '')
             nodeattrs['systemmac'] = _systemmac
         node = Node(**nodeattrs)
-        log.debug('Created node object %r' % node)
+        log.debug('%s: created node object %r' % (node.identifier(), node))
         return node
     except KeyError as err:
         log.error('Failed to create node - missing attribute: %s' % err)
