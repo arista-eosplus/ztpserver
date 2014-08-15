@@ -114,28 +114,24 @@ class FileObject(object):
         return 'FileObject(name=%s, type=%s, encoding=%s, content_type=%s)' % \
                (self.name, self.type, self.encoding, self.content_type)
 
-    def read(self, content_type=None, cls=None):
+    def read(self, content_type=None):
         ''' Reads the contents from the file system
 
         :param content_type: defines the content_type of the file used to
                              deserialize the object
         :type content_type: str
-        :param cls: an optional class argument to read the contents into
-        :type cls: object
         :returns: object
         :raises: FileObjectError
 
         The read method will read the file from the file system, deserializing
         the contents as specified by the content_type argument.  If the
         content_type argument is not specified, the read method will read
-        the file as text.   The optional cls argument will create an instance
-        of the specified class using the deserailized file contents.  If
-        any errors occur, a FileObjectError is raised
+        the file as text. If any errors occur, a FileObjectError is raised.
 
         '''
         try:
             self.content_type = content_type
-            return ztpserver.serializers.load(self.name, content_type, cls)
+            return ztpserver.serializers.load(self.name, content_type)
         except SerializerError:
             log.error('Failed to read file %s' % self.name)
             raise FileObjectError('Failed to read file %s' % self.name)

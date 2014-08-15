@@ -90,7 +90,8 @@ class WSGIController(object):
             # serialize body based on response content type
             if 'body' in result:
                 content_type = result.get('content_type')
-                result['body'] = dumps(result['body'], content_type)
+                result['body'] = dumps(result['body'], content_type,
+                                       'general')
 
             result.setdefault('status', HTTP_STATUS_OK)
             result.setdefault('content_type', CONTENT_TYPE_HTML)

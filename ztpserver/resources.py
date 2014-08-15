@@ -47,9 +47,11 @@ class ResourcePoolError(Exception):
 
 class ResourcePool(object):
 
-    def __init__(self):
+    def __init__(self, node_id):
+        self.node_id = node_id
+
         cfg = ztpserver.config.runtime
-        self.filepath = os.path.join(cfg.default.data_root, 'resources')
+        self.file_path = os.path.join(cfg.default.data_root, 'resources')
         self.data = None
 
     def serialize(self):
@@ -60,48 +62,50 @@ class ResourcePool(object):
 
     def load(self, pool):
         self.data = dict()
-        filepath = os.path.join(self.filepath, pool)
-        contents = load(filepath, CONTENT_TYPE_YAML)
+        filename = os.path.join(self.file_path, pool)
+        contents = load(filename, CONTENT_TYPE_YAML, self.node_id)
         for key, value in contents.items():
             self.data[key] = str(value) if value is not None else None
 
     def dump(self, pool):
-        filepath = os.path.join(self.filepath, pool)
-        dump(self, filepath, CONTENT_TYPE_YAML)
+        file_path = os.path.join(self.file_path, pool)
+        dump(self, file_path, CONTENT_TYPE_YAML, self.node_id)
 
     def allocate(self, pool, node):
         node_id = node.identifier()
-        log.debug('Allocating resource for node %s' % node_id)
+        log.debug('%s: allocating resources' % node_id)
         try:
             match = self.lookup(pool, node)
             if match:
-                log.debug('Resource for node %r already allocated: %s' % 
+                log.debug('%s: resource \'%s\' already allocated' % 
                          (node_id, match))
                 return match
 
             self.load(pool)
             key = next(x[0] for x in self.data.items() if x[1] is None)
 
-            log.debug('Allocating %s from pool %s to node %s' %
-                      (key, pool, node_id))
+            log.debug('%s: allocating \'%s\' from pool \'%s\'' %
+                      (node_id, key, pool))
 
             self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
-            log.warning('No resources available in pool %s for %s' % 
-                        (pool, node_id))
-            raise ResourcePoolError
+            log.warning('%s: no resources available in pool \'%s\'' % 
+                        (node_id, pool))
+            raise ResourcePoolError('%s: no resources available '
+                                    'in pool \'%s\'' % 
+                                    (node_id, pool))
         except Exception as exc:
-            log.error('Failed to allocate resource for node %s: %s' % 
+            log.error('%s: failed to allocate resource \'%s\'' % 
                       (node_id, exc))
-            raise ResourcePoolError('Failed to allocate resource '
-                                    'for node %s: %s' % (node_id, exc))
+            raise ResourcePoolError('%s: failed to allocate resource \'%s\'' % 
+                                    (node_id, exc))
         return key
 
     def lookup(self, pool, node):
         ''' Return an existing allocated resource if one exists '''
         node_id = node.identifier()
-        log.debug('Looking up resource for node %s' % node_id)
+        log.debug('%s: looking up resource' % node_id)
         try:
             self.load(pool)
             matches = [m[0] for m in self.data.iteritems()
@@ -109,7 +113,7 @@ class ResourcePool(object):
             key = matches[0] if matches else None
             return key
         except Exception as exc:
-            log.error('Failed to lookup resource for node %s: %s' % 
+            log.error('%s: failed to lookup resource \'%s\'' % 
                       (node_id, exc))
-            raise ResourcePoolError('Failed to lookup resource '
-                                    'for node %s: %s' % (node_id, exc))
+            raise ResourcePoolError('%s: failed to lookup resource \'%s\'' % 
+                                    (node_id, exc))

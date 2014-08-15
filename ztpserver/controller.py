@@ -45,7 +45,7 @@ import ztpserver.neighbordb
 
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
-from ztpserver.neighbordb import create_node, load_pattern, Node
+from ztpserver.neighbordb import create_node, load_pattern
 
 from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
@@ -205,7 +205,7 @@ class NodesController(BaseController):
 
         try:
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
-            node = fobj.read(CONTENT_TYPE_JSON, Node)
+            node = fobj.read(CONTENT_TYPE_JSON)
         except Exception as err:           # pylint: disable=W0703
             log.error('Unable to read file resource: %s' % err)
             response = self.http_bad_request()
@@ -218,7 +218,8 @@ class NodesController(BaseController):
             response = self.http_bad_request()
             return self.response(**response)
 
-        return self.fsm('get_definition', resource=resource, node=node)
+        return self.fsm('get_definition', resource=resource, 
+                        node=node, node_id=node_id)
 
     def get_config(self, request, resource, **kwargs):
         log.debug('%s: node resource GET request: \n%s\n' % 
@@ -255,7 +256,7 @@ class NodesController(BaseController):
     def fsm(self, state, **kwargs):
         ''' Execute the FSM for the request '''
 
-        log.debug('FSM: %s (%s)' % (state, kwargs))
+        log.debug('%s: running %s' % (kwargs['node_id'], state))
         response = dict()
         try:
             while state != None:
@@ -263,10 +264,12 @@ class NodesController(BaseController):
                 prev_state = state
                 (response, state) = method(response, **kwargs)
         except ValidationError:            # pylint: disable=W0703
-            log.error('FSM validation error in %s' % prev_state)
+            log.error('%s: validation error in %s' % 
+                      (kwargs['node_id'], prev_state))
             response = self.http_bad_request()
         except Exception as err:            # pylint: disable=W0703
-            log.error('FSM error in %s: %s' % (prev_state, err))
+            log.error('%s: error in %s: %s' % 
+                      (kwargs['node_id'], prev_state, err))
             response = self.http_bad_request()
 
         log.debug('FSM response to %s: %s' % (prev_state, response))
@@ -385,9 +388,9 @@ class NodesController(BaseController):
             node = kwargs['node']
             node_id = kwargs['node_id']
 
-            topology = ztpserver.neighbordb.load_topology()
+            neighbordb = ztpserver.neighbordb.load_neighbordb(node_id)
             # pylint: disable=E1103
-            matches = topology.match_node(node)
+            matches = neighbordb.match_node(node)
             log.info('Node matched %d pattern(s)', len(matches))
             match = matches[0]
 
@@ -448,7 +451,8 @@ class NodesController(BaseController):
                                                     filename,
                                                     definition['actions']))
         except FileObjectNotFound as err:
-            log.warning('Missing definition %s: %s' % (filename, err))
+            log.warning('%s: missing definition %s: %s' % 
+                        (kwargs['resource'], filename, err))
         return (response, 'do_validation')
 
     def get_startup_config(self, response, *args, **kwargs):
@@ -464,7 +468,8 @@ class NodesController(BaseController):
                 ztpserver.neighbordb.replace_config_action(kwargs['resource'],
                                                            STARTUP_CONFIG_FN))
         except FileObjectNotFound as err:
-            log.warning('Missing startup-config %s: %s' % (filename, err))
+            log.warning('%s: missing startup-config %s: %s' % 
+                        (kwargs['resource'], filename, err))
 
         return (response, 'do_actions')
 
@@ -475,15 +480,18 @@ class NodesController(BaseController):
             always_execute = action.get('always_execute', False)
             if always_execute:
                 _actions.append(action)
-                log.debug('always_execute action %s included in definition' %
-                          action.get('name'))
+                log.debug('%s: always_execute action %s included '
+                          'in definition' %
+                          (kwargs['resource'],  action.get('name')))
             elif not response['get_startup_config']:
                 _actions.append(action)
-                log.debug('action %s included in definition' % 
-                          action.get('name'))
+                log.debug('%s: action %s included '
+                          'in definition' %
+                          (kwargs['resource'],  action.get('name')))
             else:
-                log.debug('action %s not included in definition' %
-                          action.get('name'))
+                log.debug('%s: action %s not included '
+                          'in definition' %
+                          (kwargs['resource'],  action.get('name')))
         response['definition']['actions'] = _actions
             
         return (response, 'get_attributes')
@@ -494,7 +502,7 @@ class NodesController(BaseController):
             filename = self.expand(kwargs['resource'], PATTERN_FN)
             fobj = self.repository.get_file(filename)
 
-            pattern = load_pattern(fobj.name)
+            pattern = load_pattern(kwargs['resource'], fobj.name)
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
                           (kwargs['resource'], filename))
@@ -504,7 +512,8 @@ class NodesController(BaseController):
             log.debug('%s: node passed pattern validation (%s)' % 
                       (kwargs['resource'], filename))
         else:
-            log.warning('topology validation is disabled')
+            log.warning('%s: topology validation is disabled' %
+                        kwargs['resource'])
         return (response, 'get_startup_config')
 
     def get_attributes(self, response, *args, **kwargs):
@@ -513,13 +522,14 @@ class NodesController(BaseController):
         '''
         try:
             filename = self.expand(kwargs['resource'], ATTRIBUTES_FN)
-            log.debug('Attributes filename is %s', filename)
             fileobj = self.repository.get_file(filename)
             attributes = fileobj.read(CONTENT_TYPE_YAML)
             response['attributes'] = attributes
-            log.debug('loaded %d attributes from file', len(attributes))
+            log.debug('%s: loaded %s attributes from %s' % 
+                      (kwargs['resource'], attributes, filename))
         except FileObjectNotFound:
-            log.warning('No node specific attributes file')
+            log.warning('%s: no node specific attributes file' %
+                        kwargs['resource'])
             response['attributes'] = dict()
 
         return (response, 'do_substitution')
@@ -532,12 +542,14 @@ class NodesController(BaseController):
         nodeattrs = response.get('attributes', dict())
 
         def lookup(name):
-            log.debug('Lookup up value for variable %s', name)
+            log.debug('%s: lookup up value for variable %s' % 
+                      (kwargs['resource'], name))
             return nodeattrs.get(name, attrs.get(name))
 
         _actions = list()
         for action in definition['actions']:
-            log.info('Analyzing action: %s', action.get('name'))
+            log.debug('%s: processing action %s (variable substitution)' %
+                      (kwargs['resource'], action.get('name')))
             _attributes = dict()
             if 'attributes' in action:
                 for key, value in action.get('attributes').items():
@@ -552,13 +564,11 @@ class NodesController(BaseController):
                             value = lookup(value[1:])
                         update = value
                     finally:
-                        log.debug('%s=%s', key, update)
                         _attributes[key] = update
             action['attributes'] = _attributes
             _actions.append(action)
         definition['actions'] = _actions
         response['definition'] = definition
-        log.debug('processed %d actions', len(definition['actions']))
         return (response, 'do_resources')
 
     def do_resources(self, response, *args, **kwargs):
@@ -567,12 +577,12 @@ class NodesController(BaseController):
         _actions = list()
         for action in definition.get('actions'):
             attrs = action.get('attributes', dict())
+
             action['attributes'] = \
-                ztpserver.neighbordb.resources(attrs, node)
+                ztpserver.neighbordb.resources(attrs, node, kwargs['resource'])
             _actions.append(action)
         definition['actions'] = _actions
         response['definition'] = definition
-        log.debug('processed %d actions', len(definition['actions']))
         return (response, 'finalize_response')
 
     def finalize_response(self, response, *args, **kwargs):
@@ -651,7 +661,8 @@ class MetaController(BaseController):
                 file_resource = self.repository.get_file(file_path)
             except (FileObjectNotFound, IOError) as exc:
                 # IOError is file_path points to a folder
-                log.error(str(exc))
+                log.error('%s is a folder, not a file: %s' % 
+                          (file_path, str(exc)))
                 resp = self.http_not_found()
             else:
                 self.BODY['size'] = file_resource.size()

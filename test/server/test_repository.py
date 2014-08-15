@@ -42,7 +42,7 @@ from ztpserver.repository import FileObject, FileObjectError
 from ztpserver.repository import Repository, RepositoryError
 from ztpserver.repository import FileObjectNotFound
 
-from server_test_lib import random_string
+from server_test_lib import enable_logging, random_string
 
 class FileObjectUnitTests(unittest.TestCase):
 
@@ -148,4 +148,5 @@ class RepositoryUnitTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    enable_logging()
     unittest.main()

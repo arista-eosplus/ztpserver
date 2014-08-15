@@ -29,41 +29,44 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 import unittest
-
 import yaml
-
-from mock import patch, Mock
 
 import ztpserver.neighbordb
 
-from ztpserver.topology import Pattern
-from ztpserver.topology import Topology
+from mock import patch, Mock
 
-from server_test_lib import random_string
+from ztpserver.neighbordb import Neighbordb, Pattern
+from ztpserver.neighbordb import create_node, load_file, load_neighbordb
+from ztpserver.neighbordb import default_filename, replace_config_action
+from ztpserver.neighbordb import load_pattern
+from server_test_lib import enable_logging, random_string
 
 class NeighbordbUnitTests(unittest.TestCase):
 
     def test_default_filename(self):
-        result = ztpserver.neighbordb.default_filename()
+        result = default_filename()
         self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
 
     @patch('ztpserver.neighbordb.load')
     def test_load_file(self, m_load):
-        result = ztpserver.neighbordb.load_file(random_string(),
-                                                random_string())
+        result = load_file(random_string(),
+                           random_string(),
+                           random_string())
         self.assertEqual(result, m_load.return_value)
 
-    @patch('ztpserver.neighbordb.validate_topology')
+    @patch('ztpserver.neighbordb.validate_neighbordb')
     @patch('ztpserver.neighbordb.load')
     def test_load_file_failure(self, m_load, _):
         m_load.side_effect = ztpserver.serializers.SerializerError
-        self.assertIsNone(ztpserver.neighbordb.load_file(random_string(),
-                                                         random_string()))
+        self.assertIsNone(load_file(random_string(),
+                                    random_string(),
+                                    random_string()))
 
-    @patch('ztpserver.neighbordb.validate_topology')
+    @patch('ztpserver.neighbordb.validate_neighbordb')
     @patch('ztpserver.neighbordb.load')
-    def test_load_topology(self, _, m_load):
+    def test_load_neighbordb(self, _, m_load):
         contents = '''
             variables:
                 foo: bar
@@ -71,11 +74,11 @@ class NeighbordbUnitTests(unittest.TestCase):
                 - any: any
         '''
         m_load.return_value = yaml.load(contents)
-        result = ztpserver.neighbordb.load_topology()
+        result = load_neighbordb(random_string())
         self.assertIsNotNone(result)
 
     @patch('ztpserver.neighbordb.load')
-    def test_load_topology_no_variables(self, m_load):
+    def test_load_neighbordb_no_variables(self, m_load):
         # github issue #114
         contents = """
             patterns:
@@ -84,11 +87,11 @@ class NeighbordbUnitTests(unittest.TestCase):
                     - any: any
         """
         m_load.return_value = yaml.load(contents)
-        result = ztpserver.neighbordb.load_topology()
-        self.assertIsInstance(result, Topology)
+        result = load_neighbordb(random_string())
+        self.assertIsInstance(result, Neighbordb)
 
     def test_load_pattern_minimal(self):
-        pattern = ztpserver.neighbordb.load_pattern({'name': random_string()})
+        pattern = load_pattern({'name': random_string()})
         self.assertIsInstance(pattern, Pattern)
 
     def test_load_pattern_with_interfaces(self):
@@ -100,27 +103,28 @@ class NeighbordbUnitTests(unittest.TestCase):
                 - any: any:any
         """
         kwargs = yaml.load(contents)
-        pattern = ztpserver.neighbordb.load_pattern(kwargs)
+        pattern = load_pattern(kwargs)
         self.assertIsInstance(pattern, Pattern)
 
     def test_replace_config_action(self):
         resource = random_string()
-        result = ztpserver.neighbordb.replace_config_action(resource)
+        result = replace_config_action(resource)
         self.assertEqual('install static startup-config file', result['name'])
         self.assertEqual('replace_config', result['action'])
         self.assertTrue(result['always_execute'])
 
     def test_create_node_fixup_systemmac_colon(self):
         attrs = Mock(systemmac='99:99:99:99:99:99')
-        result = ztpserver.neighbordb.create_node({'systemmac': 
-                                                   attrs.systemmac})
+        result = create_node({'systemmac': 
+                              attrs.systemmac})
         self.assertTrue(':' not in result.systemmac)
 
     def test_create_node_fixup_systemmac_period(self):
         attrs = Mock(systemmac='99.99.99.99.99.99')
-        result = ztpserver.neighbordb.create_node({'systemmac': 
-                                                   attrs.systemmac})
+        result = create_node({'systemmac': 
+                              attrs.systemmac})
         self.assertTrue('.' not in result.systemmac)
 
 if __name__ == '__main__':
+    enable_logging()
     unittest.main()

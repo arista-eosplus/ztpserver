@@ -45,7 +45,7 @@ import ztpserver.controller
 import ztpserver.neighbordb
 
 from ztpserver.serializers import load
-from ztpserver.validators import TopologyValidator
+from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.neighbordb import default_filename
 
@@ -148,9 +148,10 @@ def run_validator(filename=None):
 
     try:
         print 'Validating file \'%s\'\n' % filename
-        validator = TopologyValidator()
+        validator = NeighbordbValidator()
         filename = filename or default_filename()
-        validator.validate(load(filename, CONTENT_TYPE_YAML))
+        validator.validate(load(filename, CONTENT_TYPE_YAML,
+                                'validator'))
         print 'Valid Patterns (count: %d)' % len(validator.valid_patterns)
         print '--------------------------'
         for index, pattern in enumerate(sorted(validator.valid_patterns)):

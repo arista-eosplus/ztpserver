@@ -37,8 +37,7 @@ import inspect
 import logging
 import collections
 
-from ztpserver.topology import Pattern, PatternError
-from ztpserver.utils import expand_range
+from ztpserver.utils import expand_range, parse_interface
 
 REQUIRED_PATTERN_ATTRIBUTES = ['name']
 OPTIONAL_PATTERN_ATTRIBUTES = ['definition', 'interfaces', 'node', 'variables']
@@ -70,7 +69,8 @@ class ValidationError(Exception):
 
 class Validator(object):
 
-    def __init__(self):
+    def __init__(self, node_id):
+        self.node_id = node_id
         self.data = None
         self.fail = False
         self.errors = list()
@@ -85,8 +85,8 @@ class Validator(object):
                 else:
                     name_string  = 'for \'%s\'' % self.data['name']
 
-                log.debug('Running %s.%s %s' % 
-                          (self.__class__.__name__,
+                log.debug('%s: running %s.%s %s' % 
+                          (self.node_id, self.__class__.__name__,
                            name[0], name_string))
                 try:
                     getattr(self, name[0])()
@@ -97,17 +97,17 @@ class Validator(object):
     def error(self, err, *args, **kwargs):
         #pylint: disable=W0613
         cls = str(self.__class__).split('\'')[1].split('.')[-1]
-        log.error('%s validation error: %s' % 
-                  (cls, err))
+        log.error('%s: %s validation error: %s' % 
+                  (self.node_id, cls, err))
         self.fail = True
 
 
-class TopologyValidator(Validator):
+class NeighbordbValidator(Validator):
 
-    def __init__(self):
+    def __init__(self, node_id):
         self.invalid_patterns = set()
         self.valid_patterns = set()
-        super(TopologyValidator, self).__init__()
+        super(NeighbordbValidator, self).__init__(node_id)
 
     def validate_variables(self):
         variables = self.data.get('variables')
@@ -123,15 +123,15 @@ class TopologyValidator(Validator):
         for index, entry in enumerate(self.data.get('patterns')):
             name = str(entry.get('name'))
 
-            validator = PatternValidator()
+            validator = PatternValidator(self.node_id)
 
             if validator.validate(entry):
-                log.info('Adding pattern \'%s\' (%s) to valid patterns' % 
-                         (name, entry))
+                log.info('%s: adding pattern \'%s\' (%s) to valid patterns' % 
+                         (self.node_id, name, entry))
                 self.valid_patterns.add((index, name))
             else:
-                log.info('Adding pattern \'%s\' (%s) to invalid patterns' % 
-                         (name, entry))
+                log.info('%s: adding pattern \'%s\' (%s) to invalid patterns' % 
+                         (self.node_id, name, entry))
                 self.invalid_patterns.add((index, name))
         
         if self.invalid_patterns:
@@ -141,10 +141,10 @@ class TopologyValidator(Validator):
 
 class PatternValidator(Validator):
 
-    def __init__(self):
+    def __init__(self, node_id):
         self.invalid_interface_patterns = set()
         self.valid_interface_patterns = set()
-        super(PatternValidator, self).__init__()
+        super(PatternValidator, self).__init__(node_id)
 
     def validate_attributes(self):
         for attr in REQUIRED_PATTERN_ATTRIBUTES:
@@ -153,9 +153,9 @@ class PatternValidator(Validator):
 
         for attr in OPTIONAL_PATTERN_ATTRIBUTES:
             if attr not in self.data:
-                log.warning('PatternValidator warning: \'%s\' is missing '
+                log.warning('%s: PatternValidator warning: \'%s\' is missing '
                             'optional attribute (%s)' % 
-                            (self.data['name'], attr))
+                            (self.node_id, self.data['name'], attr))
 
     def validate_name(self):
         if not self.data or 'name' not in self.data:
@@ -183,15 +183,17 @@ class PatternValidator(Validator):
                 raise ValidationError('invalid value for interface pattern '
                                       '(%s)' % pattern)
 
-            validator = InterfacePatternValidator()
+            validator = InterfacePatternValidator(self.node_id)
 
             if validator.validate(pattern):
-                log.info('Adding interface pattern \'%s\' to valid interface '
-                         'patterns' % repr(pattern))
+                log.info('%s: adding interface pattern \'%s\' to '
+                         'valid interface patterns' % 
+                         (self.node_id, repr(pattern)))
                 self.valid_interface_patterns.add((index, repr(pattern)))
             else:
-                log.info('Adding interface pattern \'%s\' to invalid interface '
-                         'patterns' % repr(pattern))
+                log.info('%s: adding interface pattern \'%s\' to '
+                         'invalid interface patterns' % 
+                         (self.node_id, repr(pattern)))
                 self.invalid_interface_patterns.add((index, repr(pattern)))
 
         if self.invalid_interface_patterns:
@@ -243,6 +245,9 @@ class PatternValidator(Validator):
 
 class InterfacePatternValidator(Validator):
 
+    def __init__(self, node_id):
+        super(InterfacePatternValidator, self).__init__(node_id)
+
     def validate_interface_pattern(self):
 
         for interface, peer in self.data.items():
@@ -251,8 +256,8 @@ class InterfacePatternValidator(Validator):
                                       interface)
 
             try:
-                (device, port) = Pattern.parse_interface(peer)
-            except PatternError as err:
+                (device, port) = parse_interface(peer, self.node_id)
+            except Exception as err:
                 raise ValidationError('PatternError: %s' % err)
 
             if not VALID_INTERFACE_RE.match(interface):
@@ -287,25 +292,25 @@ class InterfacePatternValidator(Validator):
                                        port_re.pattern))
 
 
-def _validator(contents, cls):
+def _validator(contents, cls, node_id):
     try:
-        validator = cls()
+        validator = cls(node_id)
         result = validator.validate(contents)
         if result:
-            log.debug('%s: validation successful' % 
-                      validator.__class__.__name__)
+            log.debug('%s: %s validation successful' % 
+                      (node_id, validator.__class__.__name__))
         else:
-            log.debug('%s: validation failed' % 
-                      validator.__class__.__name__)
+            log.debug('%s: %s validation failed' % 
+                      (node_id, validator.__class__.__name__))
 
         return result
     except Exception as exc:
-        log.error('Failed to run validator %s(%s): %s' %
-                  (cls.__name__, contents, repr(exc)))
+        log.error('%s: failed to run validator %s(%s): %s' %
+                  (node_id, cls.__name__, contents, repr(exc)))
         raise
 
-def validate_topology(contents):
-    return _validator(contents, TopologyValidator)
+def validate_neighbordb(contents, node_id):
+    return _validator(contents, NeighbordbValidator, node_id)
 
-def validate_pattern(contents):
-    return _validator(contents, PatternValidator)
+def validate_pattern(contents, node_id):
+    return _validator(contents, PatternValidator, node_id)

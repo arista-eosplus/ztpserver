@@ -38,19 +38,35 @@ import traceback
 import yaml
 
 from ztpserver.app import enable_handler_console
-from ztpserver.neighbordb import load_topology, load_node
-from ztpserver.validators import TopologyValidator
+from ztpserver.neighbordb import load_neighbordb, load_file
+from ztpserver.neighbordb import Node
+from ztpserver.validators import NeighbordbValidator
 
-from server_test_lib import enable_logging, log
+from ztpserver.constants import CONTENT_TYPE_YAML
 
+from server_test_lib import enable_logging, log, random_string
 
 TEST_DIR = 'test/neighbordb'
+ID = random_string()
+
 
 def debug(exc):
     # Uncomment line for debugging
     # import pdb; pdb.set_trace()
     
     raise exc
+
+def load_node(node, content_type=CONTENT_TYPE_YAML):
+    try:
+        if not hasattr(node, 'items'):
+            node = load_file(node, content_type, ID)
+        for symbol in [':', '.']:
+            node['systemmac'] = str(node['systemmac']).replace(symbol, '')
+        return Node(**node)
+    except TypeError:
+        log.error('Failed to load node')
+    except KeyError as err:
+        log.error('Failed to load node - missing attribute: %s' % err)
 
 class NeighbordbTest(unittest.TestCase):
     # pylint: disable=C0103
@@ -75,11 +91,11 @@ class NeighbordbTest(unittest.TestCase):
 
         super(NeighbordbTest, self).__init__(test_name)
 
-    def _load_topology(self):
-        return load_topology(contents=self.ndb)
+    def _load_neighbordb(self):
+        return load_neighbordb(ID, contents=self.ndb)
 
-    def _validate_topology(self):
-        validator = TopologyValidator()
+    def _validate_neighbordb(self):
+        validator = NeighbordbValidator(ID)
         validator.validate(self.ndb)
         return (validator.valid_patterns, validator.invalid_patterns)
 
@@ -88,7 +104,7 @@ class NeighbordbTest(unittest.TestCase):
             log.info('START: neighbordb_patterns')
             tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
-            (valid, failed) = self._validate_topology()
+            (valid, failed) = self._validate_neighbordb()
 
             if self.invalid_patterns:
                 failed_names = sorted([p[1] for p in failed])
@@ -105,7 +121,7 @@ class NeighbordbTest(unittest.TestCase):
 
                 self.assertEqual(valid_actual, valid_configured, tag)
 
-            log.info('END: neighbordb_patterns')
+            log.info('END: neighbordb_pattern')
         except AssertionError as exc:
             print exc
             print traceback.format_exc()
@@ -113,10 +129,10 @@ class NeighbordbTest(unittest.TestCase):
 
     def neighbordb_topology(self):
         try:
-            log.info('START: neighbordb_topology')
+            log.info('START: neighbordb_test')
             tag = 'tag=%s, fn=%s' % (self.tag, self.filename)
 
-            topo = self._load_topology()
+            topo = self._load_neighbordb()
             self.assertIsNotNone(topo, tag)
 
             p_nodes = [p.name for p in topo.get_patterns() 
@@ -131,7 +147,7 @@ class NeighbordbTest(unittest.TestCase):
                              sorted(p_globals),
                              tag)
 
-            log.info('END: neighbordb_topology')
+            log.info('END: neighbordb_test')
             return topo
         except AssertionError as exc:
             print exc
@@ -146,9 +162,9 @@ class NeighbordbTest(unittest.TestCase):
             node = load_node(self.node)
             self.assertIsNotNone(node, tag)
             
-            topology = self._load_topology()
-            self.assertIsNotNone(topology, tag)
-            result = topology.match_node(node)
+            neighbordb = self._load_neighbordb()
+            self.assertIsNotNone(neighbordb, tag)
+            result = neighbordb.match_node(node)
             
             self.assertTrue(result, tag)
             self.assertEqual(result[0].name, self.match, tag)
@@ -166,10 +182,10 @@ class NeighbordbTest(unittest.TestCase):
             node = load_node(self.node)
             self.assertIsNotNone(node, tag)
 
-            topology = self._load_topology()
-            self.assertIsNotNone(topology, tag)
+            neighbordb = self._load_neighbordb()
+            self.assertIsNotNone(neighbordb, tag)
 
-            result = topology.match_node(node)
+            result = neighbordb.match_node(node)
 
             self.assertFalse(result, tag)
             log.info('END: node_fail')
@@ -223,13 +239,12 @@ def load_tests(loader, tests, pattern):      # pylint: disable=W0613
 
             for test in tests:
                 assert test in ['pattern', 'topology']
-                test_name = 'neighbordb_%s' % test
-                suite.addTest(NeighbordbTest(test_name, ndb, **kwargs))
+                suite.addTest(NeighbordbTest('neighbordb_%s' % test, 
+                                             ndb, **kwargs))
 
             if 'nodes' in harness and 'topology' in tests:
                 for key in harness['nodes'].keys():
                     assert key in ['pass', 'fail']
-                    test = 'node_%s' % key
                     entries = harness['nodes'][key]
                     if not entries is None:
                         for entry in entries:
@@ -240,10 +255,12 @@ def load_tests(loader, tests, pattern):      # pylint: disable=W0613
                             kwargs['tag'] = '%s:%s' % (harness.get('tag'), 
                                                        filename)
                             log.info('Adding node %s', name)
-                            suite.addTest(NeighbordbTest(test, ndb, **kwargs))
+                            suite.addTest(NeighbordbTest('node_%s' % key, 
+                                                         ndb, **kwargs))
 
-    except Exception:      # pylint: disable=W0703
-        log.exception('Unexpected error trying to execute load_tests')
+    except Exception as exc:      # pylint: disable=W0703
+        log.exception('Unexpected error trying to execute load_tests: %s' %
+                      exc)
     else:
         return suite
 

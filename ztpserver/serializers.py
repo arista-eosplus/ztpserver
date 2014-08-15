@@ -36,12 +36,7 @@ import collections
 import logging
 import json
 
-try:
-    import yaml
-    YAML_AVAILABLE = True
-except ImportError:
-    YAML_AVAILABLE = False
-
+import yaml
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
@@ -54,88 +49,84 @@ class SerializerError(Exception):
 class BaseSerializer(object):
     ''' Base serializer object '''
 
-    def serialize(self, data, **kwargs):
+    def __init__(self, node_id):
+        self.node_id = node_id
+
+    def serialize(self, data):
         ''' Serialize a dict to object '''
         raise NotImplementedError
 
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         ''' Deserialize an object to dict '''
         raise NotImplementedError
 
 
 class TextSerializer(BaseSerializer):
 
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         ''' Deserialize a text object and return a dict '''
         return str(data)
 
-    def serialize(self, data, **kwargs):
+    def serialize(self, data):
         ''' Serialize a dict object and return text '''
         return str(data)
 
 
 class YAMLSerializer(BaseSerializer):
 
-    def __new__(cls):
-        if not YAML_AVAILABLE:
-            log.error('Unable to import YAML')
-            return None
-        else:
-            return super(YAMLSerializer, cls).__new__(cls)
-
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         ''' Deserialize a YAML object and return a dict '''
 
         try:
             return yaml.safe_load(data)
         except yaml.YAMLError as err:
-            log.error('Unable to deserialize YAML data %s (%s)' % 
-                      (data, err))
+            log.error('%s: unable to deserialize YAML data %s (%s)' % 
+                      (self.node_id, data, err))
             raise
 
-    def serialize(self, data, safe_dump=False, **kwargs):
+    def serialize(self, data):
         ''' Serialize a dict object and return YAML '''
 
         try:
-            if safe_dump:
-                return yaml.safe_dump(data, default_flow_style=False)
             return yaml.dump(data, default_flow_style=False)
         except yaml.YAMLError as err:
-            log.error('Unable to serialize YAML data %s (%s)' % 
-                      (data, err))
+            log.error('%s: unable to serialize YAML data %s (%s)' % 
+                      (self.node_id, data, err))
             raise
 
 
 class JSONSerializer(BaseSerializer):
 
-    def deserialize(self, data, **kwargs):
+    def deserialize(self, data):
         ''' Deserialize a JSON object and return a dict '''
 
         try:
             return json.loads(data)
         except Exception as err:
-            log.error('Unable to deserialize JSON data %s (%s)' %
-                      (data, err))
+            log.error('%s: unable to deserialize JSON data %s (%s)' %
+                      (self.node_id, data, err))
             raise
 
-    def serialize(self, data, **kwargs):
+    def serialize(self, data):
         ''' Serialize a dict object and return JSON '''
 
         try:
             return json.dumps(data)
         except Exception as err:
-            log.error('Unable to deserialize JSON data %s (%s)' %
-                      (data, err))
+            log.error('%s: unable to deserialize JSON data %s (%s)' %
+                      (self.node_id, data, err))
             raise
 
 
 class Serializer(object):
 
-    def __init__(self):
+    def __init__(self, node_id):
+        self.node_id = node_id
+
         self._handlers = {
-            'text/plain': TextSerializer(),
-            'application/json': JSONSerializer(),
-            'application/yaml': YAMLSerializer()
+            'text/plain': TextSerializer(self.node_id),
+            'application/json': JSONSerializer(self.node_id),
+            'application/yaml': YAMLSerializer(self.node_id)
         }
 
     @property
@@ -144,36 +135,37 @@ class Serializer(object):
 
     def add_handler(self, content_type, instance):
         if content_type in self._handlers:
-            log.warning('Overwriting previous loaded handler %s', content_type)
+            log.warning('%s: overwriting previous loaded handler %s', 
+                        (self.node_id, content_type))
         self._handlers[content_type] = instance
 
-    def serialize(self, obj, content_type=None, **kwargs):
+    def serialize(self, data, content_type):
         ''' Serialize the data based on the content_type '''
 
         try:
-            handler = self.handlers.get(content_type, TextSerializer())
-            return handler.serialize(obj, **kwargs)
+            handler = self.handlers.get(content_type, 
+                                        TextSerializer(self.node_id))
+            return handler.serialize(data)
         except Exception as err:
-            log.error('Unable to serialize obj:%s, content_type:%s (%s)' %
-                      (obj, content_type, err))
-            raise SerializerError('Unable to serialize obj:%s, content_type:%s '
-                                  '(%s)' % (obj, content_type, err))
-        
-    def deserialize(self, obj, content_type=None, cls=None, **kwargs):
+            log.error('%s: unable to serialize (%s): %s' %
+                      (self.node_id, data, err))
+            raise SerializerError('%s: unable to serialize (%s): %s' % 
+                                  (self.node_id, data, err))
+
+    def deserialize(self, data, content_type=None):
         ''' Deserialize the data based on the content_type '''
 
         try:
-            handler = self.handlers.get(content_type, TextSerializer())
-            obj = self._convert_from_unicode(handler.deserialize(obj, **kwargs))
-            if cls:
-                obj = cls(**obj)    #pylint: disable=W0142
-            return obj
+            handler = self.handlers.get(content_type, 
+                                        TextSerializer(self.node_id))
+            data = self._convert_from_unicode(
+                handler.deserialize(data))
+            return data
         except Exception as err:
-            log.error('Unable to deserailize obj:%s, content_type:%s, cls:%s '
-                      '(%s)' % (obj, content_type, cls, err))
-            raise SerializerError('Unable to deserailize obj:%s, '
-                                  'content_type:%s, cls:%s (%s)' % 
-                                  (obj, content_type, cls, err))
+            log.error('%s: unable to deserialize (%s): %s' % 
+                      (self.node_id, data, err))
+            raise SerializerError('%s: unable to deserialize (%s): %s)' % 
+                                  (self.node_id, data, err))
 
     @staticmethod
     def _convert_from_unicode(data):
@@ -189,31 +181,31 @@ class Serializer(object):
             return data
 
 
-def loads(obj, content_type=None, cls=None, **kwargs):
-    serializer = Serializer()
-    return serializer.deserialize(obj, content_type, cls=cls, **kwargs)
+def loads(data, content_type, node_id):
+    serializer = Serializer(node_id)
+    return serializer.deserialize(data, content_type)
 
-def load(file_path, content_type=None, cls=None, **kwargs):
+def load(file_path, content_type, node_id='general'):
     try:
-        contents = open(file_path).read()
-        return loads(contents, content_type, cls=cls, **kwargs)
+        data = open(file_path).read()
+        return loads(data, content_type, node_id)
     except (OSError, IOError) as err:
-        log.error('Failed to load file from %s (%s)' % 
-                  (file_path, err))
-        raise SerializerError('Failed to load file from %s (%s)' % 
-                              (file_path, err))
+        log.error('%s: failed to load file from %s (%s)' % 
+                  (node_id, file_path, err))
+        raise SerializerError('%s: failed to load file from %s (%s)' % 
+                              (node_id, file_path, err))
 
-def dumps(obj, content_type=None, cls=None, **kwargs):
-    serializer = Serializer()
-    if hasattr(obj, 'serialize'):
-        obj = obj.serialize()
-    return serializer.serialize(obj, content_type, cls=cls, **kwargs)
+def dumps(data, content_type, node_id):
+    serializer = Serializer(node_id)
+    if hasattr(data, 'serialize'):
+        data = data.serialize()
+    return serializer.serialize(data, content_type)
 
-def dump(obj, file_path, content_type=None, cls=None, **kwargs):
+def dump(data, file_path, content_type, node_id='general'):
     try:
         with open(file_path, 'w') as fhandler:
-            fhandler.write(dumps(obj, content_type, cls=cls, **kwargs))
+            fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
-        log.error('Failed to write file to %s (%s)' % 
-                  (file_path, err))
+        log.error('%s: failed to write file to %s (%s)' % 
+                  (node_id, file_path, err))
         raise
