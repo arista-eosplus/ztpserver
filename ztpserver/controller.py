@@ -65,6 +65,11 @@ BOOTSTRAP_CONF = 'bootstrap.conf'
 log = logging.getLogger(__name__)    # pylint: disable=C0103
 
 
+class ValidationError(Exception):
+    ''' Base exception class for :py:class:`Pattern` '''
+    pass
+
+
 class BaseController(WSGIController):
 
     FOLDER = None
@@ -108,7 +113,7 @@ class FilesController(BaseController):
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /files/{resource} '''
-        log.debug('\n%s\nResource: %s\n' % (request, resource))
+        log.debug('%s\nResource: %s\n' % (request, resource))
 
         try:
             urlvars = request.urlvars
@@ -131,7 +136,7 @@ class ActionsController(BaseController):
 
     def show(self, request, resource, **kwargs):
         ''' Handles GET /actions/{resource} '''
-        log.debug('\n%s\nResource: %s\n' % (request, resource))
+        log.debug('%s\nResource: %s\n' % (request, resource))
 
         try:
             file_path = self.expand(resource)
@@ -165,7 +170,7 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('\n%s\n' % request)
+        log.debug('%s\n' % request)
 
         try:
             node = create_node(request.json)
@@ -196,7 +201,7 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('\n%s\nResource: %s\n' % (request, resource))
+        log.debug('%s\nResource: %s\n' % (request, resource))
 
         try:
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
@@ -257,11 +262,14 @@ class NodesController(BaseController):
                 method = getattr(self, state)
                 prev_state = state
                 (response, state) = method(response, **kwargs)
+        except ValidationError:            # pylint: disable=W0703
+            log.error('FSM validation error in %s' % prev_state)
+            response = self.http_bad_request()
         except Exception as err:            # pylint: disable=W0703
             log.error('FSM error in %s: %s' % (prev_state, err))
             response = self.http_bad_request()
 
-        log.debug('FSM response to %s: %s' % (state, response))
+        log.debug('FSM response to %s: %s' % (prev_state, response))
         return response                     # pylint: disable=W0150
 
     def node_exists(self, response, *args, **kwargs):
@@ -490,8 +498,9 @@ class NodesController(BaseController):
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
                           (kwargs['resource'], filename))
-                raise Exception('%s: node failed pattern validation (%s)' % 
-                                (kwargs['resource'], filename))
+                raise ValidationError('%s: node failed pattern '
+                                      'validation (%s)' %
+                                      (kwargs['resource'], filename))
             log.debug('%s: node passed pattern validation (%s)' % 
                       (kwargs['resource'], filename))
         else:
