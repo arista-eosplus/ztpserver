@@ -498,7 +498,7 @@ class NodesController(BaseController):
             filename = self.expand(kwargs['resource'], PATTERN_FN)
             fobj = self.repository.get_file(filename)
 
-            pattern = load_pattern(kwargs['resource'], fobj.name)
+            pattern = load_pattern(fobj.name, kwargs['resource'])
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
                           (kwargs['resource'], filename))
