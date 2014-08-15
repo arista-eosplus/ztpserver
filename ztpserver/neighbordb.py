@@ -545,7 +545,7 @@ class Pattern(object):
             for pattern in entry['patterns']:
                 patterns.append(pattern)
 
-        for interface, neighbors in node.neighbors.items():
+        for interface, neighbors in node['neighbors'].items():
             log.debug('%s: pattern \'%s\' - attempting to match '
                       'interface %s(%s)' %
                       (self.node_id, self.name, interface, str(neighbors)))
