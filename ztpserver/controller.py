@@ -203,18 +203,13 @@ class NodesController(BaseController):
         """
         log.debug('%s\nResource: %s\n' % (request, resource))
 
+        node_id = resource.split('/')[0]
         try:
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = fobj.read(CONTENT_TYPE_JSON)
         except Exception as err:           # pylint: disable=W0703
-            log.error('Unable to read file resource: %s' % err)
-            response = self.http_bad_request()
-            return self.response(**response)
-
-        node_id = node.identifier()
-        if not node_id:
-            log.error('Missing node identifier: %s (request=%s)' % 
-                      (node, request))
+            log.error('%s: unable to read file resource %s: %s' % 
+                      (node_id, resource, err))
             response = self.http_bad_request()
             return self.response(**response)
 
