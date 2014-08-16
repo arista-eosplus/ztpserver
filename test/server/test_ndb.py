@@ -41,14 +41,11 @@ from ztpserver.app import enable_handler_console
 from ztpserver.neighbordb import load_neighbordb, load_file
 from ztpserver.neighbordb import Node
 from ztpserver.validators import NeighbordbValidator
-
 from ztpserver.constants import CONTENT_TYPE_YAML
-
 from server_test_lib import enable_logging, log, random_string
 
 TEST_DIR = 'test/neighbordb'
 ID = random_string()
-
 
 def debug(exc):
     # Uncomment line for debugging
@@ -164,7 +161,7 @@ class NeighbordbTest(unittest.TestCase):
             
             neighbordb = self._load_neighbordb()
             self.assertIsNotNone(neighbordb, tag)
-            result = neighbordb.match_node(node)
+            result = neighbordb.match_node(self.node)
             
             self.assertTrue(result, tag)
             self.assertEqual(result[0].name, self.match, tag)
@@ -185,7 +182,7 @@ class NeighbordbTest(unittest.TestCase):
             neighbordb = self._load_neighbordb()
             self.assertIsNotNone(neighbordb, tag)
 
-            result = neighbordb.match_node(node)
+            result = neighbordb.match_node(self.node)
 
             self.assertFalse(result, tag)
             log.info('END: node_fail')

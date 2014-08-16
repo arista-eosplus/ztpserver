@@ -99,7 +99,7 @@ neighbordb:
 
     - name: sample node template 1
       definition: test
-      node: 1234567890
+      node: 000c29f5d27d
       interfaces:
         - Ethernet1: any
         - Ethernet3: localhost:Ethernet1

@@ -57,6 +57,9 @@ NON_HEX_CHARS = ALL_CHARS - set(string.hexdigits)
 
 log = logging.getLogger(__name__)
 
+
+Neighbor = collections.namedtuple('Neighbor', ['device', 'interface'])
+
 def default_filename():
     ''' Returns the path for neighbordb based on the conf file
     '''
@@ -229,9 +232,6 @@ class ExactFunction(Function):
         return arg == self.value
 
 
-Neighbor = collections.namedtuple('Neighbor', ['device', 'interface'])
-
-
 class Node(object):
     ''' A Node object is maps the metadata from an EOS node.  It provides
     access to the node's meta data including interfaces and the
@@ -397,33 +397,38 @@ class Neighbordb(object):
     def get_patterns(self):
         return self.patterns['nodes'].values() + self.patterns['globals']
 
+    @staticmethod
+    def identifier(node):
+        identifier = ztpserver.config.runtime.default.identifier
+        return node[identifier]
+        
     def find_patterns(self, node):
+        identifier = self.identifier(node)
         log.debug('%s: searching for eligible patterns' % 
-                  str(node.identifier()))
-        pattern = self.patterns['nodes'].get(node.systemmac, None)
-        if not pattern:
-            pattern = self.patterns['nodes'].get(node.serialnumber, None)
+                  identifier)
+        pattern = self.patterns['nodes'].get(identifier, None)
         if pattern:
-            log.debug('%s: eligible pattern: %s' % (node.identifier(), 
+            log.debug('%s: eligible pattern: %s' % (identifier, 
                                                     pattern.name))
             return [pattern]
         else:
             log.debug('%s: eligible patterns: all global patterns' %
-                      node.identifier())
+                      identifier)
             return self.patterns['globals']
 
     def match_node(self, node):
+        identifier = self.identifier(node)
         result = list()
         for pattern in self.find_patterns(node):
             log.debug('%s: attempting to match pattern %s' % 
-                      (node.identifier(), pattern.name))
+                      (identifier, pattern.name))
             if pattern.match_node(node):
                 log.debug('%s: pattern %s matched' % 
-                          (node.identifier(), pattern.name))
+                          (identifier, pattern.name))
                 result.append(pattern)
             else:
                 log.debug('%s: pattern %s match failed' % 
-                          (node.identifier(), pattern.name))
+                          (identifier, pattern.name))
         return result
 
 
@@ -545,7 +550,7 @@ class Pattern(object):
             for pattern in entry['patterns']:
                 patterns.append(pattern)
 
-        for interface, neighbors in node['neighbors'].items():
+        for interface, neighbors in node.get('neighbors', dict()).items():
             log.debug('%s: pattern \'%s\' - attempting to match '
                       'interface %s(%s)' %
                       (self.node_id, self.name, interface, str(neighbors)))
@@ -639,7 +644,8 @@ class InterfacePattern(object):
 
     def match(self, interface, neighbors):
         for neighbor in neighbors:
-            res = self.match_neighbor(interface, neighbor)
+            res = self.match_neighbor(interface, Neighbor(neighbor['device'],
+                                                          neighbor['port']))
             if res is True:
                 return True
             elif res is False:
@@ -750,7 +756,6 @@ class InterfacePattern(object):
                        self.match_remote_device(neighbor.device) and
                        self.match_remote_interface(neighbor.interface)):
                         return True 
-
         return None
 
 

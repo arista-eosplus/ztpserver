@@ -39,7 +39,7 @@ from mock import Mock
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
 from ztpserver.neighbordb import InterfacePattern, InterfacePatternError
 from ztpserver.neighbordb import Pattern, PatternError
-from ztpserver.neighbordb import Neighbor, Node, NodeError
+from ztpserver.neighbordb import Node, NodeError
 
 from ztpserver.neighbordb import ExcludesFunction, IncludesFunction
 from ztpserver.neighbordb import ExactFunction, RegexFunction
@@ -301,7 +301,7 @@ class TestInterfacePattern(unittest.TestCase):
         remote_device = random_string()
         remote_interface = random_string()
 
-        neighbor = Neighbor(remote_device, remote_interface)
+        neighbor = {'device':remote_device, 'port':remote_interface}
         for intf in ['any', interface]:
             for remote_d in ['any', remote_device]:
                 for remote_i in ['any', remote_interface]:
@@ -320,7 +320,7 @@ class TestInterfacePattern(unittest.TestCase):
             pattern = InterfacePattern(intf, remote_device, 
                                        remote_interface,
                                        random_string())
-            neighbor = Neighbor(remote_device, remote_interface)
+            neighbor = {'device':remote_device, 'port':remote_interface}
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
@@ -328,14 +328,14 @@ class TestInterfacePattern(unittest.TestCase):
             pattern = InterfacePattern(interface, remote_d, 
                                        remote_interface,
                                        random_string())
-            neighbor = Neighbor(remote_device, remote_interface)
+            neighbor = {'device':remote_device, 'port':remote_interface}
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
         for remote_i in ['none', remote_interface + 'dummy']:
             pattern = InterfacePattern(interface, remote_device, 
                                        remote_i, random_string())
-            neighbor = Neighbor(remote_device, remote_interface)
+            neighbor = {'device':remote_device, 'port':remote_interface}
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
@@ -343,7 +343,7 @@ class TestInterfacePattern(unittest.TestCase):
             for remote_i in ['none', remote_interface + 'dummy']:
                 pattern = InterfacePattern(interface, remote_d, 
                                            remote_i, random_string())
-                neighbor = Neighbor(remote_device, remote_interface)
+                neighbor = {'device':remote_device, 'port':remote_interface}
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
@@ -351,7 +351,7 @@ class TestInterfacePattern(unittest.TestCase):
             for remote_i in ['none', remote_interface + 'dummy']:
                 pattern = InterfacePattern(intf, remote_device, 
                                            remote_i, random_string())
-                neighbor = Neighbor(remote_device, remote_interface)
+                neighbor = {'device':remote_device, 'port':remote_interface}
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
@@ -359,7 +359,7 @@ class TestInterfacePattern(unittest.TestCase):
             for remote_d in ['none', remote_device + 'dummy']:
                 pattern = InterfacePattern(intf, remote_d, 
                                            remote_interface, random_string())
-                neighbor = Neighbor(remote_device, remote_interface)
+                neighbor = {'device':remote_device, 'port':remote_interface}
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
@@ -368,7 +368,7 @@ class TestInterfacePattern(unittest.TestCase):
                 for remote_i in ['none', remote_interface + 'dummy']:
                     pattern = InterfacePattern(intf, remote_d, 
                                                remote_i, random_string())
-                    neighbor = Neighbor(remote_device, remote_interface)
+                    neighbor = {'device':remote_device, 'port':remote_interface}
                     result = pattern.match(interface, [neighbor])
                     self.assertFalse(result)
 

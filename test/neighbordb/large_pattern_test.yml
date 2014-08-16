@@ -57,7 +57,7 @@ neighbordb:
   patterns:
     - name: sample node template 1
       definition: test
-      node: 000c29f5d27d
+      node: 1234567890
       interfaces:
         - Ethernet1: any
         - Ethernet3: localhost:Ethernet1
