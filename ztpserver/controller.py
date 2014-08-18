@@ -226,9 +226,11 @@ class NodesController(BaseController):
             response['body'] = self.repository.get_file(filename).read()
             response['content_type'] = CONTENT_TYPE_OTHER
         except FileObjectNotFound:
-            log.error('Missing startup-config file %s' % 
-                      filename)
-            raise
+            log.error('%s: missing startup-config file %s' % 
+                      (resource, filename))
+        except Exception as err:
+            raise('%s: unable to retrieve startup-config (%s)' %
+                  (resource, err))
         return (response, None)
 
     def put_config(self, *args, **kwargs):
