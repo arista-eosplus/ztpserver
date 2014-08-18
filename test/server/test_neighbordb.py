@@ -33,14 +33,14 @@
 import unittest
 import yaml
 
-import ztpserver.neighbordb
+import ztpserver.topology
 
 from mock import patch, Mock
 
-from ztpserver.neighbordb import Neighbordb, Pattern
-from ztpserver.neighbordb import create_node, load_file, load_neighbordb
-from ztpserver.neighbordb import default_filename, replace_config_action
-from ztpserver.neighbordb import load_pattern
+from ztpserver.topology import Neighbordb, Pattern
+from ztpserver.topology import create_node, load_file, load_neighbordb
+from ztpserver.topology import default_filename, replace_config_action
+from ztpserver.topology import load_pattern
 from server_test_lib import enable_logging, random_string
 
 class NeighbordbUnitTests(unittest.TestCase):
@@ -49,23 +49,23 @@ class NeighbordbUnitTests(unittest.TestCase):
         result = default_filename()
         self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
 
-    @patch('ztpserver.neighbordb.load')
+    @patch('ztpserver.topology.load')
     def test_load_file(self, m_load):
         result = load_file(random_string(),
                            random_string(),
                            random_string())
         self.assertEqual(result, m_load.return_value)
 
-    @patch('ztpserver.neighbordb.validate_neighbordb')
-    @patch('ztpserver.neighbordb.load')
+    @patch('ztpserver.topology.validate_neighbordb')
+    @patch('ztpserver.topology.load')
     def test_load_file_failure(self, m_load, _):
         m_load.side_effect = ztpserver.serializers.SerializerError
         self.assertIsNone(load_file(random_string(),
                                     random_string(),
                                     random_string()))
 
-    @patch('ztpserver.neighbordb.validate_neighbordb')
-    @patch('ztpserver.neighbordb.load')
+    @patch('ztpserver.topology.validate_neighbordb')
+    @patch('ztpserver.topology.load')
     def test_load_neighbordb(self, _, m_load):
         contents = '''
             variables:
@@ -77,7 +77,7 @@ class NeighbordbUnitTests(unittest.TestCase):
         result = load_neighbordb(random_string())
         self.assertIsNotNone(result)
 
-    @patch('ztpserver.neighbordb.load')
+    @patch('ztpserver.topology.load')
     def test_load_neighbordb_no_variables(self, m_load):
         # github issue #114
         contents = """

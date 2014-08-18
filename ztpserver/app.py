@@ -42,12 +42,12 @@ from wsgiref.simple_server import make_server
 
 import ztpserver.config
 import ztpserver.controller
-import ztpserver.neighbordb
+import ztpserver.topology
 
 from ztpserver.serializers import load
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
-from ztpserver.neighbordb import default_filename
+from ztpserver.topology import default_filename
 
 from ztpserver import __version__ as VERSION
 

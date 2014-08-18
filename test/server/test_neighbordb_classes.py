@@ -37,12 +37,12 @@ import unittest
 from mock import Mock
 
 from ztpserver.app import enable_handler_console    # pylint: disable=W0611
-from ztpserver.neighbordb import InterfacePattern, InterfacePatternError
-from ztpserver.neighbordb import Pattern, PatternError
-from ztpserver.neighbordb import Node, NodeError
+from ztpserver.topology import InterfacePattern, InterfacePatternError
+from ztpserver.topology import Pattern, PatternError
+from ztpserver.topology import Node, NodeError
 
-from ztpserver.neighbordb import ExcludesFunction, IncludesFunction
-from ztpserver.neighbordb import ExactFunction, RegexFunction
+from ztpserver.topology import ExcludesFunction, IncludesFunction
+from ztpserver.topology import ExactFunction, RegexFunction
 
 from server_test_lib import random_string
 from server_test_lib import create_node

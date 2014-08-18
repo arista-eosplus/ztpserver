@@ -38,8 +38,8 @@ import traceback
 import yaml
 
 from ztpserver.app import enable_handler_console
-from ztpserver.neighbordb import load_neighbordb, load_file
-from ztpserver.neighbordb import Node
+from ztpserver.topology import load_neighbordb, load_file
+from ztpserver.topology import Node
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
 from server_test_lib import enable_logging, log, random_string
