@@ -236,7 +236,7 @@ class NodesController(BaseController):
                       (resource, err))
             next_state = 'http_bad_request'
 
-        return (response, None)
+        return response
 
     def put_config(self, *args, **kwargs):
         log.debug('%s: node resource PUT request: \n%s\n' % 
