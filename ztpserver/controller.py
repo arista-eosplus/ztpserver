@@ -220,7 +220,9 @@ class NodesController(BaseController):
         log.debug('%s: node resource GET request: \n%s\n' % 
                   (resource, request))
 
+        next_state = None
         response = dict()
+
         try:
             filename = self.expand(resource, STARTUP_CONFIG_FN)
             response['body'] = self.repository.get_file(filename).read()
@@ -228,9 +230,12 @@ class NodesController(BaseController):
         except FileObjectNotFound:
             log.error('%s: missing startup-config file %s' % 
                       (resource, filename))
+            next_state = 'http_bad_request'
         except Exception as err:
-            raise('%s: unable to retrieve startup-config (%s)' %
-                  (resource, err))
+            log.error('%s: unable to retrieve startup-config (%s)' %
+                      (resource, err))
+            next_state = 'http_bad_request'
+
         return (response, None)
 
     def put_config(self, *args, **kwargs):
