@@ -122,8 +122,8 @@ class FilesController(BaseController):
             file_path = self.expand(resource)
             filename = self.repository.get_file(file_path).name
             return FileApp(filename, content_type=CONTENT_TYPE_OTHER)
-        except FileObjectNotFound as err:
-            log.error('File %s not found (%s)' % (resource, err))
+        except FileObjectNotFound:
+            log.error('File %s not found' % resource)
             return self.http_not_found()
 
 
@@ -142,8 +142,8 @@ class ActionsController(BaseController):
             file_path = self.expand(resource)
             body = self.repository.get_file(file_path).read(CONTENT_TYPE_PYTHON)
             return dict(body=body, content_type=CONTENT_TYPE_PYTHON)
-        except FileObjectNotFound as err:
-            log.error('File %s not found (%s)' % (resource, err))
+        except FileObjectNotFound:
+            log.error('Action %s not found' % resource)
             return self.http_not_found()
 
 
@@ -225,9 +225,9 @@ class NodesController(BaseController):
             filename = self.expand(resource, STARTUP_CONFIG_FN)
             response['body'] = self.repository.get_file(filename).read()
             response['content_type'] = CONTENT_TYPE_OTHER
-        except FileObjectNotFound as err:
-            log.error('Missing startup-config file %s: %s' % 
-                      (filename, err))
+        except FileObjectNotFound:
+            log.error('Missing startup-config file %s' % 
+                      filename)
             raise
         return (response, None)
 
@@ -409,8 +409,8 @@ class NodesController(BaseController):
             log.error('Failed to find pattern match for %s (%s)' % 
                       (node_id, err))
             raise
-        except FileObjectNotFound as err:
-            log.error('Failed to find file: %s' % err)
+        except FileObjectNotFound:
+            log.error('Failed to find definition %s' % definition_url)
             raise
         return (response, 'dump_node')
 
@@ -446,9 +446,9 @@ class NodesController(BaseController):
             log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
                                                     filename,
                                                     definition['actions']))
-        except FileObjectNotFound as err:
-            log.warning('%s: missing definition %s: %s' % 
-                        (kwargs['resource'], filename, err))
+        except FileObjectNotFound:
+            log.warning('%s: missing definition %s' % 
+                        (kwargs['resource'], filename))
         return (response, 'do_validation')
 
     def get_startup_config(self, response, *args, **kwargs):
@@ -463,9 +463,9 @@ class NodesController(BaseController):
             response['definition']['actions'].append(\
                 ztpserver.neighbordb.replace_config_action(kwargs['resource'],
                                                            STARTUP_CONFIG_FN))
-        except FileObjectNotFound as err:
-            log.warning('%s: missing startup-config %s: %s' % 
-                        (kwargs['resource'], filename, err))
+        except FileObjectNotFound:
+            log.warning('%s: missing startup-config %s' % 
+                        (kwargs['resource'], filename))
 
         return (response, 'do_actions')
 
@@ -614,8 +614,8 @@ class BootstrapController(BaseController):
             log.warning('Bootstrap config file not found - using defaults')
             body = self.DEFAULTCONFIG
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
-        except FileObjectError as err:
-            log.error('Failed to read bootstrap config file: %s' % err)
+        except FileObjectError:
+            log.error('Failed to read bootstrap config file (%s)' % filename)
             resp = self.http_bad_request()
         return resp
 
@@ -631,8 +631,11 @@ class BootstrapController(BaseController):
         except KeyError as err:
             log.debug('Missing variable: %s' % err)
             resp = self.http_bad_request()
-        except (FileObjectNotFound, FileObjectError) as err:
-            log.error('Failed to read bootstrap file: %s' % err)
+        except FileObjectNotFound:
+            log.error('Bootstrap file not found (%s)' % filename)            
+            resp = self.http_bad_request()
+        except FileObjectError:
+            log.error('Failed to read bootstrap file (%s)' % filename)
             resp = self.http_bad_request()
         return resp
 
@@ -655,7 +658,7 @@ class MetaController(BaseController):
         try:
             try:
                 file_resource = self.repository.get_file(file_path)
-            except (FileObjectNotFound, IOError) as exc:
+            except IOError as exc:
                 # IOError is file_path points to a folder
                 log.error('%s is a folder, not a file: %s' % 
                           (file_path, str(exc)))

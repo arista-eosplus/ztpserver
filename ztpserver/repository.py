@@ -64,9 +64,8 @@ log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 def create_repository(path):
     if not os.path.exists(path):
-        raise RepositoryError
+        raise RepositoryError('%s not found' % path)
     return Repository(path)
-
 
 
 class RepositoryError(Exception):
@@ -133,8 +132,7 @@ class FileObject(object):
             self.content_type = content_type
             return ztpserver.serializers.load(self.name, content_type)
         except SerializerError:
-            log.error('Failed to read file %s' % self.name)
-            raise FileObjectError('Failed to read file %s' % self.name)
+            raise FileObjectError
 
     def write(self, contents, content_type=None):
         ''' Writes the contents to the file
@@ -159,8 +157,7 @@ class FileObject(object):
             ztpserver.serializers.dump(contents, self.name, content_type)
             self.content_type = content_type
         except SerializerError:
-            log.error('Failed to write file %s' % self.name)
-            raise FileObjectError('Failed to write file %s' % self.name)
+            raise FileObjectError
 
     def size(self):
         ''' Returns the size of the object in bytes.
@@ -255,15 +252,11 @@ class Repository(object):
         the serialization to be used when saving the file.
 
         '''
-        try:
-            file_path = self.expand(file_path)
-            obj = FileObject(file_path)
-            if contents:
-                obj.write(contents, content_type)
-            return obj
-        except FileObjectError:
-            log.error('Failed to add file %s' % file_path)
-            raise RepositoryError('Failed to add file %s' % file_path)
+        file_path = self.expand(file_path)
+        obj = FileObject(file_path)
+        if contents:
+            obj.write(contents, content_type)
+        return obj
 
     def exists(self, file_path):
         ''' Returns boolean if the file_path exists in the repository
@@ -290,7 +283,6 @@ class Repository(object):
         '''
         file_path = self.expand(file_path)
         if not self.exists(file_path):
-            log.error('File not found: %s' % file_path)
             raise FileObjectNotFound('File not found: %s' % file_path)
         return FileObject(file_path)
 
