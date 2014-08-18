@@ -50,8 +50,6 @@ def expand_range(interfaces):
                      interfaces)
 
     if not match:
-        log.warning('Unable to expand interface range: %s (invalid input)' % 
-                    interfaces)
         raise TypeError('Unable to expand interface range: %s '
                         '(invalid input)' % interfaces)
 

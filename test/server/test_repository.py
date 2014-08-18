@@ -103,7 +103,7 @@ class RepositoryUnitTests(unittest.TestCase):
     def test_create_file_failure(self, m_fileobj):
         m_fileobj.return_value.write.side_effect = FileObjectError
         store = Repository(random_string())
-        self.assertRaises(RepositoryError, store.add_file,
+        self.assertRaises(FileObjectError, store.add_file,
                           random_string(), random_string())
 
     @patch('os.path.exists')

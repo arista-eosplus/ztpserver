@@ -139,8 +139,7 @@ class MetaControllerUnitTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
     def test_bad_request_file_not_found(self, m_repository):
-        error = random.choice([ztpserver.repository.FileObjectNotFound,
-                               IOError])
+        error = IOError
         cfg = {'return_value.get_file.side_effect': error}
         m_repository.configure_mock(**cfg)
 
