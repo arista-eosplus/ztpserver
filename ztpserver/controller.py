@@ -220,7 +220,6 @@ class NodesController(BaseController):
         log.debug('%s: node resource GET request: \n%s\n' % 
                   (resource, request))
 
-        next_state = None
         response = dict()
 
         try:
@@ -230,11 +229,11 @@ class NodesController(BaseController):
         except FileObjectNotFound:
             log.error('%s: missing startup-config file %s' % 
                       (resource, filename))
-            next_state = 'http_bad_request'
+            response = self.http_bad_request()
         except Exception as err:
             log.error('%s: unable to retrieve startup-config (%s)' %
                       (resource, err))
-            next_state = 'http_bad_request'
+            response = self.http_bad_request()
 
         return response
 
@@ -253,7 +252,8 @@ class NodesController(BaseController):
             fobj = self.repository.add_file(filename)
         finally:
             fobj.write(body, content_type)
-        return (response, None)
+
+        return response
 
     def fsm(self, state, **kwargs):
         ''' Execute the FSM for the request '''

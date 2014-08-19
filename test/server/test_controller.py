@@ -868,11 +868,10 @@ class NodesControllerUnitTests(unittest.TestCase):
         request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.put_config(list(),
+        resp = controller.put_config(list(),
                                               resource=resource,
                                               request=request)
 
-        self.assertIsNone(state)
         self.assertEqual(resp, dict())
 
 class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
