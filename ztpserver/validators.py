@@ -233,9 +233,10 @@ class PatternValidator(Validator):
         if not self.data:
             return
 
-        if 'node' not in self.data:
+        if not self.data.get('node', None):
             return
 
+        # if system MAC is used
         node = str(self.data['node']).replace(':', '').replace('.', '')
         if re.search(ANTINODE_PATTERN, node):
             raise ValidationError('invalid value for \'node\' (%s)' %

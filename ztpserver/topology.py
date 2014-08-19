@@ -420,8 +420,12 @@ class Neighbordb(object):
                                                     pattern.name))
             return [pattern]
         else:
-            log.debug('%s: eligible patterns: all global patterns' %
-                      identifier)
+            if self.patterns['globals']:
+                log.debug('%s: all global patterns are eligible' %
+                          identifier)
+            else:
+                log.debug('%s: no eligible patterns' %
+                          identifier)
             return self.patterns['globals']
 
     def match_node(self, node):

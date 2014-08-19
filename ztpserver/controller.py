@@ -350,7 +350,7 @@ class NodesController(BaseController):
          # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
-            log.info('%s: node matched no patterns in neighbordb' %
+            log.error('%s: node matched no patterns in neighbordb' %
                      node_id)
             return (self.http_bad_request(), None)
 
