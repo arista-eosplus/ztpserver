@@ -71,12 +71,16 @@ class Validator(object):
 
     def __init__(self, node_id):
         self.node_id = node_id
-        self.data = None
+        self.data = dict()
         self.fail = False
         self.errors = list()
 
-    def validate(self, data):
-        self.data = data
+    def validate(self, data=None):
+        if data:
+            self.data = data
+        else:
+            self.data = dict()
+
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name in methods:
             if name[0].startswith('validate_'):
@@ -110,6 +114,7 @@ class NeighbordbValidator(Validator):
         super(NeighbordbValidator, self).__init__(node_id)
 
     def validate_variables(self):
+        log.debug('%s: validating neighbordb variables' % self.node_id)
         variables = self.data.get('variables', None)
         if variables is not None:
             if not hasattr(variables, '__iter__'):
@@ -117,6 +122,7 @@ class NeighbordbValidator(Validator):
                                       variables)
 
     def validate_patterns(self):
+        log.debug('%s: validating neighbordb patterns' % self.node_id)
         patterns = self.data.get('patterns', None)
 
         if not patterns:

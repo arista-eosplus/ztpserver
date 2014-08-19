@@ -49,7 +49,7 @@ ID = random_string()
 
 def debug(exc):
     # Uncomment line for debugging
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     
     raise exc
 
