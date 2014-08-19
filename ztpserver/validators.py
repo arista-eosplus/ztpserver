@@ -76,6 +76,8 @@ class Validator(object):
         self.errors = list()
 
     def validate(self, data=None):
+        log.debug('%s: running %s.validate' % 
+                  (self.node_id, self.__class__.__name__))
         if data:
             self.data = data
         else:
@@ -84,7 +86,7 @@ class Validator(object):
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name in methods:
             if name[0].startswith('validate_'):
-                if 'name' not in data:
+                if 'name' not in self.data:
                     name_string  = ''
                 else:
                     name_string  = 'for \'%s\'' % self.data['name']
