@@ -46,7 +46,6 @@ import ztpserver.topology
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
 from ztpserver.topology import create_node, load_pattern
-from ztpserver.serializers import SerializerError
 from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
@@ -377,7 +376,7 @@ class NodesController(BaseController):
 
         try:
             definition = fobj.read(content_type=CONTENT_TYPE_YAML)
-        except SerializerError:
+        except FileObjectError:
             log.error('%s: failed to load definition' % 
                       (node_id))
             raise

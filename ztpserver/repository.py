@@ -131,8 +131,8 @@ class FileObject(object):
         try:
             self.content_type = content_type
             return ztpserver.serializers.load(self.name, content_type)
-        except SerializerError:
-            raise FileObjectError
+        except SerializerError as err:
+            raise FileObjectError(err.message)
 
     def write(self, contents, content_type=None):
         ''' Writes the contents to the file
@@ -156,8 +156,8 @@ class FileObject(object):
         try:
             ztpserver.serializers.dump(contents, self.name, content_type)
             self.content_type = content_type
-        except SerializerError:
-            raise FileObjectError
+        except SerializerError as err:
+            raise FileObjectError(err.message)
 
     def size(self):
         ''' Returns the size of the object in bytes.
