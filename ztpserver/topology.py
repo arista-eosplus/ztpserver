@@ -425,6 +425,7 @@ class Neighbordb(object):
             return self.patterns['globals']
 
     def match_node(self, node):
+        log.debug('Attemtping to match node: %s' % node)
         identifier = self.identifier(node)
         result = list()
         for pattern in self.find_patterns(node):
