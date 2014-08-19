@@ -116,7 +116,6 @@ class NeighbordbValidator(Validator):
         super(NeighbordbValidator, self).__init__(node_id)
 
     def validate_variables(self):
-        log.debug('%s: validating neighbordb variables' % self.node_id)
         variables = self.data.get('variables', None)
         if variables is not None:
             if not hasattr(variables, '__iter__'):
@@ -124,7 +123,6 @@ class NeighbordbValidator(Validator):
                                       variables)
 
     def validate_patterns(self):
-        log.debug('%s: validating neighbordb patterns' % self.node_id)
         patterns = self.data.get('patterns', None)
 
         if not patterns:

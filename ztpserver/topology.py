@@ -97,12 +97,16 @@ def load_neighbordb(node_id, contents=None):
         if 'variables' in contents:
             neighbordb.add_variables(contents['variables'])
 
-        neighbordb.add_patterns(contents['patterns'])
+        if 'patterns' in contents:
+            neighbordb.add_patterns(contents['patterns'])
 
         log.info('%s: loaded neighbordb: %s' % (node_id, neighbordb))
         return neighbordb
     except (NeighbordbError, SerializerError):
         log.error('%s: failed to load neighbordb' % node_id)
+    except Exception:
+        log.error('%s: failed to load neighbordb because of unknown error' % 
+                  node_id)
 
 def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
     """ Returns an instance of Pattern """
