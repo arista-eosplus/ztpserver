@@ -154,6 +154,75 @@ class NodesController(BaseController):
     def __repr__(self):
         return 'NodesController(folder=%s)' % self.FOLDER
 
+
+    def fsm(self, state, **kwargs):
+        ''' Execute the FSM for the request '''
+
+        response = dict()
+        try:
+            while state != None:
+                method = getattr(self, state)
+                prev_state = state
+                log.debug('%s: running %s' % (kwargs['node_id'], state))
+                (response, state) = method(response, **kwargs)
+        except ValidationError:            # pylint: disable=W0703
+            log.error('%s: validation error in %s' % 
+                      (kwargs['node_id'], prev_state))
+            response = self.http_bad_request()
+        except Exception as err:            # pylint: disable=W0703
+            log.error('%s: error in %s: %s' % 
+                      (kwargs['node_id'], prev_state, err))
+            response = self.http_bad_request()
+
+        log.debug('%s: response to %s: %s' % 
+                  (kwargs['node_id'], prev_state, response))
+        return response                     # pylint: disable=W0150
+
+    #-------------------------------------------------------------------
+
+    def get_config(self, request, resource, **kwargs):
+        log.debug('%s: node resource GET request: \n%s\n' % 
+                  (resource, request))
+
+        response = dict()
+
+        try:
+            filename = self.expand(resource, STARTUP_CONFIG_FN)
+            response['body'] = self.repository.get_file(filename).read()
+            response['content_type'] = CONTENT_TYPE_OTHER
+        except FileObjectNotFound:
+            log.error('%s: missing startup-config file %s' % 
+                      (resource, filename))
+            response = self.http_bad_request()
+        except Exception as err:
+            log.error('%s: unable to retrieve startup-config (%s)' %
+                      (resource, err))
+            response = self.http_bad_request()
+
+        return response
+
+    #-------------------------------------------------------------------
+
+    def put_config(self, *args, **kwargs):
+        log.debug('%s: node resource PUT request: \n%s\n' % 
+                  (kwargs['resource'], kwargs['request']))
+
+        response = dict()
+        try:
+            body = str(kwargs['request'].body)
+            content_type = str(kwargs['request'].content_type)
+            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            fobj = self.repository.get_file(filename)
+        except FileObjectNotFound:
+            log.debug('File not found: %s - adding it' % filename)
+            fobj = self.repository.add_file(filename)
+        finally:
+            fobj.write(body, content_type)
+
+        return response
+
+    #-------------------------------------------------------------------
+
     def create(self, request, **kwargs):
         """ Handle the POST /nodes request
 
@@ -189,95 +258,6 @@ class NodesController(BaseController):
         return self.fsm('node_exists', request=request, 
                         node=node, node_id=node_id)
 
-    def show(self, request, resource, *args, **kwargs):
-        """ Handle the GET /nodes/{resource} request
-
-        Args:
-            request (webob.Request): the request object from WSGI
-            resource (str): the resource being requested
-
-        Returns:
-            A dict as the result of the state machine which is used to
-            create a WSGI response object.
-
-        """
-        log.debug('%s\nResource: %s\n' % (request, resource))
-
-        node_id = resource.split('/')[0]
-        try:
-            fobj = self.repository.get_file(self.expand(resource, NODE_FN))
-            node = fobj.read(CONTENT_TYPE_JSON)
-        except Exception as err:           # pylint: disable=W0703
-            log.error('%s: unable to read file resource %s: %s' % 
-                      (node_id, resource, err))
-            response = self.http_bad_request()
-            return self.response(**response)
-
-        return self.fsm('get_definition', resource=resource, 
-                        node=node, node_id=node_id)
-
-    def get_config(self, request, resource, **kwargs):
-        log.debug('%s: node resource GET request: \n%s\n' % 
-                  (resource, request))
-
-        response = dict()
-
-        try:
-            filename = self.expand(resource, STARTUP_CONFIG_FN)
-            response['body'] = self.repository.get_file(filename).read()
-            response['content_type'] = CONTENT_TYPE_OTHER
-        except FileObjectNotFound:
-            log.error('%s: missing startup-config file %s' % 
-                      (resource, filename))
-            response = self.http_bad_request()
-        except Exception as err:
-            log.error('%s: unable to retrieve startup-config (%s)' %
-                      (resource, err))
-            response = self.http_bad_request()
-
-        return response
-
-    def put_config(self, *args, **kwargs):
-        log.debug('%s: node resource PUT request: \n%s\n' % 
-                  (kwargs['resource'], kwargs['request']))
-
-        response = dict()
-        try:
-            body = str(kwargs['request'].body)
-            content_type = str(kwargs['request'].content_type)
-            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
-            fobj = self.repository.get_file(filename)
-        except FileObjectNotFound:
-            log.debug('File not found: %s - adding it' % filename)
-            fobj = self.repository.add_file(filename)
-        finally:
-            fobj.write(body, content_type)
-
-        return response
-
-    def fsm(self, state, **kwargs):
-        ''' Execute the FSM for the request '''
-
-        response = dict()
-        try:
-            while state != None:
-                method = getattr(self, state)
-                prev_state = state
-                log.debug('%s: running %s' % (kwargs['node_id'], state))
-                (response, state) = method(response, **kwargs)
-        except ValidationError:            # pylint: disable=W0703
-            log.error('%s: validation error in %s' % 
-                      (kwargs['node_id'], prev_state))
-            response = self.http_bad_request()
-        except Exception as err:            # pylint: disable=W0703
-            log.error('%s: error in %s: %s' % 
-                      (kwargs['node_id'], prev_state, err))
-            response = self.http_bad_request()
-
-        log.debug('%s: response to %s: %s' % 
-                  (kwargs['node_id'], prev_state, response))
-        return response                     # pylint: disable=W0150
-
     def node_exists(self, response, *args, **kwargs):
         """ Checks if the node already exists and determines the next state
 
@@ -306,31 +286,6 @@ class NodesController(BaseController):
             next_state = 'dump_node'
 
         return (response, next_state)
-
-    def dump_node(self, response, *args, **kwargs):
-        """ Writes the contents of the node to the repository
-
-        Args:
-            response (dict): the response object being constructed
-            kwargs (dict): arbitrary keyword arguments
-
-        Returns:
-            a tuple of response object and next state.  The next state is
-            'set_location'
-
-        """
-
-        try:
-            node = kwargs.get('node')
-            node_id = kwargs.get('node_id')
-            contents = node.serialize()
-            filename = self.expand(node_id, NODE_FN)
-            fobj = self.repository.get_file(filename)
-        except FileObjectNotFound:
-            fobj = self.repository.add_file(filename)
-        finally:
-            fobj.write(contents, CONTENT_TYPE_JSON)
-        return (response, 'set_location')
 
     def post_config(self, response, *args, **kwargs):
         """ Writes the nodes startup config file if found in the request
@@ -422,6 +377,31 @@ class NodesController(BaseController):
             raise
         return (response, 'dump_node')
 
+    def dump_node(self, response, *args, **kwargs):
+        """ Writes the contents of the node to the repository
+
+        Args:
+            response (dict): the response object being constructed
+            kwargs (dict): arbitrary keyword arguments
+
+        Returns:
+            a tuple of response object and next state.  The next state is
+            'set_location'
+
+        """
+
+        try:
+            node = kwargs.get('node')
+            node_id = kwargs.get('node_id')
+            contents = node.serialize()
+            filename = self.expand(node_id, NODE_FN)
+            fobj = self.repository.get_file(filename)
+        except FileObjectNotFound:
+            fobj = self.repository.add_file(filename)
+        finally:
+            fobj.write(contents, CONTENT_TYPE_JSON)
+        return (response, 'set_location')
+
     def set_location(self, response, *args, **kwargs):
         """ Writes the HTTP Content-Location header
 
@@ -441,6 +421,35 @@ class NodesController(BaseController):
         response['location'] = self.expand(node_id)
         return (response, None)
 
+    #-------------------------------------------------------------------
+
+    def show(self, request, resource, *args, **kwargs):
+        """ Handle the GET /nodes/{resource} request
+
+        Args:
+            request (webob.Request): the request object from WSGI
+            resource (str): the resource being requested
+
+        Returns:
+            A dict as the result of the state machine which is used to
+            create a WSGI response object.
+
+        """
+        log.debug('%s\nResource: %s\n' % (request, resource))
+
+        node_id = resource.split('/')[0]
+        try:
+            fobj = self.repository.get_file(self.expand(resource, NODE_FN))
+            node = create_node(fobj.read(CONTENT_TYPE_JSON))
+        except Exception as err:           # pylint: disable=W0703
+            log.error('%s: unable to read file resource %s: %s' % 
+                      (node_id, resource, err))
+            response = self.http_bad_request()
+            return self.response(**response)
+
+        return self.fsm('get_definition', resource=resource, request=request,
+                        node=node, node_id=node_id)
+
     def get_definition(self, response, *args, **kwargs):
         ''' Reads the node specific definition from disk and stores it in the
         repsonse dict with key `definition`
@@ -458,6 +467,26 @@ class NodesController(BaseController):
             log.warning('%s: missing definition %s' % 
                         (kwargs['resource'], filename))
         return (response, 'do_validation')
+
+    def do_validation(self, response, *args, **kwargs):
+        config = ztpserver.config.runtime
+        if not config.default.disable_topology_validation:
+            filename = self.expand(kwargs['resource'], PATTERN_FN)
+            fobj = self.repository.get_file(filename)
+
+            pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
+            if not pattern.match_node(kwargs['node']):
+                log.error('%s: node failed pattern validation (%s)' % 
+                          (kwargs['resource'], filename))
+                raise ValidationError('%s: node failed pattern '
+                                      'validation (%s)' %
+                                      (kwargs['resource'], filename))
+            log.debug('%s: node passed pattern validation (%s)' % 
+                      (kwargs['resource'], filename))
+        else:
+            log.warning('%s: topology validation is disabled' %
+                        kwargs['resource'])
+        return (response, 'get_startup_config')
 
     def get_startup_config(self, response, *args, **kwargs):
         response['get_startup_config'] = False
@@ -499,26 +528,6 @@ class NodesController(BaseController):
         response['definition']['actions'] = _actions
             
         return (response, 'get_attributes')
-
-    def do_validation(self, response, *args, **kwargs):
-        config = ztpserver.config.runtime
-        if not config.default.disable_topology_validation:
-            filename = self.expand(kwargs['resource'], PATTERN_FN)
-            fobj = self.repository.get_file(filename)
-
-            pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
-            if not pattern.match_node(kwargs['node']):
-                log.error('%s: node failed pattern validation (%s)' % 
-                          (kwargs['resource'], filename))
-                raise ValidationError('%s: node failed pattern '
-                                      'validation (%s)' %
-                                      (kwargs['resource'], filename))
-            log.debug('%s: node passed pattern validation (%s)' % 
-                      (kwargs['resource'], filename))
-        else:
-            log.warning('%s: topology validation is disabled' %
-                        kwargs['resource'])
-        return (response, 'get_startup_config')
 
     def get_attributes(self, response, *args, **kwargs):
         ''' Reads the resource specific attributes file and stores it in the

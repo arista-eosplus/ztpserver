@@ -1028,11 +1028,11 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         def m_get_file(arg):
             fileobj = Mock()
             if arg.endswith('.node'):
-                fileobj.return_value.read.return_value = node.as_dict()
+                fileobj.read.return_value = node.as_dict()
             elif arg.endswith('startup-config'):
-                fileobj.return_value.read.return_value = random_string()
+                fileobj.read.return_value = random_string()
             elif arg.endswith('pattern'):
-                fileobj.return_value.read.return_value = random_string()
+                fileobj.read.return_value = random_string()
             else:
                 raise ztpserver.repository.FileObjectNotFound
             return fileobj
@@ -1096,10 +1096,11 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         definitions_file = create_definition()
         definitions_file.add_action()
 
-        node = Mock(serialnumber=random_string())
+        node = create_node()
         cfg = dict()
 
         def m_get_file(arg):
+            print 'XXX: %s' % arg
             m_file_object = Mock()
             if arg.endswith('.node'):
                 m_file_object.read.return_value = node.as_dict()
@@ -1132,8 +1133,11 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         cfg = dict()
 
         def m_get_file(arg):
+            print arg
             m_file_object = Mock()
-            if arg.endswith('definition'):
+            if arg.endswith('.node'):
+                m_file_object.read.return_value = node.as_dict()
+            elif arg.endswith('definition'):
                 m_file_object.read.return_value = definitions_file.as_dict()
             elif arg.endswith('attributes'):
                 raise ztpserver.repository.FileObjectNotFound
@@ -1194,8 +1198,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
                                                          m_repository):
 
         serialnumber = random_string()
-        node = Mock(serialnumber=serialnumber)
-        node.identifier.return_value = serialnumber
+        node = create_node()
 
         g_attr_foo = random_string()
         attributes_file = create_attributes()
@@ -1211,7 +1214,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         def m_get_file(arg):
             m_file_object = Mock()
             if arg.endswith('.node'):
-                m_file_object.read.return_value = node
+                m_file_object.read.return_value = node.as_dict()
             elif arg.endswith('definition'):
                 m_file_object.read.return_value = definitions_file.as_dict()
             elif arg.endswith('attributes'):

@@ -49,7 +49,7 @@ ID = random_string()
 
 def debug(exc):
     # Uncomment line for debugging
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     
     raise exc
 
@@ -161,7 +161,7 @@ class NeighbordbTest(unittest.TestCase):
             
             neighbordb = self._load_neighbordb()
             self.assertIsNotNone(neighbordb, tag)
-            result = neighbordb.match_node(self.node)
+            result = neighbordb.match_node(node)
             
             self.assertTrue(result, tag)
             self.assertEqual(result[0].name, self.match, tag)
@@ -182,7 +182,7 @@ class NeighbordbTest(unittest.TestCase):
             neighbordb = self._load_neighbordb()
             self.assertIsNotNone(neighbordb, tag)
 
-            result = neighbordb.match_node(self.node)
+            result = neighbordb.match_node(node)
 
             self.assertFalse(result, tag)
             log.info('END: node_fail')

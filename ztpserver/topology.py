@@ -411,7 +411,7 @@ class Neighbordb(object):
         return node[identifier]
         
     def find_patterns(self, node):
-        identifier = self.identifier(node)
+        identifier = node.identifier()
         log.debug('%s: searching for eligible patterns' % 
                   identifier)
         pattern = self.patterns['nodes'].get(identifier, None)
@@ -425,8 +425,7 @@ class Neighbordb(object):
             return self.patterns['globals']
 
     def match_node(self, node):
-        log.debug('Attemtping to match node: %s' % node)
-        identifier = self.identifier(node)
+        identifier = node.identifier()
         result = list()
         for pattern in self.find_patterns(node):
             log.debug('%s: attempting to match pattern %s' % 
@@ -559,7 +558,7 @@ class Pattern(object):
             for pattern in entry['patterns']:
                 patterns.append(pattern)
 
-        for interface, neighbors in node.get('neighbors', dict()).items():
+        for interface, neighbors in node.neighbors.items():
             log.debug('%s: pattern \'%s\' - attempting to match '
                       'interface %s(%s)' %
                       (self.node_id, self.name, interface, str(neighbors)))
@@ -653,8 +652,8 @@ class InterfacePattern(object):
 
     def match(self, interface, neighbors):
         for neighbor in neighbors:
-            res = self.match_neighbor(interface, Neighbor(neighbor['device'],
-                                                          neighbor['port']))
+            res = self.match_neighbor(interface, Neighbor(neighbor.device,
+                                                          neighbor.interface))
             if res is True:
                 return True
             elif res is False:
