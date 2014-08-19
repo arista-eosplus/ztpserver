@@ -142,7 +142,8 @@ class NeighbordbValidator(Validator):
             else:
                 if name:
                     name = 'N/A'
-                log.debug('%s: adding pattern \'%s\' (%s) to invalid patterns' % 
+                log.debug('%s: adding pattern \'%s\' (%s) to '
+                          'invalid patterns' % 
                          (self.node_id, name, entry))
                 self.invalid_patterns.add((index, str(name)))
         

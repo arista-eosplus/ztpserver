@@ -100,7 +100,7 @@ class ResourcePool(object):
                       (node_id, exc))
             raise ResourcePoolError('%s: failed to allocate resource \'%s\'' % 
                                     (node_id, exc))
-        return key
+        return str(key)
 
     def lookup(self, pool, node):
         ''' Return an existing allocated resource if one exists '''

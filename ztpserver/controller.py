@@ -46,7 +46,7 @@ import ztpserver.topology
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
 from ztpserver.topology import create_node, load_pattern
-
+from ztpserver.serializers import SerializerError
 from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
@@ -54,6 +54,7 @@ from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR
 from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON
 from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
+
 
 DEFINITION_FN = 'definition'
 STARTUP_CONFIG_FN = 'startup-config'
@@ -171,7 +172,7 @@ class NodesController(BaseController):
             response = self.http_bad_request()
         except Exception as err:            # pylint: disable=W0703
             log.error('%s: error in %s: %s' % 
-                      (kwargs['node_id'], prev_state, err))
+                      (kwargs['node_id'], prev_state, str(err)))
             response = self.http_bad_request()
 
         log.debug('%s: response to %s: %s' % 
@@ -282,6 +283,12 @@ class NodesController(BaseController):
 
         if self.repository.exists(self.expand(node_id, DEFINITION_FN)) or \
            self.repository.exists(self.expand(node_id, STARTUP_CONFIG_FN)):
+
+            if self.repository.exists(self.expand(node_id)):
+                log.error('%s: node found on server, but no definition '
+                          'or startup-config configured' % node_id)
+                return (self.http_bad_request(), None)
+
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
 
@@ -350,8 +357,9 @@ class NodesController(BaseController):
          # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
-            log.error('%s: node matched no patterns in neighbordb' %
+            log.debug('%s: node matched no patterns in neighbordb' %
                      node_id)
+            log.error('%s: unknown node' % node_id)
             return (self.http_bad_request(), None)
 
         log.debug('%s: node matched %d pattern(s)' % 
@@ -362,23 +370,31 @@ class NodesController(BaseController):
 
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
-            definition = fobj.read(content_type=CONTENT_TYPE_YAML)
-            definition_fn = self.expand(node_id, DEFINITION_FN)
-
-            self.repository.add_folder(self.expand(node_id))
-
-            fobj = self.repository.add_file(definition_fn)
-            fobj.write(definition, CONTENT_TYPE_YAML)
-
-            pattern_fn = self.expand(node_id, PATTERN_FN)
-            fobj = self.repository.add_file(pattern_fn)
-            fobj.write(match.serialize(), CONTENT_TYPE_YAML)
-
-            response['status'] = HTTP_STATUS_CREATED
         except FileObjectNotFound:
-            log.error('%s: failed to find definition %s' % 
+            log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
             raise
+
+        try:
+            definition = fobj.read(content_type=CONTENT_TYPE_YAML)
+        except SerializerError:
+            log.error('%s: failed to load definition' % 
+                      (node_id))
+            raise
+
+        definition_fn = self.expand(node_id, DEFINITION_FN)
+        
+        self.repository.add_folder(self.expand(node_id))
+
+        fobj = self.repository.add_file(definition_fn)
+        fobj.write(definition, CONTENT_TYPE_YAML)
+        
+        pattern_fn = self.expand(node_id, PATTERN_FN)
+        fobj = self.repository.add_file(pattern_fn)
+        fobj.write(match.serialize(), CONTENT_TYPE_YAML)
+        
+        response['status'] = HTTP_STATUS_CREATED
+
         return (response, 'dump_node')
 
     def dump_node(self, response, *args, **kwargs):

@@ -465,7 +465,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
 
     @patch('ztpserver.controller.create_repository')
-    def test_node_exists_success(self, m_repository):
+    def test_node_exists_but_unconfigured(self, m_repository):
         m_repository.return_value.exists.return_value = True
 
         node = Mock(serialnumber=random_string())
@@ -474,9 +474,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         (resp, state) = controller.node_exists(dict(), node=node,
                                                node_id=node.serialnumber)
 
-        self.assertEqual(state, 'dump_node')
-        self.assertIsInstance(resp, dict)
-        self.assertEqual(resp['status'], 409)
+        self.assertEqual(state, None)
+        self.assertEqual(resp['status'], constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists_definition_exists(self, m_repository):
@@ -496,7 +495,7 @@ class NodesControllerUnitTests(unittest.TestCase):
                                                node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
-        self.assertEqual(resp['status'], 409)
+        self.assertEqual(resp['status'], constants.HTTP_STATUS_CONFLICT)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists_startup_config_exists(self, m_repository):
@@ -516,7 +515,7 @@ class NodesControllerUnitTests(unittest.TestCase):
                                                node_id=node.serialnumber)
 
         self.assertEqual(state, 'dump_node')
-        self.assertEqual(resp['status'], 409)
+        self.assertEqual(resp['status'], constants.HTTP_STATUS_CONFLICT)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists_sysmac_folder_exists(self, m_repository):
@@ -669,7 +668,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         m_load_neighbordb.return_value.match_node.return_value = list()
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.post_node(dict(), request=request, node=node, 
+        (resp, state) = controller.post_node(dict(), request=request, 
+                                             node=node, 
                                              node_id=node.serialnumber)
         self.assertEqual(state, None)
         self.assertIsInstance(resp, dict)
@@ -894,7 +894,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
-    def test_node_exists(self, m_repository):
+    def test_unconfigured_node_exists(self, m_repository):
         url = '/nodes'
         serialnumber = random_string()
         body = json.dumps(dict(serialnumber=serialnumber))
@@ -906,11 +906,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
         resp = request.get_response(ztpserver.controller.Router())
 
-        location = 'http://localhost/nodes/%s' % serialnumber
-
-
-        self.assertEqual(resp.status_code, 409)
-        self.assertEqual(resp.location, location)
+        self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
     def test_post_config(self, m_repository):
@@ -1102,7 +1098,6 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
         cfg = dict()
 
         def m_get_file(arg):
-            print 'XXX: %s' % arg
             m_file_object = Mock()
             if arg.endswith('.node'):
                 m_file_object.read.return_value = node.as_dict()
@@ -1199,7 +1194,6 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
     def test_get_definition_w_attributes_no_substitution(self, m_load_pattern,
                                                          m_repository):
 
-        serialnumber = random_string()
         node = create_node()
 
         g_attr_foo = random_string()

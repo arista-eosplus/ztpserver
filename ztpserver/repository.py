@@ -283,7 +283,7 @@ class Repository(object):
         '''
         file_path = self.expand(file_path)
         if not self.exists(file_path):
-            raise FileObjectNotFound('File not found: %s' % file_path)
+            raise FileObjectNotFound('file not found (%s)' % file_path)
         return FileObject(file_path)
 
     def delete_file(self, file_path):

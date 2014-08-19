@@ -147,8 +147,6 @@ class Serializer(object):
                                         TextSerializer(self.node_id))
             return handler.serialize(data)
         except Exception as err:
-            log.error('%s: unable to serialize (%s): %s' %
-                      (self.node_id, data, err))
             raise SerializerError('%s: unable to serialize (%s): %s' % 
                                   (self.node_id, data, err))
 
@@ -162,8 +160,6 @@ class Serializer(object):
                 handler.deserialize(data))
             return data
         except Exception as err:
-            log.error('%s: unable to deserialize (%s): %s' % 
-                      (self.node_id, data, err))
             raise SerializerError('%s: unable to deserialize (%s): %s)' % 
                                   (self.node_id, data, err))
 
