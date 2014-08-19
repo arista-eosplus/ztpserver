@@ -869,8 +869,8 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         resp = controller.put_config(list(),
-                                              resource=resource,
-                                              request=request)
+                                     resource=resource,
+                                     request=request)
 
         self.assertEqual(resp, dict())
 

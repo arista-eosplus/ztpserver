@@ -258,12 +258,12 @@ class NodesController(BaseController):
     def fsm(self, state, **kwargs):
         ''' Execute the FSM for the request '''
 
-        log.debug('%s: running %s' % (kwargs['node_id'], state))
         response = dict()
         try:
             while state != None:
                 method = getattr(self, state)
                 prev_state = state
+                log.debug('%s: running %s' % (kwargs['node_id'], state))
                 (response, state) = method(response, **kwargs)
         except ValidationError:            # pylint: disable=W0703
             log.error('%s: validation error in %s' % 
@@ -413,11 +413,12 @@ class NodesController(BaseController):
 
             response['status'] = HTTP_STATUS_CREATED
         except IndexError as err:
-            log.error('Failed to find pattern match for %s (%s)' % 
+            log.error('%s: failed to find pattern match for node (%s)' % 
                       (node_id, err))
             raise
         except FileObjectNotFound:
-            log.error('Failed to find definition %s' % definition_url)
+            log.error('%s: failed to find definition %s' % 
+                      (node_id, definition_url))
             raise
         return (response, 'dump_node')
 

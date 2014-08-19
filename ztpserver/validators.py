@@ -110,29 +110,35 @@ class NeighbordbValidator(Validator):
         super(NeighbordbValidator, self).__init__(node_id)
 
     def validate_variables(self):
-        variables = self.data.get('variables')
+        variables = self.data.get('variables', None)
         if variables is not None:
             if not hasattr(variables, '__iter__'):
                 raise ValidationError('invalid global variables value (%s)' %
                                       variables)
 
     def validate_patterns(self):
-        if not self.data.get('patterns'):
-            raise ValidationError('missing attribute: \'patterns\'')
+        patterns = self.data.get('patterns', None)
 
-        for index, entry in enumerate(self.data.get('patterns')):
-            name = str(entry.get('name'))
+        if not patterns:
+            log.warning('%s: no patterns found in neighbordb (%s)' % 
+                        (self.node_id, self.data))
+            return
 
+        for index, entry in enumerate(patterns):
+            name = entry.get('name', None)
+ 
             validator = PatternValidator(self.node_id)
 
-            if validator.validate(entry):
+            if name and validator.validate(entry):
                 log.info('%s: adding pattern \'%s\' (%s) to valid patterns' % 
                          (self.node_id, name, entry))
                 self.valid_patterns.add((index, name))
             else:
+                if name:
+                    name = 'N/A'
                 log.info('%s: adding pattern \'%s\' (%s) to invalid patterns' % 
                          (self.node_id, name, entry))
-                self.invalid_patterns.add((index, name))
+                self.invalid_patterns.add((index, str(name)))
         
         if self.invalid_patterns:
             raise ValidationError('invalid patterns: %s' % 
