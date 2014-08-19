@@ -88,6 +88,10 @@ def load_neighbordb(node_id, contents=None):
             contents = load_file(default_filename(), CONTENT_TYPE_YAML,
                                  node_id)
 
+        # neighbordb is empty
+        if not contents:
+            contents = dict()
+
         if not validate_neighbordb(contents, node_id):
             log.error('%s: failed to validate neighbordb' % node_id)
             return
@@ -104,9 +108,9 @@ def load_neighbordb(node_id, contents=None):
         return neighbordb
     except (NeighbordbError, SerializerError):
         log.error('%s: failed to load neighbordb' % node_id)
-    except Exception:
-        log.error('%s: failed to load neighbordb because of unknown error' % 
-                  node_id)
+    except Exception as err:
+        log.error('%s: failed to load neighbordb because of error: %s' %
+                  (node_id, err))
 
 def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
     """ Returns an instance of Pattern """
