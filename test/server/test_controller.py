@@ -669,9 +669,11 @@ class NodesControllerUnitTests(unittest.TestCase):
         m_load_neighbordb.return_value.match_node.return_value = list()
 
         controller = ztpserver.controller.NodesController()
-        self.assertRaises(IndexError, controller.post_node, dict(),
-                          request=request, node=node, node_id=node.serialnumber)
-
+        (resp, state) = controller.post_node(dict(), request=request, node=node, 
+                                             node_id=node.serialnumber)
+        self.assertEqual(state, None)
+        self.assertIsInstance(resp, dict)
+        self.assertEqual(resp['status'], constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.topology.load_neighbordb')
     def test_post_node_no_definition_in_pattern(self, m_load_neighbordb):

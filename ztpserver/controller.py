@@ -342,15 +342,23 @@ class NodesController(BaseController):
             exist in the repository, then a log message is created and a
             FileObjectNotFound exception is raised
             """
-        try:
-            node = kwargs['node']
-            node_id = kwargs['node_id']
 
-            neighbordb = ztpserver.topology.load_neighbordb(node_id)
-            # pylint: disable=E1103
-            matches = neighbordb.match_node(node)
-            log.info('Node matched %d pattern(s)', len(matches))
-            match = matches[0]
+        node = kwargs['node']
+        node_id = kwargs['node_id']
+        
+        neighbordb = ztpserver.topology.load_neighbordb(node_id)
+         # pylint: disable=E1103
+        matches = neighbordb.match_node(node)
+        if not matches:
+            log.info('%s: node matched no patterns in neighbordb' %
+                     node_id)
+            return (self.http_bad_request(), None)
+
+        log.info('%s: node matched %d pattern(s)' % 
+                 (node_id, len(matches)))
+        match = matches[0]
+
+        try:
 
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
@@ -367,10 +375,6 @@ class NodesController(BaseController):
             fobj.write(match.serialize(), CONTENT_TYPE_YAML)
 
             response['status'] = HTTP_STATUS_CREATED
-        except IndexError as err:
-            log.error('%s: failed to find pattern match for node (%s)' % 
-                      (node_id, err))
-            raise
         except FileObjectNotFound:
             log.error('%s: failed to find definition %s' % 
                       (node_id, definition_url))
