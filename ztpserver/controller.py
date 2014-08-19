@@ -354,8 +354,8 @@ class NodesController(BaseController):
                      node_id)
             return (self.http_bad_request(), None)
 
-        log.info('%s: node matched %d pattern(s)' % 
-                 (node_id, len(matches)))
+        log.debug('%s: node matched %d pattern(s)' % 
+                  (node_id, len(matches)))
         match = matches[0]
 
         try:

@@ -104,7 +104,7 @@ def load_neighbordb(node_id, contents=None):
         if 'patterns' in contents:
             neighbordb.add_patterns(contents['patterns'])
 
-        log.info('%s: loaded neighbordb: %s' % (node_id, neighbordb))
+        log.debug('%s: loaded neighbordb: %s' % (node_id, neighbordb))
         return neighbordb
     except (NeighbordbError, SerializerError):
         log.error('%s: failed to load neighbordb' % node_id)

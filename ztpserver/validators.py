@@ -136,13 +136,13 @@ class NeighbordbValidator(Validator):
             validator = PatternValidator(self.node_id)
 
             if name and validator.validate(entry):
-                log.info('%s: adding pattern \'%s\' (%s) to valid patterns' % 
+                log.debug('%s: adding pattern \'%s\' (%s) to valid patterns' % 
                          (self.node_id, name, entry))
                 self.valid_patterns.add((index, name))
             else:
                 if name:
                     name = 'N/A'
-                log.info('%s: adding pattern \'%s\' (%s) to invalid patterns' % 
+                log.debug('%s: adding pattern \'%s\' (%s) to invalid patterns' % 
                          (self.node_id, name, entry))
                 self.invalid_patterns.add((index, str(name)))
         
@@ -198,12 +198,12 @@ class PatternValidator(Validator):
             validator = InterfacePatternValidator(self.node_id)
 
             if validator.validate(pattern):
-                log.info('%s: adding interface pattern \'%s\' to '
+                log.debug('%s: adding interface pattern \'%s\' to '
                          'valid interface patterns' % 
                          (self.node_id, repr(pattern)))
                 self.valid_interface_patterns.add((index, repr(pattern)))
             else:
-                log.info('%s: adding interface pattern \'%s\' to '
+                log.debug('%s: adding interface pattern \'%s\' to '
                          'invalid interface patterns' % 
                          (self.node_id, repr(pattern)))
                 self.invalid_interface_patterns.add((index, repr(pattern)))
