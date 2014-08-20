@@ -283,14 +283,13 @@ class NodesController(BaseController):
 
         if self.repository.exists(self.expand(node_id, DEFINITION_FN)) or \
            self.repository.exists(self.expand(node_id, STARTUP_CONFIG_FN)):
-
+            response['status'] = HTTP_STATUS_CONFLICT
+            next_state = 'dump_node'
+        else:
             if self.repository.exists(self.expand(node_id)):
                 log.error('%s: node found on server, but no definition '
                           'or startup-config configured' % node_id)
                 return (self.http_bad_request(), None)
-
-            response['status'] = HTTP_STATUS_CONFLICT
-            next_state = 'dump_node'
 
         return (response, next_state)
 
