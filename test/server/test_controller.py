@@ -465,7 +465,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
 
     @patch('ztpserver.controller.create_repository')
-    def test_node_exists_but_unconfigured(self, m_repository):
+    def test_node_exists(self, m_repository):
         m_repository.return_value.exists.return_value = True
 
         node = Mock(serialnumber=random_string())
@@ -474,8 +474,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         (resp, state) = controller.node_exists(dict(), node=node,
                                                node_id=node.serialnumber)
 
-        self.assertEqual(state, None)
-        self.assertEqual(resp['status'], constants.HTTP_STATUS_BAD_REQUEST)
+        self.assertEqual(state, 'dump_node')
+        self.assertEqual(resp['status'], constants.HTTP_STATUS_CONFLICT)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists_definition_exists(self, m_repository):
@@ -534,8 +534,9 @@ class NodesControllerUnitTests(unittest.TestCase):
         (resp, state) = controller.node_exists(dict(), node=node,
                                                node_id=node.serialnumber)
 
-        self.assertEqual(state, 'post_config')
-        self.assertTrue('status' not in resp)
+        self.assertEqual(state, None)
+        self.assertEqual(resp['status'], 
+                         constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists_failure(self, m_repository):
@@ -894,7 +895,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
-    def test_unconfigured_node_exists(self, m_repository):
+    def test_node_exists(self, m_repository):
         url = '/nodes'
         serialnumber = random_string()
         body = json.dumps(dict(serialnumber=serialnumber))
@@ -906,7 +907,9 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
         resp = request.get_response(ztpserver.controller.Router())
 
-        self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
+        location = 'http://localhost/nodes/%s' % serialnumber
+        self.assertEqual(resp.status_code, constants.HTTP_STATUS_CONFLICT)
+        self.assertEqual(resp.location, location)
 
     @patch('ztpserver.controller.create_repository')
     def test_post_config(self, m_repository):

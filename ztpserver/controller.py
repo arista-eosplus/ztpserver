@@ -45,6 +45,7 @@ import ztpserver.topology
 
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
+from ztpserver.resources import ResourcePoolError
 from ztpserver.topology import create_node, load_pattern
 from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
@@ -607,12 +608,19 @@ class NodesController(BaseController):
         definition = response['definition']
         node = kwargs.get('node')
         _actions = list()
-        for action in definition.get('actions'):
-            attrs = action.get('attributes', dict())
 
-            action['attributes'] = \
-                ztpserver.topology.resources(attrs, node, kwargs['resource'])
-            _actions.append(action)
+        try:
+            for action in definition.get('actions'):
+                attrs = action.get('attributes', dict())
+
+                action['attributes'] = \
+                    ztpserver.topology.resources(attrs, node, 
+                                                 kwargs['resource'])
+                _actions.append(action)
+        except ResourcePoolError as exc:
+            log.debug(exc)
+            raise Exception('failed to allocate resources')
+            
         definition['actions'] = _actions
         response['definition'] = definition
         return (response, 'finalize_response')
