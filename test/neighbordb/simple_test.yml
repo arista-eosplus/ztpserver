@@ -13,6 +13,7 @@ valid_patterns:
     - simple pattern 6
     - simple pattern 7
     - simple pattern 8
+
 nodes:
   pass:
     - name: 2b3c

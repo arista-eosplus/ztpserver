@@ -619,12 +619,16 @@ class InterfacePattern(object):
 
     def __init__(self, interface, remote_device, remote_interface, node_id):
 
-        self.interface = interface
+        match = re.match(r'^[ehnrtE]+(\d.*)$', interface)
+        if match:
+            self.interface = 'Ethernet%s' % match.groups()[0]
+        else:
+            self.interface = interface
+
         self.remote_device = remote_device
         self.remote_interface = remote_interface
         self.node_id = node_id
 
-        self.interface_re = self.compile(interface)
         self.remote_device_re = self.compile(remote_device)
         self.remote_interface_re = self.compile(remote_interface)
 
@@ -634,7 +638,6 @@ class InterfacePattern(object):
                 (self.interface, self.remote_device, self.remote_interface)
 
     def refresh(self):
-        self.interface_re = self.compile(self.interface)
         self.remote_device_re = self.compile(self.remote_device)
         self.remote_interface_re = self.compile(self.remote_interface)
 
@@ -778,7 +781,7 @@ class InterfacePattern(object):
         elif self.interface is None:
             return False
         else:
-            return self.interface_re.match(interface)
+            return self.interface == interface
 
     def match_remote_device(self, remote_device):
         if self.remote_device == 'any':

@@ -373,11 +373,11 @@ class TestInterfacePattern(unittest.TestCase):
                     self.assertFalse(result)
 
     def compile_known_function(self, interface, cls):
-        pattern = InterfacePattern(interface,
-                                   random_string(),
+        pattern = InterfacePattern(random_string(),
+                                   interface,
                                    random_string(),
                                    random_string())
-        self.assertIsInstance(pattern.interface_re, cls)
+        self.assertIsInstance(pattern.remote_device_re, cls)
 
     def test_compile_exact_function(self):
         interface = 'exact(\'%s\')' % random_string()

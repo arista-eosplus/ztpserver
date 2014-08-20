@@ -1,0 +1,45 @@
+debug: true
+tests:
+  - topology
+  - pattern
+
+valid_patterns:
+  globals:
+    - interface name
+
+nodes:
+  pass:
+    - name: 2b3c
+      match: interface name
+
+2b3c:
+  systemmac: 00:1c:73:1a:2b:3c
+  serialnumber:  001c731a2b3c
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+    Ethernet2:
+      - device: localhost
+        port: Ethernet2
+    Ethernet3:
+      - device: localhost
+        port: Ethernet3
+    Ethernet4:
+      - device: localhost
+        port: Ethernet4
+
+neighbordb:
+
+  patterns:
+    - name: interface name
+      definition: test
+      interfaces:
+        - et1: localhost:Ethernet1
+        - E2:
+            device: localhost
+            port: Ethernet2
+        - Et3:
+            device: localhost
+            port: Ethernet3
+        - ethernet4: localhost:Ethernet4
