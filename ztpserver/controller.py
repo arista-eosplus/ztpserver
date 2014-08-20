@@ -487,7 +487,7 @@ class NodesController(BaseController):
         except FileObjectNotFound:
             log.warning('%s: missing definition %s' % 
                         (kwargs['resource'], filename))
-        except FileObjectNotFound as err:
+        except FileObjectError as err:
             log.error(err.message)
             raise Exception('failed to load definition %s' % filename)
         return (response, 'do_validation')
