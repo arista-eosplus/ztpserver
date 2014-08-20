@@ -80,9 +80,12 @@ class YAMLSerializer(BaseSerializer):
         try:
             return yaml.safe_load(data)
         except yaml.YAMLError as err:
-            log.error('%s: unable to deserialize YAML data %s (%s)' % 
-                      (self.node_id, data, err))
-            raise
+            msg = '''%s: unable to deserialize YAML data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
 
     def serialize(self, data):
         ''' Serialize a dict object and return YAML '''
@@ -90,9 +93,12 @@ class YAMLSerializer(BaseSerializer):
         try:
             return yaml.dump(data, default_flow_style=False)
         except yaml.YAMLError as err:
-            log.error('%s: unable to serialize YAML data %s (%s)' % 
-                      (self.node_id, data, err))
-            raise
+            msg = '''%s: unable to serialize YAML data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
 
 
 class JSONSerializer(BaseSerializer):
@@ -103,9 +109,12 @@ class JSONSerializer(BaseSerializer):
         try:
             return json.loads(data)
         except Exception as err:
-            log.error('%s: unable to deserialize JSON data %s (%s)' %
-                      (self.node_id, data, err))
-            raise
+            msg = '''%s: unable to deserialize JSON data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
 
     def serialize(self, data):
         ''' Serialize a dict object and return JSON '''
@@ -113,9 +122,12 @@ class JSONSerializer(BaseSerializer):
         try:
             return json.dumps(data)
         except Exception as err:
-            log.error('%s: unable to deserialize JSON data %s (%s)' %
-                      (self.node_id, data, err))
-            raise
+            msg = '''%s: unable to serialize JSON data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
 
 
 class Serializer(object):
@@ -142,26 +154,17 @@ class Serializer(object):
     def serialize(self, data, content_type):
         ''' Serialize the data based on the content_type '''
 
-        try:
-            handler = self.handlers.get(content_type, 
-                                        TextSerializer(self.node_id))
-            return handler.serialize(data)
-        except Exception as err:
-            raise SerializerError('%s: unable to serialize (%s): %s' % 
-                                  (self.node_id, data, err))
+        handler = self.handlers.get(content_type, 
+                                    TextSerializer(self.node_id))
+        return handler.serialize(data)
 
     def deserialize(self, data, content_type=None):
         ''' Deserialize the data based on the content_type '''
 
-        try:
-            handler = self.handlers.get(content_type, 
-                                        TextSerializer(self.node_id))
-            data = self._convert_from_unicode(
-                handler.deserialize(data))
-            return data
-        except Exception as err:
-            raise SerializerError('%s: unable to deserialize (%s): %s)' % 
-                                  (self.node_id, data, err))
+        handler = self.handlers.get(content_type, 
+                                    TextSerializer(self.node_id))
+        data = self._convert_from_unicode(handler.deserialize(data))
+        return data
 
     @staticmethod
     def _convert_from_unicode(data):
