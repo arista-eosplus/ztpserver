@@ -92,11 +92,11 @@ class ResourcePool(object):
             self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
-            raise ResourcePoolError('no resources available '
-                                    'in pool \'%s\'' % pool)
+            log.error('%s: no resource free in %s' % pool)
+            raise ResourcePoolError('%s: no resource free in %s' % pool)
         except Exception as exc:
-            raise ResourcePoolError('failed to allocate resource \'%s\'' % 
-                                    exc)
+            log.error('%s: failed to allocate resource from %s' % pool)
+            raise ResourcePoolError(exc.message)
         return str(key)
 
     def lookup(self, pool, node):
@@ -110,5 +110,5 @@ class ResourcePool(object):
             key = matches[0] if matches else None
             return key
         except Exception as exc:
-            raise ResourcePoolError('failed to lookup resource \'%s\'' % 
-                                    exc)
+            log.error('%s: failed to lookup resource from %s' % pool)
+            raise ResourcePoolError(exc.message)
