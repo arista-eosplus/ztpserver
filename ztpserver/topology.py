@@ -81,6 +81,7 @@ def load_file(filename, content_type, node_id):
         return load(filename, content_type, node_id)
     except SerializerError:
         log.error('%s: failed to load file: %s' % (node_id, filename))
+        raise
 
 def load_neighbordb(node_id, contents=None):
     try:
