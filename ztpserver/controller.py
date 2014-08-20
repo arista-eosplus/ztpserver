@@ -54,7 +54,7 @@ from ztpserver.resources import ResourcePoolError
 from ztpserver.serializers import SerializerError
 from ztpserver.topology import create_node, load_pattern
 from ztpserver.topology import load_neighbordb, resources
-from ztpserver.topology import replace_config_action, 
+from ztpserver.topology import replace_config_action
 
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
