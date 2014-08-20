@@ -79,21 +79,20 @@ class ResourcePool(object):
 
         try:
             if match:
-                log.debug('%s: already allocated resource '
-                          'from \'%s\':\'%s\'' % 
+                log.debug('%s: already allocated resource \'%s\':\'%s\'' % 
                          (node_id, pool, match))
                 return match
 
             self.load(pool)
             key = next(x[0] for x in self.data.items() if x[1] is None)
 
-            log.debug('%s: allocating \'%s\' from pool \'%s\'' %
-                      (node_id, key, pool))
+            log.debug('%s: allocated \'%s\':\'%s\'' %
+                      (node_id, pool, key))
 
             self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
-            log.error('%s: no resource free in \'%s\'' % pool)
+            log.error('%s: no resource free in \'%s\'' % (node_id, pool))
             raise ResourcePoolError('%s: no resource free in \'%s\'' % 
                                     (node_id, pool))
         except Exception as exc:
@@ -105,7 +104,8 @@ class ResourcePool(object):
     def lookup(self, pool, node):
         ''' Return an existing allocated resource if one exists '''
         node_id = node.identifier()
-        log.debug('%s: looking up resource in \'%s\'' % node_id)
+        log.debug('%s: looking up resource in \'%s\'' % 
+                  (node_id, pool))
         try:
             self.load(pool)
             matches = [m[0] for m in self.data.iteritems()
