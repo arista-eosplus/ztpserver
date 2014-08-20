@@ -41,7 +41,6 @@ from webob import Request
 
 from mock import MagicMock, Mock, patch
 
-import ztpserver.topology
 import ztpserver.controller
 import ztpserver.config
 import ztpserver.repository
@@ -628,7 +627,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.NodesController()
         self.assertRaises(Exception, controller.post_config, dict())
 
-    @patch('ztpserver.topology.load_neighbordb')
+    @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_success_single_match(self, m_load_neighbordb):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
@@ -644,14 +643,14 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], constants.HTTP_STATUS_CREATED)
 
-    @patch('ztpserver.topology.load_neighbordb')
+    @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_success_multiple_matches(self, m_load_neighbordb):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
 
         m_load_neighbordb.return_value.match_node.return_value = [Mock(),
-                                                                Mock(),
-                                                                Mock()]
+                                                                  Mock(),
+                                                                  Mock()]
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_node(dict(), request=request, node=node,
@@ -661,7 +660,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], constants.HTTP_STATUS_CREATED)
 
-    @patch('ztpserver.topology.load_neighbordb')
+    @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_failure_no_matches(self, m_load_neighbordb):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
@@ -676,7 +675,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status'], constants.HTTP_STATUS_BAD_REQUEST)
 
-    @patch('ztpserver.topology.load_neighbordb')
+    @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_no_definition_in_pattern(self, m_load_neighbordb):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
@@ -702,11 +701,11 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'do_validation')
         self.assertIsInstance(resp, dict)
 
-    @patch('ztpserver.topology.replace_config_action')
+    @patch('ztpserver.controller.replace_config_action')
     def test_get_startup_config_success(self, m_replace_config_action):
         m_replace_config_action.return_value = dict()
 
-        #ztpserver.topology.replace_config_action = Mock(return_value=dict())
+        ztpserver.topology.replace_config_action = Mock(return_value=dict())
 
         response = dict(definition={'actions': list()})
 
@@ -717,7 +716,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(state, 'do_actions')
         self.assertIsInstance(resp, dict)
 
-    @patch('ztpserver.topology.replace_config_action')
+    @patch('ztpserver.controller.replace_config_action')
     def test_get_startup_config_success_no_definition(self, 
                                                       m_replace_config_action):
         resource = random_string()
@@ -725,7 +724,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         action_name = random_string()
         action = {'name': action_name, 'action': 'replace_config'}
         m_replace_config_action.return_value = action
-        #ztpserver.topology.replace_config_action = Mock(return_value=action)
+        ztpserver.topology.replace_config_action = Mock(return_value=action)
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.get_startup_config(dict(), resource=resource)
@@ -848,7 +847,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
     def test_do_resources_success(self):
         var_foo = random_string()
-        ztpserver.topology.resources = Mock(return_value=dict(foo=var_foo))
+        ztpserver.controller.resources = Mock(return_value=dict(foo=var_foo))
 
         definition = create_definition()
         definition.add_action(name='dummy action',
@@ -929,7 +928,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.location, location)
 
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.topology.load_neighbordb')
+    @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_success(self, m_load_neighbordb, m_repository):
         node = create_node()
 
@@ -1014,7 +1013,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
     @patch('ztpserver.controller.load_pattern')
     @patch('ztpserver.controller.create_repository')
-    @patch('ztpserver.topology.create_node')
+    @patch('ztpserver.controller.create_node')
     def test_get_startup_config_w_validation_success(self,
                                                      m_load_pattern,
                                                      m_repository,

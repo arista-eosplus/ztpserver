@@ -33,9 +33,10 @@
 import unittest
 import yaml
 
-import ztpserver.topology
-
 from mock import patch, Mock
+
+import ztpserver.serializers
+import ztpserver.topology
 
 from ztpserver.topology import Neighbordb, Pattern
 from ztpserver.topology import create_node, load_file, load_neighbordb
@@ -60,9 +61,11 @@ class NeighbordbUnitTests(unittest.TestCase):
     @patch('ztpserver.topology.load')
     def test_load_file_failure(self, m_load, _):
         m_load.side_effect = ztpserver.serializers.SerializerError
-        self.assertIsNone(load_file(random_string(),
-                                    random_string(),
-                                    random_string()))
+        self.assertRaises(ztpserver.serializers.SerializerError,
+                          load_file,
+                          random_string(),
+                          random_string(),
+                          random_string())
 
     @patch('ztpserver.topology.validate_neighbordb')
     @patch('ztpserver.topology.load')

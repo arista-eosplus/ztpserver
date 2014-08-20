@@ -55,7 +55,6 @@ from ztpserver.serializers import SerializerError
 from ztpserver.topology import create_node, load_pattern
 from ztpserver.topology import load_neighbordb, resources
 from ztpserver.topology import replace_config_action
-
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
 
@@ -506,6 +505,9 @@ class NodesController(BaseController):
             except SerializerError as err:
                 log.error(err.message)
                 raise Exception('failed to load pattern %s' % filename)
+
+            if not pattern:
+                raise Exception('failed to validate pattern')
 
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 

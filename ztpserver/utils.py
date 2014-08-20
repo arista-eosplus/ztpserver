@@ -45,7 +45,7 @@ def natural_keys(text):
 def expand_range(interfaces):
     ''' Returns a naturally sorted list of items expanded from interfaces. '''
 
-    match = re.match(r'^(((E(t(h)?)?(ernet)?)?(\d+)(([\/\-\,])?(\d+))*)'
+    match = re.match(r'^((([Ee](t(h)?)?(ernet)?)?(\d+)(([\/\-\,])?(\d+))*)'
                      '(,)?)+$', 
                      interfaces)
 

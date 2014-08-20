@@ -122,7 +122,7 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
 
         if not validate_pattern(pattern, node_id):
             log.error('%s: failed to validate pattern attributes' % node_id)
-            return
+            return None
 
         pattern['node_id'] = node_id
         return Pattern(**pattern)
