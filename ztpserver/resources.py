@@ -93,9 +93,11 @@ class ResourcePool(object):
             self.dump(pool)
         except StopIteration:
             log.error('%s: no resource free in %s' % pool)
-            raise ResourcePoolError('%s: no resource free in %s' % pool)
+            raise ResourcePoolError('%s: no resource free in %s' % 
+                                    (node_id, pool))
         except Exception as exc:
-            log.error('%s: failed to allocate resource from %s' % pool)
+            log.error('%s: failed to allocate resource from %s' % 
+                      (node_id, pool))
             raise ResourcePoolError(exc.message)
         return str(key)
 
