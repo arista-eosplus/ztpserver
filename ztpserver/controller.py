@@ -76,6 +76,7 @@ class BaseController(WSGIController):
 
     def __init__(self, **kwargs):
         data_root = ztpserver.config.runtime.default.data_root
+        self.data_root = data_root
         self.repository = create_repository(data_root)
         super(BaseController, self).__init__()
 

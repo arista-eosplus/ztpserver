@@ -184,15 +184,16 @@ def loads(data, content_type, node_id):
     serializer = Serializer(node_id)
     return serializer.deserialize(data, content_type)
 
-def load(file_path, content_type, node_id='general'):
+def load(file_path, content_type, node_id=None):
+    id_string = '%s: ' % node_id if node_id else ''
     try:
         data = open(file_path).read()
         return loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
-                  (node_id, file_path, err))
+                  (id_string, file_path, err))
         raise SerializerError('%s: failed to load file from %s (%s)' % 
-                              (node_id, file_path, err))
+                              (id_string, file_path, err))
 
 def dumps(data, content_type, node_id):
     serializer = Serializer(node_id)
@@ -200,11 +201,13 @@ def dumps(data, content_type, node_id):
         data = data.serialize()
     return serializer.serialize(data, content_type)
 
-def dump(data, file_path, content_type, node_id='general'):
+def dump(data, file_path, content_type, node_id=None):
+    id_string = '%s: ' % node_id if node_id else ''
     try:
         with open(file_path, 'w') as fhandler:
             fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
         log.error('%s: failed to write file to %s (%s)' % 
-                  (node_id, file_path, err))
-        raise
+                  (id_string, file_path, err))
+        raise SerializerError('%s: failed to write file to %s (%s)' % 
+                              (id_string, file_path, err))

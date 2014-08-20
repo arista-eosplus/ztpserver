@@ -74,8 +74,10 @@ class ResourcePool(object):
     def allocate(self, pool, node):
         node_id = node.identifier()
         log.debug('%s: allocating resources' % node_id)
+
+        match = self.lookup(pool, node)
+
         try:
-            match = self.lookup(pool, node)
             if match:
                 log.debug('%s: resource \'%s\' already allocated' % 
                          (node_id, match))
@@ -90,16 +92,11 @@ class ResourcePool(object):
             self.data[key] = node_id
             self.dump(pool)
         except StopIteration:
-            log.warning('%s: no resources available in pool \'%s\'' % 
-                        (node_id, pool))
-            raise ResourcePoolError('%s: no resources available '
-                                    'in pool \'%s\'' % 
-                                    (node_id, pool))
+            raise ResourcePoolError('no resources available '
+                                    'in pool \'%s\'' % pool)
         except Exception as exc:
-            log.error('%s: failed to allocate resource \'%s\'' % 
-                      (node_id, exc))
-            raise ResourcePoolError('%s: failed to allocate resource \'%s\'' % 
-                                    (node_id, exc))
+            raise ResourcePoolError('failed to allocate resource \'%s\'' % 
+                                    exc)
         return str(key)
 
     def lookup(self, pool, node):
@@ -113,7 +110,5 @@ class ResourcePool(object):
             key = matches[0] if matches else None
             return key
         except Exception as exc:
-            log.error('%s: failed to lookup resource \'%s\'' % 
-                      (node_id, exc))
-            raise ResourcePoolError('%s: failed to lookup resource \'%s\'' % 
-                                    (node_id, exc))
+            raise ResourcePoolError('failed to lookup resource \'%s\'' % 
+                                    exc)
