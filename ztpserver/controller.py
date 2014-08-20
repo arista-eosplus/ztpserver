@@ -478,7 +478,8 @@ class NodesController(BaseController):
         try:
             filename = self.expand(kwargs['resource'], DEFINITION_FN)
             fobj = self.repository.get_file(filename)
-            definition = fobj.read(CONTENT_TYPE_YAML)
+            definition = fobj.read(CONTENT_TYPE_YAML,
+                                   kwargs['resource'])
             response['definition'] = definition
             log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
                                                     filename,
@@ -486,6 +487,9 @@ class NodesController(BaseController):
         except FileObjectNotFound:
             log.warning('%s: missing definition %s' % 
                         (kwargs['resource'], filename))
+        except FileObjectNotFound as err:
+            log.error(err.message)
+            raise Exception('failed to load definition %s' % filename)
         return (response, 'do_validation')
 
     def do_validation(self, response, *args, **kwargs):
@@ -618,7 +622,7 @@ class NodesController(BaseController):
                                                  kwargs['resource'])
                 _actions.append(action)
         except ResourcePoolError as exc:
-            log.debug(exc)
+            log.error(exc)
             raise Exception('failed to allocate resources')
             
         definition['actions'] = _actions

@@ -113,7 +113,7 @@ class FileObject(object):
         return 'FileObject(name=%s, type=%s, encoding=%s, content_type=%s)' % \
                (self.name, self.type, self.encoding, self.content_type)
 
-    def read(self, content_type=None):
+    def read(self, content_type=None, node_id=None):
         ''' Reads the contents from the file system
 
         :param content_type: defines the content_type of the file used to
@@ -130,7 +130,8 @@ class FileObject(object):
         '''
         try:
             self.content_type = content_type
-            return ztpserver.serializers.load(self.name, content_type)
+            return ztpserver.serializers.load(self.name, content_type,
+                                              node_id)
         except SerializerError as err:
             raise FileObjectError(err.message)
 
