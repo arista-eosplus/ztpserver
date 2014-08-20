@@ -112,5 +112,6 @@ class ResourcePool(object):
             key = matches[0] if matches else None
             return key
         except Exception as exc:
-            log.error('%s: failed to lookup resource from %s' % pool)
+            log.error('%s: failed to lookup resource from %s' % 
+                      (node_id, pool))
             raise ResourcePoolError(exc.message)
