@@ -44,7 +44,7 @@ from ztpserver.topology import Node, NodeError, Neighbor
 from ztpserver.topology import ExcludesFunction, IncludesFunction
 from ztpserver.topology import ExactFunction, RegexFunction
 
-from server_test_lib import random_string
+from server_test_lib import random_string, enable_logging
 from server_test_lib import create_node
 
 
@@ -284,7 +284,7 @@ class PatternUnitTests(unittest.TestCase):
 class TestInterfacePattern(unittest.TestCase):
 
     def test_create_interface_pattern(self):
-        intf = random_string()
+        intf = 'Ethernet1'
         remote_device = random_string()
         remote_interface = random_string()
 
@@ -403,8 +403,9 @@ class TestInterfacePattern(unittest.TestCase):
         interface = '%s(\'%s\')' % (random_string(), random_string())
         self.assertRaises(InterfacePatternError,
                           InterfacePattern,
-                          interface, random_string(), 
+                          random_string(), interface,
                           random_string(), random_string())
 
 if __name__ == '__main__':
+    enable_logging()
     unittest.main()
