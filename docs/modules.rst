@@ -1,5 +1,5 @@
-ZTP Server Modules
-==================
+Modules
+=======
 
 .. toctree::
    :maxdepth: 4
