@@ -1,4 +1,4 @@
-ztpserver Package
+ZTPServer Package
 =================
 
 :mod:`ztpserver` Package

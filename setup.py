@@ -31,6 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from glob import glob
+import os
 
 try:
     from setuptools import setup
@@ -39,8 +40,16 @@ except ImportError:
 
 from ztpserver import __version__, __author__
 
-CONF_PATH = '/etc/ztpserver'
-INSTALL_PATH = '/usr/share/ztpserver'
+INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
+if os.environ.get('READTHEDOCS'):
+    INSTALL_ROOT = "."
+
+CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
+INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
+#if os.environ.get('READTHEDOCS'):
+#    INSTALL_REQUIREMENTS = open('requirements-doc.txt').read().split('\n')
+#else:
+#    INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 
 setup(
@@ -48,7 +57,7 @@ setup(
     version=__version__,
     description = 'ZTP Server for EOS',
     author=__author__,
-    author_email='eosplus@aristanetworks.com',
+    author_email='eosplus-dev@aristanetworks.com',
     url='https://github.com/arista-eosplus/ztpserver',
     download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.0.0',
     license='BSD-3',
