@@ -29,7 +29,7 @@ Support
 =======
 
 * [Mailing List](https://groups.google.com/forum/#!forum/eosplus)
-* eosplus-dev@aristanetworks.com
+* eosplus-dev@arista.com
 * IRC: irc.freenode.net#arista
 
 Dependencies

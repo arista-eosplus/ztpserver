@@ -57,7 +57,7 @@ setup(
     version=__version__,
     description = 'ZTP Server for EOS',
     author=__author__,
-    author_email='eosplus-dev@aristanetworks.com',
+    author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
     download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.0.0',
     license='BSD-3',
