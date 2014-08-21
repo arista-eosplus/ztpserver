@@ -14,8 +14,8 @@ Global configuration file
     # Location of all ztps boostrap process data files
     data_root = /usr/share/ztpserver
     
-    # UID used in the /nodes structure (serialnum is not supported yet)
-    identifier = systemmac
+    # UID used in the /nodes structure (serialnumber or systemmac)
+    identifier = serialnumber
     
     # Server URL to-be-advertised to clients (via POST replies) during the bootstrap process
     server_url = http://172.16.130.10:8080
@@ -89,7 +89,7 @@ Dynamic neighbordb or pattern file
 
 .. _static_neighbordb_example:
 
-Static neighbordb and /node/<MAC>/pattern file
+Static neighbordb and /node/<unique-id>/pattern file
 ``````````````````````````````````````````````
 .. code-block:: yaml
 

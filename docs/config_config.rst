@@ -48,8 +48,8 @@ Sections and attributes
     data_root=<PATH>
 
     # UID used in the /nodes structure (serialnum is not supported yet)
-    # default=systemmac
-    identifier=<systemmac | serialnum> 
+    # default=serialnum
+    identifier=<serialnum | systemmac> 
 
     # Server URL to-be-advertised to clients (via POST replies) during the bootstrap process
     # default=http://ztpserver:8080
@@ -141,7 +141,7 @@ The ZTPServer side components are housed in a single directory defined by the ``
             bootstrap
             bootstrap.conf
         nodes/
-            <system id (MAC)>/
+            <unique_id)>/
                 startup-config
                 definition
                 pattern
@@ -191,7 +191,7 @@ Node-specific configuration
 Startup configuration
 ^^^^^^^^^^^^^^^^^^^^^
 
-``startup-config`` provides a static startup configuration file. If this file is present in a node’s folder, when the node sends a GET request to ``/nodes/<systemmac>``, the server will respond with a static definition that includes:
+``startup-config`` provides a static startup configuration file. If this file is present in a node’s folder, when the node sends a GET request to ``/nodes/<unique_id>`` where unique_id is either the serial number or system-mac, the server will respond with a static definition that includes:
 
 -  a **replace\_config** action which will install the configuration file on the switch (see `actions <#actions>`__ section below for more on this)
 -  all the **actions** from the local **definition** file (see definition section below for more on this) which have the ``always_execute`` attribute set to ``True``
@@ -543,7 +543,7 @@ are marked using the ``null`` descriptor.
     192.168.1.8/24: null
 
 When a resource is allocated to a node’s definition, the first available
-null value will be replaced by the node’s system MAC address. Here is an
+null value will be replaced by the node’s unique_id. Here is an
 example:
 
 .. code-block:: console
@@ -584,7 +584,7 @@ definition will be automatically generated for the node.
     patterns*:
         - name*: <single line description of pattern>
           definition*: <defintion_url>
-          node: <system_mac>
+          node: <unique_id>
           variables:
             <variable_name>: <function>
           interfaces*:
@@ -619,14 +619,10 @@ includes (string)
 excludes (string)
     defines a string that must not be present in the node name
 
-system\_mac
-'''''''''''
+itentifier
+''''''''''
 
-MAC address of a node - supported formats:
-
-    -  1234.aaaa.4321
-    -  12:34:aa:aa:43:21
-    -  1234aaa4321
+System serial number or MAC address of a node, depending on the global 'identifier' setting in ztpserver.conf.
 
 port\_name
 ''''''''''

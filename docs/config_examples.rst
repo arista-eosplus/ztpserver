@@ -11,15 +11,15 @@ Example #1: strongly typed definition with a strongly typed map
     ---
     - name: standard leaf definition
       definition: leaf_template
-      node: 001c73aabbcc
+      node: ABC12345678
       interfaces:
         - Ethernet49: pod1-spine1:Ethernet1/1
         - Ethernet50: 
             device: pod1-spine2
             port: Ethernet1/1
 
-In example #1, the topology map would only apply to a node with system
-mac address equal to **001c73aabbcc**. The following interface map rules
+In example #1, the topology map would only apply to a node with serial number,
+the default ID, equal to **ABC12345678**. The following interface map rules
 apply:
 
 -  Interface Ethernet49 must be connected to node pod1-spine1 on port
@@ -43,7 +43,8 @@ Example #2: strongly typed definition with loose typed map
             port: Ethernet2/3
 
 In this example, the topology map would only apply to the node with
-system mac address equal to **001c73aabbcc**. The following interface
+system mac address equal to **001c73aabbcc**. This requires that identifier be
+set to systemmac in the global ztpserver.conf file. The following interface
 map rules apply:
 
 -  Any interface must be connected to node that matches the regular
