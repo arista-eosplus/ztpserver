@@ -40,6 +40,8 @@ def main(attributes):
     Installs CliPlugin based on the value of the
     'url' attribute.
 
+    This action is NOT dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values

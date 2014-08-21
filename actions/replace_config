@@ -35,6 +35,8 @@ def main(attributes):
     Replaces/adds /mnt/flash/startup-config based on the value of the
     'url' attribute.
 
+    This action is dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values

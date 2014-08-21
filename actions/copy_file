@@ -64,6 +64,8 @@ def main(attributes):
     If 'overwrite' is not set, then 'replace' is the default
     behaviour.
 
+    This action is NOT dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values

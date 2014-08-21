@@ -32,6 +32,8 @@ def main(attributes):
 
     SHORT_DESCRIPTION
 
+    This action is [NOT] dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
