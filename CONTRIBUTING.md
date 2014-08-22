@@ -20,4 +20,4 @@ If you happen to find a bug with ZTPServer, please open an issue and flag it as 
 
 Contact
 =======
-If you have any additional questions about ZTPServer please send an email to eosplus@aristanetworks.com
+If you have any additional questions about ZTPServer please send an email to eosplus-dev@arista.com
