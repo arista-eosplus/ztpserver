@@ -247,6 +247,7 @@ def serial_number():
         proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                             shell=True)
         (out, err) = proc.communicate()
+        out = out.replace('.', '')
     code = proc.returncode             #pylint: disable=E1101
     return (code, out.strip(), err)
 
