@@ -146,7 +146,7 @@ def log_xmpp():
 
 def log(msg, error=False, xmpp=None):
     global SYSTEM_ID                    #pylint: disable=W0603
-    if not STSTEM_ID:
+    if not SYSTEM_ID:
         (_, SYSTEM_ID, _) = serial_number() 
 
     if xmpp is None:

@@ -32,8 +32,8 @@ all: clean python
 pylint:
 	find ./ztpserver -name \*.py | xargs pylint --rcfile .pylintrc
 	find ./test -name \*.py | xargs pylint --rcfile .pylintrc
-	find ./actions -name \*.py | xargs pylint --rcfile .pylintrc
-	find ./client -name \*.py | xargs pylint --rcfile .pylintrc
+	find ./actions -name \* -xtype f | xargs pylint --rcfile .pylintrc
+	find ./client -name bootstrap | xargs pylint --rcfile .pylintrc
 
 clean:
 	@echo "Cleaning up distutils stuff"
