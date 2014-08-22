@@ -52,15 +52,17 @@ def main(attributes):
     Copies file based on the values of 'src_url' and 'dst_url'
     attributes ('dst_url' should point to the detination folder).
     If 'overwrite' is set to:
-       - 'replace': the file is copied to the switch regardless
-         of whether there is already a file with the same name at the
-         destination;
-       - 'if-missing': the file is copied to the switch only if
-         there is not already a file with the same name at the
-         destination; if there is, then the action is a no-op;
-       - 'backup': the file is copied to the switch; if there is
-         already another file at the destination, that file is renamed
-         by appending the '.backup' suffix
+
+    * 'replace': the file is copied to the switch regardless
+      of whether there is already a file with the same name at the
+      destination;
+    * 'if-missing': the file is copied to the switch only if
+      there is not already a file with the same name at the
+      destination; if there is, then the action is a no-op;
+    * 'backup': the file is copied to the switch; if there is
+      already another file at the destination, that file is renamed
+      by appending the '.backup' suffix
+
     If 'overwrite' is not set, then 'replace' is the default
     behaviour.
 

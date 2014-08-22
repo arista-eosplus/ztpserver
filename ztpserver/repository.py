@@ -172,7 +172,7 @@ class FileObject(object):
 
         :raises: IOError
         '''
-        
+
         sha1 = hashlib.sha1()
         sha1.update(open(self.name).read())       #pylint: disable=E1101
         return sha1.hexdigest()
@@ -228,9 +228,9 @@ class Repository(object):
             os.makedirs(folder_path)
             return folder_path
         except OSError as err:
-            log.error('Failed to add folder %s (%s)' % 
+            log.error('Failed to add folder %s (%s)' %
                       (folder_path, err))
-            raise RepositoryError('Failed to add folder %s (%s)' % 
+            raise RepositoryError('Failed to add folder %s (%s)' %
                                   (folder_path, err))
 
     def add_file(self, file_path, contents=None, content_type=None):
@@ -242,7 +242,7 @@ class Repository(object):
         :type contents: str
         :param content_type: specifies the serialization to use for the file
         :type content_type: str
-        :returns: :py:class:`FileObject'
+        :returns: :py:class:`FileObject`
         :raises: RespositoryError
 
         The add_file method allows for a new file to be added to the
@@ -300,7 +300,7 @@ class Repository(object):
             file_path = self.expand(file_path)
             os.remove(file_path)
         except (OSError, IOError) as err:
-            log.error('Failed to delete file %s (%s)' % 
+            log.error('Failed to delete file %s (%s)' %
                       (file_path, err))
-            raise RepositoryError('Failed to delete file %s (%s)' % 
+            raise RepositoryError('Failed to delete file %s (%s)' %
                                   (file_path, err))

@@ -5,3 +5,4 @@ Modules
    :maxdepth: 4
 
    ztpserver
+   actions

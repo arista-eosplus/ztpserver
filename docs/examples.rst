@@ -90,7 +90,7 @@ Dynamic neighbordb or pattern file
 .. _static_neighbordb_example:
 
 Static neighbordb and /node/<unique-id>/pattern file
-``````````````````````````````````````````````
+````````````````````````````````````````````````````
 .. code-block:: yaml
 
     ---
