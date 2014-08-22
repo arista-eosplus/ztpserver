@@ -19,7 +19,7 @@ ZTPServer Features
 
 Docs
 ====
-https://github.com/arista-eosplus/ztpserver/wiki
+[ZTPServer official documentation](http://ztpserver.readthedocs.org/) is built and hosted at (http://ReadTheDocs.org/).
 
 Contributing
 ============
@@ -29,7 +29,7 @@ Support
 =======
 
 * [Mailing List](https://groups.google.com/forum/#!forum/eosplus)
-* eosplus-dev@aristanetworks.com
+* eosplus-dev@arista.com
 * IRC: irc.freenode.net#arista
 
 Dependencies
