@@ -33,5 +33,10 @@ from client_test_lib import CLI_LOG
 
 open(CLI_LOG, 'a+b').write('%s\n' % ' '.join(sys.argv))
 
-# Need to return something, so that the check for EAPI being enabled succeeds
-print 'dummy-response'
+if sys.argv[-1] == 'show version':
+    # serial number is used for client-side logging
+    print 'Serial number:       DUMMY_SERIAL'
+else:
+    # Need to return something, so that the check for 
+    # EAPI being enabled succeeds
+    print 'dummy-response'

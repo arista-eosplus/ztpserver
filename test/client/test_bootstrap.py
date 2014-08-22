@@ -37,7 +37,7 @@ from client_test_lib import BOOT_EXTENSIONS, BOOT_EXTENSIONS_FOLDER
 from client_test_lib import RC_EOS
 
 from client_test_lib import Bootstrap
-from client_test_lib import cli_log, file_log, remove_file
+from client_test_lib import file_log, remove_file
 from client_test_lib import startup_config_action
 from client_test_lib import fail_action, print_action, random_string
 from client_test_lib import erroneous_action, missing_main_action
@@ -88,7 +88,6 @@ class ConfigRequestErrorTest(unittest.TestCase):
 
         try:
             self.failUnless(bootstrap.unexpected_response_failure())
-            self.assertEquals(cli_log(), [])
             self.failIf(bootstrap.error)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -106,7 +105,6 @@ class ConfigRequestErrorTest(unittest.TestCase):
 
         try:
             self.failUnless(bootstrap.unexpected_response_failure())
-            self.assertEquals(cli_log(), [])
             self.failIf(bootstrap.error)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output

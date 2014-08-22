@@ -359,9 +359,8 @@ class Bootstrap(object):
 
     def node_information_collected(self):
         cmds = ['show version',          # Collect system MAC for logging
-                'show version',
                 'show lldp neighbors']
-        return [x for x in eapi_log()[-6:] if x != 'enable'] == cmds
+        return [x for x in eapi_log() if x != 'enable'][-2:] == cmds
 
     def eapi_configured(self):
         cmds = ['configure',
@@ -370,41 +369,41 @@ class Bootstrap(object):
                 'no protocol https',
                 'protocol http',
                 'no shutdown']
-        return cli_log()[:6] == cmds
+        return cli_log()[1:7] == cmds
 
     def eapi_node_information_collected(self):
         return self.eapi_configured() and self.node_information_collected()
 
     def server_connection_failure(self):
-        return 'Server connection error' in self.output and \
+        return 'server connection error' in self.output and \
                self.return_code
 
     def eapi_failure(self):
-        return 'Unable to enable eAPI' in self.output and \
+        return 'unable to enable eAPI' in self.output and \
                self.return_code
 
     def unexpected_response_failure(self):
-        return 'Unexpected reponse from server' in self.output and \
+        return 'unexpected reponse from server' in self.output and \
                self.return_code
 
     def node_not_found_failure(self):
-        return 'Node not found on server' in self.output and \
+        return 'node not found on server' in self.output and \
                self.return_code
 
     def toplogy_check_failure(self):
-        return 'Server-side topology check failed' in self.output and \
+        return 'server-side topology check failed' in self.output and \
                self.return_code
 
     def action_not_found_failure(self):
-        return 'Action not found on server' in self.output and \
+        return 'action not found on server' in self.output and \
                self.return_code
 
     def missing_startup_config_failure(self):
-        return 'Startup configuration is missing' in self.output and \
+        return 'startup configuration is missing' in self.output and \
                self.return_code
 
     def action_failure(self):
-        return 'Executing action failed' in self.output and \
+        return 'executing action failed' in self.output and \
                self.return_code
 
     def invalid_definition_format(self):
@@ -412,7 +411,7 @@ class Bootstrap(object):
                self.return_code
 
     def invalid_definition_location_failure(self):
-        return 'Invalid definition location received ' \
+        return 'invalid definition location received ' \
                'from server' in self.output and \
                self.return_code
 
