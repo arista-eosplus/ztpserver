@@ -60,6 +60,7 @@ def main(attributes):
     Generates an email from the bootstrap process and routes it through a
     smarthost.  The parameters value expects a dictionary with the
     following values in order for this function to work properly.
+    ::
 
         {
             'smarthost':   <hostname of smarthost>,

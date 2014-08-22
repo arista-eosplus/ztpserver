@@ -1,7 +1,7 @@
 ZTPServer Documentation
 ========================
 
-[ZTPServer official documentation](http://http://ztpserver.readthedocs.org/) is built and hosted at (http://ReadTheDocs.org/).
+[ZTPServer official documentation](http://ztpserver.readthedocs.org/) is built and hosted at (http://ReadTheDocs.org/).
 
 Contributing
 ------------

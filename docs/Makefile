@@ -40,13 +40,31 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
-clean:
+clean: clean_actionlinks
 	-rm -rf $(BUILDDIR)/*
 
-html:
+html: actionlinks
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+
+ACTIONS := $(shell ls ../actions | grep -v "\.py")
+ACTIONLINKS := $(shell ls ../actions | grep "\.py")
+
+actionlinks:
+	@touch ../actions/__init__.py
+	@- $(foreach ACTION,$(ACTIONS), \
+		cd ../actions; \
+		[ -h $(ACTION).py ] || ln -s $(ACTION) $(ACTION).py; \
+	)
+
+clean_actionlinks:
+	@rm -f ../actions/__init__.py
+	@- $(foreach ACTION,$(ACTIONLINKS), \
+		cd ../actions; \
+		[ -f $(ACTION) ] && rm $(ACTION); \
+	)
+
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml

@@ -14,8 +14,8 @@ Static provisioning:
 
 Manually create node entries in /nodes and a startup-configuration. In order to do that:
 
-* create a new directory for each node under [data_root]/nodes, using the system MAC address as the name
-* place a startup-config in the newly-created folder 
+* Create a new directory for each node under [data_root]/nodes, using the system unique_id as the name.
+* Place a startup-config in the newly-created folder.
 
 Example:
 
@@ -29,7 +29,7 @@ Topology validation is still an active component of a static provisioning config
 e.g.:
 ``/usr/share/ztpserver/nodes/000c29f3a39g/pattern``
 
-This can be as simple as an ``any: any:any`` statemena,t but must exist. See the :ref:`static_neighbordb_example` example.
+This can be as simple as an ``any: any:any`` statement but must exist. See the :ref:`static_neighbordb_example` example.
 
 .. _dynamic_provisioning:
 

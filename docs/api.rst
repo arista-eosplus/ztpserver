@@ -148,8 +148,8 @@ provisioned.
     :statuscode 409: Conflict
     :statuscode 400: Bad Request
 
-GET definition
-^^^^^^^^^^^^^^
+GET node definition
+^^^^^^^^^^^^^^^^^^^
 
 Request definition from the server.
 

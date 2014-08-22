@@ -119,7 +119,7 @@ Strongly-typed node with topology validation
 
 * Definition is node specific
 * Node is dynamically created 
-* Topology validation is enabled globally and pattern is placed in “/nodes/<system> or mapped to node MAC in neighbordb
+* Topology validation is enabled globally and pattern is placed in “/nodes/<unique_id> or mapped to node unique_id in neighbordb
 
 Weakly-typed node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
