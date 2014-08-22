@@ -241,13 +241,13 @@ def serial_number():
     (out, err) = proc.communicate()
 
     # vEOS might not have a serial number configured
-    if not out:
+    if not out.strip():
         command = 'FastCli -p 15 -A -c \'show version\' | grep MAC | ' \
             'tr -s \' \' | cut -d \' \' -f 4 | tr -d \'\r\''    
         proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                             shell=True)
     code = proc.returncode             #pylint: disable=E1101
-    return (code, out.rstrip('\n'), err)
+    return (code, out.strip, err)
 
 def restore_factory_default():
     for filename in [RC_EOS, BOOT_EXTENSIONS]:
