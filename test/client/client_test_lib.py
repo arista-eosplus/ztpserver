@@ -84,7 +84,7 @@ def raise_exception(exception):
     #pylint: disable=C0301, C0321
 
     # Uncomment the following line for debugging
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
 
     raise exception, 'Uncomment line in client_tes_lib.py:raise exception for debugging'
 
@@ -369,7 +369,7 @@ class Bootstrap(object):
                 'no protocol https',
                 'protocol http',
                 'no shutdown']
-        return cli_log()[1:7] == cmds
+        return cli_log()[:6] == cmds
 
     def eapi_node_information_collected(self):
         return self.eapi_configured() and self.node_information_collected()
