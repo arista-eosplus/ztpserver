@@ -108,8 +108,15 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
     xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
+# ------------------Utilities---------------------------------
+def restore_factory_default():
+    for filename in [STARTUP_CONFIG, RC_EOS, 
+                     BOOT_EXTENSIONS]:
+        if os.path.exists(filename):
+            os.remove(filename)
 
-# ------------------Utilities----------------------------
+    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
+
 def exit_bootstrap(code):
     #pylint: disable=W0702
 
@@ -125,6 +132,9 @@ def exit_bootstrap(code):
     sys.stdout.flush()
     sys.stderr.flush()
 
+    if code:
+        restore_factory_default()
+
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
     os._exit(code)
@@ -135,6 +145,10 @@ def log_xmpp():
     return XMPP_MSG_TYPE == 'debug'
 
 def log(msg, error=False, xmpp=None):
+    global SYSTEM_ID                    #pylint: disable=W0603
+    if not STSTEM_ID:
+        (_, SYSTEM_ID, _) = serial_number() 
+
     if xmpp is None:
         xmpp = log_xmpp()
 
@@ -177,7 +191,7 @@ def cli_enable_cmd(cli_cmd):
 
 def cli_config_cmds(cmds):
     cli_enable_cmd('\n'.join(['configure'] + cmds))
-# ------------------Utilities----------------------------
+# ------------------Utilities---------------------------------
 
 
 # ------------------4.12.x support----------------------------
@@ -248,21 +262,13 @@ def serial_number():
                             shell=True)
         (out, err) = proc.communicate()
         out = out.replace('.', '')
-    code = proc.returncode             #pylint: disable=E1101
+    code = proc.returncode             #pylint: disable=E1101, E1103
     return (code, out.strip(), err)
-
-def restore_factory_default():
-    for filename in [RC_EOS, BOOT_EXTENSIONS]:
-        if os.path.exists(filename):
-            os.remove(filename)
-
-    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
 
 def apply_config(config, node):
     global xmpp_client                      #pylint: disable=W0603
 
     log('Applying server config')
-
 
     # XMPP not configured yet
     xmpp_config = config.get('xmpp', {})
@@ -982,12 +988,8 @@ def main():
     #pylint: disable=W0603,R0912,R0915
     global syslog_manager
 
-    global SYSTEM_ID                    #pylint: disable=W0603
-    (_, SYSTEM_ID, _) = serial_number() 
-
     restore_factory_default()
     enable_api()
-
 
     syslog_manager = SyslogManager()
     server = Server()
