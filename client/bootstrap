@@ -247,7 +247,7 @@ def serial_number():
         proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                             shell=True)
     code = proc.returncode             #pylint: disable=E1101
-    return (code, out.strip, err)
+    return (code, out.strip(), err)
 
 def restore_factory_default():
     for filename in [RC_EOS, BOOT_EXTENSIONS]:
