@@ -45,9 +45,17 @@ clean: clean_actionlinks
 
 html: actionlinks
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
+#####
+# actionlinks and clean_actionlinks targets were created to enable sphinx
+# autodoc to import the actions/ scripts.  As it uses import <module> which
+# requires that there be an __init__.py and that files end in .py
+# actionlinks should be a dependency for a build target and that target should
+# end with "@$(MAKE) --no-print-directory clean_actionlinks" to cleanup.
+#####
 ACTIONS := $(shell ls ../actions | grep -v "\.py")
 ACTIONLINKS := $(shell ls ../actions | grep "\.py")
 
@@ -115,17 +123,19 @@ epub:
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
-latex:
+latex: actionlinks
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 	      "(use \`make latexpdf' here to do that automatically)."
 
-latexpdf:
+latexpdf: actionlinks
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 text:
