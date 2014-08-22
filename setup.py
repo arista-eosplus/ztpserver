@@ -58,6 +58,7 @@ setup(
     data_files=[
         (CONF_PATH, ['conf/ztpserver.conf']),
         ('%s/bootstrap' % INSTALL_PATH, glob('client/bootstrap')),
+        ('%s/bootstrap' % INSTALL_PATH, glob('conf/bootstrap.conf')),
         ('%s/actions' % INSTALL_PATH, glob('actions/*')),
         ('%s/nodes' % INSTALL_PATH, []),
         ('%s/definitions' % INSTALL_PATH, []),
