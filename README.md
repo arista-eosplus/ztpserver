@@ -19,7 +19,7 @@ ZTPServer Features
 
 Docs
 ====
-https://github.com/arista-eosplus/ztpserver/wiki
+[ZTPServer official documentation](http://ztpserver.readthedocs.org/) is built and hosted at (http://ReadTheDocs.org/).
 
 Contributing
 ============

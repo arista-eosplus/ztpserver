@@ -23,7 +23,8 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 #sys.path.insert(0, os.path.join('ztpserver', 'lib'))
-sys.path.insert(0, os.path.join('ztpserver'))
+#sys.path.insert(0, os.path.join('ztpserver'))
+#sys.path.insert(0, os.path.join('actions'))
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -127,7 +128,7 @@ pygments_style = 'sphinx'
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 #html_logo = None
-html_logo = '_static/AristaLogo.png'
+#html_logo = '_static/AristaLogo.png'
 #html_logo = 'AristaLogo.png'
 
 # The name of an image file (within the static path) to use as favicon of the

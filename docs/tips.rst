@@ -51,6 +51,7 @@ From a bash shell:
     # make file executable
     sudo chmod 777 bootstrap
     # execute file
+    ./bootstrap
 
 How do I override the default system-mac in vEOS?
 ``````````````````````````````````````````````````
