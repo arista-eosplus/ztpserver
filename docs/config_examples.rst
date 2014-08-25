@@ -1,7 +1,7 @@
 Configuration Examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. contents:: Topics
+.. contents:: :local:
 
 Example #1: strongly typed definition with a strongly typed map
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''

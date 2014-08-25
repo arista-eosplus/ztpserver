@@ -1,7 +1,7 @@
 Tips and tricks
 ===============
 
-.. contents:: Topics
+.. contents:: :local:
 
 How do I update my local copy of ZTPServer from GitHub?
 ````````````````````````````````````````````````````````
