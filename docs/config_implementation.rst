@@ -1,7 +1,7 @@
 Implementation Details
 ======================
 
-.. contents:: Topics
+.. contents:: :local:
 
 Client-Server Message Flows
 ---------------------------

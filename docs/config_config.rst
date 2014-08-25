@@ -1,7 +1,7 @@
 Configuration Guide
 ===================
 
-.. contents:: Topics
+.. contents:: :local:
 
 Configuration
 -------------

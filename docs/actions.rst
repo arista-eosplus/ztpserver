@@ -1,7 +1,7 @@
 Actions
 =======
 
-.. contents:: Topics
+.. contents:: :local:
 
 :mod:`add_config` Action
 ------------------------

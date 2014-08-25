@@ -1,7 +1,7 @@
 ZTPServer Package
 =================
 
-.. contents:: Topics
+.. contents:: :local:
 
 
 :mod:`ztpserver` Package

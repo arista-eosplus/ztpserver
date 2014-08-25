@@ -1,7 +1,7 @@
 Known Caveats
 ==============
 
-.. contents:: Topics
+.. contents:: :local:
 
 The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
 
