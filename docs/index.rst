@@ -44,5 +44,7 @@ ZTPServer Features
    glossary
    resources
    support
+   ReleaseNotes
    caveats
+   roadmap
 
