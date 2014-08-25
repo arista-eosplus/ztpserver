@@ -403,25 +403,27 @@ Actions
 definitions. More details about each action can be found at the top of
 the corresponding Python file.
 
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| Action               | Description                                               | Required Attributes                    |
-+======================+===========================================================+========================================+
-| add\_config ^        | Adds a section of config to the final startup-config file | url                                    |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| copy\_file           | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| install\_cli\_plugin | Installs a new EOS CLI plugin and configures rc.eos       | url                                    |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| install\_extension   | Installs a new EOS extension                              | extension\_url, autoload, force        |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| install\_image       | Validates and installs a specific version of EOS          | url, version                           |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| replace\_config      | Sends an entire startup-config to the node (overrides     | url                                    |
-|                      | (overrides add\_config)                                   |                                        |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
-| send\_email          | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
-|                      | through a relay host. Can include file attachments        | body, attachments, commands            |
-+----------------------+-----------------------------------------------------------+----------------------------------------+
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| Action                    | Description                                               | Required Attributes                    |
++===========================+===========================================================+========================================+
+| :mod:`add_config` ^       | Adds a section of config to the final startup-config file | url                                    |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_cli_plugin` | Installs a new EOS CLI plugin and configures rc.eos       | url                                    |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_extension`  | Installs a new EOS extension                              | extension\_url, autoload, force        |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_image`      | Validates and installs a specific version of EOS          | url, version                           |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`replace_config`     | Sends an entire startup-config to the node (overrides     | url                                    |
+|                           | (overrides add\_config)                                   |                                        |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`send_email`         | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
+|                           | through a relay host. Can include file attachments        | body, attachments, commands            |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+
+Additional details on each action are available in the :doc:`actions` module docs.
 
 .. note::
 
