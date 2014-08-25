@@ -6,6 +6,15 @@ Tips and tricks
 How do I update my local copy of ZTPServer from GitHub?
 ````````````````````````````````````````````````````````
 
+Script
+^^^^^^
+
+Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code and execute:
+    ``/utils/refresh_ztps``
+
+Manually
+^^^^^^^^
+
 Remove the existing ZTPS files:
 
 .. code-block:: console
@@ -51,7 +60,7 @@ From a bash shell:
     # make file executable
     sudo chmod 777 bootstrap
     # execute file
-    ./bootstrap
+    sudo ./bootstrap
 
 How do I override the default system-mac in vEOS?
 ``````````````````````````````````````````````````
