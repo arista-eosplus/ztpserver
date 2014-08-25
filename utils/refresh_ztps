@@ -3,7 +3,7 @@
 # This script can be used in order to automatically refresh the
 # installation of ZTP Server to the latest code on GitHub.  This can
 # be useful in order to pull bug fixes or run the latest version of
-# various developement branches.
+# various development branches.
 
 # INSTRUCTIONS:
 #  - The script must be run by a user with sudo access.

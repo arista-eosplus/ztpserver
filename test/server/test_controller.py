@@ -250,7 +250,7 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.BootstrapController()
         resp = controller.config(None)
 
-        self.assertEqual(resp['body'], controller.DEFAULTCONFIG)
+        self.assertEqual(resp['body'], controller.DEFAULT_CONFIG)
         self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
 
     @patch('ztpserver.controller.create_repository')

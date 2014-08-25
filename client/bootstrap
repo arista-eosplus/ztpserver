@@ -32,6 +32,7 @@
 #    Written by:
 #       EOS+, Arista Networks
 
+#pylint: disable=C0302
 
 import datetime
 import imp
@@ -107,9 +108,16 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
     xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
+# ------------------Utilities---------------------------------
+def restore_factory_default():
+    for filename in [STARTUP_CONFIG, RC_EOS, 
+                     BOOT_EXTENSIONS]:
+        if os.path.exists(filename):
+            os.remove(filename)
 
-# ------------------Utilities----------------------------
-def _exit(code):
+    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
+
+def exit_bootstrap(code):
     #pylint: disable=W0702
 
     # Wait for XMPP messages to drain
@@ -124,6 +132,9 @@ def _exit(code):
     sys.stdout.flush()
     sys.stderr.flush()
 
+    if code:
+        restore_factory_default()
+
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
     os._exit(code)
@@ -134,6 +145,10 @@ def log_xmpp():
     return XMPP_MSG_TYPE == 'debug'
 
 def log(msg, error=False, xmpp=None):
+    global SYSTEM_ID                    #pylint: disable=W0603
+    if not SYSTEM_ID:
+        (_, SYSTEM_ID, _) = serial_number() 
+
     if xmpp is None:
         xmpp = log_xmpp()
 
@@ -145,11 +160,7 @@ def log(msg, error=False, xmpp=None):
     if xmpp and xmpp_client and xmpp_client.connected:
         xmpp_client.message(xmpp_msg)
 
-    if SYSTEM_ID:
-        syslog_msg = '%s: %s' % (SYSTEM_ID, msg)
-    else:
-        syslog_msg = msg
-    
+    syslog_msg = '%s: %s' % (SYSTEM_ID, str(msg))
     if error:
         print 'ERROR: %s' % syslog_msg
     else:
@@ -170,7 +181,17 @@ def flash_usage():
     total = stats.f_blocks * stats.f_frsize
     used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
     return _ntuple_diskusage(total, used, free)
-# ------------------Utilities----------------------------
+
+def cli_enable_cmd(cli_cmd):
+    bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
+    proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    (out, err) = proc.communicate()
+    code = proc.returncode             #pylint: disable=E1101
+    return (code, out, err)
+
+def cli_config_cmds(cmds):
+    cli_enable_cmd('\n'.join(['configure'] + cmds))
+# ------------------Utilities---------------------------------
 
 
 # ------------------4.12.x support----------------------------
@@ -201,10 +222,136 @@ except ImportError:
     res = os.system(cmd)
     if res:
         log('%s returned %s' % (cmd, res), error=True)
-        _exit(1)
+        exit_bootstrap(1)
     import requests
 #pylint: enable=C0103
 # ------------------4.12.x support----------------------------    
+
+
+def enable_api():
+    cli_config_cmds(['username %s secret %s privilege 15' %
+                      (COMMAND_API_USERNAME,
+                       COMMAND_API_PASSWORD),
+                      'management api http-commands',
+                      'no protocol https',
+                      'protocol %s' % COMMAND_API_PROTOCOL,
+                      'no shutdown'])
+
+    _, out, _ = cli_enable_cmd('show management api http-commands |'
+                                ' grep running')
+    retries = 3
+    while not out and retries:
+        log('Waiting for CommandAPI to be enabled...')
+        time.sleep(1)
+        retries = retries - 1
+        _, out, _ = cli_enable_cmd(
+            'show management api http-commands | grep running')
+
+def serial_number():
+    command = 'FastCli -p 15 -A -c \'show version\' | grep Serial | ' \
+              'tr -s \' \' | cut -d \' \' -f 3 | tr -d \'\r\''    
+    proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                            shell=True)
+    (out, err) = proc.communicate()
+
+    # vEOS might not have a serial number configured
+    if not out.strip():
+        command = 'FastCli -p 15 -A -c \'show version\' | grep MAC | ' \
+            'tr -s \' \' | cut -d \' \' -f 4 | tr -d \'\r\''    
+        proc = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                            shell=True)
+        (out, err) = proc.communicate()
+        out = out.replace('.', '')
+    code = proc.returncode             #pylint: disable=E1101, E1103
+    return (code, out.strip(), err)
+
+def apply_config(config, node):
+    global xmpp_client                      #pylint: disable=W0603
+
+    log('Applying server config')
+
+    # XMPP not configured yet
+    xmpp_config = config.get('xmpp', {})
+    
+    global XMPP_MSG_TYPE                        #pylint: disable=W0603
+    XMPP_MSG_TYPE = xmpp_config.get('msg_type', 'debug')
+    if XMPP_MSG_TYPE not in ['debug', 'info']:
+        log('XMPP configuration failed because of unexpected \'msg_type\': '
+            '%s not in [\'debug\', \'info\']' % XMPP_MSG_TYPE, error=True,
+            xmpp=False)
+    else:
+        if xmpp_config:
+            log('Configuring XMPP', xmpp=False)
+            if ('username' in xmpp_config and
+                'domain' in xmpp_config and
+                'password' in xmpp_config and
+                'rooms' in xmpp_config and
+                xmpp_config['rooms']):
+                nick = node.system()['serialnumber']
+                if not nick:
+                    # vEOS might not have a serial number configured
+                    nick = node.system()['systemmac']                    
+                xmpp_client = XmppClient(xmpp_config['username'],
+                                         xmpp_config['domain'],
+                                         xmpp_config['password'],
+                                         xmpp_config['rooms'],
+                                         nick,
+                                         xmpp_config.get('server', None),
+                                         xmpp_config.get('port', 5222))
+            else:
+                # XMPP not configured yet
+                log('XMPP configuration failed because server response '
+                    'is missing config details', 
+                    error=True, xmpp=False)
+        else:
+            log('No XMPP configuration received from server', xmpp=False)
+
+    log_config = config.get('logging', [])
+    if log_config:
+        log('Configuring syslog')
+        syslog_manager.add_handlers(log_config)
+    else:
+        log('No remote syslog configuration received from server')
+
+
+def execute_action(server, action_details, special_attr):
+    action = action_details['action']
+
+    description = ''
+    if 'description'in action_details:
+        description = '(%s)' % action_details['description']
+
+    if action not in sys.modules:
+        log('Downloading action %s%s' % (action, description))
+        filename = server.get_action(action)
+
+    log('Executing action %s' % action)
+    if 'onstart' in action_details:
+        log('Action %s: %s' % (action, action_details['onstart']),
+            xmpp=True)
+
+    try:
+        if action in sys.modules:
+            module = sys.modules[action]
+        else:
+            module = imp.load_source(action, filename)
+
+        local_attr = action_details['attributes'] \
+                     if 'attributes' in action_details \
+                     else []
+        ret = module.main(Attributes(local_attr, special_attr))
+        if ret:
+            raise ZtpActionError('return code %s' % ret)
+        log('Action executed succesfully (%s)' % action)
+        if 'onsuccess' in action_details:
+            log('Action %s: %s' % (action, action_details['onsuccess']),
+                xmpp=True)
+    except Exception as err:                  #pylint: disable=W0703
+        if 'onfailure' in action_details:
+            log('Action %s: %s' % (action, action_details['onfailure']),
+                xmpp=True)
+        raise ZtpActionError('executing action failed (%s): %s' % 
+                             (action, err.message))
 
 
 class ZtpError(Exception):
@@ -253,8 +400,6 @@ class Node(object):
     def __init__(self, server):
         self.server_ = server
 
-        Node._enable_api()
-
         url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
                                              COMMAND_API_USERNAME,
                                              COMMAND_API_PASSWORD,
@@ -264,49 +409,14 @@ class Node(object):
         try:
             self.api_enable_cmds([])
         except socket.error:
-            raise ZtpError('Unable to enable eAPI')
+            raise ZtpError('unable to enable eAPI')
 
         # Workaround for BUG89374
         try:
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
-            log('unable to disable COPP: %s' % err, error=True)
-
-        global SYSTEM_ID                    #pylint: disable=W0603
-        SYSTEM_ID = \
-            self.api_enable_cmds(['show version'])[0]['serialNumber']
-
-    @classmethod
-    def _cli_enable_cmd(cls, cli_cmd):
-        bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
-        proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        (out, err) = proc.communicate()
-        code = proc.returncode             #pylint: disable=E1101
-        return (code, out, err)
-
-    @classmethod
-    def _cli_config_cmds(cls, cmds):
-        cls._cli_enable_cmd('\n'.join(['configure'] + cmds))
-
-    @classmethod
-    def _enable_api(cls):
-        cls._cli_config_cmds(['username %s secret %s privilege 15' %
-                              (COMMAND_API_USERNAME,
-                               COMMAND_API_PASSWORD),
-                              'management api http-commands',
-                              'no protocol https',
-                              'protocol %s' % COMMAND_API_PROTOCOL,
-                              'no shutdown'])
-
-        _, out, _ = cls._cli_enable_cmd('show management api http-commands |'
-                                        ' grep running')
-        retries = 3
-        while not out and retries:
-            log('Waiting for CommandAPI to be enabled...')
-            time.sleep(1)
-            retries = retries - 1
-            _, out, _ = cls._cli_enable_cmd(
-                'show management api http-commands | grep running')
+            log('unable to disable COPP: %s' % err.message, 
+                error=True)
 
     def _disable_copp(self):
         # COPP does not apply to vEOS
@@ -603,7 +713,7 @@ class Server(object):
                 log('Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
-            raise ZtpError('Server connection error')
+            raise ZtpError('server connection error')
 
         return response
 
@@ -621,7 +731,7 @@ class Server(object):
     def _save_file_contents(self, contents, path, url=None):
         if path.startswith('/mnt/flash'):
             if not url:
-                raise ZtpError('Attempting to save file to %s, but cannot'
+                raise ZtpError('attempting to save file to %s, but cannot'
                                'retrieve content metadata.')
             
             _, _, metadata = self.get_metadata(url)
@@ -629,7 +739,7 @@ class Server(object):
 
             usage = flash_usage()
             if (metadata['size'] > usage.free):
-                raise ZtpError('Not enough memory on flash for saving %s to %s '
+                raise ZtpError('not enough memory on flash for saving %s to %s '
                                '(free: %s bytes, required: %s bytes)' % 
                                (url, path, usage.free, metadata['size']))
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
@@ -647,7 +757,8 @@ class Server(object):
                         result.write(chunk)
                 result.close()
         except IOError as err:
-            raise ZtpError('Unable to write %s: %s' % (path, err))
+            raise ZtpError('unable to write %s: %s' % 
+                           (path, err.message))
 
         # Set permissions
         os.chmod(path, 0777)
@@ -663,7 +774,7 @@ class Server(object):
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
 
         return (status, content, result)
@@ -687,10 +798,10 @@ class Server(object):
                           HTTP_STATUS_CONFLICT] or
            content != CONTENT_TYPE_HTML):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('Node not found on server (status=%s)' % status)
+            raise ZtpError('node not found on server (status=%s)' % status)
 
         return (status, content, location)
 
@@ -713,10 +824,10 @@ class Server(object):
                 (status == HTTP_STATUS_BAD_REQUEST and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('Server-side topology check failed (status=%s)' % 
+            raise ZtpError('server-side topology check failed (status=%s)' % 
                            status)
 
         return (status, content, result)
@@ -730,10 +841,10 @@ class Server(object):
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Action not found on server (status=%s)' % status)
+            raise ZtpError('action not found on server (status=%s)' % status)
 
         filename = os.path.join(TEMP, action)
         self._save_file_contents(action_response, filename)
@@ -765,14 +876,14 @@ class Server(object):
                 (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Metadata not found on server (status=%s)' % 
+            raise ZtpError('metadata not found on server (status=%s)' % 
                            status)
         elif status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
             raise ZtpError(
-                'Unable to retrieve metadata from server (status=%s)' % 
+                'unable to retrieve metadata from server (status=%s)' % 
                 status)
 
         return (status, content, result)
@@ -787,10 +898,10 @@ class Server(object):
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Resource not found on server (status=%s)' % status)
+            raise ZtpError('resource not found on server (status=%s)' % status)
         
         self._save_file_contents(response, path, url)
 
@@ -872,107 +983,13 @@ class XmppClient(sleekxmpp.ClientXMPP):
                               mbody=message,
                               mtype='groupchat')
 
-def apply_config(config, node):
-    global xmpp_client                      #pylint: disable=W0603
-
-    log('Applying server config')
-
-
-    # XMPP not configured yet
-    xmpp_config = config.get('xmpp', {})
-    
-    global XMPP_MSG_TYPE                        #pylint: disable=W0603
-    XMPP_MSG_TYPE = xmpp_config.get('msg_type', 'debug')
-    if XMPP_MSG_TYPE not in ['debug', 'info']:
-        log('XMPP configuration failed because of unexpected \'msg_type\': '
-            '%s not in [\'debug\', \'info\']' % XMPP_MSG_TYPE, error=True,
-            xmpp=False)
-    else:
-        if xmpp_config:
-            log('Configuring XMPP', xmpp=False)
-            if ('username' in xmpp_config and
-                'domain' in xmpp_config and
-                'password' in xmpp_config and
-                'rooms' in xmpp_config and
-                xmpp_config['rooms']):
-                nick = node.system()['serialnumber']
-                if not nick:
-                    # vEOS might not have a serial number configured
-                    nick = node.system()['systemmac']                    
-                xmpp_client = XmppClient(xmpp_config['username'],
-                                         xmpp_config['domain'],
-                                         xmpp_config['password'],
-                                         xmpp_config['rooms'],
-                                         nick,
-                                         xmpp_config.get('server', None),
-                                         xmpp_config.get('port', 5222))
-            else:
-                # XMPP not configured yet
-                log('XMPP configuration failed because server response '
-                    'is missing config details', 
-                    error=True, xmpp=False)
-        else:
-            log('No XMPP configuration received from server', xmpp=False)
-
-    log_config = config.get('logging', [])
-    if log_config:
-        log('Configuring syslog')
-        syslog_manager.add_handlers(log_config)
-    else:
-        log('No XMPP configuration received from server')
-
-
-def execute_action(server, action_details, special_attr):
-    action = action_details['action']
-
-    description = ''
-    if 'description'in action_details:
-        description = '(%s)' % action_details['description']
-
-    if action not in sys.modules:
-        log('Downloading action %s%s' % (action, description))
-        filename = server.get_action(action)
-
-    log('Executing action %s' % action)
-    if 'onstart' in action_details:
-        log('Action %s: %s' % (action, action_details['onstart']),
-            xmpp=True)
-
-    try:
-        if action in sys.modules:
-            module = sys.modules[action]
-        else:
-            module = imp.load_source(action, filename)
-
-        local_attr = action_details['attributes'] \
-                     if 'attributes' in action_details \
-                     else []
-        ret = module.main(Attributes(local_attr, special_attr))
-        if ret:
-            raise ZtpActionError('%s' % ret)
-        log('Action executed succesfully (%s)' % action)
-        if 'onsuccess' in action_details:
-            log('Action %s: %s' % (action, action_details['onsuccess']),
-                xmpp=True)
-    except Exception as err:                  #pylint: disable=W0703
-        if 'onfailure' in action_details:
-            log('Action %s: %s' % (action, action_details['onfailure']),
-                xmpp=True)
-        raise ZtpActionError('Executing action failed (%s): %s' % (action, err))
-
-def restore_factory_default():
-    for filename in [RC_EOS, BOOT_EXTENSIONS]:
-        if os.path.exists(filename):
-            os.remove(filename)
-
-    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
-
 
 def main():
     #pylint: disable=W0603,R0912,R0915
     global syslog_manager
 
     restore_factory_default()
+    enable_api()
 
     syslog_manager = SyslogManager()
     server = Server()
@@ -1017,33 +1034,31 @@ def main():
 
     # Check for startup-config
     if not node.has_startup_config():
-        raise ZtpError('Startup configuration is missing at the end of the '
+        raise ZtpError('startup configuration is missing at the end of the '
                        'bootstrap process')
 
     log('ZTP bootstrap completed successfully!')
 
-    _exit(0)
+    exit_bootstrap(0)
 
 
 if __name__ == '__main__':
     try:
         main()
     except ZtpError as exception:
-        log('''Bootstrap process failed:
-   %s''' % str(exception),
+        log('Bootstrap process failed (%s)' % exception.message,
             error=True)
-        _exit(1)
+        exit_bootstrap(1)
     except KeyboardInterrupt:
         log('Bootstrap process keyboard-interrupted',
             error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        _exit(1)
+        exit_bootstrap(1)
     except Exception, exception:
-        log('''Bootstrap process failed because of unknown exception:
-   %s''' % 
-            exception, error=True)
+        log('Bootstrap process failed because of unknown exception: %s' % 
+            exception.message, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
-        _exit(1)
+        exit_bootstrap(1)
 

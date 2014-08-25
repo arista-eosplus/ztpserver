@@ -650,7 +650,7 @@ class NodesController(BaseController):
 
 class BootstrapController(BaseController):
 
-    DEFAULTCONFIG = {
+    DEFAULT_CONFIG = {
         'logging': list(),
         'xmpp': dict()
     }
@@ -663,16 +663,37 @@ class BootstrapController(BaseController):
     def config(self, request, **kwargs):
         ''' Handles GET /bootstrap/config '''
 
+        body = self.DEFAULT_CONFIG
+
         try:
             filename = self.expand(BOOTSTRAP_CONF)
-            body = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
+            config = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
+            if not config:
+                log.warning('Bootstrap config file empty')                
+            else:
+                if 'logging' in config:
+                    body['logging'] = config['logging']
+
+                if 'xmpp' in config:
+                    body['xmpp'] = config['xmpp'] 
+                    for key in ['username', 'password', 'domain']:
+                        if key not in body['xmpp']:
+                            log.warning('Bootstrap config: \'%s\' missing from '
+                                        'XMPP config' % key)
+                    if 'rooms' not in body['xmpp'] or \
+                       not body['xmpp']['rooms']:
+                        log.warning('Bootstrap config: no XMPP rooms '
+                                    'configured')
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectNotFound:
-            log.warning('Bootstrap config file not found - using defaults')
-            body = self.DEFAULTCONFIG
+            log.warning('Bootstrap config file not found')
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectError:
             log.error('Failed to read bootstrap config file (%s)' % filename)
+            resp = self.http_bad_request()
+        except Exception as exc:
+            log.error('Failed to load bootstrap config file (%s): %s' % 
+                      (filename, exc))
             resp = self.http_bad_request()
         return resp
 
