@@ -1,11 +1,11 @@
 .. _install_config:
 
-Initial Configuration
-=====================
+Configuration Types
+===================
 
 .. contents:: :local:
 
-There are 2 general types of configurations supported by ZTPServer, `Static <static_provisioning>`_ and `Dynamic <#dynamic_provisioning>`_ provisioning.  For detailed configuration, see the :doc:`config`.
+There are 2 general types of configurations supported by ZTPServer, `Static <static_provisioning>`_ and `Dynamic <#dynamic_provisioning>`_ provisioning.  For detailed configuration, see the :doc:`config_config`.
 
 .. _static_provisioning:
 
