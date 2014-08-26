@@ -15,23 +15,26 @@ To start the standalone ZTPServer, exec the ztps binary
 .. code-block:: console
 
     [root@ztpserver ztpserver]# ztps
-    INFO: Logging started for ztpserver
-    DEBUG: NeighborDB: Adding pattern: name=tor1 for pod1, ...
-    DEBUG: NeighborDB: parse_interface[Ethernet1]: veos-dc1-pod1-spine1:Ethernet1
-    DEBUG: NeighborDB: Adding interface to pattern: ('Ethernet1', 'veos-dc1-pod1-spine1', 'Ethernet1')
-    DEBUG: NeighborDB: Pattern entry parsed successfully
-    DEBUG: NeighborDB: Adding pattern: name=tor2 for pod1, ...
-    DEBUG: NeighborDB: parse_interface[Ethernet1]: veos-dc1-pod1-spine1:Ethernet2
-    DEBUG: NeighborDB: Adding interface to pattern: ('Ethernet1', 'veos-dc1-pod1-spine1', 'Ethernet2')
-    DEBUG: NeighborDB: Pattern entry parsed successfully
-    DEBUG: Loaded neighbordb [Topology(variables=0, globals=2, nodes=0)]
-    DEBUG: creating FileStore[bootstrap] with basepath=/usr/share/ztpserver
-    DEBUG: creating FileStore[definitions] with basepath=/usr/share/ztpserver
-    DEBUG: creating FileStore[nodes] with basepath=/usr/share/ztpserver
-    DEBUG: creating FileStore[actions] with basepath=/usr/share/ztpserver
-    DEBUG: creating FileStore[files] with basepath=/usr/share/ztpserver
+    INFO: [app:115] Logging started for ztpserver
+    INFO: [app:116] Using repository /usr/share/ztpserver
+    Starting server on http://<ip_address>:<port>
 
-When ZTPS starts, it loads neighbordb and other files (using the paths defined in the global configuration file). Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
+
+The following options may be specified when starting the ztps binary:
+
+.. code-block:: console
+
+    -h, --help            show this help message and exit
+    --version, -v         Displays the version information
+    --conf CONF, -c CONF  Specifies the configuration file to use
+    --validate FILENAME   Runs a validation check on neighbordb
+    --debug               Enables debug output to the STDOUT
+
+When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
+
+.. note:
+
+  All other files including neighbordb and other files are loaded on-access meaning that ZTPServer does NOT require a restart to pick up changes to node / pattern configurations, etc.  However, a restart IS required to pickup changes to ztpserver.conf.
 
 Apache (mod_wsgi)
 `````````````````

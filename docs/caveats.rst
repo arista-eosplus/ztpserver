@@ -9,10 +9,13 @@ The authoritative state for any known issue can be found in `GitHub issues <http
 
 * Only a single entry in a resource pool may be allocated to a node.
 
-* Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080.
+* Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080 by default.
   For **firewalld**: 
 
-  * Open TCP/8080 through firewalld via: ``bash-3.2$ firewall-cmd --zone=public --add-port=8080/tcp [--permanent]``
-  * Stop firewalld via: ``bash-3.2$ systemctl status firewalld``
-  * Disable firewalld via: ``bash-3.2$ systemctl disable firewalld``
+  * Open TCP/<port> through firewalld
+    ``bash-3.2$ firewall-cmd --zone=public --add-port=<port>/tcp [--permanent]``
+  * Stop firewalld
+    ``bash-3.2$ systemctl status firewalld``
+  * Disable firewalld
+    ``bash-3.2$ systemctl disable firewalld``
 

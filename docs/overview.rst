@@ -1,5 +1,5 @@
-ZTPServer Overview
-==================
+Overview
+========
 
 ZTPServer provides a robust server which enables comprehensive bootstrap solutions for Arista EOS based network elements.  ZTPserver interacts with the ZeroTouch Provisioning (ZTP) mode of EOS which takes an unprovisioned network element to a bootstrap ready state whenever a valid configuration file is not present on the internal flash storage.
 
@@ -30,12 +30,28 @@ ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP
 * User extensible actions
 * Email, XMPP, syslog based logging and accounting of all processes
 
+ZTP Intro
+`````````
+
+`Zero Touch Provisioning (ZTP) <http://www.arista.com/en/products/eos/automation/articletabs/0>`_ is a feature in Arista EOS software which, in the absence of a startup-config, attempts to configure a switch over the network.
+
+The basic flow is as follows:
+
+    * Check for startup-config, if absent, attempt ZTP
+    * Send out a DHCP request on all connected interfaces
+    * If a DHCP response is received with Option 67 defined (bootfile-name), retrieve that file
+    * If that file is a startup-config, then apply it to the device and boot
+    * If that file is an executable, then run it.  Common actions include upgrading the EOS image, downloading extension packages, and dynamically building a startup-config file.   (**ZTPServer's bootstrap script is launched this way**)
+    * Restart with the new configuration.
+
+See the `ZTP Tech Bulletin <https://www.arista.com/assets/data/pdf/TechBulletins/Tech_bulletin_ZTP.pdf>`_ and the `Press Release <http://www.arista.com/en/company/news/press-release/345-pr-20110215-01>`_ for more information on ZTP.
+
 Architecture
-``````````````````````
+````````````
 
 There are 2 primary components of the ZTPServer implementation: 
 
-* the **server** or ZTPS instance **AND**
+* the **server** or ZTPServer instance **AND**
 * the **client** or bootstrap (a process running on each node, which connects to the server in order to provision the node)
 
 Server
@@ -75,6 +91,8 @@ ZTP Client-Server Message Flows
 
 A high level view of the client - server message flows can be seen in the following diagram:
 
+(Red indicates Arista EOS flows.  Blue indicates the bootstrap client.)
+
 .. image:: _static/ztpserver-seqdiag.png
    :alt: Message Flow Diagram
 
@@ -98,34 +116,34 @@ Topology-validation can be disabled:
 Operational modes
 `````````````````
 
-There are 4 operational modes for ZTPServer, explained below.  See :doc:`config_examples` to see how to use them.
+There are 4 operational modes for ZTPServer, explained below.  See :ref:`mode_examples` to see how to use them.
 
 Statically defined node without topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Node is created in /nodes before bootstrap
+* Node is created in /nodes/<unique_id>/ before bootstrap
 * Definition or startup-config is placed in /nodes
 * Topology validation is disabled globally or with an open pattern
 
 Statically defined node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Node is created in /nodes before bootstrap
+* Node is created in /nodes/<unique_id>/ before bootstrap
 * Definition or startup-config is placed in /nodes
 * Topology validation is enabled globally and pattern is placed in /nodes
 
 Strongly-typed node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Definition is node specific
-* Node is dynamically created 
-* Topology validation is enabled globally and pattern is placed in “/nodes/<unique_id> or mapped to node unique_id in neighbordb
+* Definition is node specific, though the /nodes/<unique_id>/ directory is not pre-created
+* /nodes/<unique_id>/ is dynamically created during ZTP provisioning
+* Topology validation is enabled globally and pattern in neighbordb references the node's unique_id
 
 Weakly-typed node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Definition is NOT node specific, leverages resources and templates
-* Node is dynamically created 
+* /nodes/<unique_id>/ is dynamically created during ZTP provisioning
 * Topology validation is enabled globally and pattern is matched in neighbordb
 
 

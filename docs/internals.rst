@@ -4,7 +4,7 @@ Internals
 .. toctree::
    :maxdepth: 2
 
-   config_implementation
+   implementation
    api
    modules
 

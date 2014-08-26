@@ -164,7 +164,7 @@ Enhancements
 
 * ztps should check Python version and report a sane error is incompatible version is being used to run it (`110 <https://github.com/arista-eosplus/ztpserver/issues/110>`_)
     ztps reports error if it is ran on a system with an incompatible Python version installed.
-* Do not hardcode python path  (`109 <https://github.com/arista-eosplus/ztpserver/issues/109>`_)
+* Do not hardcode Python path  (`109 <https://github.com/arista-eosplus/ztpserver/issues/109>`_)
     .. comment
 * Set XMPP nickname to serial number (`106 <https://github.com/arista-eosplus/ztpserver/issues/106>`_)
     Serial number is used as XMPP presence/nickname. For vEOS instances which don't have one configured, systemmac is used instead.
@@ -191,8 +191,8 @@ Enhancements
 * test_topology must cover all cases (`40 <https://github.com/arista-eosplus/ztpserver/issues/40>`_)
     .. comment
 
-Resolved
-^^^^^^^^
+Resolved issues
+^^^^^^^^^^^^^^^
 
 * Syslog messages are missing system-id (vEOS) (`184 <https://github.com/arista-eosplus/ztpserver/issues/184>`_)
     All client-side log message are prefixed by the serial number for now (regardless of what the identifier is configured on the server).
