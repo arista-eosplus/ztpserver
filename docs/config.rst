@@ -461,7 +461,7 @@ the corresponding Python file.
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | Action                    | Description                                               | Required Attributes                    |
 +===========================+===========================================================+========================================+
-| :mod:`add_config` ^       | Adds a section of config to the final startup-config file | url                                    |
+| :mod:`add_config` *       | Adds a section of config to the final startup-config file | url                                    |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
@@ -482,7 +482,7 @@ Additional details on each action are available in the :doc:`actions` module doc
 
 .. note::
 
-    ^ *The 'add_config' action supports applying block of EOS configuration commands to a node’s startup-config.*
+    * The 'add_config' action supports applying block of EOS configuration commands to a node’s startup-config.
 
 e.g.
 
