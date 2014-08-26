@@ -207,26 +207,26 @@ class NodesController(BaseController):
 
     #-------------------------------------------------------------------
 
-    def put_config(self, *args, **kwargs):
+    def put_config(self, request, **kwargs):
         log.debug('%s: startup-config PUT request: %s' % 
-                  (kwargs['resource'], args))
+                  (kwargs['resource'], request))
 
         response = dict()
-        # fobj = None
-        # try:
-        #     body = str(kwargs['request'].body)
-        #     content_type = str(kwargs['request'].content_type)
-        #     filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
-        #     fobj = self.repository.get_file(filename)
-        # except FileObjectNotFound:
-        #     log.debug('File not found: %s - adding it' % filename)
-        #     fobj = self.repository.add_file(filename)
-        # finally:
-        #     if fobj:
-        #         fobj.write(body, content_type)
-        #     else:
-        #         log.error('File not found: %s - adding it' % filename)                
-        #         return self.http_bad_request()
+        fobj = None
+        try:
+            body = str(kwargs['request'].body)
+            content_type = str(kwargs['request'].content_type)
+            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            fobj = self.repository.get_file(filename)
+        except FileObjectNotFound:
+            log.debug('File not found: %s - adding it' % filename)
+            fobj = self.repository.add_file(filename)
+        finally:
+            if fobj:
+                fobj.write(body, content_type)
+            else:
+                log.error('File not found: %s - adding it' % filename)                
+                return self.http_bad_request()
         return response
 
     #-------------------------------------------------------------------
