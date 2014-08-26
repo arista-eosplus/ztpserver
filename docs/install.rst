@@ -133,7 +133,16 @@ Once the above system requirements are met, use the following git command to pul
 
     bash-3.2$ git clone https://github.com/arista-eosplus/ztpserver.git
 
-Then checkout the release desired:
+Or, you may download the zip or tar archive and expand it.
+
+.. code-block:: console
+
+    bash-3.2$ wget |tar release|_
+    bash-3.2$ tar xvf <filename>
+      or
+    bash-3.2$ unzip <filename>
+
+Change in to the ztpserver directory, then checkout the release desired:
 
 .. code-block:: console
 
@@ -155,7 +164,6 @@ Execute ``setup.py`` to build and then install ZTPServer
     running build_py
     running install_lib
     ...
-
 
 .. _server_config:
 
