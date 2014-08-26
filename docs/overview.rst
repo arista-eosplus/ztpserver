@@ -100,7 +100,7 @@ Topology-validation can be disabled:
 Operational modes
 `````````````````
 
-There are 4 operational modes for ZTPServer, explained below.  See :doc:`config_examples` to see how to use them.
+There are 4 operational modes for ZTPServer, explained below.  See :ref:`mode_examples` to see how to use them.
 
 Statically defined node without topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
