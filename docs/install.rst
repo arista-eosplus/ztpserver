@@ -26,7 +26,7 @@ Requirements
   * webob 1.3 or later (http://webob.org/)
   * PyYaml 3.0 or later (http://pyyaml.org/)
 
-  **Clients:**
+  **Client:**
 
   * |EOS| 4.13.3 or later
 
