@@ -68,7 +68,7 @@ VM Specification:
 * ejabberd (XMPP server) configured for im.ztps-test.com
 
   * XMPP admin user ztpsadmin, passwd eosplus
-* httpd installed and configured for ZTPServer (mod_wsgi) listening on port 8080
+* httpd installed and configured for ZTPServer (mod_wsgi)
 * ZTPServer installed
 * ztpserver-demo repo files pre-loaded
 
@@ -185,7 +185,7 @@ If using dhcpd, the following example configuration will add a network (192.168.
       option routers 192.168.100.1;
       option domain-name-servers <ipaddr>;
       option domain-name "<org>";
-      option bootfile-name "http://<ztp_hostname_or_ip>:8080/bootstrap";
+      option bootfile-name "http://<ztp_hostname_or_ip>:<port>/bootstrap";
     }
 
 Enable and start the dhcpd service.
