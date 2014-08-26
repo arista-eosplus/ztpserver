@@ -191,8 +191,8 @@ Enhancements
 * test_topology must cover all cases (`40 <https://github.com/arista-eosplus/ztpserver/issues/40>`_)
     .. comment
 
-Resolved
-^^^^^^^^
+Resolved issues
+^^^^^^^^^^^^^^^
 
 * Syslog messages are missing system-id (vEOS) (`184 <https://github.com/arista-eosplus/ztpserver/issues/184>`_)
     All client-side log message are prefixed by the serial number for now (regardless of what the identifier is configured on the server).
