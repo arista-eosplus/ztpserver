@@ -1,5 +1,5 @@
-Configuration Guide
-===================
+Configuration
+=============
 
 .. contents:: :local:
 
@@ -9,8 +9,62 @@ easier to read and makes it easier and more intuitive to add/update
 entries (as opposed to other files formats such as JSON, or binary
 formats such as SQL).
 
+
+Configuration Types
+===================
+
+There are 2 general types of configurations supported by ZTPServer, `Static <static_provisioning_>`_ and `Dynamic <dynamic_provisioning_>`_ provisioning.
+
+.. _static_provisioning:
+
+Static provisioning:
+````````````````````
+
+Manually create node entries in /nodes and a startup-configuration. In order to do that:
+
+* Create a new directory for each node under [data_root]/nodes, using the system unique_id as the name.
+* Place a startup-config in the newly-created folder.
+
+Example:
+
+.. code-block:: console
+
+    [root@localhost ztpserver]# mkdir /usr/share/ztpserver/nodes/000c29f3a39g
+    [root@localhost ztpserver]# cp myconfig /usr/share/ztpserver/nodes/000c29f3a39g/startup-config
+
+Topology validation is still an active component of a static provisioning configuration at defaults. This allows a customer to validate cabling even with a statically defined node.  If ``disable_topology_validation = true`` in ``/etc/ztpserver/ztpserver.conf`` then you won’t need to create a pattern file in the directory for topology validation, if it is set to “false” (default), then you’ll need to place a “pattern” file in the specific node directory, using a similar syntax as neighbordb. 
+
+e.g.:
+``/usr/share/ztpserver/nodes/ABC12345678/pattern``
+
+This can be as simple as below, but must exist. See the :ref:`static_neighbordb_example` example.
+::
+
+    name: static_node
+    interfaces:
+    - any: any:any
+
+.. _dynamic_provisioning:
+
+Dynamic provisioning:
+`````````````````````
+
+This method assumes that you do not create a node entry for each node manually. Instead create a neighbordb entry with at least one pattern that maps to a definition. This requires editing: 
+/usr/share/ztpserver/neighbordb
+
+And creating at least one pattern. See the :ref:`dynamic_neighbordb_example` example.
+
+Once you’ve created the neighbordb entry, you’ll need to match a definition file placed in:
+/usr/share/ztpserver/definitions/
+
+See the :ref:`dynamic_definition_example` example.
+
+The combination of a neighbordb match and a template definition with dynamic resource allocation allow the same definition to be used for multiple nodes. 
+
 Global configuration
 ~~~~~~~~~~~~~~~~~~~~
+
+.. _global_configuration:
 
 Global configuration file
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -29,6 +83,8 @@ e.g.
       -h, --help            show this help message and exit
       --version, -v         Displays the version information
       --conf CONF, -c CONF  Specifies the configuration file to use
+      --validate FILENAME   Runs a validation check on neighbordb
+      --debug               Enables debug output to the STDOUT
     (bash)# ztps --conf /var/ztps.conf
 
 If the global configuration file is updated, the server must be restarted in order to pick up the new configuration.

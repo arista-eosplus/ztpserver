@@ -209,7 +209,7 @@ Ubuntu (and derivative Linux implementations)
 Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on boot.
 
 
-Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`install_config` options for more information.
+Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`global_configuration` options for more information.
 
 Now, you are ready to :doc:`startup` ZTPServer.
 
