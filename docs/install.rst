@@ -137,7 +137,7 @@ Or, you may download the zip or tar archive and expand it.
 
 .. code-block:: console
 
-    bash-3.2$ wget |tar release|_
+    bash-3.2$ wget https://github.com/arista-eosplus/ztpserver/tarball/master
     bash-3.2$ tar xvf <filename>
       or
     bash-3.2$ unzip <filename>
