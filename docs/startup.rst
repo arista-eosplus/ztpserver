@@ -31,7 +31,7 @@ To start the standalone ZTPServer, exec the ztps binary
     DEBUG: creating FileStore[actions] with basepath=/usr/share/ztpserver
     DEBUG: creating FileStore[files] with basepath=/usr/share/ztpserver
 
-When ZTPS starts, it loads neighbordb and other files (using the paths defined in the global configuration file). Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
+When ZTPServer starts, it loads neighbordb and other files (using the paths defined in the global configuration file). Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
 
 Apache (mod_wsgi)
 `````````````````
