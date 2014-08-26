@@ -79,7 +79,7 @@ class WSGIController(object):
             method = getattr(self, action)    #pylint: disable=R0921
             result = method(request, **request.urlvars)
         except Exception as exc:
-            log.error('Unrecoverable error detected: %s' % exc)
+            log.error('Unrecoverable error detected: %s' % exc.message)
             raise webob.exc.HTTPInternalServerError()
 
         if result is None:
