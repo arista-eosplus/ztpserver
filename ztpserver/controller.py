@@ -209,7 +209,7 @@ class NodesController(BaseController):
 
     def put_config(self, *args, **kwargs):
         log.debug('%s: node resource PUT request: \n%s\n' % 
-                  (kwargs['resource'], kwargs['request']))
+                  ('test', kwargs))
 
         response = dict()
         try:
