@@ -11,6 +11,11 @@ A high level view of the client - server message flows can be seen in the follow
 .. image:: _static/ztpserver-seqdiag.png
    :alt: Message Flow Diagram 
 
+.. note::
+    Red lines indicate Arista EOS (ZTP) flows.
+
+    Blue lines indicate ZTPServer's bootstrap client's flows.
+
 Server-side implementation details
 ----------------------------------
 
