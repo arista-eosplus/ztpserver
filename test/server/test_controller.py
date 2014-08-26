@@ -870,9 +870,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)
 
         controller = ztpserver.controller.NodesController()
-        resp = controller.put_config(list(),
-                                     resource=resource,
-                                     request=request)
+        resp = controller.put_config(request,
+                                     resource=resource)
 
         self.assertEqual(resp, dict())
 
