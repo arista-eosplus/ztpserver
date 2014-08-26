@@ -208,21 +208,25 @@ class NodesController(BaseController):
     #-------------------------------------------------------------------
 
     def put_config(self, *args, **kwargs):
-        log.debug('%s: node resource PUT request: \n%s\n' % 
-                  ('test', kwargs))
+        log.debug('%s: startup-config PUT request: %s' % 
+                  (kwargs['resource'], args))
 
         response = dict()
-        try:
-            body = str(kwargs['request'].body)
-            content_type = str(kwargs['request'].content_type)
-            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
-            fobj = self.repository.get_file(filename)
-        except FileObjectNotFound:
-            log.debug('File not found: %s - adding it' % filename)
-            fobj = self.repository.add_file(filename)
-        finally:
-            fobj.write(body, content_type)
-
+        # fobj = None
+        # try:
+        #     body = str(kwargs['request'].body)
+        #     content_type = str(kwargs['request'].content_type)
+        #     filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+        #     fobj = self.repository.get_file(filename)
+        # except FileObjectNotFound:
+        #     log.debug('File not found: %s - adding it' % filename)
+        #     fobj = self.repository.add_file(filename)
+        # finally:
+        #     if fobj:
+        #         fobj.write(body, content_type)
+        #     else:
+        #         log.error('File not found: %s - adding it' % filename)                
+        #         return self.http_bad_request()
         return response
 
     #-------------------------------------------------------------------
