@@ -27,9 +27,14 @@ Example:
 Topology validation is still an active component of a static provisioning configuration at defaults. This allows a customer to validate cabling even with a statically defined node.  If ``disable_topology_validation = true`` in ``/etc/ztpserver/ztpserver.conf`` then you won’t need to create a pattern file in the directory for topology validation, if it is set to “false” (default), then you’ll need to place a “pattern” file in the specific node directory, using a similar syntax as neighbordb. 
 
 e.g.:
-``/usr/share/ztpserver/nodes/000c29f3a39g/pattern``
+``/usr/share/ztpserver/nodes/ABC12345678/pattern``
 
-This can be as simple as an ``any: any:any`` statement but must exist. See the :ref:`static_neighbordb_example` example.
+This can be as simple as below, but must exist. See the :ref:`static_neighbordb_example` example.
+::
+
+    name: static_node
+    interfaces:
+    - any: any:any
 
 .. _dynamic_provisioning:
 
