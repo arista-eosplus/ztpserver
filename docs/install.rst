@@ -202,7 +202,5 @@ Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on
 
 Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`install_config` options for more information.
 
-At a minimum, create the ``/usr/share/ztpserver/neighbordb`` file.
-
 Now, you are ready to :doc:`startup` ZTPServer.
 
