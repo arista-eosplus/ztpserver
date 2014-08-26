@@ -28,7 +28,8 @@ Requirements
 
   **Client:**
 
-  * |EOS| 4.13.3 or later
+  * |EOS| 4.12.0 or later (ZTPServer 1.1)
+  * |EOS| 4.13.3 or later (ZTPServer 1.0)
 
 .. |EOS| raw:: html
 
