@@ -11,7 +11,7 @@ There are 3 primary installation methods:
 
 Examples in this guide are based on the following:
 
- * python 2.7
+ * Python 2.7
  * dhcp server - (dhcpd)
  * pip
  * git
@@ -81,7 +81,7 @@ PyPI Package (pip install)
 
 `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ may be installed as a `PyPI <https://pypi.python.org/pypi/ztpserver>`_ package.
 
-This option assumes you have a server with python and pip pre-installed.  See `installing pip <https://pip.pypa.io/en/latest/installing.html>`_.
+This option assumes you have a server with Python and pip pre-installed.  See `installing pip <https://pip.pypa.io/en/latest/installing.html>`_.
 
 Once pip is installed, type:
 

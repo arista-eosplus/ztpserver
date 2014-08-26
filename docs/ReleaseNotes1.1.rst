@@ -164,7 +164,7 @@ Enhancements
 
 * ztps should check Python version and report a sane error is incompatible version is being used to run it (`110 <https://github.com/arista-eosplus/ztpserver/issues/110>`_)
     ztps reports error if it is ran on a system with an incompatible Python version installed.
-* Do not hardcode python path  (`109 <https://github.com/arista-eosplus/ztpserver/issues/109>`_)
+* Do not hardcode Python path  (`109 <https://github.com/arista-eosplus/ztpserver/issues/109>`_)
     .. comment
 * Set XMPP nickname to serial number (`106 <https://github.com/arista-eosplus/ztpserver/issues/106>`_)
     Serial number is used as XMPP presence/nickname. For vEOS instances which don't have one configured, systemmac is used instead.
