@@ -8,7 +8,7 @@ ZTPServer Documentation
 
 ZTPServer provides a bootstrap environment for Arista EOS based products. It is written mostly in Python and leverages standard protocols like DHCP and DHCP options for boot functions, HTTP for bi-directional transport, and XMPP and syslog for logging. Most of the files that the user interacts with are YAML based.
 
-This open source project is maintained by the `Arista Netowrks <http://arista.com/>`_ EOS+ services organization.
+This open source project is maintained by the `Arista Networks <http://arista.com/>`_ EOS+ services organization.
 
 ZTPServer Highlights
 ````````````````````
@@ -37,6 +37,7 @@ ZTPServer Features
    overview
    download
    install
+   startup
    config
    examples
    tips
@@ -44,5 +45,8 @@ ZTPServer Features
    glossary
    resources
    support
+   ReleaseNotes
    caveats
+   roadmap
+   license
 

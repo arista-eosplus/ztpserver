@@ -1,7 +1,7 @@
 Startup
 =======
 
-.. contents:: Topics
+.. contents:: :local:
 
 **HTTP Server Deployment Options**
 

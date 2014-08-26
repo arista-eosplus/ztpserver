@@ -1,7 +1,7 @@
 Client - Server API
 -------------------
 
-.. contents:: Topics
+.. contents:: :local:
 
 URL Endpoints
 ~~~~~~~~~~~~~

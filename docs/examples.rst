@@ -1,7 +1,7 @@
 Examples
 ========
 
-.. contents:: Topics
+.. contents:: :local:
 
 .. _global_config:
 
