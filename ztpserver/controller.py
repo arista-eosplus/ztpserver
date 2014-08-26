@@ -359,15 +359,16 @@ class NodesController(BaseController):
          # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
-            log.debug('%s: node matched no patterns in neighbordb' %
+            log.info('%s: node matched no patterns in neighbordb' %
                      node_id)
-            log.error('%s: unknown node' % node_id)
             return (self.http_bad_request(), None)
 
-        log.debug('%s: node matched %d pattern(s)' % 
+        log.debug('%s: %d pattern(s) in neihgbordb are a good match' %
                   (node_id, len(matches)))
         match = matches[0]
 
+        log.info('%s: node matched \'%s\' pattern in neighbordb' % 
+                 (node_id, match.name))
         try:
 
             definition_url = self.expand(match.definition, folder='definitions')
@@ -387,6 +388,9 @@ class NodesController(BaseController):
         definition_fn = self.expand(node_id, DEFINITION_FN)
         
         self.repository.add_folder(self.expand(node_id))
+
+        log.info('%s: new /nodes/%s folder created' % 
+                 (node_id, node_id))
 
         fobj = self.repository.add_file(definition_fn)
         fobj.write(definition, CONTENT_TYPE_YAML)
@@ -535,8 +539,8 @@ class NodesController(BaseController):
                 replace_config_action(kwargs['resource'],
                                                            STARTUP_CONFIG_FN))
         except FileObjectNotFound:
-            log.warning('%s: missing startup-config %s' % 
-                        (kwargs['resource'], filename))
+            log.debug('%s: no startup-config %s' % 
+                      (kwargs['resource'], filename))
 
         return (response, 'do_actions')
 
