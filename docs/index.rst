@@ -10,16 +10,16 @@ ZTPServer provides a bootstrap environment for Arista EOS based products. It is 
 
 This open source project is maintained by the `Arista Networks <http://arista.com/>`_ EOS+ services organization.
 
-ZTPServer Highlights
-````````````````````
+Highlights
+``````````
 
 * Extends the basic capability of EOS ZTP to allow more robust provisioning activities
 * Extensible for easy integration into network operational environment
 * Can be run natively in EOS
 * An Arista EOS+ led community open source project
 
-ZTPServer Features
-``````````````````
+Features
+````````
 
 * Automated configuration file generation and application
 * Image and file system validation and standardization

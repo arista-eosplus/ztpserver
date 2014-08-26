@@ -1,5 +1,5 @@
-ZTPServer Overview
-==================
+Overview
+========
 
 ZTPServer provides a robust server which enables comprehensive bootstrap solutions for Arista EOS based network elements.  ZTPserver interacts with the ZeroTouch Provisioning (ZTP) mode of EOS which takes an unprovisioned network element to a bootstrap ready state whenever a valid configuration file is not present on the internal flash storage.
 
@@ -13,14 +13,14 @@ ZTPServer provides a number of features that extend beyond simply loading a conf
 
 ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML based. 
 
-**ZTPServer Highlights:**
+**Highlights:**
 
 * Extends the basic capability of EOS ZTP to allow more robust provisioning activities
 * Extensible for easy integration into network operational environment
 * Can be run natively in EOS or on a separate server.
 * An Arista EOS+ led community open source project
 
-**ZTPServer Features:**
+**Features:**
 
 * Automated configuration file generation and application
 * Image and file system validation and standardization
@@ -30,8 +30,8 @@ ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP
 * User extensible actions
 * Email, XMPP, syslog based logging and accounting of all processes
 
-ZTPServer architecture
-``````````````````````
+architecture
+````````````
 
 There are 2 primary components of the ZTPServer implementation: 
 
@@ -74,6 +74,8 @@ ZTP Client-Server Message Flows
 ```````````````````````````````
 
 A high level view of the client - server message flows can be seen in the following diagram:
+
+Red indicates Arista EOS flows.  Blue indicates the bootstrap client.
 
 .. image:: _static/ztpserver-seqdiag.png
    :alt: Message Flow Diagram
