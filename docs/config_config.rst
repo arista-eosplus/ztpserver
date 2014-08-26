@@ -3,9 +3,6 @@ Configuration Guide
 
 .. contents:: :local:
 
-Configuration
--------------
-
 The ZTPServer uses a series of YAML files to provide its various
 configuration and databases. Use of the YAML format makes the file
 easier to read and makes it easier and more intuitive to add/update
@@ -117,7 +114,7 @@ Environment Variables in the global configuration
 
     Configuration values may be overridden by setting environment variables, if the configuration attribute supports it. This is mainly used for testing and should not be used in production deployments. 
 
-Configuration values that support environment overrides use the ``environ`` keyword, as shown below (from config.py):
+Configuration values that support environment overrides use the ``environ`` keyword, as shown below:
 
 .. code-block:: python
 
