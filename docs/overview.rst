@@ -121,29 +121,29 @@ There are 4 operational modes for ZTPServer, explained below.  See :ref:`mode_ex
 Statically defined node without topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Node is created in /nodes before bootstrap
+* Node is created in /nodes/<unique_id>/ before bootstrap
 * Definition or startup-config is placed in /nodes
 * Topology validation is disabled globally or with an open pattern
 
 Statically defined node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Node is created in /nodes before bootstrap
+* Node is created in /nodes/<unique_id>/ before bootstrap
 * Definition or startup-config is placed in /nodes
 * Topology validation is enabled globally and pattern is placed in /nodes
 
 Strongly-typed node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Definition is node specific
-* Node is dynamically created 
-* Topology validation is enabled globally and pattern is placed in “/nodes/<unique_id> or mapped to node unique_id in neighbordb
+* Definition is node specific, though the /nodes/<unique_id>/ directory is not pre-created
+* /nodes/<unique_id>/ is dynamically created during ZTP provisioning
+* Topology validation is enabled globally and pattern in neighbordb references the node's unique_id
 
 Weakly-typed node with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Definition is NOT node specific, leverages resources and templates
-* Node is dynamically created 
+* /nodes/<unique_id>/ is dynamically created during ZTP provisioning
 * Topology validation is enabled globally and pattern is matched in neighbordb
 
 
