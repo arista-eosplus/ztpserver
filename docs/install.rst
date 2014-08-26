@@ -96,6 +96,36 @@ The pip install process will install all dependencies and run the install script
 Manual installation
 ```````````````````
 
+Download:
+
++----------------------------+-----------------+-----------------+-----------------+
+| Release                    | Git             | ZIP             | TAR             |
++============================+=================+=================+=================+
+| 1.1.0 (Current)            | |git release|_  | |zip release|_  | |tar release|_  |
++----------------------------+-----------------+-----------------+-----------------+
+| Development (Unstable)     | |git dev|_      | |zip dev|_      | |tar dev|_      |
++----------------------------+-----------------+-----------------+-----------------+
+
+
+.. |git release| replace:: GitHub
+.. _git release: https://github.com/arista-eosplus/ztpserver/tree/v1.1.0
+
+.. |zip release| replace:: ZIP
+.. _zip release: https://github.com/arista-eosplus/ztpserver/zipball/master
+
+.. |tar release| replace:: TAR
+.. _tar release: https://github.com/arista-eosplus/ztpserver/tarball/master
+
+
+.. |git dev| replace:: GitHub
+.. _git dev: https://github.com/arista-eosplus/ztpserver/tree/develop
+
+.. |zip dev| replace:: ZIP
+.. _zip dev: https://github.com/arista-eosplus/ztpserver/zipball/develop
+
+.. |tar dev| replace:: TAR
+.. _tar dev: https://github.com/arista-eosplus/ztpserver/tarball/develop
+
 Once the above system requirements are met, use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
 
 .. code-block:: console

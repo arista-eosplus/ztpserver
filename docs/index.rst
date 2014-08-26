@@ -35,7 +35,6 @@ ZTPServer Features
    :maxdepth: 1
 
    overview
-   download
    install
    startup
    config
