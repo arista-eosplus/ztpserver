@@ -13,14 +13,14 @@ ZTPServer provides a number of features that extend beyond simply loading a conf
 
 ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML based. 
 
-**ZTPServer Highlights:**
+**Highlights:**
 
 * Extends the basic capability of EOS ZTP to allow more robust provisioning activities
 * Extensible for easy integration into network operational environment
 * Can be run natively in EOS or on a separate server.
 * An Arista EOS+ led community open source project
 
-**ZTPServer Features:**
+**Features:**
 
 * Automated configuration file generation and application
 * Image and file system validation and standardization
@@ -30,7 +30,7 @@ ZTPServer is written in Python and leverages standard protocols like DHCP  (DHCP
 * User extensible actions
 * Email, XMPP, syslog based logging and accounting of all processes
 
-ZTPServer architecture
+Architecture
 ``````````````````````
 
 There are 2 primary components of the ZTPServer implementation: 
