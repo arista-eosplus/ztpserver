@@ -197,6 +197,7 @@ RedHat (and derivative Linux implementations)
 
 Ubuntu (and derivative Linux implementations)
 ``bash-3.2# sudo /usr/sbin/service isc-dhcp-server start``
+
 Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on boot.
 
 
