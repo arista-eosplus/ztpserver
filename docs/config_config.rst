@@ -163,22 +163,24 @@ Bootstrap configuration
 
    .. code-block:: yaml
 
-       logging:
-           - destination: file:/tmp/ztps-log
-               level: DEBUG
-           - destination: ztps-server:1234
-               level: CRITICAL
-           - destination: 10.0.1.1:9000
-               level: CRITICAL
-       ...
-       xmpp:
-           username: ztps
-           password: ztps
-           domain: pcknapweed.lab.local
-           rooms:
-               - ztps-room1
-               - ztps-room2
-               ...
+      ---
+      logging:
+        -
+          destination: "ztps.ztps-test.com:514"
+          level: DEBUG
+        - destination: file:/tmp/ztps-log
+          level: DEBUG
+        - destination: ztps-server:1234
+          level: CRITICAL
+        - destination: 10.0.1.1:9000
+          level: CRITICAL
+      xmpp:
+        domain: im.ztps-test.com
+        username: bootstrap
+        password: eosplus
+        rooms: 
+          - ztps
+          - ztps-room2
 
 Node-specific configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
