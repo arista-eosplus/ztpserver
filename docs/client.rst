@@ -4,7 +4,7 @@ Bootstrap Client
 .. :class:`bootstrap`
    ------------------
 
-.. module:: bootstrap
+.. module:: ztps.bootstrap
 
 .. autoclass:: Node
     :members:
