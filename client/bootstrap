@@ -264,7 +264,7 @@ class Node(object):
         try:
             self.api_enable_cmds([])
         except socket.error:
-            raise ZtpError('Unable to enable eAPI')
+            raise ZtpError('unable to enable eAPI')
 
         # Workaround for BUG89374
         try:
@@ -617,7 +617,7 @@ class Server(object):
                 log('Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
-            raise ZtpError('Server connection error')
+            raise ZtpError('server connection error')
 
         return response
 
@@ -635,7 +635,7 @@ class Server(object):
     def _save_file_contents(self, contents, path, url=None):
         if path.startswith('/mnt/flash'):
             if not url:
-                raise ZtpError('Attempting to save file to %s, but cannot'
+                raise ZtpError('attempting to save file to %s, but cannot'
                                'retrieve content metadata.')
 
             _, _, metadata = self.get_metadata(url)
@@ -643,7 +643,7 @@ class Server(object):
 
             usage = flash_usage()
             if (metadata['size'] > usage.free):
-                raise ZtpError('Not enough memory on flash for saving %s to %s '
+                raise ZtpError('not enough memory on flash for saving %s to %s '
                                '(free: %s bytes, required: %s bytes)' %
                                (url, path, usage.free, metadata['size']))
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
@@ -661,7 +661,7 @@ class Server(object):
                         result.write(chunk)
                 result.close()
         except IOError as err:
-            raise ZtpError('Unable to write %s: %s' % (path, err))
+            raise ZtpError('unable to write %s: %s' % (path, err))
 
         # Set permissions
         os.chmod(path, 0777)
@@ -677,7 +677,7 @@ class Server(object):
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
 
         return (status, content, result)
@@ -701,10 +701,10 @@ class Server(object):
                           HTTP_STATUS_CONFLICT] or
            content != CONTENT_TYPE_HTML):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('Node not found on server (status=%s)' % status)
+            raise ZtpError('node not found on server (status=%s)' % status)
 
         return (status, content, location)
 
@@ -727,10 +727,10 @@ class Server(object):
                 (status == HTTP_STATUS_BAD_REQUEST and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('Server-side topology check failed (status=%s)' %
+            raise ZtpError('server-side topology check failed (status=%s)' %
                            status)
 
         return (status, content, result)
@@ -744,10 +744,10 @@ class Server(object):
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Action not found on server (status=%s)' % status)
+            raise ZtpError('action not found on server (status=%s)' % status)
 
         filename = os.path.join(TEMP, action)
         self._save_file_contents(action_response, filename)
@@ -779,14 +779,14 @@ class Server(object):
                 (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Metadata not found on server (status=%s)' %
+            raise ZtpError('metadata not found on server (status=%s)' %
                            status)
         elif status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
             raise ZtpError(
-                'Unable to retrieve metadata from server (status=%s)' %
+                'unable to retrieve metadata from server (status=%s)' %
                 status)
 
         return (status, content, result)
@@ -801,10 +801,10 @@ class Server(object):
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'Unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Resource not found on server (status=%s)' % status)
+            raise ZtpError('resource not found on server (status=%s)' % status)
 
         self._save_file_contents(response, path, url)
 
@@ -963,7 +963,7 @@ def execute_action(server, action_details, special_attr):
                      else []
         ret = module.main(Attributes(local_attr, special_attr))
         if ret:
-            raise ZtpActionError('%s' % ret)
+            raise ZtpActionError('action returned %s' % ret)
         log('Action executed succesfully (%s)' % action)
         if 'onsuccess' in action_details:
             log('Action %s: %s' % (action, action_details['onsuccess']),
@@ -972,7 +972,7 @@ def execute_action(server, action_details, special_attr):
         if 'onfailure' in action_details:
             log('Action %s: %s' % (action, action_details['onfailure']),
                 xmpp=True)
-        raise ZtpActionError('Executing action failed (%s): %s' % (action, err))
+        raise ZtpActionError('executing action failed (%s): %s' % (action, err))
 
 def restore_factory_default():
     for filename in [RC_EOS, BOOT_EXTENSIONS]:
@@ -1031,7 +1031,7 @@ def main():
 
     # Check for startup-config
     if not node.has_startup_config():
-        raise ZtpError('Startup configuration is missing at the end of the '
+        raise ZtpError('startup configuration is missing at the end of the '
                        'bootstrap process')
 
     log('ZTP bootstrap completed successfully!')
