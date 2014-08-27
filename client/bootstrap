@@ -114,13 +114,13 @@ def _exit(code):
 
     # Wait for XMPP messages to drain
     time.sleep(3)
-    
+
     if xmpp_client:
         try:
             xmpp_client.abort()
         except:
             pass
-        
+
     sys.stdout.flush()
     sys.stderr.flush()
 
@@ -149,7 +149,7 @@ def log(msg, error=False, xmpp=None):
         syslog_msg = '%s: %s' % (SYSTEM_ID, msg)
     else:
         syslog_msg = msg
-    
+
     if error:
         print 'ERROR: %s' % syslog_msg
     else:
@@ -204,7 +204,7 @@ except ImportError:
         _exit(1)
     import requests
 #pylint: enable=C0103
-# ------------------4.12.x support----------------------------    
+# ------------------4.12.x support----------------------------
 
 
 class ZtpError(Exception):
@@ -243,7 +243,7 @@ class Attributes(object):
 class Node(object):
      #pylint: disable=R0201
 
-    '''Node object which can be used by actions via: 
+    '''Node object which can be used by actions via:
            attributes.get('NODE')
 
     Attributes:
@@ -326,7 +326,7 @@ class Node(object):
         '''Run CLI commands via Command API, starting from enable mode.
 
         Commands are ran in order.
-        
+
         Args:
             cmds (list): List of CLI commands.
             text_format (bool, optional): If true, Command API request will run
@@ -347,7 +347,7 @@ class Node(object):
         '''Run CLI commands via Command API, starting from config mode.
 
         Commands are ran in order.
-        
+
         Args:
             cmds (list): List of CLI commands.
 
@@ -361,11 +361,15 @@ class Node(object):
         '''Get system information.
 
         Returns:
-            dict: System information - format:
-                  {'model':        <MODEL>,
-                   'version':      <EOS_VERSION>,
-                   'systemmac':    <SYSTEM_MAC>,
-                   'serialnumber': <SERIAL_NUMBER>}
+            dict: System information
+
+            Format::
+
+                {'model':        <MODEL>,
+                 'version':      <EOS_VERSION>,
+                 'systemmac':    <SYSTEM_MAC>,
+                 'serialnumber': <SERIAL_NUMBER>}
+
         '''
         result = {}
         info = self.api_enable_cmds(['show version'])[0]
@@ -381,11 +385,15 @@ class Node(object):
         '''Get neighbors.
 
         Returns:
-            dict: LLDP neighbors - format:
-                  {'neighbors': {<LOCAL_PORT>: 
-                                  [{'device': <REMOTE_DEVICE>,
-                                    'port': <REMOTE_PORT>}, ...],
-                                 ...}}
+            dict: LLDP neighbors
+
+            Format::
+
+                {'neighbors': {<LOCAL_PORT>:
+                 [{'device': <REMOTE_DEVICE>,
+                   'port': <REMOTE_PORT>}, ...],
+                ...}}
+
         '''
         result = {}
         info = self.api_enable_cmds(['show lldp neighbors'])[0]
@@ -404,13 +412,17 @@ class Node(object):
         '''Get details.
 
         Returns:
-            dict: System details - format:
-                  {'model':        <MODEL>,
-                   'version':      <EOS_VERSION>,
-                   'systemmac':    <SYSTEM_MAC>,
-                   'serialnumber': <SERIAL_NUMBER>,
-                   'neighbors':    <NEIGHBORS>        # see neighbors()
-                  }
+            dict: System details
+
+            Format::
+
+              {'model':        <MODEL>,
+               'version':      <EOS_VERSION>,
+               'systemmac':    <SYSTEM_MAC>,
+               'serialnumber': <SERIAL_NUMBER>,
+               'neighbors':    <NEIGHBORS>        # see neighbors()
+              }
+
         '''
 
         return dict(self.system().items() +
@@ -429,7 +441,7 @@ class Node(object):
         '''Add lines to startup-config.
 
         Args:
-            lines (list): List of CLI commands 
+            lines (list): List of CLI commands
         '''
         self._append_lines(STARTUP_CONFIG, lines)
 
@@ -581,7 +593,7 @@ class Server(object):
 
         if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
             full_url = urlparse.urljoin(SERVER, path)
-        else: 
+        else:
             full_url = path
 
         try:
@@ -623,14 +635,14 @@ class Server(object):
             if not url:
                 raise ZtpError('Attempting to save file to %s, but cannot'
                                'retrieve content metadata.')
-            
+
             _, _, metadata = self.get_metadata(url)
             metadata = metadata.json()
 
             usage = flash_usage()
             if (metadata['size'] > usage.free):
                 raise ZtpError('Not enough memory on flash for saving %s to %s '
-                               '(free: %s bytes, required: %s bytes)' % 
+                               '(free: %s bytes, required: %s bytes)' %
                                (url, path, usage.free, metadata['size']))
             elif (metadata['size'] + usage.used > 0.9 * usage.total):
                 percent = (metadata['size'] + usage.used) * 100.0 / usage.total
@@ -659,7 +671,7 @@ class Server(object):
         log('Server response to GET config: contents=%s' % result.json())
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0]         
+        content = result.headers['content-type'].split(';')[0]
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
@@ -681,7 +693,7 @@ class Server(object):
             (result.status_code, location))
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0] 
+        content = result.headers['content-type'].split(';')[0]
         if(status not in [HTTP_STATUS_CREATED,
                           HTTP_STATUS_BAD_REQUEST,
                           HTTP_STATUS_CONFLICT] or
@@ -703,11 +715,11 @@ class Server(object):
             log('Server response to GET definition: status=%s, contents=%s' %
                 (result.status_code, result.json()))
         else:
-            log('Server response to GET definition: status=%s' % 
+            log('Server response to GET definition: status=%s' %
                 result.status_code)
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0] 
+        content = result.headers['content-type'].split(';')[0]
         if not ((status == HTTP_STATUS_OK and
                  content == CONTENT_TYPE_JSON) or
                 (status == HTTP_STATUS_BAD_REQUEST and
@@ -716,7 +728,7 @@ class Server(object):
                 'Unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('Server-side topology check failed (status=%s)' % 
+            raise ZtpError('Server-side topology check failed (status=%s)' %
                            status)
 
         return (status, content, result)
@@ -768,11 +780,11 @@ class Server(object):
                 'Unexpected reponse from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('Metadata not found on server (status=%s)' % 
+            raise ZtpError('Metadata not found on server (status=%s)' %
                            status)
         elif status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
             raise ZtpError(
-                'Unable to retrieve metadata from server (status=%s)' % 
+                'Unable to retrieve metadata from server (status=%s)' %
                 status)
 
         return (status, content, result)
@@ -791,7 +803,7 @@ class Server(object):
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
             raise ZtpError('Resource not found on server (status=%s)' % status)
-        
+
         self._save_file_contents(response, path, url)
 
 
@@ -808,7 +820,7 @@ class XmppClient(sleekxmpp.ClientXMPP):
             sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid,
                                           password)
         except sleekxmpp.jid.InvalidJID:
-            log('Unable to connect XMPP client because of invalid jid: %s' % 
+            log('Unable to connect XMPP client because of invalid jid: %s' %
                 self.xmpp_jid, xmpp=False)
             return
 
@@ -880,7 +892,7 @@ def apply_config(config, node):
 
     # XMPP not configured yet
     xmpp_config = config.get('xmpp', {})
-    
+
     global XMPP_MSG_TYPE                        #pylint: disable=W0603
     XMPP_MSG_TYPE = xmpp_config.get('msg_type', 'debug')
     if XMPP_MSG_TYPE not in ['debug', 'info']:
@@ -898,7 +910,7 @@ def apply_config(config, node):
                 nick = node.system()['serialnumber']
                 if not nick:
                     # vEOS might not have a serial number configured
-                    nick = node.system()['systemmac']                    
+                    nick = node.system()['systemmac']
                 xmpp_client = XmppClient(xmpp_config['username'],
                                          xmpp_config['domain'],
                                          xmpp_config['password'],
@@ -909,7 +921,7 @@ def apply_config(config, node):
             else:
                 # XMPP not configured yet
                 log('XMPP configuration failed because server response '
-                    'is missing config details', 
+                    'is missing config details',
                     error=True, xmpp=False)
         else:
             log('No XMPP configuration received from server', xmpp=False)
@@ -1007,7 +1019,7 @@ def main():
     definition_name = definition['name']
     log('Applying definition %s' % definition_name)
 
-    
+
     special_attr = {}
     special_attr['NODE'] = node
     for details in definition['actions']:
@@ -1041,7 +1053,7 @@ if __name__ == '__main__':
         _exit(1)
     except Exception, exception:
         log('''Bootstrap process failed because of unknown exception:
-   %s''' % 
+   %s''' %
             exception, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
