@@ -53,8 +53,6 @@ From a bash shell:
 
 .. code-block:: console
 
-    # remove startup config
-    sudo rm /mnt/flash/startup-config
     # retrieve the bootstrap file from server
     wget (http://<ZTPS_SERVER>:<PORT>/bootstrap
     # make file executable
@@ -70,4 +68,14 @@ Add the desired MAC address to the first line of the file /mnt/flash/system_mac_
 .. code-block:: console
 
     [admin@localhost ~]$ echo 1122.3344.5566 > /mnt/flash/system_mac_address
+
+How do I override the default serial number or system-mac in vEOS?
+``````````````````````````````````````````````````````````````````
+
+As of vEOS 4.14.0, the serial number and system mac address can be configured with a file in /mnt/flash/veos-config.  After modifying SERIALNUMBER or SYSTEMMACADDR, a reboot is required for the changes to take effect.
+
+.. code-block:: console
+
+    SERIALNUMBER=ABC12345678
+    SYSTEMMACADDR=1122.3344.5566
 
