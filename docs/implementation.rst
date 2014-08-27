@@ -16,55 +16,8 @@ A high level view of the client - server message flows can be seen in the follow
 
     Blue lines indicate ZTPServer's bootstrap client's flows.
 
-Server-side implementation details
-----------------------------------
-
-NodeController POST FSM
-~~~~~~~~~~~~~~~~~~~~~~~
-
-|POST FSM|
-
-NodeController GET FSM
-~~~~~~~~~~~~~~~~~~~~~~
-
-|GET FSM|
-
 Client-side implementation details
 ----------------------------------
-
-Bootstrap exit codes
-~~~~~~~~~~~~~~~~~~~~
-
-Exit code
-^^^^^^^^^
-
-+-------------+--------------------------------------------------------------+
-| Exit Code   | Explanation                                                  |
-+=============+==============================================================+
-| 1           | Server connection error                                      |
-+-------------+--------------------------------------------------------------+
-| 2           | Unable to enable eAPI                                        |
-+-------------+--------------------------------------------------------------+
-| 3           | Unexpected response from server                              |
-+-------------+--------------------------------------------------------------+
-| 4           | Node not found on server                                     |
-+-------------+--------------------------------------------------------------+
-| 5           | Server-side topology check failed                            |
-+-------------+--------------------------------------------------------------+
-| 6           | Action not found on server                                   |
-+-------------+--------------------------------------------------------------+
-| 7           | Startup config missing at the end of the bootstrap process   |
-+-------------+--------------------------------------------------------------+
-| 8           | Action failed                                                |
-+-------------+--------------------------------------------------------------+
-| 9           | Invalid definition                                           |
-+-------------+--------------------------------------------------------------+
-| 10          | Invalid definition location received from server             |
-+-------------+--------------------------------------------------------------+
-| 11          | Other                                                        |
-+-------------+--------------------------------------------------------------+
-| 100         | Unable to install requests library (4.12.x)                  |
-+-------------+--------------------------------------------------------------+
 
 Action attributes
 ~~~~~~~~~~~~~~~~~
@@ -92,21 +45,8 @@ entries**\ \* (always upper case) are also contained in the attributes
 object:
 
 1. ‘NODE’: a node object for making eAPI calls to localhost
+   See the :doc:`client` documentation.
 
-   -  **API:**\ #
-   -  api\_enable\_cmds(cmds, text\_format=False) // run eAPI commands
-      from enable mode
-   -  append\_startup\_config\_lines(lines)
-   -  append\_rc\_eos\_lines(lines) // assumes bash code
-      has\_startup\_config()
-   -  log\_msg(msg, error=False)
-   -  details() // get node details
-   -  rc\_eos() // returns path for rc.eos
-   -  flash() // returns path for flash
-   -  startup\_config() // returns path for startup\_config
-   -  retrieve\_url(url, path)
-
-    | **Note:** \* *Only one for now.*
 
 .. note::
 
