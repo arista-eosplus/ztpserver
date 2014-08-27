@@ -40,9 +40,15 @@ except ImportError:
 
 from ztpserver import __version__, __author__
 
+PACKAGES = ['ztpserver']
+
 INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
 if os.environ.get('READTHEDOCS'):
+    print "Customizing install for ReadTheDocs.org build servers..."
     INSTALL_ROOT = "."
+    from subprocess import call
+    call(['docs/setup_rtd_files.sh'])
+    PACKAGES.append('ztps')
 
 CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
 INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
@@ -58,7 +64,7 @@ setup(
     download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.1.0',
     license='BSD-3',
     install_requires=INSTALL_REQUIREMENTS,
-    packages=['ztpserver'],
+    packages=PACKAGES,
     scripts=glob('bin/*'),
     data_files=[
         ('%s/nodes' % INSTALL_PATH, []),

@@ -6,43 +6,43 @@ Actions
 :mod:`add_config` Action
 ------------------------
 
-.. automodule:: add_config
+.. automodule:: ztps.add_config
     :members:
 
 :mod:`copy_file` Action
 ------------------------
 
-.. automodule:: copy_file
+.. automodule:: ztps.copy_file
     :members:
 
 :mod:`install_cli_plugin` Action
 --------------------------------
 
-.. automodule:: install_cli_plugin
+.. automodule:: ztps.install_cli_plugin
     :members:
 
 :mod:`install_extension` Action
 -------------------------------
 
-.. automodule:: install_extension
+.. automodule:: ztps.install_extension
     :members:
 
 :mod:`install_image` Action
 ---------------------------
 
-.. automodule:: install_image
+.. automodule:: ztps.install_image
     :members:
 
 :mod:`replace_config` Action
 ----------------------------
 
-.. automodule:: replace_config
+.. automodule:: ztps.replace_config
     :members:
 
 :mod:`send_email` Action
 ------------------------
 
-.. automodule:: send_email
+.. automodule:: ztps.send_email
     :members:
 
 ..
