@@ -58,19 +58,35 @@ html: actionlinks
 #####
 ACTIONS := $(shell ls ../actions | grep -v "\.py")
 ACTIONLINKS := $(shell ls ../actions | grep "\.py")
+CLIENT := $(shell ls ../client | grep -v "\.py")
+CLIENTLINKS := $(shell ls ../client | grep "\.py")
 
-actionlinks:
+actionlinks: clientlinks
 	@touch ../actions/__init__.py
 	@- $(foreach ACTION,$(ACTIONS), \
 		cd ../actions; \
-		[ -h $(ACTION).py ] || ln -s $(ACTION) $(ACTION).py; \
+		[ -L $(ACTION).py ] || ln -s $(ACTION) $(ACTION).py; \
 	)
 
-clean_actionlinks:
+clean_actionlinks: clean_clientlinks
 	@rm -f ../actions/__init__.py
 	@- $(foreach ACTION,$(ACTIONLINKS), \
 		cd ../actions; \
 		[ -f $(ACTION) ] && rm $(ACTION); \
+	)
+
+clientlinks:
+	@touch ../client/__init__.py
+	@- $(foreach FILE,$(CLIENT), \
+		cd ../client; \
+		[ -L $(FILE).py -o -d $(FILE) ] || ln -s $(FILE) $(FILE).py; \
+	)
+
+clean_clientlinks:
+	@rm -f ../client/__init__.py
+	@- $(foreach FILE,$(CLIENTLINKS), \
+		cd ../client; \
+		[ -L $(FILE) -o -f $(FILE) ] && rm $(FILE); \
 	)
 
 
