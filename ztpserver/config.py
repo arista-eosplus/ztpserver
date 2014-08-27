@@ -30,12 +30,16 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#
-import os
+#pylint: disable=C0103
+
 import collections
+import logging
+import os
 import ConfigParser
 
 import ztpserver.types
+
+log = logging.getLogger(__name__)
 
 class Attr(object):
     """ Base Attribute class for deriving all attributes for a Config object
@@ -79,19 +83,22 @@ class StrAttr(Attr):
         attrtype = ztpserver.types.String(choices=choices)
         super(StrAttr, self).__init__(name, type=attrtype, **kwargs)
 
+
 class IntAttr(Attr):
     """ Integer attribute class derived from Attr
 
-    :param minvalue: specifies the min value.  the default is None
-    :param maxvalue: specifies the max value.  the default is None
+    :param min_value: specifies the min value.  the default is None
+    :param max_value: specifies the max value.  the default is None
 
     """
 
-    def __init__(self, name, minvalue=None, maxvalue=None, **kwargs):
-        self.minvalue = minvalue
-        self.maxvalue = maxvalue
-        attrtype = ztpserver.types.Integer(minvalue=minvalue, maxvalue=maxvalue)
+    def __init__(self, name, min_value=None, max_value=None, **kwargs):
+        self.min_value = min_value
+        self.max_value = max_value
+        attrtype = ztpserver.types.Integer(min_value=min_value, 
+                                           max_value=max_value)
         super(IntAttr, self).__init__(name, type=attrtype, **kwargs)
+
 
 class BoolAttr(Attr):
     """ Boolean attribute class derived from Attr """
@@ -99,6 +106,7 @@ class BoolAttr(Attr):
     def __init__(self, name, **kwargs):
         attrtype = ztpserver.types.Boolean()
         super(BoolAttr, self).__init__(name, type=attrtype, **kwargs)
+
 
 class ListAttr(Attr):
     """ List attribute class derived from Attr
@@ -110,6 +118,7 @@ class ListAttr(Attr):
     def __init__(self, name, delimiter=',', **kwargs):
         attrtype = ztpserver.types.List(delimiter=delimiter)
         super(ListAttr, self).__init__(name, type=attrtype, **kwargs)
+
 
 class Group(collections.Mapping):
     """ The Group class provides a logical grouping of attributes in a
@@ -185,7 +194,7 @@ class Config(collections.Mapping):
 
         key = (group, name)
         if key not in self.attributes:
-            raise AttributeError('attribute %s does not exist' % str(key))
+            raise AttributeError('Missing attribute: %s' % str(key))
 
         item = self.attributes.get(key)
         return item.get('value')
@@ -203,7 +212,7 @@ class Config(collections.Mapping):
             self.add_group(group)
 
         if key in self.attributes:
-            raise AttributeError('item already exists')
+            raise AttributeError('Duplicate attribute: %s' % str(key))
 
         self.attributes[key] = obj
         if item.default is not None:
@@ -222,18 +231,24 @@ class Config(collections.Mapping):
 
     def set_value(self, name, value, group=None):
         if not group and name in self.groups:
-            raise AttributeError('cannot set a value for a group')
+            raise AttributeError('Failed to set value (name=%s, group=%s): '
+                                 'cannot set a value for a group' %
+                                 (name, group))
 
         item = self.attributes.get((group, name))
         if item is None:
-            raise AttributeError('item does not exist')
+            raise AttributeError('Failed to set value (name=%s, group=%s): '
+                                 'missing item' %
+                                 (name, group))
         item['value'] = self._transform(item, value)
 
     def clear_value(self, name, group=None):
         """ clears the attributes value and resets it to default """
 
         if not group and name in self.groups:
-            raise AttributeError('cannot clear values for a group')
+            raise AttributeError('Failed to clear value (name=%s, group=%s): '
+                                 'cannot clear values for a group' %
+                                 (name, group))
 
         item = self.attributes.get((group, name))
 
@@ -250,10 +265,12 @@ class Config(collections.Mapping):
             for key, value in cp.items(section):
                 try:
                     self.set_value(key, value, section)
-                except AttributeError:
+                except AttributeError as err:
+                    log.warning('Error detected while reading %s: %s' %
+                                (filename, err))
                     continue
 
-runtime = Config() #pylint: disable=C0103
+runtime = Config()
 
 # Group: default
 runtime.add_attribute(StrAttr(
@@ -264,8 +281,8 @@ runtime.add_attribute(StrAttr(
 
 runtime.add_attribute(StrAttr(
     name='identifier',
-    choices=['systemmac', 'serialnum'],
-    default='systemmac'
+    choices=['systemmac', 'serialnumber'],
+    default='serialnumber'
 ))
 
 runtime.add_attribute(StrAttr(
@@ -285,6 +302,12 @@ runtime.add_attribute(BoolAttr(
     default=True
 ))
 
+runtime.add_attribute(StrAttr(
+    name='console_logging_format',
+    default='%(levelname)s: [%(module)s:%(lineno)d] %(message)s',
+    environ='ZTPS_CONSOLE_LOGGING_FORMAT'
+))
+
 runtime.add_attribute(BoolAttr(
     name='disable_topology_validation',
     default=False
@@ -300,8 +323,8 @@ runtime.add_attribute(StrAttr(
 runtime.add_attribute(IntAttr(
     name='port',
     group='server',
-    minvalue=1,
-    maxvalue=65534,
+    min_value=1,
+    max_value=65534,
     default=8080
 ))
 
@@ -362,5 +385,3 @@ runtime.add_attribute(StrAttr(
     default='neighbordb',
     environ='ZTPS_NEIGHBORDB_FILENAME'
 ))
-
-

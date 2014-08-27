@@ -1,0 +1,130 @@
+tag: large_pattern_test
+test:
+  - pattern
+  - topology
+valid_patterns:
+  nodes:
+    - sample node template 1
+    - sample node template 2
+  globals:
+    - sample global template 1
+    - sample global template 2
+    - sample global template 3
+    - default catch all
+nodes:
+  pass:
+    - name: node_d27d
+      match: sample node template 1
+
+node_d27d:
+  model: vEOS
+  serialnumber: 1234567890
+  systemmac: 00:0c:29:f5:d2:7d
+  version: 4.12.0
+  neighbors:
+     Ethernet1:
+       - device: localhost
+         port: Ethernet1
+     Ethernet2:
+       - device: localhost
+         port: Ethernet1
+     Ethernet3:
+       - device: localhost
+         port: Ethernet1
+     Ethernet6:
+       - device: spine4
+         port: Ethernet8
+       - device: spine5
+         port: Ethernet2
+     Ethernet7:
+       - device: spine4
+         port: Ethernet8
+       - device: spine5
+         port: Ethernet2
+     Ethernet49:
+       - device: localhost
+         port: Ethernet49
+     Ethernet50:
+       - device: localhost
+         port: Ethernet50
+
+neighbordb:
+  variables:
+    not_spine: includes('localhost')
+    not_pod1: exclude('pod1')
+    ny_pod: regex("ny\d+")
+
+  patterns:
+    - name: sample node template 1
+      definition: test
+      node: 1234567890
+      interfaces:
+        - Ethernet1: any
+        - Ethernet3: localhost:Ethernet1
+        - Ethernet49: localhost:Ethernet49
+        - Ethernet50:
+            device: localhost
+            port: Ethernet50
+
+    - name: sample node template 2
+      definition: leaf_template
+      node: 001c73aabbcc
+      interfaces:
+        - Ethernet1-8: none
+        - Ethernet9,10,11-13: any:Ethernet50
+        - any: regex('pod\d+-spine\d+'):Ethernet1/1
+        - any:
+            device: regex('pod\d+-spine1')
+            port: Ethernet2/3
+
+    - name: sample global template 1
+      definition: test
+      variables:
+        any_spine: regex('spine\d+')
+        any_pod: includes('pod')
+        any_pod_spine: any_spine and any_pod
+        localhost: includes('localhost')
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+        - Ethernet2: localhost:Ethernet1
+        - any: regex('spine\d+'):Ethernet2
+        - Ethernet49:
+            device: not_spine
+            port: Ethernet49
+        - Ethernet50:
+            device: includes('localhost')
+            port: Ethernet50
+
+    - name: sample global template 2
+      definition: mlag_leaf_template
+      variables:
+        any_spine: includes('spine')
+        not_spine: not any_spine
+      interfaces:
+        - Ethernet1: any_spine:Ethernet1/1
+        - Ethernet2: any_spine:any
+        - Ethernet3: none
+        - Ethernet4: any
+        - Ethernet5:
+            device: includes('oob')
+            port: any
+        - Ethernet49: not_spine:Ethernet49
+        - Ethernet50: not_spine:Ethernet50
+
+    - name: sample global template 3
+      definition: mlag_leaf_template
+      variables:
+        any_spine: includes('spine')
+        not_spine: not any_spine
+      interfaces:
+        - Ethernet1-3: any_spine:Ethernet1/1
+        - Ethernet5,6,7: any_spine:any
+        - Ethernet49: not_spine:Ethernet49
+        - Ethernet50: not_spine:Ethernet50
+
+    - name: default catch all
+      definition: test
+      interfaces:
+        - Ethernet1: none
+
+

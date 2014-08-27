@@ -1,4 +1,3 @@
-#!/usr/bin/env python 
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -6,15 +5,18 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-#  - Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
-#  - Redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution.
-#  - Neither the name of Arista Networks nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-# 
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -26,6 +28,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
 import collections
 import os
@@ -85,20 +88,20 @@ class TestAttributes(unittest.TestCase):
         obj = ztpserver.config.IntAttr('test')
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
 
-    def test_intattr_with_minvalue(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1)
+    def test_intattr_with_min_value(self):
+        obj = ztpserver.config.IntAttr('test', min_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=None)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=1, max_value=None)")
 
-    def test_intattr_with_maxvalue(self):
-        obj = ztpserver.config.IntAttr('test', maxvalue=1)
+    def test_intattr_with_max_value(self):
+        obj = ztpserver.config.IntAttr('test', max_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=None, maxvalue=1)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=None, max_value=1)")
 
     def test_intattr_with_min_and_max_value(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1)
+        obj = ztpserver.config.IntAttr('test', min_value=1, max_value=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
-        self.assertEqual(repr(obj.type), "Integer(minvalue=1, maxvalue=1)")
+        self.assertEqual(repr(obj.type), "Integer(min_value=1, max_value=1)")
 
     def test_intattr_with_default(self):
         obj = ztpserver.config.IntAttr('test', default=1)
@@ -106,55 +109,55 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_min_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, default=1)
+        obj = ztpserver.config.IntAttr('test', min_value=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_max_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', maxvalue=1, default=1)
+        obj = ztpserver.config.IntAttr('test', max_value=1, default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_range_valid_default(self):
-        obj = ztpserver.config.IntAttr('test', minvalue=1, maxvalue=1,
+        obj = ztpserver.config.IntAttr('test', min_value=1, max_value=1,
             default=1)
         self.assertIsInstance(obj, ztpserver.config.IntAttr)
         self.assertEqual(obj.default, 1)
 
     def test_intattr_with_min_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, default=-1)
+            'test', min_value=0, default=-1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, default=0)
+            'test', min_value=1, default=0)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, default=1)
+            'test', min_value=2, default=1)
 
     def test_intattr_with_max_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=0, default=1)
+            'test', max_value=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=1, default=2)
+            'test', max_value=1, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', maxvalue=2, default=3)
+            'test', max_value=2, default=3)
 
     def test_intattr_with_range_invalid_default(self):
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, maxvalue=0, default=1)
+            'test', min_value=0, max_value=0, default=1)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=0, default=2)
+            'test', min_value=1, max_value=0, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=0, default=2)
+            'test', min_value=1, max_value=0, default=2)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=1, maxvalue=1, default=2)
+            'test', min_value=1, max_value=1, default=2)
 
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=0, default=3)
+            'test', min_value=2, max_value=0, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=0, maxvalue=2, default=3)
+            'test', min_value=0, max_value=2, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=2, default=3)
+            'test', min_value=2, max_value=2, default=3)
         self.assertRaises(ValueError, ztpserver.config.IntAttr,
-            'test', minvalue=2, maxvalue=3, default=4)
+            'test', min_value=2, max_value=3, default=4)
 
     def test_intattr_with_group(self):
         obj = ztpserver.config.IntAttr('test', group='test')
@@ -262,13 +265,13 @@ class TestConfig(unittest.TestCase):
             self.config.add_group(grp)
             grp = str(grp) if isinstance(grp, int) else grp
             self.assertIn(grp, self.config.groups)
-            self.assertIsInstance(getattr(self.config, grp), 
+            self.assertIsInstance(getattr(self.config, grp),
                                   ztpserver.config.Group)
 
     def test_config_set_value_attribute(self):
         attr = self.Attr('test', str, None, None)
         self.config.add_attribute(attr)
-        self.config.set_value('test','value')
+        self.config.set_value('test', 'value')
         self.assertEqual(self.config.test, 'value')
 
     def test_config_runtime(self):

@@ -27,19 +27,20 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702,E1103
+#pylint: disable=W0703,E1103
 
 CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
 PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
 
 import os
-import urlparse
 
 def main(attributes):
     '''Installs EOS CliPlugin.
 
     Installs CliPlugin based on the value of the
     'url' attribute.
+
+    This action is NOT dual-supervisor compatible.
 
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
@@ -48,22 +49,13 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('url')
-        2 - unable to retrieve extension from URL
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     url = attributes.get('url')
 
     if not url:
-        return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(attributes.get('ztps_server'), url)
+        return 'Missing attribute(\'url\')'
 
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
@@ -75,8 +67,8 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % 
                           (PERSISTENT_PLUGIN_DIR, name))
-    except:
-        return 2
+    except Exception as exc:
+        return 'Unable to retrieve CliPlugin from URL (%s)' % exc
 
     lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
                                     name,

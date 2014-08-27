@@ -1,0 +1,123 @@
+#!/usr/bin/env python 
+
+# This script can be used in order to automatically refresh the
+# installation of ZTP Server to the latest code on GitHub.  This can
+# be useful in order to pull bug fixes or run the latest version of
+# various development branches.
+
+# INSTRUCTIONS:
+#  - The script must be run by a user with sudo access.
+
+import argparse
+import os
+import re
+import sys
+
+BACKUP_FOLDER = '/tmp/ztps_backup'
+BACKUP_CONFIG_FOLDER = '/tmp/ztps_backup/home'
+GLOBAL_CONFIG_FILE = '/etc/ztpserver/ztpserver.conf'
+
+GIT_REPO_FOLDER = '/tmp/ztps'
+
+def create_folder(path):
+    os.system('sudo rm -fr \'%s\'' % path)
+    os.system('sudo mkdir %s' % path)
+    os.system('sudo chmod 777 %s' % path)
+
+def all_files(path):
+    result = []
+    for top, dirs, files in os.walk(path):
+        result += [os.path.join(top, d) for d in dirs]
+        result += [os.path.join(top, f) for f in files]
+
+    return result
+
+def refresh_ztps(home_folder, branch):
+
+    # Backup configuration files
+    create_folder(BACKUP_FOLDER)
+    create_folder(BACKUP_CONFIG_FOLDER)
+
+    os.system('sudo cp %s %s' % 
+              (GLOBAL_CONFIG_FILE,
+               '%s/ztpserver.conf' % BACKUP_FOLDER))
+    os.system('sudo cp -r %s/* %s' % 
+              (home_folder, BACKUP_CONFIG_FOLDER))
+
+    # Uninstall
+    paths = all_files('/usr/lib')
+    paths += all_files('/usr/local')
+    for path in [p for p in paths if re.match('.*ztpserver.*', p)]:
+        os.system('sudo rm -rf %s' % path)
+
+    # Clone repository
+    os.system('sudo rm -rf \'%s\'' % GIT_REPO_FOLDER)
+    result = os.system('''
+        sudo git clone https://github.com/arista-eosplus/ztpserver %s;
+        cd %s;
+        sudo git checkout %s;
+        sudo git pull;
+
+        sudo python setup.py build;
+        sudo python setup.py install
+        ''' % (GIT_REPO_FOLDER, GIT_REPO_FOLDER, branch))
+    if result != 0:
+        sys.exit('ERROR: failed to re-install ZTP Server (branch %s)' % branch)
+
+    # Reconfigure
+    os.system('sudo cp %s %s' % 
+              ('%s/ztpserver.conf' % BACKUP_FOLDER,
+               GLOBAL_CONFIG_FILE))
+
+    os.system('sudo cp %s %s' % 
+              ('%s/bootstrap/bootstrap.conf' % BACKUP_CONFIG_FOLDER,
+               '%s/bootstrap/bootstrap.conf' % home_folder))
+    os.system('sudo cp %s %s' % 
+              ('%s/neighbordb' % BACKUP_CONFIG_FOLDER,
+               '%s/neighbordb' % home_folder))
+
+    files_1 = [y for y in [x.replace(home_folder + '/', '')
+                           for x in all_files(home_folder)] if y]
+    files_2 = [y for y in [x.replace(BACKUP_CONFIG_FOLDER + '/', '')
+                           for x in all_files(BACKUP_CONFIG_FOLDER)] if y]
+
+    for file_path in [x for x in files_2 if x not in files_1]:
+        try:
+            os.system('sudo cp %s %s' % 
+                      ('%s/%s' % (BACKUP_CONFIG_FOLDER, file_path),
+                       '%s/%s' % (home_folder, file_path)))
+        except IOError: 
+            # directory
+            create_folder('%s/%f' % (home_folder, file_path))
+
+    # Set permissions
+    os.system('sudo chmod 777 %s -R' % home_folder)
+    os.system('sudo chmod 777 %s -R' % GLOBAL_CONFIG_FILE)
+
+    # Clean up
+    os.system('sudo rm -fr \'%s\'' % BACKUP_FOLDER)
+    os.system('sudo rm -fr \'%s\'' % GIT_REPO_FOLDER)
+    print '\nDone!'
+
+def main():
+    parser = argparse.ArgumentParser(prog='refresh_ztps')
+    parser.add_argument('-b', '--branch',
+                        metavar='BRANCH',
+                        nargs='?',
+                        default='develop',
+                        help='ZTP Server branch to be used for the refresh',
+                        action='store')
+    parser.add_argument('-f', '--home-folder',
+                        metavar='HOME_FOLDER',
+                        nargs='?',
+                        default='/usr/share/ztpserver',
+                        help='ZTP Server home folder',
+                        action='store')
+    args = parser.parse_args()
+    refresh_ztps(args.home_folder, args.branch)
+    
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

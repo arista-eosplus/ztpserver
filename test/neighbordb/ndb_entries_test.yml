@@ -5,13 +5,51 @@
 # - wrong system mac
 # - all permutations of variables for a pattern
 
-name: neighbourdb entries test
+debug: false
+tag: entries_test
+tests:
+  - pattern
+valid_patterns:
+  nodes:
+    - ok nodes order 1
+    - ok nodes order 2
+    - ok nodes order 3
+    - ok nodes order 4
+    - ok nodes order 5
+    - ok nodes order 6
+    - ok nodes order 7
+    - ok nodes order 8
+    - ok nodes order 9
+    - ok nodes order 10
+    - ok nodes order 11
+    - ok nodes order 12
+    - ok nodes order 13
+    - ok nodes order 14
+    - ok nodes order 15
+    - ok nodes order 16
+    - ok nodes order 17
+    - ok nodes order 18
+    - ok nodes order 19
+    - ok nodes order 20
+    - ok nodes order 21
+    - ok nodes order 22
+    - ok nodes order 23
+    - ok nodes order 24
+    - missing interfaces 2
+    - missing definition 2
+  globals:
+    - ok global order 1
+    - ok global order 2
+    - ok global order 3
+    - ok global order 4
+    - ok global order 5
+    - ok global order 6
+    - missing interfaces 1
+    - missing definition 1
 
 neighbordb:
 
   patterns:
-
-    # ---Failing patterns---
 
     - name: missing interfaces 1
       definition: test
@@ -216,37 +254,3 @@ neighbordb:
       name: ok nodes order 24
       definition: test
       node: 003c73aabbcc
-
-configured_neighbordb:
-  nodes:
-    - ok nodes order 1
-    - ok nodes order 2
-    - ok nodes order 3
-    - ok nodes order 4
-    - ok nodes order 5
-    - ok nodes order 6
-    - ok nodes order 7
-    - ok nodes order 8
-    - ok nodes order 9
-    - ok nodes order 10
-    - ok nodes order 11
-    - ok nodes order 12
-    - ok nodes order 13
-    - ok nodes order 14
-    - ok nodes order 15
-    - ok nodes order 16
-    - ok nodes order 17
-    - ok nodes order 18
-    - ok nodes order 19
-    - ok nodes order 20
-    - ok nodes order 21
-    - ok nodes order 22
-    - ok nodes order 23
-    - ok nodes order 24
-  globals:      
-    - ok global order 1
-    - ok global order 2
-    - ok global order 3
-    - ok global order 4
-    - ok global order 5
-    - ok global order 6

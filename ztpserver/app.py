@@ -42,7 +42,12 @@ from wsgiref.simple_server import make_server
 
 import ztpserver.config
 import ztpserver.controller
-import ztpserver.neighbordb
+import ztpserver.topology
+
+from ztpserver.serializers import load
+from ztpserver.validators import NeighbordbValidator
+from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.topology import default_filename
 
 from ztpserver import __version__ as VERSION
 
@@ -52,26 +57,48 @@ log = logging.getLogger("ztpserver")
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-def enable_handler_console(level='DEBUG'):
+def enable_handler_console(level=None):
     """ Enables logging to stdout """
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
+    
+    logging_fmt = ztpserver.config.runtime.default.console_logging_format
+    formatter = logging.Formatter(logging_fmt)
+
     ch = logging.StreamHandler()
-    if level is None:
-        level = 'DEBUG'
+    ch.tag = 'console'
+
+    
+    for handler in log.handlers:
+        if 'tag' in handler.__dict__ and handler.tag == ch.tag:
+            # Handler previously added
+            return
+
+    level = level or 'DEBUG'
     level = str(level).upper()
     level = logging.getLevelName(level)
     ch.setLevel(level)
     ch.setFormatter(formatter)
+
     log.addHandler(ch)
 
-def start_logging():
+def python_supported():
+    """ Returns True if the current version of the python runtime is valid """
+    return sys.version_info > (2, 7) and sys.version_info < (3, 0)
+
+def start_logging(debug):
     """ reads the runtime config and starts logging if enabled """
 
     if ztpserver.config.runtime.default.logging:
         if ztpserver.config.runtime.default.console_logging:
-            enable_handler_console()
+            enable_handler_console('DEBUG' if debug else 'INFO')
 
-def start_wsgiapp(conf=None):
+def load_config(conf=None):
+    conf = conf or DEFAULT_CONF
+    conf = os.environ.get('ZTPS_CONFIG', conf)
+
+    if os.path.exists(conf):
+        ztpserver.config.runtime.read(conf)
+
+def start_wsgiapp(conf=None, debug=False):
     """ Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
     keyword argument specifies the path the server configuration file.  The
@@ -82,19 +109,18 @@ def start_wsgiapp(conf=None):
 
     """
 
-    conf = conf or DEFAULT_CONF
-    conf = os.environ.get('ZTPS_CONFIG', conf)
+    load_config(conf)
+    start_logging(debug)
 
-    if os.path.exists(conf):
-        ztpserver.config.runtime.read(conf)
-
-    start_logging()
     log.info('Logging started for ztpserver')
+    log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
 
-    ztpserver.neighbordb.load()
+    if not python_supported():
+        raise SystemExit('ERROR: ZTPServer requires Python 2.7')
+
     return ztpserver.controller.Router()
 
-def run_server(conf):
+def run_server(conf, debug):
     """ The :py:func:`run_server` is called by the main command line routine to
     run the server as standalone.   This function accepts a single argument
     that points towards the configuration file describing this server
@@ -104,7 +130,7 @@ def run_server(conf):
     :param conf: string path pointing to configuration file
     """
 
-    app = start_wsgiapp(conf)
+    app = start_wsgiapp(conf, debug)
 
     host = ztpserver.config.runtime.server.interface
     port = ztpserver.config.runtime.server.port
@@ -115,9 +141,33 @@ def run_server(conf):
 
     try:
         httpd.serve_forever()
-
     except KeyboardInterrupt:
         print 'Shutdown'
+
+def run_validator(filename=None):
+
+    try:
+        print 'Validating file \'%s\'\n' % filename
+        validator = NeighbordbValidator()
+        filename = filename or default_filename()
+        validator.validate(load(filename, CONTENT_TYPE_YAML,
+                                'validator'))
+        print 'Valid Patterns (count: %d)' % len(validator.valid_patterns)
+        print '--------------------------'
+        for index, pattern in enumerate(sorted(validator.valid_patterns)):
+            print '[%d] %s' % (index, pattern[1])
+        print
+        print 'Failed Patterns (count: %d)' % len(validator.invalid_patterns)
+        print '---------------------------'
+        for index, pattern in enumerate(sorted(validator.invalid_patterns)):
+            print '[%d] %s' % (index, pattern[1])
+        print
+
+    except Exception as exc:        #pylint: disable=W0703
+        log.exception(exc)
+        print 'An unexpected error occurred trying to run the validator'
+
+
 
 def main():
     """ The :py:func:`main` is the main entry point for the ztpserver if called
@@ -139,13 +189,24 @@ def main():
                         default=DEFAULT_CONF,
                         help='Specifies the configuration file to use')
 
+    parser.add_argument('--validate',
+                        type=str,
+                        metavar='FILENAME',
+                        help='Runs a validation check on neighbordb')
+
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='Enables debug output to the STDOUT')
+
+
     args = parser.parse_args()
     if args.version:
         print 'ztps version %s' % VERSION
         sys.exit()
 
-    return run_server(args.conf)
+    if args.validate is not None:
+        load_config(args.conf)
+        start_logging(args.debug)
+        sys.exit(run_validator(args.validate))
 
-
-
-
+    return run_server(args.conf, args.debug)

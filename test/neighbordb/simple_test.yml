@@ -1,8 +1,56 @@
-name: simple interface patterns
+debug: true
+tests:
+  - pattern
+  - topology
+valid_patterns:
+  globals:
+    - no LLDP-capable neighbors
+    - simple pattern 1
+    - simple pattern 2
+    - simple pattern 3
+    - simple pattern 4
+    - simple pattern 5
+    - simple pattern 6
+    - simple pattern 7
+    - simple pattern 8
+
+nodes:
+  pass:
+    - name: 2b3c
+      match: simple pattern 1
+
+    - name: 2b3d
+      match: no LLDP-capable neighbors
+
+2b3c:
+  systemmac: 00:1c:73:1a:2b:3c
+  serialnumber:  001c731a2b3c
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+    Ethernet2:
+      - device: localhost
+        port: Ethernet1
+    Ethernet3:
+      - device: localhost
+        port: Ethernet1
+    Ethernet4:
+      - device: localhost
+        port: Ethernet1
+
+2b3d:
+  systemmac: 00:1c:73:1a:2b:3d
+  serialnumber: 001c731a2b3d
 
 neighbordb:
 
   patterns:
+    - name: no LLDP-capable neighbors
+      definition: test
+      interfaces:
+        - none: none:none
+
     - name: simple pattern 1
       definition: test
       interfaces:
@@ -48,33 +96,3 @@ neighbordb:
       definition: test
       interfaces:
         - Ethernet5-10: none
-
-nodes:
-  - name: 2b3c
-    matches:
-      count: 5
-      includes:
-        - simple pattern 1
-        - simple pattern 2
-        - simple pattern 3
-        - simple pattern 5
-        - simple pattern 8
-      excludes:
-        - simple pattern 4
-        - simple pattern 6
-        - simple pattern 7
-    node:
-      systemmac: 00:1c:73:1a:2b:3c
-    neighbors:
-      Ethernet1:
-        - device: localhost
-          port: Ethernet1
-      Ethernet2:
-        - device: localhost
-          port: Ethernet1
-      Ethernet3:
-        - device: localhost
-          port: Ethernet1
-      Ethernet4:
-        - device: localhost
-          port: Ethernet1

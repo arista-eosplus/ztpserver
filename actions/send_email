@@ -60,6 +60,7 @@ def main(attributes):
     Generates an email from the bootstrap process and routes it through a
     smarthost.  The parameters value expects a dictionary with the
     following values in order for this function to work properly.
+    ::
 
         {
             'smarthost':   <hostname of smarthost>,
@@ -74,6 +75,8 @@ def main(attributes):
     The required fields for this function are smarthost, sender, and
     receivers. All other fields are optional.
 
+    This action is dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
@@ -81,29 +84,21 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing smarthost attribute
-        2 - missing sender attribute
-        3 - missing receivers attribute
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
 
     smarthost = attributes.get('smarthost')
     if not smarthost:
-        return 1
+        return 'Missing attribute(\'smarthost\')'
 
     sender = attributes.get('sender')
     if not sender:
-        return 2
+        return 'Missing attribute(\'sender\')'
 
     receivers = attributes.get('receivers')
     if not receivers:
-        return 3
+        return 'Missing attribute(\'receivers\')'
 
     msg = MIMEMultipart.MIMEMultipart()
     msg['From'] = sender

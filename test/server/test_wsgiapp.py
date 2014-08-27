@@ -38,19 +38,15 @@ import routes
 
 import webob
 
-import ztpserver.wsgiapp
-from ztpserver.constants import HTTP_STATUS_NO_CONTENT
-from ztpserver.constants import HTTP_STATUS_NOT_FOUND
+from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
 class TestWsgiApp(unittest.TestCase):
 
     def setUp(self):
-        self.controller = ztpserver.wsgiapp.Controller()
-
         mapper = routes.Mapper()
-        mapper.collection('tests', 'test', controller=self.controller)
+        mapper.collection('tests', 'test', controller=WSGIController)
 
-        self.router = ztpserver.wsgiapp.Router(mapper)
+        self.router = WSGIRouter(mapper)
 
     def request(self, url, method='GET', **kwargs):
         req = webob.Request.blank(url, method=method, **kwargs)
@@ -77,40 +73,40 @@ class TestWsgiApp(unittest.TestCase):
         return resp
 
     def test_get_url_collection(self):
-        self.get_url('/tests', HTTP_STATUS_NO_CONTENT)
+        self.get_url('/tests', 204)
 
     def test_get_url_resource(self):
-        self.get_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        self.get_url('/test/resource', 404)
 
     def test_get_url_missing(self):
-        self.get_url('/missing', HTTP_STATUS_NOT_FOUND)
+        self.get_url('/missing', 404)
 
     def test_post_url_collection(self):
-        self.post_url('/tests', HTTP_STATUS_NO_CONTENT)
+        self.post_url('/tests', 204)
 
     def test_post_url_resource(self):
-        self.post_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        self.post_url('/test/resource', 404)
 
     def test_post_url_missing(self):
-        self.post_url('/missing', HTTP_STATUS_NOT_FOUND)
+        self.post_url('/missing', 404)
 
     def test_put_url_collection(self):
-        self.put_url('/tests', HTTP_STATUS_NOT_FOUND)
+        self.put_url('/tests', 404)
 
     def test_put_url_resource(self):
-        self.put_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        self.put_url('/test/resource', 404)
 
     def test_put_url_missing(self):
-        self.put_url('/missing', HTTP_STATUS_NOT_FOUND)
+        self.put_url('/missing', 404)
 
     def test_delete_url_collection(self):
-        self.delete_url('/tests', HTTP_STATUS_NOT_FOUND)
+        self.delete_url('/tests', 404)
 
     def test_delete_url_resource(self):
-        self.delete_url('/test/resource', HTTP_STATUS_NOT_FOUND)
+        self.delete_url('/test/resource', 404)
 
     def test_delete_url_missing(self):
-        self.delete_url('/missing', HTTP_STATUS_NOT_FOUND)
+        self.delete_url('/missing', 404)
 
 if __name__ == '__main__':
     unittest.main()

@@ -27,10 +27,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0702,W0402,E1103
+#pylint: disable=W0703,W0402,E1103
 
 import os
-import urlparse
 from string import Template
 
 TEMP_CONFIG = '/tmp/tmp-config'
@@ -41,6 +40,8 @@ def main(attributes):
     Appends config section to startup config based on the value of the
     'url' attribute.
 
+    This action is dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
@@ -48,35 +49,22 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        0 - success
-        1 - missing attribute('url')
-        1 - missing attribute('ztps_server')
-        2 - unable to retrieve config from URL
-        3 - unable to perform variable substitution - invalid variables
-        4 - unable to perform variable substitution - missing variable
-        5 - invalid option specified for substitution_mode attribute
-
-    Raises:
-        None
     '''
+
     node = attributes.get('NODE')
     url = attributes.get('url')
 
     if not url:
-        return 1
-    elif not urlparse.urlsplit(url).scheme:
-        url = urlparse.urljoin(node.server_address(), url)
+        return 'Missing attribute(\'url\')'
 
     substitution_mode = attributes.get('substitution_mode', 'loose')
     if substitution_mode not in ['loose', 'strict']:
-        return 5
+        return 'Invalid option specified for substitution_mode attribute'
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
-    except:
-        return 2
+    except Exception as exc:
+        return 'Unable to retrieve config from URL (%s)' % exc
 
     contents = open(TEMP_CONFIG, 'r').read()
 
@@ -85,15 +73,15 @@ def main(attributes):
         variables = {}
 
     if not isinstance(variables, dict):
-        node.log_msg('Invalid variables: %s' % variables)
-        return 3
+        node.log_msg('Variables: %s' % variables)
+        return 'Unable to perform variable substitution - invalid variables'
     try:
         if substitution_mode == 'strict':
             contents = Template(contents).substitute(variables)
         else:
             contents = Template(contents).safe_substitute(variables)
     except KeyError:
-        return 4
+        return 'Unable to perform variable substitution - missing variable'
 
     node.append_startup_config_lines(contents.split('\n'))
     os.remove(TEMP_CONFIG)

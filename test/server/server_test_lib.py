@@ -1,4 +1,3 @@
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -30,16 +29,28 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+# pylint: disable=C0103
+#
 import json
 import os
+import logging
 import random
 import shutil
 import string        #pylint: disable=W0402
 
 import yaml
 
+from ztpserver.app import enable_handler_console
+
 WORKINGDIR = '/tmp/ztpserver'
+
+log = logging.getLogger('ztpserver')
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
+def enable_logging():
+    enable_handler_console()
 
 def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -140,7 +151,7 @@ class Attributes(SerializerMixin):
 def create_attributes():
     return Attributes()
 
-class Node(SerializerMixin):
+class NodeDict(SerializerMixin):
 
     def __init__(self, **kwargs):
         self.serialnumber = kwargs.get('serialnumber', random_string())
@@ -149,8 +160,14 @@ class Node(SerializerMixin):
         self.systemmac = kwargs.get('systemmac', random_string())
         self.neighbors = kwargs.get('neighbors', dict())
 
-    def add_neighbor(self, key, value):
-        self.neighbors[key] = value
+    def add_random_neighbor(self, interface):
+        neighbor = dict(device=random_string(), port=random_string())
+        self.add_neighbor(interface, neighbor)
+
+    def add_neighbor(self, interface, peer):
+        if interface not in self.neighbors:
+            self.neighbors[interface] = list()
+        self.neighbors[interface].append(peer)
 
     def add_neighbors(self, neighbors):
         assert isinstance(neighbors, dict)
@@ -165,5 +182,77 @@ class Node(SerializerMixin):
                     neighbors=self.neighbors)
 
 def create_node():
-    return Node()
+    return NodeDict()
+
+class BootstrapConf(SerializerMixin):
+    def __init__(self, **kwargs):
+        self.logging = kwargs.get('logging', list())
+        self.xmpp = kwargs.get('xmpp', dict())
+
+    def add_logging(self, entry):
+        self.logging.append(entry)
+
+    def as_dict(self):
+        return dict(logging=self.logging, xmpp=self.xmpp)
+
+def create_bootstrap_conf():
+    return BootstrapConf()
+
+class Pattern(SerializerMixin):
+
+    def __init__(self, **kwargs):
+
+        self.name = kwargs.get('name', random_string())
+        self.node = kwargs.get('node')
+        self.definition = kwargs.get('definition', random_string())
+        self.interfaces = list()
+
+    def add_interface(self, local_intf, remote_device, remote_intf):
+        self.interfaces.append({local_intf: {'device': remote_device,
+                                             'port': remote_intf}})
+
+    def add_random_interface(self, count=1):
+        for i in range(0, count):       # pylint: disable=W0612
+            while True:
+                intf = 'Ethernet%d' % random.randint(1, 64)
+                if intf not in self.interfaces:
+                    self.add_interface(intf, random_string(), random_string())
+                    break
+
+    def as_dict(self):
+        return dict(name=self.name,
+                    node=self.node,
+                    definition=self.definition,
+                    interfaces=self.interfaces)
+
+def create_pattern():
+    return Pattern()
+
+class NeighborDb(SerializerMixin):
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name', random_string())
+        self.variables = kwargs.get('variables', dict())
+        self.patterns = kwargs.get('patterns', list())
+
+    def get_patterns(self):
+        return [x.as_dict() for x in self.patterns]
+
+    def add_pattern(self, pattern=None):
+        if not pattern:
+            pattern = Pattern()
+            pattern = pattern.as_dict()
+        self.patterns.append(pattern)
+
+    def add_variable(self, key, value):
+        self.variables[key] = value
+
+    def as_dict(self):
+        return dict(name=self.name,
+                    variables=self.variables,
+                    patterns=[x.as_dict() for x in self.patterns])
+
+def create_neighbordb():
+    return NeighborDb()
+
 

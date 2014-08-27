@@ -32,216 +32,182 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=R0201
 #
-import warnings
 import collections
-import json
 import logging
+import json
 
-from ztpserver.constants import CONTENT_TYPE_OTHER
-
-try:
-    import yaml
-    YAML_AVAILABLE = True
-except ImportError:
-    YAML_AVAILABLE = False
+import yaml
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
+
 class SerializerError(Exception):
-    """ base error raised by serialization functions """
+    ''' base error raised by serialization functions '''
     pass
 
-class YAMLSerializer(object):
-    """ The :py:class:`YAMLSerializer` class will generate a
-    RuntimeWarning if the PyYaml module is unavialable
-    """
 
-    def __new__(cls):
-        if not YAML_AVAILABLE:
-            warnings.warn('Unable to import YAML', RuntimeWarning)
-            return None
-        else:
-            return super(YAMLSerializer, cls).__new__(cls)
+class BaseSerializer(object):
+    ''' Base serializer object '''
 
-    def deserialize(self, data):
-        try:
-            contents = yaml.safe_load(data)
-
-        except yaml.YAMLError as exc:
-            log.debug(exc)
-            contents = None
-
-        return contents
-
-    def serialize(self, data, safe_dump=False):
-        if safe_dump:
-            return yaml.safe_dump(data, default_flow_style=False)
-        return yaml.dump(data, default_flow_style=False)
-
-class JSONSerializer(object):
-
-    def deserialize(self, data):
-        ''' deserialize a JSON object and return a dict '''
-
-        assert isinstance(data, basestring)
-        return json.loads(data)
+    def __init__(self, node_id):
+        self.node_id = node_id
 
     def serialize(self, data):
-        ''' serialize a dict object and return JSON '''
+        ''' Serialize a dict to object '''
+        raise NotImplementedError
 
-        assert isinstance(data, dict)
-        return json.dumps(data)
+    def deserialize(self, data):
+        ''' Deserialize an object to dict '''
+        raise NotImplementedError
+
+
+class TextSerializer(BaseSerializer):
+
+    def deserialize(self, data):
+        ''' Deserialize a text object and return a dict '''
+        return str(data)
+
+    def serialize(self, data):
+        ''' Serialize a dict object and return text '''
+        return str(data)
+
+
+class YAMLSerializer(BaseSerializer):
+
+    def deserialize(self, data):
+        ''' Deserialize a YAML object and return a dict '''
+
+        try:
+            return yaml.safe_load(data)
+        except yaml.YAMLError as err:
+            msg = '''%s: unable to deserialize YAML data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
+
+    def serialize(self, data):
+        ''' Serialize a dict object and return YAML '''
+
+        try:
+            return yaml.dump(data, default_flow_style=False)
+        except yaml.YAMLError as err:
+            msg = '''%s: unable to serialize YAML data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
+
+
+class JSONSerializer(BaseSerializer):
+
+    def deserialize(self, data):
+        ''' Deserialize a JSON object and return a dict '''
+
+        try:
+            return json.loads(data)
+        except Exception as err:
+            msg = '''%s: unable to deserialize JSON data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
+
+    def serialize(self, data):
+        ''' Serialize a dict object and return JSON '''
+
+        try:
+            return json.dumps(data)
+        except Exception as err:
+            msg = '''%s: unable to serialize JSON data:
+%s 
+
+Error:
+%s''' % (self.node_id, data, err)
+            raise SerializerError(msg)
+
 
 class Serializer(object):
-    """ The :py:class:`Serializer` will serialize a data structure
-    based on the content-type.   If the content-type is not supported
-    the :py:class:`Serializer` will simply return the data as a
-    :py:class:`str` object
-    """
 
+    def __init__(self, node_id):
+        self.node_id = node_id
 
-
-    def serialize(self, data, content_type, **kwargs):
-        """ serialize the data base on the content_type
-
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be serialized
-        :param content_type: string specifies the serialize
-                             handler to use
-
-        """
-        #pylint: disable=E1103
-        try:
-            data = self.convert(data)
-            handler = self._serialize_handler(content_type)
-            return handler.serialize(data, **kwargs) if handler else str(data)
-
-        except Exception:
-            raise SerializerError('Could not serialize data %s:' % data)
-
-    def deserialize(self, data, content_type, **kwargs):
-        """ deserialize the data based on the content_type
-
-        If a valid handler does not exist for the requested
-        content_type, then the data is returned as a string
-
-        :param data: data to be deserialized
-        :param content_type: string specifies the deserialize
-                             handler to use
-
-        """
-
-        try:
-            handler = self._deserialize_handler(content_type)
-            data = handler.deserialize(data, **kwargs) if handler else str(data)
-            data = self.convert(data)
-            return data
-
-        except Exception:
-            raise SerializerError('Could not deserialize data: %s' % data)
-
-
-    def _deserialize_handler(self, content_type):
-        handlers = {
-            'application/json': JSONSerializer(),
-            'application/yaml': YAMLSerializer()
+        self._handlers = {
+            'text/plain': TextSerializer(self.node_id),
+            'application/json': JSONSerializer(self.node_id),
+            'application/yaml': YAMLSerializer(self.node_id)
         }
-        return handlers.get(content_type)
 
+    @property
+    def handlers(self):
+        return self._handlers
 
-    def _serialize_handler(self, content_type):
-        handlers = {
-            'application/json': JSONSerializer(),
-            'application/yaml': YAMLSerializer()
-        }
-        return handlers.get(content_type)
+    def add_handler(self, content_type, instance):
+        if content_type in self._handlers:
+            log.warning('%s: overwriting previous loaded handler %s', 
+                        (self.node_id, content_type))
+        self._handlers[content_type] = instance
 
-    @classmethod
-    def convert(cls, data):
+    def serialize(self, data, content_type):
+        ''' Serialize the data based on the content_type '''
+
+        handler = self.handlers.get(content_type, 
+                                    TextSerializer(self.node_id))
+        return handler.serialize(data)
+
+    def deserialize(self, data, content_type=None):
+        ''' Deserialize the data based on the content_type '''
+
+        handler = self.handlers.get(content_type, 
+                                    TextSerializer(self.node_id))
+        data = self._convert_from_unicode(handler.deserialize(data))
+        return data
+
+    @staticmethod
+    def _convert_from_unicode(data):
         if isinstance(data, basestring):
             return str(data)
         elif isinstance(data, collections.Mapping):
-            return dict([cls.convert(x) for x in data.iteritems()])
+            return dict([Serializer._convert_from_unicode(x)
+                         for x in data.items()])
         elif isinstance(data, collections.Iterable):
-            return type(data)([cls.convert(x) for x in data])
+            return type(data)([Serializer._convert_from_unicode(x)
+                               for x in data])
         else:
             return data
 
-class DeserializableMixin(object):
-    ''' The :py:class:`DeserializableMixin` provides a mixin class
-    that addes the ability to load and deserialize an object from
-    a file-like object stored in a format supported by
-    :py:class:`Serializer`.   Class objects using this mixin should
-    define a deserialize method to automatically transform the
-    contents loaded
-    '''
 
-    def loads(self, contents, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        log.debug('attempting to deserialize %r with content_type %s',
-                  self, content_type)
-        contents = serializer.deserialize(contents, content_type)
-        self.deserialize(contents)
+def loads(data, content_type, node_id):
+    serializer = Serializer(node_id)
+    return serializer.deserialize(data, content_type)
 
-    def load(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        try:
-            self.loads(fobj.read(), content_type)
-        except IOError as exc:
-            log.debug(exc)
-            raise SerializerError('unable to load file')
+def load(file_path, content_type, node_id=None):
+    id_string = '%s: ' % node_id if node_id else ''
+    try:
+        data = open(file_path).read()
+        return loads(data, content_type, node_id)
+    except (OSError, IOError) as err:
+        log.error('%s: failed to load file from %s (%s)' % 
+                  (id_string, file_path, err))
+        raise SerializerError('%s: failed to load file from %s (%s)' % 
+                              (id_string, file_path, err))
 
-    def load_from_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
-        try:
-            self.load(open(filepath), content_type)
-        except IOError as exc:
-            log.error('Cannot read from file %s (bad permissions?)', filepath)
-            log.exception(exc)
-            raise SerializerError
+def dumps(data, content_type, node_id):
+    serializer = Serializer(node_id)
+    if hasattr(data, 'serialize'):
+        data = data.serialize()
+    return serializer.serialize(data, content_type)
 
-    def deserialize(self, contents):
-        ''' objects that use this mixin must provide this method '''
-        raise NotImplementedError
-
-class SerializableMixin(object):
-    ''' The :py:class:`SerializableMixin` provides a mixin class
-    that addes the ability to dump and serialize an object from
-    a file-like object stored in a format supported by
-    :py:class:`Serializer`.  Class objects using this mixin should
-    define a serialize method to automatically transform the
-    contents loaded
-    '''
-
-    def dumps(self, content_type=CONTENT_TYPE_OTHER):
-        serializer = Serializer()
-        contents = self.serialize()
-        log.debug('attempting to serialize %r with content_type %s',
-                  self, content_type)
-        return serializer.serialize(contents, content_type)
-
-    def dump(self, fobj, content_type=CONTENT_TYPE_OTHER):
-        try:
-            contents = self.dumps(content_type)
-            fobj.write(contents)
-        except IOError as exc:
-            log.error(exc)
-            log.exception(exc)
-            raise SerializerError
-
-    def dump_to_file(self, filepath, content_type=CONTENT_TYPE_OTHER):
-        log.debug('Writing to file %s', filepath)
-        try:
-            self.dump(open(filepath, 'w'), content_type)
-        except IOError as exc:
-            log.error('Cannot write to file %s (bad permissions?)', filepath)
-            log.exception(exc)
-            raise SerializerError
-
-    def serialize(self):
-        ''' objects that use this mixin must provide this method '''
-        raise NotImplementedError
-
-
-
-
+def dump(data, file_path, content_type, node_id=None):
+    id_string = '%s: ' % node_id if node_id else ''
+    try:
+        with open(file_path, 'w') as fhandler:
+            fhandler.write(dumps(data, content_type, node_id))
+    except (OSError, IOError) as err:
+        log.error('%s: failed to write file to %s (%s)' % 
+                  (id_string, file_path, err))
+        raise SerializerError('%s: failed to write file to %s (%s)' % 
+                              (id_string, file_path, err))

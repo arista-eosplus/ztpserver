@@ -16,6 +16,8 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
+.DEFAULT_GOAL := html
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
@@ -38,13 +40,55 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
-clean:
+clean: clean_actionlinks
 	-rm -rf $(BUILDDIR)/*
 
-html:
+html: actionlinks
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+
+#####
+# actionlinks and clean_actionlinks targets were created to enable sphinx
+# autodoc to import the actions/ scripts.  As it uses import <module> which
+# requires that there be an __init__.py and that files end in .py
+# actionlinks should be a dependency for a build target and that target should
+# end with "@$(MAKE) --no-print-directory clean_actionlinks" to cleanup.
+#####
+ACTIONS := $(shell ls ../actions | grep -v "\.py")
+ACTIONLINKS := $(shell ls ../actions | grep "\.py")
+CLIENT := $(shell ls ../client | grep -v "\.py")
+CLIENTLINKS := $(shell ls ../client | grep "\.py")
+
+actionlinks: clientlinks
+	@touch ../actions/__init__.py
+	@- $(foreach ACTION,$(ACTIONS), \
+		cd ../actions; \
+		[ -L $(ACTION).py ] || ln -s $(ACTION) $(ACTION).py; \
+	)
+
+clean_actionlinks: clean_clientlinks
+	@rm -f ../actions/__init__.py
+	@- $(foreach ACTION,$(ACTIONLINKS), \
+		cd ../actions; \
+		[ -f $(ACTION) ] && rm $(ACTION); \
+	)
+
+clientlinks:
+	@touch ../client/__init__.py
+	@- $(foreach FILE,$(CLIENT), \
+		cd ../client; \
+		[ -L $(FILE).py -o -d $(FILE) ] || ln -s $(FILE) $(FILE).py; \
+	)
+
+clean_clientlinks:
+	@rm -f ../client/__init__.py
+	@- $(foreach FILE,$(CLIENTLINKS), \
+		cd ../client; \
+		[ -L $(FILE) -o -f $(FILE) ] && rm $(FILE); \
+	)
+
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
@@ -95,17 +139,19 @@ epub:
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
-latex:
+latex: actionlinks
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 	      "(use \`make latexpdf' here to do that automatically)."
 
-latexpdf:
+latexpdf: actionlinks
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf
+	@$(MAKE) --no-print-directory clean_actionlinks
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
 text:

@@ -36,18 +36,20 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import debug    #pylint: disable=W0611
 from client_test_lib import STARTUP_CONFIG, STATUS_NOT_FOUND
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
+from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
 
     def test_missing_url(self):
-        self.basic_test('replace_config', 1)
+        self.basic_test('replace_config',
+                        'Missing attribute(\'url\')')
 
     def test_url_failure(self):
-        self.basic_test('replace_config', 2,
+        self.basic_test('replace_config',
+                        'Unable to retrieve config from URL',
                         attributes={'url' : random_string()})
 
     def test_bad_file_status(self):
@@ -67,9 +69,11 @@ class FailureTest(ActionFailureTest):
         try:
             self.failUnless(bootstrap.action_failure())
             msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('return code 2' in msg)
-        except AssertionError:
-            raise
+            self.failUnless('Unable to retrieve config from URL' in msg)
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -93,8 +97,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(os.path.isfile(STARTUP_CONFIG))
             self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
@@ -115,8 +121,10 @@ class SuccessTest(unittest.TestCase):
             self.failUnless(os.path.isfile(STARTUP_CONFIG))
             self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
             self.failUnless(bootstrap.success())
-        except AssertionError:
-            raise
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
         finally:
             bootstrap.end_test()
 

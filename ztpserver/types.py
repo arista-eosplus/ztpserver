@@ -30,6 +30,8 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+
 class String(object):
 
     def __init__(self, choices=None):
@@ -41,14 +43,15 @@ class String(object):
         value = str(value)
 
         if self.choices and value not in self.choices:
-            raise ValueError("provided value is not a valid choice")
+            raise ValueError('Invalid string value: %s is not one of %s' %
+                             (value, self.choices))
 
         return value
 
     def __repr__(self):
-        obj = "String"
+        obj = 'String'
         if self.choices:
-            obj += "(choices=%s)" % ','.join(self.choices)
+            obj += '(choices=%s)' % ','.join(self.choices)
         return obj
 
 
@@ -63,34 +66,38 @@ class Boolean(object):
         elif str(value).lower() in self.FALSEVALUES:
             return False
         else:
-            raise ValueError
+            raise ValueError('Invalid boolean value: %s' % value)
 
     def __repr__(self):
         return 'Boolean'
 
+
 class Integer(object):
 
-    def __init__(self, minvalue=None, maxvalue=None):
-        self.minvalue = minvalue
-        self.maxvalue = maxvalue
+    def __init__(self, min_value=None, max_value=None):
+        self.min_value = min_value
+        self.max_value = max_value
 
     def __call__(self, value):
         try:
             value = int(value)
         except ValueError:
-            raise ValueError('invalid integer provided')
+            raise ValueError('Invalid integer value: %s' % value)
 
-        if self.minvalue is not None and value < self.minvalue:
-            raise ValueError('value is less than minvalue')
+        if self.min_value is not None and value < self.min_value:
+            raise ValueError('Invalid integer value: %s (min is %s)' %
+                             (value, self.min_value))
 
-        if self.maxvalue is not None and value > self.maxvalue:
-            raise ValueError('value is greater than maxvalue')
+        if self.max_value is not None and value > self.max_value:
+            raise ValueError('Invalid integer value: %s (max is %s)' %
+                             (value, self.max_value))
 
         return value
 
     def __repr__(self):
-        return "Integer(minvalue=%s, maxvalue=%s)" % \
-            (self.minvalue, self.maxvalue)
+        return 'Integer(min_value=%s, max_value=%s)' % \
+               (self.min_value, self.max_value)
+
 
 class List(object):
 
@@ -104,4 +111,4 @@ class List(object):
         return str(value).split(self.delimiter)
 
     def __repr__(self):
-        return "List(delimiter=%s)" % self.delimiter
+        return 'List(delimiter=%s)' % self.delimiter

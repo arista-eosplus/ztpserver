@@ -32,6 +32,8 @@ def main(attributes):
 
     SHORT_DESCRIPTION
 
+    This action is [NOT] dual-supervisor compatible.
+
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
@@ -39,11 +41,5 @@ def main(attributes):
        Special attributes:
            node: attributes.get('NODE')
                  API: see documentation
-
-    Returns:
-        RETURN CODES
-
-    Raises:
-        EXCEPTIONS
     '''
     print attributes
