@@ -52,10 +52,6 @@ if os.environ.get('READTHEDOCS'):
 
 CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
 INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
-#if os.environ.get('READTHEDOCS'):
-#    INSTALL_REQUIREMENTS = open('requirements-doc.txt').read().split('\n')
-#else:
-#    INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
 
 setup(
@@ -65,23 +61,23 @@ setup(
     author=__author__,
     author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
-    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.0.0',
+    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.1.0',
     license='BSD-3',
     install_requires=INSTALL_REQUIREMENTS,
     packages=PACKAGES,
     scripts=glob('bin/*'),
     data_files=[
-        (CONF_PATH, ['conf/ztpserver.conf']),
-        ('%s/bootstrap' % INSTALL_PATH, glob('client/bootstrap')),
-        ('%s/bootstrap' % INSTALL_PATH, glob('conf/bootstrap.conf')),
-        ('%s/actions' % INSTALL_PATH, glob('actions/*')),
         ('%s/nodes' % INSTALL_PATH, []),
         ('%s/definitions' % INSTALL_PATH, []),
         ('%s/files' % INSTALL_PATH, []),
         ('%s/resources' % INSTALL_PATH, []),
-        ('%s' % INSTALL_PATH, ['conf/neighbordb']),
+        (CONF_PATH, glob('conf/ztpserver.conf')),
+        ('%s/bootstrap' % INSTALL_PATH, glob('client/bootstrap')),
+        ('%s/bootstrap' % INSTALL_PATH, glob('conf/bootstrap.conf')),
+        ('%s/actions' % INSTALL_PATH, glob('actions/*')),
+        ('%s' % INSTALL_PATH, glob('conf/neighbordb')),
 
         # 4.12.x support
-        ('%s/files/lib' % INSTALL_PATH, ['client/lib/requests-2.3.0.tar.gz']),
+        ('%s/files/lib' % INSTALL_PATH, glob('client/lib/requests-2.3.0.tar.gz')),
     ]
 )
