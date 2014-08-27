@@ -596,9 +596,9 @@ class Pattern(object):
 
         for pattern in patterns:
             if pattern.is_positive_constraint():
-                log.warning('%s: pattern \'%s\' - interface pattern %s did '
-                            'not match any interface' % 
-                            (self.node_id, self.name, pattern))
+                log.debug('%s: pattern \'%s\' - interface pattern %s did '
+                          'not match any interface' % 
+                          (self.node_id, self.name, pattern))
                 return False
         return True
 

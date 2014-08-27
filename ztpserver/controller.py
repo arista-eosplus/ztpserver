@@ -207,22 +207,28 @@ class NodesController(BaseController):
 
     #-------------------------------------------------------------------
 
-    def put_config(self, *args, **kwargs):
-        log.debug('%s: node resource PUT request: \n%s\n' % 
-                  (kwargs['resource'], kwargs['request']))
+    def put_config(self, request, **kwargs):
+        log.debug('%s: startup-config PUT request: \n%s\n' % 
+                  (kwargs['resource'], request))
 
         response = dict()
+        fobj = None
         try:
-            body = str(kwargs['request'].body)
-            content_type = str(kwargs['request'].content_type)
+            body = str(request.body)
+            content_type = str(request.content_type)
             filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
-            log.debug('File not found: %s - adding it' % filename)
+            log.debug('%s: file not found: %s (adding it)' % 
+                      (kwargs['resource'], filename))
             fobj = self.repository.add_file(filename)
         finally:
-            fobj.write(body, content_type)
-
+            if fobj:
+                fobj.write(body, content_type)
+            else:
+                log.error('%s: unable to write %s' % 
+                          (kwargs['resource'], filename))
+                return self.http_bad_request()
         return response
 
     #-------------------------------------------------------------------
@@ -359,15 +365,16 @@ class NodesController(BaseController):
          # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
-            log.debug('%s: node matched no patterns in neighbordb' %
+            log.info('%s: node matched no patterns in neighbordb' %
                      node_id)
-            log.error('%s: unknown node' % node_id)
             return (self.http_bad_request(), None)
 
-        log.debug('%s: node matched %d pattern(s)' % 
+        log.debug('%s: %d pattern(s) in neihgbordb are a good match' %
                   (node_id, len(matches)))
         match = matches[0]
 
+        log.info('%s: node matched \'%s\' pattern in neighbordb' % 
+                 (node_id, match.name))
         try:
 
             definition_url = self.expand(match.definition, folder='definitions')
@@ -387,6 +394,9 @@ class NodesController(BaseController):
         definition_fn = self.expand(node_id, DEFINITION_FN)
         
         self.repository.add_folder(self.expand(node_id))
+
+        log.info('%s: new /nodes/%s folder created' % 
+                 (node_id, node_id))
 
         fobj = self.repository.add_file(definition_fn)
         fobj.write(definition, CONTENT_TYPE_YAML)
@@ -535,8 +545,8 @@ class NodesController(BaseController):
                 replace_config_action(kwargs['resource'],
                                                            STARTUP_CONFIG_FN))
         except FileObjectNotFound:
-            log.warning('%s: missing startup-config %s' % 
-                        (kwargs['resource'], filename))
+            log.debug('%s: no startup-config %s' % 
+                      (kwargs['resource'], filename))
 
         return (response, 'do_actions')
 
@@ -650,7 +660,7 @@ class NodesController(BaseController):
 
 class BootstrapController(BaseController):
 
-    DEFAULTCONFIG = {
+    DEFAULT_CONFIG = {
         'logging': list(),
         'xmpp': dict()
     }
@@ -663,16 +673,37 @@ class BootstrapController(BaseController):
     def config(self, request, **kwargs):
         ''' Handles GET /bootstrap/config '''
 
+        body = self.DEFAULT_CONFIG
+
         try:
             filename = self.expand(BOOTSTRAP_CONF)
-            body = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
+            config = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
+            if not config:
+                log.warning('Bootstrap config file empty')                
+            else:
+                if 'logging' in config:
+                    body['logging'] = config['logging']
+
+                if 'xmpp' in config:
+                    body['xmpp'] = config['xmpp'] 
+                    for key in ['username', 'password', 'domain']:
+                        if key not in body['xmpp']:
+                            log.warning('Bootstrap config: \'%s\' missing from '
+                                        'XMPP config' % key)
+                    if 'rooms' not in body['xmpp'] or \
+                       not body['xmpp']['rooms']:
+                        log.warning('Bootstrap config: no XMPP rooms '
+                                    'configured')
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectNotFound:
-            log.warning('Bootstrap config file not found - using defaults')
-            body = self.DEFAULTCONFIG
+            log.warning('Bootstrap config file not found')
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectError:
             log.error('Failed to read bootstrap config file (%s)' % filename)
+            resp = self.http_bad_request()
+        except Exception as exc:
+            log.error('Failed to load bootstrap config file (%s): %s' % 
+                      (filename, exc))
             resp = self.http_bad_request()
         return resp
 

@@ -371,6 +371,7 @@ class Node(object):
                  'serialnumber': <SERIAL_NUMBER>}
 
         '''
+
         result = {}
         info = self.api_enable_cmds(['show version'])[0]
 
@@ -385,7 +386,7 @@ class Node(object):
         '''Get neighbors.
 
         Returns:
-            dict: LLDP neighbors
+            dict: LLDP neighbor
 
             Format::
 
@@ -395,6 +396,7 @@ class Node(object):
                 ...}}
 
         '''
+
         result = {}
         info = self.api_enable_cmds(['show lldp neighbors'])[0]
         result['neighbors'] = {}
@@ -416,12 +418,12 @@ class Node(object):
 
             Format::
 
-              {'model':        <MODEL>,
-               'version':      <EOS_VERSION>,
-               'systemmac':    <SYSTEM_MAC>,
-               'serialnumber': <SERIAL_NUMBER>,
-               'neighbors':    <NEIGHBORS>        # see neighbors()
-              }
+                {'model':        <MODEL>,
+                 'version':      <EOS_VERSION>,
+                 'systemmac':    <SYSTEM_MAC>,
+                 'serialnumber': <SERIAL_NUMBER>,
+                 'neighbors':    <NEIGHBORS>        # see neighbors()
+                }
 
         '''
 
