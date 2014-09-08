@@ -118,7 +118,7 @@ def main(attributes):
         try:
             node.retrieve_url(src_url, dst_path)
             if mode is not None:
-                os.chmod(dst_path, int(mode, 8))
+                os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
             return 'Unable to retrieve file from URL (%s)' % exc
     else:
