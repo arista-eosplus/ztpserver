@@ -1,4 +1,6 @@
 include README.md INSTALL.md
 include requirements.txt
 recursive-include docs *
+recursive-include actions *
+recursive-include client *
 include Makefile
