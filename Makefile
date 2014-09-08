@@ -77,4 +77,4 @@ install:
 	$(PYTHON) setup.py install
 
 sdist: clean
-	$(PYTHON) setup.py sdist -t MANIFEST.in
+	$(PYTHON) setup.py sdist 
