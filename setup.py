@@ -72,6 +72,7 @@ setup(
         ('%s/files' % INSTALL_PATH, []),
         ('%s/resources' % INSTALL_PATH, []),
         (CONF_PATH, glob('conf/ztpserver.conf')),
+        (CONF_PATH, glob('conf/ztpserver.wsgi')),
         ('%s/bootstrap' % INSTALL_PATH, glob('client/bootstrap')),
         ('%s/bootstrap' % INSTALL_PATH, glob('conf/bootstrap.conf')),
         ('%s/actions' % INSTALL_PATH, glob('actions/*')),
