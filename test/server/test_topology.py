@@ -74,7 +74,10 @@ class NeighbordbUnitTests(unittest.TestCase):
             variables:
                 foo: bar
             patterns:
-                - any: any
+                - name: dummy pattern
+                  definition: dummy_definition
+                  interfaces:
+                    - any: any
         '''
         m_load.return_value = yaml.load(contents)
         result = load_neighbordb(random_string())
@@ -86,6 +89,7 @@ class NeighbordbUnitTests(unittest.TestCase):
         contents = """
             patterns:
                 - name: dummy pattern
+                  definition: dummy_definition
                   interfaces:
                     - any: any
         """
@@ -94,7 +98,9 @@ class NeighbordbUnitTests(unittest.TestCase):
         self.assertIsInstance(result, Neighbordb)
 
     def test_load_pattern_minimal(self):
-        pattern = load_pattern({'name': random_string()})
+        pattern = load_pattern({'name': random_string(),
+                                'definition': random_string(),
+                                'interfaces': []})
         self.assertIsInstance(pattern, Pattern)
 
     def test_load_pattern_with_interfaces(self):
@@ -102,6 +108,7 @@ class NeighbordbUnitTests(unittest.TestCase):
         contents = """
             name: test
             # Default pattern - always succeeds
+            definition: dummy_definition
             interfaces:
                 - any: any:any
         """

@@ -35,8 +35,6 @@ valid_patterns:
     - ok nodes order 22
     - ok nodes order 23
     - ok nodes order 24
-    - missing interfaces 2
-    - missing definition 2
   globals:
     - ok global order 1
     - ok global order 2
@@ -44,8 +42,6 @@ valid_patterns:
     - ok global order 4
     - ok global order 5
     - ok global order 6
-    - missing interfaces 1
-    - missing definition 1
 
 neighbordb:
 
