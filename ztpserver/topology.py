@@ -120,6 +120,12 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
             pattern = load_file(pattern, content_type,
                                 node_id)
 
+        # add dummy values to pass validation
+        if 'definition' not in pattern:
+            pattern['definition'] = 'definition'
+        if 'name' not in pattern:
+            pattern['name'] = 'name'
+
         if not validate_pattern(pattern, node_id):
             log.error('%s: failed to validate pattern attributes' % node_id)
             return None
