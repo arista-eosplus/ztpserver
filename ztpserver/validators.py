@@ -39,8 +39,8 @@ import collections
 
 from ztpserver.utils import expand_range, parse_interface
 
-REQUIRED_PATTERN_ATTRIBUTES = ['name']
-OPTIONAL_PATTERN_ATTRIBUTES = ['definition', 'interfaces', 'node', 'variables']
+REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition', 'interfaces']
+OPTIONAL_PATTERN_ATTRIBUTES = ['node', 'variables']
 INTERFACE_PATTERN_KEYWORDS = ['any', 'none']
 ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
 VALID_INTERFACE_RE = re.compile(r'^Ethernet[1-9]\d*(?:\/\d+){0,2}$')
@@ -83,6 +83,7 @@ class Validator(object):
         else:
             self.data = dict()
 
+        error = None
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name in methods:
             if name[0].startswith('validate_'):
@@ -97,7 +98,11 @@ class Validator(object):
                 try:
                     getattr(self, name[0])()
                 except ValidationError as err:
-                    self.error(err)
+                    if not error:
+                        error = err
+        if error:
+            self.error(err)
+
         return not self.fail
 
     def error(self, err, *args, **kwargs):
@@ -140,12 +145,12 @@ class NeighbordbValidator(Validator):
                          (self.node_id, name, entry))
                 self.valid_patterns.add((index, name))
             else:
-                if name:
+                if not name:
                     name = 'N/A'
                 log.debug('%s: adding pattern \'%s\' (%s) to '
                           'invalid patterns' % 
                          (self.node_id, name, entry))
-                self.invalid_patterns.add((index, str(name)))
+                self.invalid_patterns.add((index, name))
         
         if self.invalid_patterns:
             raise ValidationError('invalid patterns: %s' % 
