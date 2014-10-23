@@ -61,6 +61,7 @@ SERVER = '$SERVER'
 
 LOGGING_FACILITY = 'ztpbootstrap'
 SYSLOG = '/dev/log'
+DEFAULT_SYSLOG_PORT = 514
 
 CONTENT_TYPE_PYTHON = 'text/x-python'
 CONTENT_TYPE_HTML = 'text/html'
@@ -107,6 +108,10 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
     xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
+#---------------------------------XMPP------------------------
+# Uncomment this section in order to enable syslog debug logging
+logging.raiseExceptions = False
+#---------------------------------XMPP------------------------
 
 # ------------------Utilities----------------------------
 def _exit(code):
@@ -572,8 +577,9 @@ class SyslogManager(object):
                                                     int(match.groups()[ 1 ]),
                                                     entry['level'])
                 else:
-                    log('SyslogManager: Unable to create syslog handler for'
-                        ' %s' % str(entry), error=True)
+                    self._add_remote_syslog_handler(entry['destination'],
+                                                    DEFAULT_SYSLOG_PORT,
+                                                    entry['level'])
 
 
 class Server(object):
