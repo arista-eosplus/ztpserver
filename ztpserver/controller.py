@@ -29,7 +29,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=W0622,W0402,W0613,W0142,R0201, E1103
+# pylint: disable=W0622,W0402,W0613,W0142,R0201,E1103,W0150
 #
 
 import logging
@@ -403,10 +403,18 @@ class NodesController(BaseController):
         
         pattern_fn = self.expand(node_id, PATTERN_FN)
         fobj = self.repository.add_file(pattern_fn)
-        fobj.write(match.serialize(), CONTENT_TYPE_YAML)
-        
-        response['status'] = HTTP_STATUS_CREATED
 
+        pattern = match.serialize()
+
+        # No need to write the definition name in the apttern file
+        del pattern['definition']
+
+        for attr in ['node', 'variables']:
+            if not pattern[attr]:
+                del pattern[attr]
+
+        fobj.write(pattern, CONTENT_TYPE_YAML)
+        response['status'] = HTTP_STATUS_CREATED
         return (response, 'dump_node')
 
     def dump_node(self, response, *args, **kwargs):

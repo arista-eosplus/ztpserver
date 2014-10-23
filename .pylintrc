@@ -32,12 +32,18 @@ include-ids=yes
 # Tells wether to display a full report or only the messages
 reports=no
 
+[FORMAT]
+max-module-lines=2000
+
 [DESIGN]
+# Maximum number of locals for function / method body
+max-locals=20
 
 # Maximum number of return / yield for function / method body
 max-returns=20
 
 # Maximum number of branch for function / method body
+# pylint bug
 max-branchs=30
 
 # Maximum number of statements in function / method body

@@ -84,9 +84,10 @@ def raise_exception(exception):
     #pylint: disable=C0301, C0321
 
     # Uncomment the following line for debugging
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
 
-    raise exception, 'Uncomment line in client_tes_lib.py:raise exception for debugging'
+    raise Exception('%s\nUncomment line in client_tes_lib.py:raise_'
+                    'exception for debugging' % exception.message)
 
 ztps = None    #pylint: disable=C0103
 def start_ztp_server():
@@ -375,7 +376,8 @@ class Bootstrap(object):
         return self.eapi_configured() and self.node_information_collected()
 
     def server_connection_failure(self):
-        return 'server connection error' in self.output and \
+        return ('server connection error' in self.output or
+                'Read timed out' in self.output) and \
                self.return_code
 
     def eapi_failure(self):

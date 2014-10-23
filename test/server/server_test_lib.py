@@ -41,6 +41,7 @@ import string        #pylint: disable=W0402
 
 import yaml
 
+from mock import Mock
 from ztpserver.app import enable_handler_console
 
 WORKINGDIR = '/tmp/ztpserver'
@@ -183,6 +184,29 @@ class NodeDict(SerializerMixin):
 
 def create_node():
     return NodeDict()
+
+def mock_match(node=None, definition=None,
+               variables=None,
+               name=None,
+               interfaces=None):
+    if not definition:
+        definition = random_string()
+    if not variables:
+        variables = {}
+    if not interfaces:
+        interfaces = []
+    if not name:
+        name = random_string()
+
+    match = Mock()
+    match.serialize.return_value = {
+        'node': node,
+        'definition': definition,
+        'variables': variables, 
+        'name': name, 
+        'interfaces': interfaces}
+
+    return match
 
 class BootstrapConf(SerializerMixin):
     def __init__(self, **kwargs):

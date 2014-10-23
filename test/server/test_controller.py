@@ -50,7 +50,7 @@ from ztpserver.controller import DEFINITION_FN, PATTERN_FN
 from ztpserver.repository import FileObjectNotFound, FileObjectError
 
 from server_test_lib import enable_logging, remove_all, random_string
-from server_test_lib import ztp_headers, write_file
+from server_test_lib import mock_match, ztp_headers, write_file
 from server_test_lib import create_definition, create_attributes, create_node
 from server_test_lib import create_bootstrap_conf
 
@@ -632,8 +632,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
 
-        m_load_neighbordb.return_value.match_node.return_value = [Mock()]
-
+        m_load_neighbordb.return_value.match_node.return_value = [mock_match()]
         controller = ztpserver.controller.NodesController()
 
         (resp, state) = controller.post_node(dict(), request=request, node=node,
@@ -648,9 +647,9 @@ class NodesControllerUnitTests(unittest.TestCase):
         request = Mock(json=dict(neighbors=dict()))
         node = Mock(serialnumber=random_string())
 
-        m_load_neighbordb.return_value.match_node.return_value = [Mock(),
-                                                                  Mock(),
-                                                                  Mock()]
+        m_load_neighbordb.return_value.match_node.return_value = [mock_match(),
+                                                                  mock_match(),
+                                                                  mock_match()]
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_node(dict(), request=request, node=node,
@@ -937,7 +936,9 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         cfg = {'return_value.exists.return_value': False}
         m_repository.configure_mock(**cfg)
 
-        cfg = {'return_value.match_node.return_value': [Mock()]}
+        pattern_name = random_string()
+        cfg = {'return_value.match_node.return_value': 
+               [mock_match(name=pattern_name)]}
         m_load_neighbordb.configure_mock(**cfg)
 
         request = Request.blank('/nodes', body=node.as_json(), method='POST',
@@ -950,6 +951,13 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
         for arg in args_list:
             m_repository.return_value.add_file.assert_any_call(arg)
+
+        write_mock = m_repository.return_value.add_file.return_value.write
+        # 'definition' is not written to the pattern file
+        # Empty 'variables', 'node' are not written to the 
+        # pattern file either
+        self.assertEqual(sorted(write_mock.call_args[0][0].keys()),
+                         ['interfaces', 'name'])
 
         location = 'http://localhost/nodes/%s' % node.serialnumber
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_CREATED)
