@@ -439,6 +439,22 @@ This cache is used to validate the node’s neighbors against the
 ``pattern`` file, if topology validation is enabled (during the GET
 request the node makes in order to retrieve its definition).
 
+Example .node file:
+
+.. code-block:: json
+
+    {"neighbors": {"Management1": [{"device": "ztps.ztps-test.com",
+                                    "port": "0050.569b.9ba5"}
+                                  ],
+                   "Ethernet2": [{"device": "veos-dc1-pod1-spine1",
+                                    "port": "0050.569a.9321"}
+                                ]
+                  },
+     "model": "vEOS",
+     "version": "4.13.7M",
+     "systemmac": "005056b863ac"
+    }
+
 Attributes file
 ^^^^^^^^^^^^^^^
 
@@ -558,8 +574,8 @@ This will result in the following configuration being added to the
 Note that in each of the examples, above, the template files are
 just standard EOS configuration blocks.
 
-Resources
-~~~~~~~~~
+Other Files
+~~~~~~~~~~~
 
 ``[data_root]/files/`` contains the files that actions might request
 from the server. For example, ``[data_root]/files/images/`` could contain
@@ -583,6 +599,11 @@ The resource pools provide a way to dynamically allocate a resource to a
 node when the node definition is created. The resource pools are
 key/value YAML files that contain a set of resources to be allocated to
 a node (whenever the allocate(...) function is used in the definition).
+
+.. code-block:: console
+
+    <value1>: <"null"|node_identifier>
+    <value2>: <"null"|node_identifier>
 
 In the example below, a resource pool contains a series of 8 IP
 addresses to be allocated. Entries which are not yet allocated to a node
