@@ -675,7 +675,7 @@ definition will be automatically generated for the node.
 
 .. note::
 
-    Itemsmarked wiht \* are mandatory elements. Everything else is optional.
+    Items marked with \* are mandatory elements. Everything else is optional.
 
 variables
 ^^^^^^^^^
