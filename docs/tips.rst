@@ -10,7 +10,17 @@ Script
 ^^^^^^
 
 Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code and execute:
-    ``/utils/refresh_ztps``
+    ``./utils/refresh_ztps [-b <branch>] [-f <path>]``
+
+    * <branch> can be any branch name in the Git repo.   Typically this will be one of:
+
+        * "master" - for the latest release version
+        * "vX.Y.Z-rc" - for beta testing the next X.Y.Z release-candidate
+        * "develop" (DEFAULT) - for the latest bleeding-edge development branch
+
+    * <path> is the "base directory of the ztpserver installation.
+
+        * /usr/share/ztpserver (DEFAULT)
 
 Manually
 ^^^^^^^^
@@ -26,7 +36,7 @@ Remove the existing ZTPS files:
     rm -rf /home/ztpuser/ztpserver/ztpserver.egg-info/
     rm -rf /home/ztpuser/ztpserver/build/*
 
-Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code, build an install it:
+Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code, build and install it:
 
 .. code-block:: console
 
