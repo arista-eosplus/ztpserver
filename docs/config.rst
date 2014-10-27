@@ -497,6 +497,12 @@ the corresponding Python file.
 
 Additional details on each action are available in the :doc:`actions` module docs.
 
+.. note:: While the URL attribute MAY be a full URL to another server, that server MUST be capable of returning the same meta-data which ZTPServer returns.   Presently this is an application/json encoded response with the "size" and "sha1" hash of the file available from the following paths:
+
+    * /meta/actions/<name>
+    * /meta/files/<name>
+
+
 e.g.
 
 Assume that we have a block of configuration that adds a list of
