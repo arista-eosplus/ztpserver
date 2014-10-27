@@ -16,21 +16,30 @@ Apache (mod_wsgi)
 
 If using Apache, this section provides instructions for setting up ZTPServer using mod_wsgi. This section assumes the reader is familiar with Apache and has already installed mod_wsgi. For details on how to install mod_wsgi, please see the `modwsgi Quick Installation Guide <https://code.google.com/p/modwsgi/wiki/QuickInstallationGuide>`_.
 
-To enable ZTPServer for an Apache server, we need to add the following WSGI configuration (example)
+To enable ZTPServer for an Apache server, we need to add the following WSGI configuration to the Apache config.  A good location might be to create ``/etc/httpd/conf.d/ztpserver.conf``:
 
 .. code-block:: apacheconf
 
-    LoadModule wsgi_module modules/mod_wsgi.so
+    <VirtualHost *:8080>
+        LoadModule wsgi_module modules/mod_wsgi.so
 
-    WSGIDaemonProcess ztpserver user=www-data group=www-data threads=5
-    WSGIScriptAlias / /etc/ztpserver/ztpserver.wsgi
-    
-    <Directory /ztpserver>
-        WSGIProcessGroup ztpserver
-        WSGIApplicationGroup %{GLOBAL}
-        Order deny,allow
-        Allow from all
-    </Directory>
+        WSGIDaemonProcess ztpserver user=www-data group=www-data threads=50
+        WSGIScriptAlias / /etc/ztpserver/ztpserver.wsgi
+        # Required for RHEL
+        #WSGISocketPrefix /var/run/wsgi
+
+        <Location />
+            WSGIProcessGroup ztpserver
+            WSGIApplicationGroup %{GLOBAL}
+
+            # For Apache <= 2.2, use Order and Allow
+            Order deny,allow
+            Allow from all
+            # For Apache >= 2.4, Allow is replaced by Require
+            Require all granted
+        </Location>
+    </VirtualHost>
+
 
 
 WSGIScriptAlias should point to the ztpserver.wsgi file which is installed by default under /etc/ztpserver. The ``<Directory /ztpserver>`` tag assigns the path prefix for the ZTPServer url. The ZTPServer configuration must be updated to include the URL path prefix (``/ztpserver`` in this example).
