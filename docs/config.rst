@@ -477,7 +477,8 @@ the corresponding Python file.
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | Action                    | Description                                               | Required Attributes                    |
 +===========================+===========================================================+========================================+
-| :mod:`add_config` *       | Adds a section of config to the final startup-config file | url                                    |
+| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url                                    |
+|                           | file                                                      |                                        |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
@@ -496,13 +497,9 @@ the corresponding Python file.
 
 Additional details on each action are available in the :doc:`actions` module docs.
 
-.. note::
-
-    * The 'add_config' action supports applying block of EOS configuration commands to a node’s startup-config.
-
 e.g.
 
-Let’s assume that we have a block of configuration that adds a list of
+Assume that we have a block of configuration that adds a list of
 NTP servers to the startup configuration. The action would be
 constructed as such:
 
@@ -514,8 +511,8 @@ constructed as such:
           attributes:
             url: /files/templates/ntp.template
 
-The above action would reference the ``ntp.template`` file which would
-configure NTP. The template file could look like the one from below:
+The above action would reference the ``ntp.template`` file which would contain configuration commands to
+configure NTP. The template file could look like the following:
 
 .. code-block:: console
 
