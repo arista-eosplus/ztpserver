@@ -9,7 +9,7 @@ How do I update my local copy of ZTPServer from GitHub?
 Script
 ^^^^^^
 
-Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code and execute:
+Go to the ZTPServer directory where you previously cloned the GitHub repository in order to pull the latest code and execute:
     ``./utils/refresh_ztps [-b <branch>] [-f <path>]``
 
     * <branch> can be any branch name in the Git repo.   Typically this will be one of:
@@ -25,7 +25,7 @@ Go to the ZTPS directory where you previously cloned the GitHub repository in or
 Manually
 ^^^^^^^^
 
-Remove the existing ZTPS files:
+Remove the existing ZTPServer files:
 
 .. code-block:: console
 
@@ -36,7 +36,7 @@ Remove the existing ZTPS files:
     rm -rf /home/ztpuser/ztpserver/ztpserver.egg-info/
     rm -rf /home/ztpuser/ztpserver/build/*
 
-Go to the ZTPS directory where you previously cloned the GitHub repository in order to pull the latest code, build and install it:
+Go to the ZTPServer directory where you previously cloned the GitHub repository in order to pull the latest code, build and install it:
 
 .. code-block:: console
 
@@ -56,15 +56,26 @@ Did you know?
 
 Check out `YAML syntax checker <http://yamllint.com/>`_ for more.
 
-How can I test ZTPS without having to reboot the switch every time?
+How do I disable / enable ZTP mode on a switch
+``````````````````````````````````````````````
+
+By default, any switch that does not have a ``startup-config`` will enter ZTP mode to attempt to retrieve one. (EOS 3.7 or later for fixed, EOS 4.10 or later for modular switches)  In ZTP mode, the switch sends out DHCP requests on all interfaces and **will not forward traffic** until reloaded out of ATP mode.
+
+To cancel ZTP mode in order to manually login and configure a switch, login as admin and type ``zerotouch cancel``.  **This will trigger an immediate reload** of the switch, after which it will be ready to configure manually.   At this point, if you ever erase the startup-config and reload, ZTP will attempt to retrieve a configuration, again.
+
+To completely disable ZTP, during ztp, login as admin and type ``zerotouch disable``.  **This will trigger an immediate reload** of the switch.  Afterward the switch will boot with an empty startup-config.  If you wish to re-enable ZTP, go to configure mode and add ``Arista(config)#zerotouch enable``.  The next time you erase the startup-config and reload the switch, ZTP will attempt to configure it for you.
+
+.. note: vEOS instances come with a, minimal, startup-config so they do not boot in to ZTP mode by default.   In order to use vEOS to test ZTP, enter ``erase startup-config`` and reload.
+
+How can I test ZTPServer without having to reboot the switch every time?
 ````````````````````````````````````````````````````````````````````
 
-From a bash shell:
+From a bash shell on the switch:
 
 .. code-block:: console
 
     # retrieve the bootstrap file from server
-    wget (http://<ZTPS_SERVER>:<PORT>/bootstrap
+    wget http://<ZTP_SERVER>:<PORT>/bootstrap
     # make file executable
     sudo chmod 777 bootstrap
     # execute file
