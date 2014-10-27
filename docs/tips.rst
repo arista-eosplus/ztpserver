@@ -84,7 +84,7 @@ From a bash shell on the switch:
 How do I override the default system-mac in vEOS?
 ``````````````````````````````````````````````````
 
-Add the desired MAC address to the first line of the file /mnt/flash/system_mac_address, then reboot
+Add the desired MAC address to the first line of the file /mnt/flash/system_mac_address, then reboot (Feature added in 3.13.0F)
 
 .. code-block:: console
 
