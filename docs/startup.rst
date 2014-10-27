@@ -5,36 +5,11 @@ Startup
 
 **HTTP Server Deployment Options**
 
-ZTPServer is a Python WSGI compliant application that can be deployed behind any WSGI web server or run as a standalone application.  This section provides details for configuring ZTPServer to run under various WSGI compliant web servers.  By default, ZTPServer ships with a single-threaded server that is sufficient for testing.      
+ZTPServer is a Python WSGI compliant application that can be deployed behind any WSGI web server or run as a standalone application.  This section provides details for configuring ZTPServer to run under various WSGI compliant web servers.
 
-Standalone server
-`````````````````
+After initial startup, any change to ``ztpserver.conf`` will require a server restart.   However, all other files are read as-needed, therefore no server restart is required to pick up changes in definitions, neighbordb, resources, etc.
 
-To start the standalone ZTPServer, exec the ztps binary
-
-.. code-block:: console
-
-    [root@ztpserver ztpserver]# ztps
-    INFO: [app:115] Logging started for ztpserver
-    INFO: [app:116] Using repository /usr/share/ztpserver
-    Starting server on http://<ip_address>:<port>
-
-
-The following options may be specified when starting the ztps binary:
-
-.. code-block:: console
-
-    -h, --help            show this help message and exit
-    --version, -v         Displays the version information
-    --conf CONF, -c CONF  Specifies the configuration file to use
-    --validate FILENAME   Runs a validation check on neighbordb
-    --debug               Enables debug output to the STDOUT
-
-When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
-
-.. note:
-
-  All other files including neighbordb and other files are loaded on-access meaning that ZTPServer does NOT require a restart to pick up changes to node / pattern configurations, etc.  However, a restart IS required to pickup changes to ztpserver.conf.
+.. note:: The ``ztps`` standalone server executable is for demo and debugging use, ONLY.   It is not recommended for production use.
 
 Apache (mod_wsgi)
 `````````````````
@@ -69,4 +44,31 @@ where /ztpserver is the same name as the directory entry configured above.  Once
 ``curl http://1921.68.1.34/ztpserver/bootstrap``
 
 If everything is configured properly, curl should be able to retrieve the bootstrap script. If there is a problem, all of the ZTPServer log messages should be available under the Apache server error logs.
+
+Standalone debug server
+```````````````````````
+
+.. note:: ZTPServer ships with a single-threaded server that is sufficient for testing or demonstration, only.  It is not recommended for use with more than 10 nodes.
+
+To start the standalone ZTPServer, exec the ztps binary
+
+.. code-block:: console
+
+    [root@ztpserver ztpserver]# ztps
+    INFO: [app:115] Logging started for ztpserver
+    INFO: [app:116] Using repository /usr/share/ztpserver
+    Starting server on http://<ip_address>:<port>
+
+
+The following options may be specified when starting the ztps binary:
+
+.. code-block:: console
+
+    -h, --help            show this help message and exit
+    --version, -v         Displays the version information
+    --conf CONF, -c CONF  Specifies the configuration file to use
+    --validate FILENAME   Runs a validation check on neighbordb
+    --debug               Enables debug output to the STDOUT
+
+When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
 
