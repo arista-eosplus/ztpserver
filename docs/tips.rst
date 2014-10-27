@@ -68,7 +68,7 @@ To completely disable ZTP, during ztp, login as admin and type ``zerotouch disab
 .. note: vEOS instances come with a, minimal, startup-config so they do not boot in to ZTP mode by default.   In order to use vEOS to test ZTP, enter ``erase startup-config`` and reload.
 
 How can I test ZTPServer without having to reboot the switch every time?
-````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
 
 From a bash shell on the switch:
 
