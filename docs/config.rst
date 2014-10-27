@@ -656,23 +656,27 @@ definition will be automatically generated for the node.
     variables:
         variable_name: function
     ...
-    patterns*:
-        - name*: <single line description of pattern>
-          definition*: <defintion_url>
+    patterns:
+        - name: <single line description of pattern>
+          definition: <defintion_url>
           node: <unique_id>
           variables:
             <variable_name>: <function>
-          interfaces*:
-            - <port_name>*: <system_name>*:<neighbor_port_name>:<tags>
-            - <port_name>*:
-                device*: <system_name>*
+          interfaces:
+            - <port_name>: <system_name>:<neighbor_port_name>:<tags>
+            - <port_name>:
+                device: <system_name>
                 port: <neighbor_port_name>
                 tags: <comma delimited tags list>
     ...
 
 .. note::
 
-    Items marked with \* are mandatory elements. Everything else is optional.
+    Mandatory items include: name, definition, and interface.
+
+    Optional items include: node and variables
+
+    Interfaces array items MUST include the port_name
 
 variables
 ^^^^^^^^^
