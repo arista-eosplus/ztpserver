@@ -48,7 +48,7 @@ clean:
 
 sdist:
 	mkdir -p dist/
-	tar --directory=.. -czf dist/${PACKAGE}.tgz ${PACKAGE} --exclude=dist --exclude=rpm-build --exclude=rpms
+	tar --directory=../.. -czf dist/${PACKAGE}.tgz ${PACKAGE} --exclude=rpm
 	cp ${HTTPDCONF} dist/${HTTPDCONF}
 	@sed -i.bak 's/^Version:.*/Version: $(SPECVERSION)/g' $(RPMSPEC)
 	@sed -i.bak 's/^Release:.*/Release: $(RPMRELEASE)%{?dist}/g' $(RPMSPEC)
