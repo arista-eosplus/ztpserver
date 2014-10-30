@@ -19,10 +19,10 @@ RPMSPEC = $(RPMSPECDIR)/$(PACKAGE).spec
 HTTPDCONF = $(RPMSPECDIR)/$(PACKAGE)-wsgi.conf
 
 # VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat ../VERSION)
 
 # Spec files cannot contain extraneous strings - so just extract numbered release
-SPECVERSION := $(shell sed -n 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/p' VERSION)
+SPECVERSION := $(shell sed -n 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/p' ../VERSION)
 RPMRELEASE = 1
 
 

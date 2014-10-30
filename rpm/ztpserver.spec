@@ -1,8 +1,6 @@
 #################################
 # Application specific settings #
 #################################
-%define app_name    ztpserver
-%define app_version 1.2.0
 %define app_summary "Arista Zero Touch Provisioning Server for Arista EOS Devices."
 %define app_virtualenv_dir  opt/ztpsrv_env
 %define app_user    ztpserver
@@ -12,9 +10,9 @@
 %define app_url      https://github.com/arista-eosplus/ztpserver.git
 %define httpd_dir    opt/rh/httpd24/root/etc/httpd/conf.d
 
-Name:    %{app_name}
-Version: %{app_version}
-Release: 1%{?dist}
+Name:    ztpserver
+Version: UPDATED BY SED
+Release: UPDATED BY SED
 Summary: %{app_summary}
 
 Group:    Network
