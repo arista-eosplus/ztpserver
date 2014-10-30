@@ -1,7 +1,7 @@
 #!/usr/bin/make
 # WARN: gmake syntax
 ########################################################
-# Makefile for simApi extension
+# Makefile for ZTPServer
 #
 # useful targets:
 #   make clean ----- cleans distutils
