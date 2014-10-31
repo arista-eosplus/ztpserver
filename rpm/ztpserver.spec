@@ -65,7 +65,6 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
-%setup -q -c -n %{name}-%{version}
 
 %if 0%{?rhel} == 6
 ## Prepare virtualenv w/ python27 for build of ztpserver source
@@ -74,6 +73,8 @@ source /opt/rh/python27/enable
 virtualenv-2.7 -v --system-site-packages %{app_virtualenv_dir}
 source %{app_virtualenv_dir}/bin/activate
 %endif
+
+%setup -q -c -n %{name}-%{version}
 
 pip install setuptools --upgrade
 
