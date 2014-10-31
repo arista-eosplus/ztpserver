@@ -32,13 +32,25 @@ AutoReqProv: no
 BuildRequires: python-pip
 
 %if 0%{?rhel} == 6
+BuildRequires: python27
+BuildRequires: python-virtualenv
+BuildRequires: python27-python-virtualenv
+%else
+BuildRequires: python >= 2.7
+BuildRequires: python < 3
+BuildRequires: python-virtualenv
+%endif
+
+%if 0%{?rhel} == 6
 Requires: python27
+Requires: python-virtualenv
 Requires: python27-python-virtualenv
 Requires: httpd27
 Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
 Requires: python < 3
+Requires: python-virtualenv
 Requires: httpd
 Requires: mod_wsgi
 %endif
