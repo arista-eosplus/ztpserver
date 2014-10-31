@@ -13,7 +13,7 @@
 
 SHELL = /bin/sh
 
-PACKAGE = "ztpserver"
+PACKAGE = ztpserver
 RPMSPECDIR = .
 RPMSPEC = $(RPMSPECDIR)/$(PACKAGE).spec
 HTTPDCONF = $(RPMSPECDIR)/$(PACKAGE)-wsgi.conf
