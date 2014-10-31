@@ -33,7 +33,6 @@ BuildRequires: python-pip
 
 %if 0%{?rhel} == 6
 Requires: python27
-Requires: python27-python-devel
 Requires: python27-python-virtualenv
 Requires: httpd27
 Requires: python27-mod_wsgi
