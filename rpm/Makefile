@@ -33,7 +33,7 @@ RPMBUILD = rpmbuild --define "_topdir %(pwd)/rpm-build" \
         --define "_builddir %{_topdir}" \
         --define "_rpmdir %(pwd)/rpms" \
         --define "_srcrpmdir %{_rpmdir}" \
-        --define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}%%{?dist}.rpm" \
+        --define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.rpm" \
         --define "_sourcedir  %(pwd)/dist/"
 
 ########################################################

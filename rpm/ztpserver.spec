@@ -1,31 +1,48 @@
 #################################
 # Application specific settings #
 #################################
-%define app_summary "Arista Zero Touch Provisioning Server for Arista EOS Devices."
-%define app_virtualenv_dir  opt/ztpsrv_env
-%define app_user    ztpserver
-
-#### This part is used to directly fetch sources from within the build section 
-#### (handled externally when built w/ jenkins):
-%define app_url      https://github.com/arista-eosplus/ztpserver.git
-%define httpd_dir    opt/rh/httpd24/root/etc/httpd/conf.d
+%define app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
+%define app_user            ztpserver
+%if 0%{?rhel} == 6
+%define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
+%define app_virtualenv_dir  /opt/ztpsrv_env
+%define ztps_bin            /bin
+%global python2_sitelib     /lib/python2.7/site-packages
+%global python2_sitearch    /lib64/python2.7/site-packages
+%else
+%define httpd_dir           /etc/httpd/conf.d
+%define app_virtualenv_dir  /
+%define ztps_bin            /usr/bin
+%endif
 
 Name:    ztpserver
-Version: UPDATED BY SED
-Release: UPDATED BY SED
+Version: 1.2.0
+Release: 1%{?dist}
 Summary: %{app_summary}
 
 Group:    Network
-License:  NonPublic
+License:  BSD-3
 URL:      %{app_url}
-#Source0: %{name}.init
+Source0:  %{name}.tgz
 Source1:  %{name}-wsgi.conf
 
 ### Don't allow rpmbuild to modify dependencies 
 AutoReqProv: no
 
-BuildRequires: python-virtualenv, python27, python27-python-virtualenv, mock, git
-Requires: python-virtualenv, python27, python27-python-virtualenv, dhcp, httpd24, python27-mod_wsgi
+BuildRequires: python-pip
+
+%if 0%{?rhel} == 6
+Requires: python27
+Requires: python27-python-devel
+Requires: python27-python-virtualenv
+Requires: httpd27
+Requires: python27-mod_wsgi
+%else
+Requires: python >= 2.7
+Requires: python < 3
+Requires: httpd
+Requires: mod_wsgi
+%endif
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-%{id -un}
 
@@ -49,69 +66,63 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
-%setup -q -c -T -n %{name}-%{version}-%{release}
+%setup -q -c -n %{name}-%{version}
 
-# prepare virtualenv w/ python27 for build of ztpserver source
+%if 0%{?rhel} == 6
+## Prepare virtualenv w/ python27 for build of ztpserver source
 export X_SCLS=python27
 source /opt/rh/python27/enable
 virtualenv-2.7 -v --system-site-packages %{app_virtualenv_dir}
 source %{app_virtualenv_dir}/bin/activate
+%endif
 
-cd %{app_virtualenv_dir}
 pip install setuptools --upgrade
-git clone %{app_url} ztpserver-gitsrc
-cd ztpserver-gitsrc
-
-### For testing purposes just checkout develop
-#git checkout v%{version}
-git checkout develop
-
 
 #%build
+cd ztpserver
 python setup.py build
 
-
 %install
-# export virtualenv vars again and activate it (apparently \install macro has its own shell/env):
+
+%if 0%{?rhel} == 6
+## Export virtualenv vars again and activate it (apparently \install macro has its own shell/env):
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source %{app_virtualenv_dir}/bin/activate
-cd %{app_virtualenv_dir}/ztpserver-gitsrc
-python setup.py install
+%endif
+
+cd ztpserver
+python setup.py install --root=$RPM_BUILD_ROOT
 
 # clean-up gitsrc dir after install:
 cd ..
-rm -rf ztpserver-gitsrc
+rm -rf ztpserver
 
 # install everything into RPM_BUILD_ROOT:
-cd $RPM_BUILD_DIR/%{name}-%{version}-%{release}
-mkdir -p $RPM_BUILD_ROOT/{usr/share,etc}
-mkdir -p $RPM_BUILD_ROOT/%{app_virtualenv_dir}
-cp -rp %{app_virtualenv_dir}/* $RPM_BUILD_ROOT/%{app_virtualenv_dir}/
-mkdir -p $RPM_BUILD_ROOT/%{httpd_dir}
-cp -rp %{SOURCE1} $RPM_BUILD_ROOT/%{httpd_dir}/%{name}-wsgi.conf
-
-# fix shebangs before packaging the files:
-grep -sHE '^#!/builddir/build/BUILD/%{name}-%{version}-%{release}/%{app_virtualenv_dir}/bin/python' $RPM_BUILD_ROOT/%{app_virtualenv_dir}/bin/* -r | awk -F: '{ print $1 }' | uniq | while read line; do sed -i 's@^#\!/builddir/build/BUILD/%{name}-%{version}-%{release}/%{app_virtualenv_dir}/bin/python@#\!/%{app_virtualenv_dir}/bin/python@' $line; done
-
-grep -sHE '^VIRTUAL_ENV=\"/builddir/build/BUILD/%{name}-%{version}-%{release}/%{app_virtualenv_dir}\"' $RPM_BUILD_ROOT/%{app_virtualenv_dir}/bin/* -r | awk -F: '{ print $1 }' | uniq | while read line; do sed -i 's@^VIRTUAL_ENV=\"/builddir/build/BUILD/%{name}-%{version}-%{release}/%{app_virtualenv_dir}\"@VIRTUAL_ENV=\"/%{app_virtualenv_dir}\"@' $line; done
-
+mkdir -p $RPM_BUILD_ROOT%{httpd_dir}
+cp -rp %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
+%if 0%{?rhel} == 6
 getent passwd %{app_user} > /dev/null || \
   useradd -m -g %{app_user} -d /%{app_virtualenv_dir} -s /bin/bash \
   -c "%{name} - Server" %{app_user}
-
+%else
+getent passwd %{app_user} > /dev/null || \
+  useradd -m -g %{app_user} -s /bin/bash \
+  -c "%{name} - Server" %{app_user}
+%endif
 
 %posttrans
 
 
 %post
-ln -s /%{app_virtualenv_dir}/usr/share/ztpserver /usr/share/
-ln -s /%{app_virtualenv_dir}/etc/ztpserver /etc/
-chcon -Rv --type=httpd_sys_content_t /%{app_virtualenv_dir}/usr/share/ztpserver
-#/sbin/service httpd24-httpd restart
+%if 0%{?rhel} == 6
+ln -s %{app_virtualenv_dir}/usr/share/ztpserver /usr/share/
+ln -s %{app_virtualenv_dir}/etc/ztpserver /etc/
+%endif
+chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -133,10 +144,13 @@ rm /etc/ztpserver
 %files
 # all the files to be included in this RPM:
 %defattr(-,root,root,)
-%config(noreplace) /%{app_virtualenv_dir}/etc/ztpserver/ztpserver.conf
-#%attr(0755,root,root) %{_initddir}/%{name}
-%attr(0755,%{name},root) /%{app_virtualenv_dir}
-%attr(0755,%{name},root) /%{httpd_dir}/%{name}-wsgi.conf
+%{app_virtualenv_dir}%{python2_sitelib}/ztpserver/*
+%{app_virtualenv_dir}%{python2_sitelib}/%{name}-%{version}*.egg-info
+%{app_virtualenv_dir}%{ztps_bin}/ztps
+%config(noreplace) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.conf
+%attr(0755,%{app_user},root) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.wsgi
+%attr(0755,%{app_user},root) %{app_virtualenv_dir}/usr/share/ztpserver/*
+%attr(0755,%{app_user},root) %{httpd_dir}/%{name}-wsgi.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
