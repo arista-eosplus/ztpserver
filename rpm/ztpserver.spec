@@ -109,7 +109,7 @@ getent passwd %{app_user} > /dev/null || \
   -c "%{name} - Server" %{app_user}
 %else
 getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -s /bin/bash \
+  useradd -m -g %{app_user} -d /home/%{app_user}-s /bin/bash \
   -c "%{name} - Server" %{app_user}
 %endif
 
