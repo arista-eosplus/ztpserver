@@ -164,7 +164,7 @@ def run_validator(filename=None):
         print
 
     except Exception as exc:        #pylint: disable=W0703
-        print 'ERROR: Failed to validate neighbordb'
+        print 'ERROR: Failed to validate neighbordb: %s' % exc
 
 
 
