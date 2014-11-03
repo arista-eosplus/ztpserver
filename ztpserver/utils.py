@@ -49,10 +49,10 @@ def expand_range(interfaces):
     ''' Returns a naturally sorted list of items expanded from interfaces. '''
 
     # pylint: disable=R0914,R0912
-
+    
     items = set()
     prefix = None
-    for group in [x.strip for x in interfaces.split(',')]:
+    for group in [x.strip() for x in interfaces.split(',')]:
         ranges = [x.strip() for x in group.split('-')]
         if len(ranges) == 1:
             interface = ranges[0].lower()

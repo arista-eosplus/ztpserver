@@ -107,11 +107,19 @@ def load_neighbordb(node_id, contents=None):
 
         log.debug('%s: loaded neighbordb: %s' % (node_id, neighbordb))
         return neighbordb
-    except (NeighbordbError, SerializerError):
-        log.error('%s: failed to load neighbordb' % node_id)
+    except SerializerError as err:
+        # pylint: disable=E1101
+        tokens = err.message.split('Error:')
+        log.error('%s: failed to load neighbordb: %s' % 
+                  (node_id, 
+                   'Error:'.join(tokens[1:]) 
+                   if len(tokens) > 1
+                   else err.message))
+        return None
     except Exception as err:
         log.error('%s: failed to load neighbordb because of error: %s' %
                   (node_id, err))
+        return None
 
 def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
     """ Returns an instance of Pattern """

@@ -362,7 +362,10 @@ class NodesController(BaseController):
         node_id = kwargs['node_id']
         
         neighbordb = load_neighbordb(node_id)
-         # pylint: disable=E1103
+        if not neighbordb:
+            return (self.http_bad_request(), None)
+            
+        # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
             log.info('%s: node matched no patterns in neighbordb' %
