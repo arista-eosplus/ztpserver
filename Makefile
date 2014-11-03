@@ -45,7 +45,7 @@ clean:
 	find . -type f -regex ".*\.py[co]$$" -delete
 
 test_neighbordb: clean
-	$(PYTHON)  ./test/server/test_ndb.py -v
+	PYTHONPATH=./ $(PYTHON)  ./test/server/test_ndb.py -v
 
 test_client: clean
 ifeq ($(TESTNAME),discover)
