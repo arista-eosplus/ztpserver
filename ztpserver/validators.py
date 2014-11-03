@@ -43,7 +43,6 @@ REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition', 'interfaces']
 OPTIONAL_PATTERN_ATTRIBUTES = ['node', 'variables']
 INTERFACE_PATTERN_KEYWORDS = ['any', 'none']
 ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
-VALID_INTERFACE_RE = re.compile(r'^Ethernet[1-9]\d*(?:\/\d+){0,2}$')
 KW_ANY_RE = re.compile(r' *any *')
 KW_NONE_RE = re.compile(r' *none *')
 WC_PORT_RE = re.compile(r'.*')
@@ -279,18 +278,14 @@ class InterfacePatternValidator(Validator):
             except Exception as err:
                 raise ValidationError('PatternError: %s' % err)
 
-            if not VALID_INTERFACE_RE.match(interface):
-                if interface not in INTERFACE_PATTERN_KEYWORDS:
-                    try:
-                        expand_range(interface)
-                    except Exception as err:
-                        raise ValidationError('invalid interface %s (%s)' % 
-                                              (interface, err))
-
-            try:
-                for entry in expand_range(interface):
-                    self._validate_pattern(entry, device, port)
-            except TypeError:
+            if interface not in INTERFACE_PATTERN_KEYWORDS:
+                try:
+                    for entry in expand_range(interface):
+                        self._validate_pattern(entry, device, port)
+                except Exception as err:
+                    raise ValidationError('invalid interface %s (%s)' % 
+                                          (interface, err))
+            else:
                 self._validate_pattern(interface, device, port)
 
     def _validate_pattern(self, interface, device, port):
