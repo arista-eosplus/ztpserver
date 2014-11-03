@@ -7,17 +7,19 @@
 %define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %define app_virtualenv_dir  /opt/ztpsrv_env
 %define ztps_bin            /bin
+%define install_dir         /
 %global python2_sitelib     /lib/python2.7/site-packages
 %global python2_sitearch    /lib64/python2.7/site-packages
 %else
 %define httpd_dir           /etc/httpd/conf.d
 %define app_virtualenv_dir  /
 %define ztps_bin            /usr/bin
+%define install_dir         $RPM_BUILD_DIR
 %endif
 
 Name:    ztpserver
-Version: 1.2.0
-Release: 1%{?dist}
+Version: BLANK
+Release: 2%{?dist}
 Summary: %{app_summary}
 
 Group:    Network
@@ -38,7 +40,6 @@ BuildRequires: python27-python-virtualenv
 %else
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
-BuildRequires: python-virtualenv
 %endif
 
 %if 0%{?rhel} == 6
@@ -50,12 +51,11 @@ Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
 Requires: python < 3
-Requires: python-virtualenv
 Requires: httpd
 Requires: mod_wsgi
 %endif
 
-Requires: shadow-utils
+Requires(pre): shadow-utils
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-%{id -un}
 
@@ -79,42 +79,47 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
+%setup -q -c -n %{name}-%{version}
 
+%build
 %if 0%{?rhel} == 6
 ## Prepare virtualenv w/ python27 for build of ztpserver source
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages %{app_virtualenv_dir}
-source %{app_virtualenv_dir}/bin/activate
+virtualenv-2.7 -v --system-site-packages $RPM_BUILD_DIR%{app_virtualenv_dir}
+source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
 %endif
-
-%setup -q -c -n %{name}-%{version}
 
 pip install setuptools --upgrade
 
-#%build
 cd ztpserver
 python setup.py build
 
-%install
-
-%if 0%{?rhel} == 6
-## Export virtualenv vars again and activate it (apparently \install macro has its own shell/env):
-export X_SCLS=python27
-source /opt/rh/python27/enable
-source %{app_virtualenv_dir}/bin/activate
-%endif
-
-cd ztpserver
-python setup.py install --root=$RPM_BUILD_ROOT
+python setup.py install --root=%{install_dir}
 
 # clean-up gitsrc dir after install:
 cd ..
 rm -rf ztpserver
 
-# install everything into RPM_BUILD_ROOT:
+%install
+# Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
+%if 0%{?rhel} == 6
+mkdir -p $RPM_BUILD_ROOT%{app_virtualenv_dir}
+cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
+%else
+mkdir -p $RPM_BUILD_ROOT%{python2_sitelib}/
+cp -rp $RPM_BUILD_DIR%{python2_sitelib}/%{name}-%{version}*.egg* $RPM_BUILD_ROOT%{python2_sitelib}/
+
+mkdir -p $RPM_BUILD_ROOT%{ztps_bin}
+cp -rp $RPM_BUILD_DIR%{ztps_bin}/ztps $RPM_BUILD_ROOT%{ztps_bin}/ztps
+
+mkdir -p $RPM_BUILD_ROOT/{etc,usr/share}
+cp -rp $RPM_BUILD_DIR/etc $RPM_BUILD_ROOT
+cp -rp $RPM_BUILD_DIR/usr/share/ztpserver $RPM_BUILD_ROOT/usr/share/
+%endif
 mkdir -p $RPM_BUILD_ROOT%{httpd_dir}
 cp -rp %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
+
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
@@ -127,6 +132,7 @@ getent passwd %{app_user} > /dev/null || \
   useradd -m -g %{app_user} -d /home/%{app_user} -s /bin/bash \
   -c "%{name} - Server" %{app_user}
 %endif
+exit 0
 
 %posttrans
 
@@ -158,8 +164,11 @@ rm /etc/ztpserver
 %files
 # all the files to be included in this RPM:
 %defattr(-,root,root,)
-%{app_virtualenv_dir}%{python2_sitelib}/ztpserver/*
-%{app_virtualenv_dir}%{python2_sitelib}/%{name}-%{version}*.egg-info
+%if 0%{?rhel} == 6
+%{app_virtualenv_dir}
+%else
+%{python2_sitelib}/%{name}-%{version}*.egg*
+%endif
 %{app_virtualenv_dir}%{ztps_bin}/ztps
 %config(noreplace) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.conf
 %attr(0755,%{app_user},root) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.wsgi
@@ -171,6 +180,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Nov 03 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-2
+- Add logic to work with virtualenv installs versus standard installs
+- For virtualenv installs, all python dependencies will be installed
+- For standard installs, only ztpserver egg and /usr/share/ztpserver files are included (as well as config in /etc/ztpserver and /usr/bin/ztps)
+
 * Tue Oct 28 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-1
 - Remove standalone ZTPServer functions from SPEC
 - Remove ztpserver.init script
