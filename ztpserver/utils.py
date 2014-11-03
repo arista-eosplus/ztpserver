@@ -52,8 +52,8 @@ def expand_range(interfaces):
 
     items = set()
     prefix = None
-    for group in interfaces.split(','):
-        ranges = group.split('-')
+    for group in [x.strip for x in interfaces.split(',')]:
+        ranges = [x.strip() for x in group.split('-')]
         if len(ranges) == 1:
             interface = ranges[0].lower()
             match = ETHERNET_RE.match(interface)
