@@ -45,7 +45,7 @@ BuildRequires: python-virtualenv
 Requires: python27
 Requires: python-virtualenv
 Requires: python27-python-virtualenv
-Requires: httpd27
+Requires: httpd24
 Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
@@ -54,6 +54,8 @@ Requires: python-virtualenv
 Requires: httpd
 Requires: mod_wsgi
 %endif
+
+Requires: shadow-utils
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-%{id -un}
 
