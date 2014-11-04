@@ -3,6 +3,7 @@
 #################################
 %define app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
 %define app_user            ztpserver
+%{!?python2_sitelib: %global python2_sitelib /usr/lib/python2.7/site-packages }
 %if 0%{?rhel} == 6
 %define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %define app_virtualenv_dir  /opt/ztpsrv_env
