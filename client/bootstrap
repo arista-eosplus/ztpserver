@@ -1022,7 +1022,7 @@ def main():
     definition = definition.json()
 
     if 'actions' not in definition:
-        raise ZtpError('\'actions\' section missing from definition' % attr)
+        raise ZtpError('\'actions\' section missing from definition')
 
     definition_name = definition.get('name', '')
     log('Applying definition %s' % definition_name)
@@ -1066,4 +1066,3 @@ if __name__ == '__main__':
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
-
