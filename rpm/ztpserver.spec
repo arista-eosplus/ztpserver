@@ -3,6 +3,7 @@
 #################################
 %define app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
 %define app_user            ztpserver
+%{!?python2_sitelib: %global python2_sitelib /usr/lib/python2.7/site-packages }
 %if 0%{?rhel} == 6
 %define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %define app_virtualenv_dir  /opt/ztpsrv_env
@@ -37,9 +38,11 @@ BuildRequires: python-pip
 BuildRequires: python27
 BuildRequires: python-virtualenv
 BuildRequires: python27-python-virtualenv
+BuildRequires: python27-python-setuptools
 %else
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
+BuildRequires: python-setuptools
 %endif
 
 %if 0%{?rhel} == 6
@@ -90,7 +93,7 @@ virtualenv-2.7 -v --system-site-packages $RPM_BUILD_DIR%{app_virtualenv_dir}
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
 %endif
 
-pip install setuptools --upgrade
+#pip install setuptools --upgrade
 
 cd ztpserver
 python setup.py build
