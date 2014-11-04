@@ -78,4 +78,12 @@ def main(attributes):
     if force:
         line = line + ' force'
 
-    open(BOOT_EXTENSIONS, 'a').write('\r\n%s' % line)
+    lines = []
+    try:
+        lines = [x.strip() for x in open(BOOT_EXTENSIONS).readlines() 
+                 if x.strip()]
+    except IOError:
+        # file Missing   
+        pass
+
+    open(BOOT_EXTENSIONS, 'w').write('\n'.join(lines + [line]))
