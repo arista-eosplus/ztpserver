@@ -230,3 +230,17 @@ TODO:
 * Wed Aug 27 2014 tzhnape1 <peter.najdenik@swisscom.com>
 - Initial release/build of ztpserver
 
+* Fri Nov 14 2014 Jere Julian <jere@arista.com>
+- Increase utilization of built-in macros
+- Replace %define (runtime expansion) with %global (immediate)
+- Add app_url
+- Disable the -debug package fro being built
+- Source0 now has version-info and unpacks in to a versioned dir
+- Remove manual override of BuildRoot
+- Move python setup.py install to %install
+- Force some install path info for python setup so it properly places files, both in and out of a virtualenv
+- Replace "cp -rp and mkdir -p" with %{__install}
+- Consolidate useradd code in %pre and change the user/s HOME
+- Remove symlinks on virtualenv systems (rhel6) as paths are fixed
+- Remove userdel from %preun as we can't guarantee other file ownership
+- Specifically call out directories, config files, and permissions in %files
