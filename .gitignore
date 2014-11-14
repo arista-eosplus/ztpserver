@@ -44,3 +44,8 @@ _templates
 
 # local environment
 .env
+
+# Dynamic RPM build files
+*.spec
+rpm/rpmbuild
+rpm/rpms
