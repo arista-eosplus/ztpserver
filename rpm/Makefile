@@ -61,7 +61,7 @@ prep_rpmbuild: sdist
 	mkdir -p rpms
 
 rpm: prep_rpmbuild
-	${RPMBUILD} -ba ${PACKAGE}.spec
+	${RPMBUILD} -ba ../${PACKAGE}.spec
 
 srpm: prep_rpmbuild
-	${RPMBUILD} -bs ${PACKAGE}.spec
+	${RPMBUILD} -bs ../${PACKAGE}.spec
