@@ -4,15 +4,12 @@
 %global app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
 %global app_url             https://github.com/arista-eosplus/ztpserver/
 %global app_user            ztpserver
-%{!?python2_sitelib: %global python2_sitelib /usr/lib/python2.7/site-packages }
 
 %if 0%{?rhel} == 6
 %global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
 %global basedatadir         %{_datadir}
 %global basesysconfdir      %{_sysconfdir}
-%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
-%global python2_sitearch    /lib64/python2.7/site-packages
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
 %endif
@@ -25,7 +22,7 @@ Version: BLANK
 Release: 2%{?dist}
 Summary: %{app_summary}
 
-Group:    Network
+Group:    Applications/Communications
 License:  BSD-3
 URL:      %{app_url}
 Source0:  %{name}-%{version}.tgz
@@ -82,7 +79,7 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
-%setup
+%setup -q
 
 %build
 %if 0%{?rhel} == 6
@@ -102,6 +99,8 @@ python setup.py build
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
+%python2_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+%python2_sitearch %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
 
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
@@ -183,6 +182,25 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Nov 14 2014 Jere Julian <jere@arista.com>
+- Increase utilization of built-in macros
+- Replace define (runtime expansion) with global (immediate)
+- Add app_url
+- Disable the -debug package fro being built
+- Source0 now has version-info and unpacks in to a versioned dir
+- Remove manual override of BuildRoot
+- Move python setup.py install to install
+- Force some install path info for python setup so it properly places files, both in and out of a virtualenv
+- Replace "cp -rp and mkdir -p" with __install
+- Consolidate useradd code in pre and change the user/s HOME
+- Remove symlinks on virtualenv systems (rhel6) as paths are fixed
+- Remove userdel from preun as we can't guarantee other file ownership
+- Specifically call out directories, config files, and permissions in files
+- Fix rpmlint issues
+  - Make setup quiet
+  - dynamically define python2_sitelib and sitearch
+  - Use a standard Group:
+
 * Mon Nov 03 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-2
 - Add logic to work with virtualenv installs versus standard installs
 - For virtualenv installs, all python dependencies will be installed
@@ -229,18 +247,3 @@ TODO:
 
 * Wed Aug 27 2014 tzhnape1 <peter.najdenik@swisscom.com>
 - Initial release/build of ztpserver
-
-* Fri Nov 14 2014 Jere Julian <jere@arista.com>
-- Increase utilization of built-in macros
-- Replace %define (runtime expansion) with %global (immediate)
-- Add app_url
-- Disable the -debug package fro being built
-- Source0 now has version-info and unpacks in to a versioned dir
-- Remove manual override of BuildRoot
-- Move python setup.py install to %install
-- Force some install path info for python setup so it properly places files, both in and out of a virtualenv
-- Replace "cp -rp and mkdir -p" with %{__install}
-- Consolidate useradd code in %pre and change the user/s HOME
-- Remove symlinks on virtualenv systems (rhel6) as paths are fixed
-- Remove userdel from %preun as we can't guarantee other file ownership
-- Specifically call out directories, config files, and permissions in %files
