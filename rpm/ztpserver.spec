@@ -86,8 +86,8 @@ that the user interacts with are YAML based.
 ## Prepare virtualenv w/ python27 for build of ztpserver source
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages $RPM_BUILD_DIR%{app_virtualenv_dir}
-source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
+virtualenv-2.7 -v --system-site-packages $RPM_BUILD_ROOT%{app_virtualenv_dir}
+source $RPM_BUILD_ROOT%{app_virtualenv_dir}/bin/activate
 %endif
 
 python setup.py build
@@ -95,14 +95,14 @@ python setup.py build
 
 %install
 %if 0%{?rhel} == 6
-## Set into the virtualenv w/ python27
+# Copy necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 export X_SCLS=python27
 source /opt/rh/python27/enable
-source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
+virtualenv-2.7 -v --system-site-packages $RPM_BUILD_ROOT%{app_virtualenv_dir}
 
-# Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
-%{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
-cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
+source $RPM_BUILD_ROOT%{app_virtualenv_dir}/bin/activate
+
+pip install -r requirements.txt
 %endif
 
 # Allow us to install libs in to RPM_BUILD_ROOT
@@ -114,6 +114,14 @@ python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
 
 %{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
+%if 0%{?rhel} == 6
+# Due to the virtual_env, the shebang line in some scripts gets mangled.
+# Correct those before packaging or check-buildroot will halt the build
+cd ${RPM_BUILD_ROOT}%{app_virtualenv_dir}/bin
+sed -i -e "s#${RPM_BUILD_ROOT}##" *
+cd ${RPM_BUILD_ROOT}%{_bindir}
+sed -i -e "s#${RPM_BUILD_ROOT}##" ztps
+%endif
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
@@ -130,7 +138,8 @@ exit 0
 # ZTPServer operators may be put in to this group to allow them to configure the service
 chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
 chmod -R ug+rw %{_datadir}/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
+chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver > /dev/null
+service httpd24-httpd status || service httpd24-httpd graceful
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -140,6 +149,10 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
+if [$1 == 0]; then
+  # Gracefully restart httpd to remove the wsgi file from memory
+  service httpd24-httpd status || service httpd24-httpd graceful
+fi
 
 
 %files
@@ -198,6 +211,11 @@ rm -rf $RPM_BUILD_ROOT
   - Make setup quiet
   - dynamically define python2_sitelib and sitearch
   - Use a standard Group:
+- Make chcon quiet during post
+- Gracefully restart httpd24 IF it was running before in rhel6
+- Move the virtualenv location during rpmbuild for rhel6
+  - Update "python" paths after install section with sed
+- Explicitly install requirements in the virtualenv for RHEL6
 
 * Mon Nov 03 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-2
 - Add logic to work with virtualenv installs versus standard installs
