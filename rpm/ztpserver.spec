@@ -1,22 +1,24 @@
 #################################
 # Application specific settings #
 #################################
-%define app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
-%define app_user            ztpserver
+%global app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
+%global app_url             https://github.com/arista-eosplus/ztpserver/
+%global app_user            ztpserver
 %{!?python2_sitelib: %global python2_sitelib /usr/lib/python2.7/site-packages }
+
 %if 0%{?rhel} == 6
-%define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
-%define app_virtualenv_dir  /opt/ztpsrv_env
-%define ztps_bin            /bin
-%define install_dir         /
-%global python2_sitelib     /lib/python2.7/site-packages
+%global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
+%global app_virtualenv_dir  /opt/ztpsrv_env
+%global basedatadir         %{_datadir}
+%global basesysconfdir      %{_sysconfdir}
+%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
 %global python2_sitearch    /lib64/python2.7/site-packages
 %else
-%define httpd_dir           /etc/httpd/conf.d
-%define app_virtualenv_dir  /
-%define ztps_bin            /usr/bin
-%define install_dir         $RPM_BUILD_DIR
+%global httpd_dir           %{_sysconfdir}/httpd/conf.d
 %endif
+
+# We don't need the -debug package
+%global debug_package %{nil}
 
 Name:    ztpserver
 Version: BLANK
@@ -26,7 +28,7 @@ Summary: %{app_summary}
 Group:    Network
 License:  BSD-3
 URL:      %{app_url}
-Source0:  %{name}.tgz
+Source0:  %{name}-%{version}.tgz
 Source1:  %{name}-wsgi.conf
 
 ### Don't allow rpmbuild to modify dependencies 
@@ -60,8 +62,6 @@ Requires: mod_wsgi
 
 Requires(pre): shadow-utils
 
-BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-%{id -un}
-
 %description
 ZTPServer provides a bootstrap environment for Arista EOS based products.
 ZTPserver interacts with the ZeroTouch Provisioning (ZTP) mode of Arista EOS.
@@ -82,7 +82,7 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
-%setup -q -c -n %{name}-%{version}
+%setup
 
 %build
 %if 0%{?rhel} == 6
@@ -93,59 +93,47 @@ virtualenv-2.7 -v --system-site-packages $RPM_BUILD_DIR%{app_virtualenv_dir}
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
 %endif
 
-#pip install setuptools --upgrade
-
-cd ztpserver
 python setup.py build
 
-python setup.py install --root=%{install_dir}
-
-# clean-up gitsrc dir after install:
-cd ..
-rm -rf ztpserver
 
 %install
-# Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %if 0%{?rhel} == 6
-mkdir -p $RPM_BUILD_ROOT%{app_virtualenv_dir}
+## Set into the virtualenv w/ python27
+export X_SCLS=python27
+source /opt/rh/python27/enable
+source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
+
+# Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
+%{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
 cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
-%else
-mkdir -p $RPM_BUILD_ROOT%{python2_sitelib}/
-cp -rp $RPM_BUILD_DIR%{python2_sitelib}/%{name}-%{version}*.egg* $RPM_BUILD_ROOT%{python2_sitelib}/
-
-mkdir -p $RPM_BUILD_ROOT%{ztps_bin}
-cp -rp $RPM_BUILD_DIR%{ztps_bin}/ztps $RPM_BUILD_ROOT%{ztps_bin}/ztps
-
-mkdir -p $RPM_BUILD_ROOT/{etc,usr/share}
-cp -rp $RPM_BUILD_DIR/etc $RPM_BUILD_ROOT
-cp -rp $RPM_BUILD_DIR/usr/share/ztpserver $RPM_BUILD_ROOT/usr/share/
 %endif
-mkdir -p $RPM_BUILD_ROOT%{httpd_dir}
-cp -rp %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
+
+# Allow us to install libs in to RPM_BUILD_ROOT
+# Force some paths for install to handle the virtual_env case for RHEL
+%{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
+PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
+python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
+--install-lib=%{python2_sitelib}
+
+%{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
-%if 0%{?rhel} == 6
 getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d /%{app_virtualenv_dir} -s /bin/bash \
+  useradd -m -g %{app_user} -d %{_datadir}/ztpserver/ -s /bin/false \
   -c "%{name} - Server" %{app_user}
-%else
-getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d /home/%{app_user} -s /bin/bash \
-  -c "%{name} - Server" %{app_user}
-%endif
 exit 0
 
 %posttrans
 
 
 %post
-%if 0%{?rhel} == 6
-ln -s %{app_virtualenv_dir}/usr/share/ztpserver /usr/share/
-ln -s %{app_virtualenv_dir}/etc/ztpserver /etc/
-%endif
-chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
+# Ensure the server can read/write the necessary files.
+# ZTPServer operators may be put in to this group to allow them to configure the service
+chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
+chmod -R ug+rw %{_datadir}/ztpserver
+chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -155,13 +143,6 @@ chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-#if [ $1 -eq 0 ]; then
-#    userdel -r %{app_user}
-#    #groupdel %{app_user}
-#fi
-# remove symlink relics:
-rm /usr/share/ztpserver
-rm /etc/ztpserver
 
 
 %files
@@ -170,13 +151,32 @@ rm /etc/ztpserver
 %if 0%{?rhel} == 6
 %{app_virtualenv_dir}
 %else
-%{python2_sitelib}/%{name}-%{version}*.egg*
+%{python2_sitelib}/%{name}
+%{python2_sitelib}/%{name}-%{version}*.egg-info
 %endif
-%{app_virtualenv_dir}%{ztps_bin}/ztps
-%config(noreplace) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.conf
-%attr(0755,%{app_user},root) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.wsgi
-%attr(0755,%{app_user},root) %{app_virtualenv_dir}/usr/share/ztpserver/*
-%attr(0755,%{app_user},root) %{httpd_dir}/%{name}-wsgi.conf
+
+%{_bindir}/ztps
+
+%dir %{_sysconfdir}/ztpserver
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
+%config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
+
+%defattr(0775,%{app_user},%{app_user},)
+%dir %{_datadir}/ztpserver
+%dir %{_datadir}/ztpserver/actions
+%dir %{_datadir}/ztpserver/bootstrap
+%dir %{_datadir}/ztpserver/definitions
+%dir %{_datadir}/ztpserver/files
+%dir %{_datadir}/ztpserver/files/lib
+%dir %{_datadir}/ztpserver/nodes
+%dir %{_datadir}/ztpserver/resources
+
+%defattr(0665,%{app_user},%{app_user},)
+%{_datadir}/ztpserver/files/lib/*
+%config(noreplace) %{_datadir}/ztpserver/actions/*
+%config(noreplace) %{_datadir}/ztpserver/bootstrap/*
+%config(noreplace) %{_datadir}/ztpserver/neighbordb
 
 %clean
 rm -rf $RPM_BUILD_ROOT
