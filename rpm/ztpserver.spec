@@ -4,12 +4,12 @@
 %global app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
 %global app_url             https://github.com/arista-eosplus/ztpserver/
 %global app_user            ztpserver
+%{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 %if 0%{?rhel} == 6
 %global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
-%global basedatadir         %{_datadir}
-%global basesysconfdir      %{_sysconfdir}
+%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
 %endif
@@ -99,8 +99,6 @@ python setup.py build
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
-%python2_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-%python2_sitearch %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
 
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
