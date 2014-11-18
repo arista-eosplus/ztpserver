@@ -602,7 +602,7 @@ class Server(object):
             request_files[entry] = open(entry,'rb')
 
         if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
-            full_url = urlparse.urljoin(SERVER, path)
+            full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
