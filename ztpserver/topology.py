@@ -45,7 +45,7 @@ from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
-from ztpserver.utils import expand_range, parse_interface
+from ztpserver.utils import expand_range, parse_interface, url_path_join, first
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -190,7 +190,7 @@ def replace_config_action(resource, filename=None):
 
     filename = filename or 'startup-config'
     server_url = ztpserver.config.runtime.default.server_url
-    url = '%s/nodes/%s/%s' % (server_url, str(resource), filename)
+    url = url_path_join(server_url, str(resource), filename)
 
     action = dict(name='install static startup-config file',
                   action='replace_config',

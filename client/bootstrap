@@ -50,6 +50,7 @@ import time
 import traceback
 import urllib2
 import urlparse
+from urlparse import urlsplit, urlunsplit
 
 from collections import namedtuple
 from logging.handlers import SysLogHandler
@@ -762,14 +763,13 @@ class Server(object):
 
     def get_metadata(self, url):
         if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
-            aux = url.split('/')
-            if aux[3] != 'meta':
-                aux = aux[0:3] + ['meta'] + aux[3:]
-                url = '/'.join(aux)
+            p = re.compile(SERVER,re.IGNORECASE)
+            if p.match(url):
+                url = re.sub(p,'',url)
+                url = url_path_join(SERVER,'/meta',url)
         else:
             aux = [x for x in url.split('/') if x]
-            if aux[0] != 'meta':
-                url = '/'.join(['meta'] + aux)
+            url = '/'.join(['meta'] + aux)
 
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request(url,
