@@ -190,7 +190,7 @@ def replace_config_action(resource, filename=None):
 
     filename = filename or 'startup-config'
     server_url = ztpserver.config.runtime.default.server_url
-    url = url_path_join(server_url, str(resource), filename)
+    url = url_path_join(server_url, 'nodes/', str(resource), filename)
 
     action = dict(name='install static startup-config file',
                   action='replace_config',
