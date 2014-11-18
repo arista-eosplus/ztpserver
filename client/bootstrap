@@ -194,7 +194,7 @@ def download_file(url, path):
 
 #pylint: disable=C0103
 REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = url_path_join(SERVER,'/files/lib/',REQUESTS+'.tar.gz')
+REQUESTS_URL = url_path_join(SERVER, '/files/lib/', REQUESTS + '.tar.gz')
 try:
     import requests
 except ImportError:
