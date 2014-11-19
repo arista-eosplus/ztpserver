@@ -33,6 +33,7 @@
 
 import logging
 import re
+from urlparse import urlsplit, urlunsplit
 
 log = logging.getLogger(__name__)
 
@@ -242,3 +243,16 @@ def parse_interface(neighbor, node_id):
                   (node_id, str(err)))
         raise Exception('%s: interface parse error: missing '
                         'attribute (%s)' % (node_id, str(err)))
+
+def url_path_join(*parts):
+    """Normalize url parts and join them with a slash."""
+    schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+    scheme = get_first_token(schemes)
+    netloc = get_first_token(netlocs)
+    path = '/'.join(x.strip('/') for x in paths if x)
+    query = get_first_token(queries)
+    fragment = get_first_token(fragments)
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+def get_first_token(sequence):
+    return next((x for x in sequence if x), '')

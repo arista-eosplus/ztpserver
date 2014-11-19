@@ -50,6 +50,7 @@ import time
 import traceback
 import urllib2
 import urlparse
+from urlparse import urlsplit, urlunsplit
 
 from collections import namedtuple
 from logging.handlers import SysLogHandler
@@ -176,13 +177,27 @@ def flash_usage():
     total = stats.f_blocks * stats.f_frsize
     used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
     return _ntuple_diskusage(total, used, free)
+
+def url_path_join(*parts):
+    """Normalize url parts and join them with a slash."""
+    schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+    scheme = get_first_token(schemes)
+    netloc = get_first_token(netlocs)
+    path = '/'.join(x.strip('/') for x in paths if x)
+    query = get_first_token(queries)
+    fragment = get_first_token(fragments)
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+def get_first_token(sequence):
+    return next((x for x in sequence if x), '')
+
 # ------------------Utilities---------------------------------
 
 
 # ------------------4.12.x support----------------------------
 def download_file(url, path):
     if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
-        url = urlparse.urljoin(SERVER, url)
+        url = url_path_join(SERVER, url)
 
     log('Retrieving URL: %s' % url)
 
@@ -193,7 +208,7 @@ def download_file(url, path):
 
 #pylint: disable=C0103
 REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
+REQUESTS_URL = url_path_join(SERVER, '/files/lib/', REQUESTS+'.tar.gz')
 try:
     import requests
 except ImportError:
@@ -601,7 +616,7 @@ class Server(object):
             request_files[entry] = open(entry,'rb')
 
         if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
-            full_url = urlparse.urljoin(SERVER, path)
+            full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
@@ -762,14 +777,13 @@ class Server(object):
 
     def get_metadata(self, url):
         if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
-            aux = url.split('/')
-            if aux[3] != 'meta':
-                aux = aux[0:3] + ['meta'] + aux[3:]
-                url = '/'.join(aux)
+            p = re.compile(SERVER, re.IGNORECASE)
+            if p.match(url):
+                url = re.sub(p, '', url)
+                url = url_path_join(SERVER, '/meta', url)
         else:
             aux = [x for x in url.split('/') if x]
-            if aux[0] != 'meta':
-                url = '/'.join(['meta'] + aux)
+            url = '/'.join(['meta'] + aux)
 
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request(url,
@@ -987,7 +1001,6 @@ def restore_factory_default():
             os.remove(filename)
 
     shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
-
 
 def main():
     #pylint: disable=W0603,R0912,R0915
