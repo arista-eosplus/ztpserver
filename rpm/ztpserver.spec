@@ -19,7 +19,7 @@
 
 Name:    ztpserver
 Version: BLANK
-Release: 2%{?dist}
+Release: BLANK%{?dist}
 Summary: %{app_summary}
 
 Group:    Applications/Communications
