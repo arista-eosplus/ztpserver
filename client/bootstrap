@@ -676,11 +676,19 @@ class Server(object):
                                    'metadata' % url)
 
             usage = flash_usage()
-            if (size > usage.free):
+
+            free_space = usage.free
+            potential_used_space = size + usage.used
+            if os.path.isfile(path):
+                size = os.path.getsize(path)
+                free_space += size
+                potential_used_space -= size
+
+            if (size > free_space):
                 raise ZtpError('not enough memory on flash for saving %s to %s '
                                '(free: %s bytes, required: %s bytes)' %
-                               (url, path, usage.free, size))
-            elif (size + usage.used > 0.9 * usage.total):
+                               (url, path, free_space, size))
+            elif (potential_used_space > 0.9 * usage.total):
                 percent = (size + usage.used) * 100.0 / usage.total
                 log('WARNING: flash disk usage will exceeed %s%% after '
                     'saving %s to %s' % (percent, url, path))
