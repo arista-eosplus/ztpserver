@@ -179,8 +179,10 @@ def flash_usage():
     return _ntuple_diskusage(total, used, free)
 
 def url_path_join(*parts):
-    """Normalize url parts and join them with a slash."""
-    schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+    """Normalize URL parts and join them with a slash."""
+    # pylint: disable=W0142
+    schemes, netlocs, paths, queries, fragments = \
+        zip(*(urlsplit(part) for part in parts))
     scheme = get_first_token(schemes)
     netloc = get_first_token(netlocs)
     path = '/'.join(x.strip('/') for x in paths if x)
@@ -514,13 +516,17 @@ class Node(object):
     def retrieve_url(self, url, path):
         '''Download resource from server.
 
-        If 'path' is somewhere on flash, the client will first request the
-        metainformation for the resource from the server (in order to Check
-        whether there is enogh disk space available).
+        If 'path' is somewhere on flash and 'url' points back to
+        SERVER, then the client will request the metadata for
+        the resource from the server (in order to check whether there
+        is enogh disk space available). If 'url' points to a different
+        server, then the 'content-length' header will be used for the
+        disk space checks.
 
         Raises:
             ZtpError: resource cannot be retrieved:
-                - metainformation cannot be retrieved from server OR
+                - metadata cannot be retrieved from server OR
+                - metadata is inconsistent with request OR
                 - disk space on flash is insufficient OR
                 - file cannot be written to disk
 
@@ -660,16 +666,21 @@ class Server(object):
                 raise ZtpError('attempting to save file to %s, but cannot'
                                'retrieve content metadata.')
 
-            _, _, metadata = self.get_metadata(url)
-            metadata = metadata.json()
+            size = int(contents.headers['content-length'])
+            if url.startswith(SERVER):
+                _, _, metadata = self.get_metadata(url)
+                metadata = metadata.json()
+                if metadata['size'] != contents.headers['content-length']:
+                    raise ZtpError('"content-length" for %s does not match '
+                                   'metadata' % url)
 
             usage = flash_usage()
-            if (metadata['size'] > usage.free):
+            if (size > usage.free):
                 raise ZtpError('not enough memory on flash for saving %s to %s '
                                '(free: %s bytes, required: %s bytes)' %
-                               (url, path, usage.free, metadata['size']))
-            elif (metadata['size'] + usage.used > 0.9 * usage.total):
-                percent = (metadata['size'] + usage.used) * 100.0 / usage.total
+                               (url, path, usage.free, size))
+            elif (size + usage.used > 0.9 * usage.total):
+                percent = (size + usage.used) * 100.0 / usage.total
                 log('WARNING: flash disk usage will exceeed %s%% after '
                     'saving %s to %s' % (percent, url, path))
 
@@ -777,9 +788,9 @@ class Server(object):
 
     def get_metadata(self, url):
         if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
-            p = re.compile(SERVER, re.IGNORECASE)
-            if p.match(url):
-                url = re.sub(p, '', url)
+            regex = re.compile(SERVER, re.IGNORECASE)
+            if regex.match(url):
+                url = re.sub(regex, '', url)
                 url = url_path_join(SERVER, '/meta', url)
         else:
             aux = [x for x in url.split('/') if x]

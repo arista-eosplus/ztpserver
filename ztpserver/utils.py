@@ -246,7 +246,9 @@ def parse_interface(neighbor, node_id):
 
 def url_path_join(*parts):
     """Normalize url parts and join them with a slash."""
-    schemes, netlocs, paths, queries, fragments = zip(*(urlsplit(part) for part in parts))
+    # pylint: disable=W0142
+    schemes, netlocs, paths, queries, fragments = \
+        zip(*(urlsplit(part) for part in parts))
     scheme = get_first_token(schemes)
     netloc = get_first_token(netlocs)
     path = '/'.join(x.strip('/') for x in paths if x)
