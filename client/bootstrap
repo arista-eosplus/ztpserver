@@ -32,7 +32,7 @@
 #    Written by:
 #       EOS+, Arista Networks
 
-
+import argparse
 import datetime
 import imp
 import json
@@ -85,12 +85,18 @@ HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
 
 FLASH = '/mnt/flash'
 
+BACKUP_FOLDER = '/tmp'
+
 STARTUP_CONFIG = '%s/startup-config' % FLASH
 RC_EOS = '%s/rc.eos' % FLASH
+
 BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH
 BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH
 
 HTTP_TIMEOUT = 30
+
+FLASH_FILES = []
+RESTORE_FACTORY_FLASH = True
 
 #pylint: disable=C0103
 syslog_manager = None
@@ -130,6 +136,28 @@ def _exit(code):
 
     sys.stdout.flush()
     sys.stderr.flush()
+
+    if not RESTORE_FACTORY_FLASH:
+        for path in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
+            filename = path.split('/')[-1]
+            if os.path.isfile(path):
+                shutil.move(path, '%s.ztp' % path)
+            backup_path = '%s/%s' % (BACKUP_FOLDER, filename)
+            if os.path.isfile(backup_path):
+                shutil.move(backup_path, path)
+
+        if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
+            shutil.move(BOOT_EXTENSIONS_FOLDER, 
+                        '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
+
+        backup_path = '%s/%s' % (BACKUP_FOLDER,
+                                 BOOT_EXTENSIONS_FOLDER.split('/')[-1])
+        if os.path.isdir(backup_path):
+            shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
+    else:
+        for path in [x for x in all_files('/mnt/flash')
+                     if x not in FLASH_FILES]:
+            shutil.rmtree(path)
 
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
@@ -179,6 +207,18 @@ def flash_usage():
     used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
     return _ntuple_diskusage(total, used, free)
 
+def flash_snapshot():
+    #pylint: disable=W0603
+    global FLASH_FILES
+    FLASH_FILES = all_files('/mnt/flash')
+
+    for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
+        if os.path.isfile(filename):
+            shutil.move(filename, BACKUP_FOLDER)
+
+    if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
+        shutil.move(BOOT_EXTENSIONS_FOLDER, BACKUP_FOLDER)
+
 def url_path_join(*parts):
     """Normalize URL parts and join them with a slash."""
     # pylint: disable=W0142
@@ -194,6 +234,13 @@ def url_path_join(*parts):
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
 
+def all_files(path):
+    result = []
+    for top, dirs, files in os.walk(path):
+        result += [os.path.join(top, d) for d in dirs]
+        result += [os.path.join(top, f) for f in files]
+
+    return result
 # ------------------Utilities---------------------------------
 
 
@@ -1027,18 +1074,20 @@ def execute_action(server, action_details, special_attr):
                 xmpp=True)
         raise ZtpActionError('executing action failed (%s): %s' % (action, err))
 
-def restore_factory_default():
-    for filename in [RC_EOS, BOOT_EXTENSIONS]:
-        if os.path.exists(filename):
-            os.remove(filename)
-
-    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
-
+            
 def main():
     #pylint: disable=W0603,R0912,R0915
-    global syslog_manager
+    global syslog_manager, RESTORE_FACTORY_FLASH
 
-    restore_factory_default()
+    usage = 'bootstrap [options]'
+    parser = argparse.ArgumentParser(usage=usage)
+    parser.add_argument('--no-flash-factory-restore', '-n',
+                        action='store_true',
+                        help='Do NOT restore flash config to factory default')
+    args = parser.parse_args()
+    RESTORE_FACTORY_FLASH = not args.no_flash_factory_restore
+
+    flash_snapshot()
 
     syslog_manager = SyslogManager()
     server = Server()
