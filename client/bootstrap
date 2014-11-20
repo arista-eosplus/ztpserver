@@ -834,18 +834,30 @@ class Server(object):
 
     def get_resource(self, url, path):
         if not urlparse.urlsplit(url).scheme:     #pylint: disable=E1103
-            url = urlparse.urljoin(SERVER, url)
+            url = url_path_join(SERVER, url)
 
         status, content, response = self._get_request(url)
-        if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_OTHER) or
-                (status == HTTP_STATUS_NOT_FOUND and
-                 content == CONTENT_TYPE_HTML)):
-            raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('resource not found on server (status=%s)' % status)
+
+        if url.startswith(SERVER):
+            if not ((status == HTTP_STATUS_OK and
+                     content == CONTENT_TYPE_OTHER) or
+                    (status == HTTP_STATUS_NOT_FOUND and
+                     content == CONTENT_TYPE_HTML)):
+                raise ZtpUnexpectedServerResponseError(
+                    'unexpected reponse from server for %s '
+                    '(status=%s; content-type=%s)' %
+                    (url, status, content))
+        else:
+            if not (status == HTTP_STATUS_OK or
+                    status == HTTP_STATUS_NOT_FOUND):
+                raise ZtpUnexpectedServerResponseError(
+                    'unexpected reponse from server for %s '
+                    '(status=%s; content-type=%s)' %
+                    (url, status, content))
+
+        if status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError('resource %s not found on server (status=%s)' % 
+                           (url, status))
 
         self._save_file_contents(response, path, url)
 
