@@ -145,7 +145,8 @@ def log(msg, error=False, xmpp=None):
         xmpp = log_xmpp()
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    xmpp_msg = 'ZTPS:%s: %s%s' % (timestamp,
+    xmpp_msg = '%s: %s - %s%s' % (SYSTEM_ID if SYSTEM_ID else 'N/A', 
+                                  timestamp,
                                   'ERROR: ' if error else '',
                                   msg)
 
