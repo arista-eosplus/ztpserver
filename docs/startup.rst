@@ -40,7 +40,7 @@ To enable ZTPServer for an Apache server, we need to add the following WSGI conf
         </Location>
     </VirtualHost>
 
-
+A sample ztpserver-wsgi.conf is provided in /etc/ztpserver/ which may be copied or symlinked in to the httpd conf.d/ dir.
 
 WSGIScriptAlias should point to the ztpserver.wsgi file which is installed by default under /etc/ztpserver. The ``<Directory /ztpserver>`` tag assigns the path prefix for the ZTPServer url. The ZTPServer configuration must be updated to include the URL path prefix (``/ztpserver`` in this example).
 
