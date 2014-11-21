@@ -733,7 +733,7 @@ class Server(object):
             if url.startswith(SERVER):
                 _, _, metadata = self.get_metadata(url)
                 metadata = metadata.json()
-                if metadata['size'] != contents.headers['content-length']:
+                if metadata['size'] != size:
                     raise ZtpError('"content-length" for %s does not match '
                                    'metadata' % url)
 
