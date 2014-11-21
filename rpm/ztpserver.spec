@@ -55,7 +55,6 @@ Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
 Requires: python < 3
-Requires: mod_wsgi
 %endif
 
 Requires(pre): shadow-utils
@@ -96,10 +95,9 @@ python setup.py build
 
 %install
 %if 0%{?rhel} == 6
-# Copy necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
+#virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
 
 source %{buildroot}%{app_virtualenv_dir}/bin/activate
 
@@ -126,7 +124,7 @@ INSTALL_ROOT=%{buildroot} python setup.py install \
 --root=%{buildroot}
 %endif
 
-%{__install} -pD %{SOURCE1} %{buildroot}%{_sysconfdir}/%{name}-wsgi.conf
+%{__install} -pD %{SOURCE1} %{buildroot}%{_sysconfdir}/ztpserver/%{name}-wsgi.conf
 
 %if 0%{?rhel} == 6
 %{__install} -d %{buildroot}%{_datadir}
@@ -141,12 +139,17 @@ cd %{buildroot}%{app_virtualenv_dir}/bin
 sed -i -e "s#%{buildroot}##" *
 cd %{buildroot}%{_bindir}
 sed -i -e "s#%{buildroot}##" ztps
+
+echo "export X_SCLS=python27
+source /opt/rh/python27/enable
+source %{buildroot}%{app_virtualenv_dir}/bin/activate" >> \
+%{buildroot}%{_datadir}/ztpserver/.profile
 %endif
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
 getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d %{_datadir}/ztpserver/ -s /bin/false \
+  useradd -m -g %{app_user} -d %{_datadir}/ztpserver/ -s /bin/sh \
   -c "%{name} - Server" %{app_user}
 exit 0
 
@@ -185,9 +188,9 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver > /dev/null
 %dir %{_sysconfdir}/ztpserver
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
-%config(noreplace) %{_sysconfdir}/%{name}-wsgi.conf
+%config(noreplace) %{_sysconfdir}/ztpserver/%{name}-wsgi.conf
 
-%defattr(0775,%{app_user},%{app_user},)
+%defattr(2775,%{app_user},%{app_user},)
 %dir %{_datadir}/ztpserver
 %dir %{_datadir}/ztpserver/actions
 %dir %{_datadir}/ztpserver/bootstrap
@@ -203,6 +206,10 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver > /dev/null
 %config(noreplace) %{_datadir}/ztpserver/bootstrap/*
 %config(noreplace) %{_datadir}/ztpserver/neighbordb
 
+%if 0%{?rhel} == 6
+%config(noreplace) %{_datadir}/ztpserver/.profile
+%endif
+
 %clean
 rm -rf %{buildroot}
 
@@ -212,6 +219,8 @@ rm -rf %{buildroot}
 - Global replace RPM_BUILD_ROOT with rpmbuildroot macro
 - Rework python setup.py install options to work in/out of virtualenv
 - Don't place configs in httpd/conf.d and restart httpd.  Sysadmin should do this.
+- Make /usr/share/ztpserver/ sgid to keep group ownership correct
+- Add /usr/share/ztpserver/.profile to setup virtualenv on rhel6
 
 * Fri Nov 14 2014 Jere Julian <jere@arista.com>
 - Increase utilization of built-in macros
