@@ -325,6 +325,8 @@ class NodesController(BaseController):
         if 'config' not in kwargs['request'].json:
             # POST request for the node - will try to match neighbordb
             next_state = 'post_node'
+            log.info('%s: node does not exist on the server - ' 
+                     'will try to match node against neighbordb' % kwargs['node_id'])
         else:
             # POST request for the node's startup-config
             config = kwargs['request'].json['config']
@@ -388,6 +390,7 @@ class NodesController(BaseController):
 
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
+            log.info('%s: definition location: %s' % (node_id, definition_url))
         except FileObjectNotFound:
             log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
@@ -710,6 +713,8 @@ class BootstrapController(BaseController):
             else:
                 if 'logging' in config:
                     body['logging'] = config['logging']
+                    log.info('%s: syslog info included in bootstrap config' %
+                             request.remote_addr)
 
                 if 'xmpp' in config:
                     body['xmpp'] = config['xmpp'] 
@@ -721,6 +726,8 @@ class BootstrapController(BaseController):
                        not body['xmpp']['rooms']:
                         log.warning('Bootstrap config: no XMPP rooms '
                                     'configured')
+                    log.info('%s: XMPP info included in bootstrap config' %
+                             request.remote_addr)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectNotFound:
             log.warning('Bootstrap config file not found')
@@ -743,6 +750,8 @@ class BootstrapController(BaseController):
             default_server = ztpserver.config.runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
+            log.info('%s: node beginning ZeroTouchProvisioning' %
+                     request.remote_addr)
         except KeyError as err:
             log.debug('Missing variable: %s' % err)
             resp = self.http_bad_request()
