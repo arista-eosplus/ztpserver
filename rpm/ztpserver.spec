@@ -97,7 +97,7 @@ python setup.py build
 %if 0%{?rhel} == 6
 export X_SCLS=python27
 source /opt/rh/python27/enable
-#virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
+virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
 
 source %{buildroot}%{app_virtualenv_dir}/bin/activate
 
@@ -124,15 +124,13 @@ INSTALL_ROOT=%{buildroot} python setup.py install \
 --root=%{buildroot}
 %endif
 
-%{__install} -pD %{SOURCE1} %{buildroot}%{_sysconfdir}/ztpserver/%{name}-wsgi.conf
-
 %if 0%{?rhel} == 6
 %{__install} -d %{buildroot}%{_datadir}
 %{__install} -d %{buildroot}%{_bindir}
 %{__install} -d %{buildroot}%{_sysconfdir}
 mv %{buildroot}%{app_virtualenv_dir}%{_datadir}/ztpserver %{buildroot}%{_datadir}/ztpserver
 mv %{buildroot}%{app_virtualenv_dir}/bin/ztps %{buildroot}%{_bindir}/
-mv %{buildroot}%{app_virtualenv_dir}%{_sysconfdir}/ztpserver %{buildroot}%{_sysconfdir}/ztpserver
+mv %{buildroot}%{app_virtualenv_dir}%{_sysconfdir}/ztpserver %{buildroot}%{_sysconfdir}/
 # Due to the virtual_env, the shebang line in some scripts gets mangled.
 # Correct those before packaging or check-buildroot will halt the build
 cd %{buildroot}%{app_virtualenv_dir}/bin
@@ -142,9 +140,11 @@ sed -i -e "s#%{buildroot}##" ztps
 
 echo "export X_SCLS=python27
 source /opt/rh/python27/enable
-source %{buildroot}%{app_virtualenv_dir}/bin/activate" >> \
+source %{app_virtualenv_dir}/bin/activate" >> \
 %{buildroot}%{_datadir}/ztpserver/.profile
 %endif
+
+%{__install} -pD %{SOURCE1} %{buildroot}%{_sysconfdir}/ztpserver/%{name}-wsgi.conf
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
@@ -197,7 +197,7 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver > /dev/null
 %dir %{_datadir}/ztpserver/definitions
 %dir %{_datadir}/ztpserver/files
 %dir %{_datadir}/ztpserver/files/lib
-%dir %{_datadir}/ztpserver/nodes
+%attr(2775,-,-) %dir %{_datadir}/ztpserver/nodes
 %dir %{_datadir}/ztpserver/resources
 
 %defattr(0665,%{app_user},%{app_user},)
