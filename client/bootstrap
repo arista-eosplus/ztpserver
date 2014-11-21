@@ -358,7 +358,8 @@ class Node(object):
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
             log('WARNING: unable to disable COPP: %s '
-                '(can be ignored for EOS-4.11.x and older)' % err)
+                '(platform/EOS version might not support this feature)' % 
+                err)
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
@@ -397,8 +398,9 @@ class Node(object):
                 'show management api http-commands | grep running')
 
     def _disable_copp(self):
-        # COPP does not apply to vEOS
-        if self.system()['model'] != 'vEOS':
+        # COPP does not apply to vEOS or EOS-4.11.x and earlier
+        if (self.system()['model'] != 'vEOS' and
+            int(self.system()['version'].split('.')[1]) < 12):
             self.api_config_cmds(['control-plane',
                                   'no service-policy input copp-system-policy'])
 
