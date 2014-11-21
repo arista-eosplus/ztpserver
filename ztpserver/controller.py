@@ -267,8 +267,9 @@ class NodesController(BaseController):
             response = self.http_bad_request()
             return self.response(**response)
 
-        log.info('%s: successfully determined Node ID - %s' %
-                 (request.remote_addr, node_id))
+        identifier = ztpserver.config.runtime.default.identifier
+        log.info('%s: successfully determined node ID(%s) based upon %s' %
+                 (request.remote_addr, node_id, identifier))
 
         return self.fsm('node_exists', request=request, 
                         node=node, node_id=node_id)
