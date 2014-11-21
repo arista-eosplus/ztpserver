@@ -7,13 +7,10 @@
 %{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 %if 0%{?rhel} == 6
-%global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
-#%%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
 %global python2_sitelib     /lib/python2.7/site-packages
 %global _python_datadir     /
 %else
-%global httpd_dir           %{_sysconfdir}/httpd/conf.d
 %global _python_datadir     %{_datadir}
 %endif
 
@@ -58,7 +55,6 @@ Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
 Requires: python < 3
-Requires: httpd
 Requires: mod_wsgi
 %endif
 
@@ -163,7 +159,6 @@ exit 0
 chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
 chmod -R ug+rw %{_datadir}/ztpserver
 chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver > /dev/null
-service httpd24-httpd status || service httpd24-httpd graceful
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -173,10 +168,6 @@ service httpd24-httpd status || service httpd24-httpd graceful
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-if [$1 == 0]; then
-  # Gracefully restart httpd to remove the wsgi file from memory
-  service httpd24-httpd status || service httpd24-httpd graceful
-fi
 
 
 %files
@@ -194,8 +185,7 @@ fi
 %dir %{_sysconfdir}/ztpserver
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
-%%config(noreplace) %%{httpd_dir}/%%{name}-wsgi.conf
-#%config(noreplace) %{_sysconfdir}/%{name}-wsgi.conf
+%config(noreplace) %{_sysconfdir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
 %dir %{_datadir}/ztpserver
@@ -221,6 +211,7 @@ rm -rf %{buildroot}
 * Fri Nov 21 2014 Jere Julian <jere@arista.com> - 1.2.0-dev
 - Global replace RPM_BUILD_ROOT with rpmbuildroot macro
 - Rework python setup.py install options to work in/out of virtualenv
+- Don't place configs in httpd/conf.d and restart httpd.  Sysadmin should do this.
 
 * Fri Nov 14 2014 Jere Julian <jere@arista.com>
 - Increase utilization of built-in macros
