@@ -531,13 +531,13 @@ class NodesController(BaseController):
     def do_validation(self, response, *args, **kwargs):
         config = ztpserver.config.runtime
         if not config.default.disable_topology_validation:
-            log.info('%s: Topology Validation is ENABLED' % kwargs['resource'])
+            log.info('%s: topology validation is ENABLED' % kwargs['resource'])
 
             filename = self.expand(kwargs['resource'], PATTERN_FN)
             fobj = self.repository.get_file(filename)
 
             try:
-                log.info('%s: validating pattern file for Topology Validation '
+                log.info('%s: validating pattern file for topology validation '
                          '%s' % (kwargs['resource'], filename))
                 pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
             except SerializerError as err:
