@@ -357,7 +357,8 @@ class Node(object):
         try:
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
-            log('unable to disable COPP: %s' % err, error=True)
+            log('WARNING: unable to disable COPP: %s '
+                '(can be ignored for EOS-4.11.x and older)' % err)
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
