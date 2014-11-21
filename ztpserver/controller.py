@@ -250,6 +250,8 @@ class NodesController(BaseController):
 
         """
         log.debug('%s\n' % request)
+        log.info('%s: received LLDP, SystemID, Version and Model information '
+                 'from node' % request.remote_addr)
 
         try:
             node = create_node(request.json)
@@ -264,6 +266,9 @@ class NodesController(BaseController):
                       (node, request))
             response = self.http_bad_request()
             return self.response(**response)
+
+        log.info('%s: successfully determined Node ID - %s' %
+                 (request.remote_addr, node_id))
 
         return self.fsm('node_exists', request=request, 
                         node=node, node_id=node_id)
@@ -292,6 +297,7 @@ class NodesController(BaseController):
 
         if self.repository.exists(self.expand(node_id, DEFINITION_FN)) or \
            self.repository.exists(self.expand(node_id, STARTUP_CONFIG_FN)):
+            log.info('%s: this node already exists on the server' % node_id)
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
         else:
@@ -443,6 +449,9 @@ class NodesController(BaseController):
             fobj = self.repository.add_file(filename)
         finally:
             fobj.write(contents, CONTENT_TYPE_JSON)
+
+        log.info('%s: saved LLDP information to %s' % (node_id, filename))
+        
         return (response, 'set_location')
 
     def set_location(self, response, *args, **kwargs):
@@ -478,6 +487,7 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
+        log.info('%s: received request for node definition' % resource)
         log.debug('%s\nResource: %s\n' % (request, resource))
 
         node_id = resource.split('/')[0]
@@ -518,10 +528,14 @@ class NodesController(BaseController):
     def do_validation(self, response, *args, **kwargs):
         config = ztpserver.config.runtime
         if not config.default.disable_topology_validation:
+            log.info('%s: Topology Validation is ENABLED' % kwargs['resource'])
+
             filename = self.expand(kwargs['resource'], PATTERN_FN)
             fobj = self.repository.get_file(filename)
 
             try:
+                log.info('%s: validating pattern file for Topology Validation '
+                         '%s' % (kwargs['resource'], filename))
                 pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
             except SerializerError as err:
                 log.error(err.message)
@@ -530,6 +544,8 @@ class NodesController(BaseController):
             if not pattern:
                 raise Exception('failed to validate pattern')
 
+            log.info('%s: evaluating node info against %s' %
+                     (kwargs['resource'], filename))
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
                           (kwargs['resource'], filename))
