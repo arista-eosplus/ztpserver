@@ -32,6 +32,7 @@
 
 from glob import glob
 import os
+import sys
 
 try:
     from setuptools import setup
@@ -43,7 +44,8 @@ from ztpserver import __version__, __author__
 PACKAGES = ['ztpserver']
 
 #INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
-INSTALL_ROOT = ''
+INSTALL_ROOT = os.getenv('INSTALL_ROOT', '')
+#INSTALL_ROOT = ''
 if os.environ.get('READTHEDOCS'):
     print "Customizing install for ReadTheDocs.org build servers..."
     INSTALL_ROOT = "."

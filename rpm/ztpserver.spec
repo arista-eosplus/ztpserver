@@ -9,9 +9,12 @@
 %if 0%{?rhel} == 6
 %global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
-%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
+#%%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
+%global python2_sitelib     /lib/python2.7/site-packages
+%global _python_datadir     /
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
+%global _python_datadir     %{_datadir}
 %endif
 
 # We don't need the -debug package
@@ -38,6 +41,7 @@ BuildRequires: python27
 BuildRequires: python-virtualenv
 BuildRequires: python27-python-virtualenv
 BuildRequires: python27-python-setuptools
+#BuildRequires: libyaml-devel
 %else
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
@@ -48,6 +52,7 @@ BuildRequires: python-setuptools
 Requires: python27
 Requires: python-virtualenv
 Requires: python27-python-virtualenv
+#Requires: libyaml-devel
 Requires: httpd24
 Requires: python27-mod_wsgi
 %else
@@ -86,8 +91,8 @@ that the user interacts with are YAML based.
 ## Prepare virtualenv w/ python27 for build of ztpserver source
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages $RPM_BUILD_ROOT%{app_virtualenv_dir}
-source $RPM_BUILD_ROOT%{app_virtualenv_dir}/bin/activate
+virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
+source %{buildroot}%{app_virtualenv_dir}/bin/activate
 %endif
 
 python setup.py build
@@ -98,29 +103,48 @@ python setup.py build
 # Copy necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages $RPM_BUILD_ROOT%{app_virtualenv_dir}
+virtualenv-2.7 -v --system-site-packages %{buildroot}%{app_virtualenv_dir}
 
-source $RPM_BUILD_ROOT%{app_virtualenv_dir}/bin/activate
+source %{buildroot}%{app_virtualenv_dir}/bin/activate
 
 pip install -r requirements.txt
 %endif
 
 # Allow us to install libs in to RPM_BUILD_ROOT
 # Force some paths for install to handle the virtual_env case for RHEL
-%{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
-PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
-python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
---install-lib=%{python2_sitelib}
-
-%{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
+%{__install} -d %{buildroot}%{python2_sitelib}
 
 %if 0%{?rhel} == 6
+#
+# In virtualenv
+#
+PYTHONPATH=%{buildroot}%{python2_sitelib}:${PYTHONPATH} \
+python setup.py install
+
+%else
+#
+# No virtualenv#
+#
+PYTHONPATH=%{buildroot}%{python2_sitelib}:${PYTHONPATH} \
+INSTALL_ROOT=%{buildroot} python setup.py install \
+--root=%{buildroot}
+%endif
+
+%{__install} -pD %{SOURCE1} %{buildroot}%{_sysconfdir}/%{name}-wsgi.conf
+
+%if 0%{?rhel} == 6
+%{__install} -d %{buildroot}%{_datadir}
+%{__install} -d %{buildroot}%{_bindir}
+%{__install} -d %{buildroot}%{_sysconfdir}
+mv %{buildroot}%{app_virtualenv_dir}%{_datadir}/ztpserver %{buildroot}%{_datadir}/ztpserver
+mv %{buildroot}%{app_virtualenv_dir}/bin/ztps %{buildroot}%{_bindir}/
+mv %{buildroot}%{app_virtualenv_dir}%{_sysconfdir}/ztpserver %{buildroot}%{_sysconfdir}/ztpserver
 # Due to the virtual_env, the shebang line in some scripts gets mangled.
 # Correct those before packaging or check-buildroot will halt the build
-cd ${RPM_BUILD_ROOT}%{app_virtualenv_dir}/bin
-sed -i -e "s#${RPM_BUILD_ROOT}##" *
-cd ${RPM_BUILD_ROOT}%{_bindir}
-sed -i -e "s#${RPM_BUILD_ROOT}##" ztps
+cd %{buildroot}%{app_virtualenv_dir}/bin
+sed -i -e "s#%{buildroot}##" *
+cd %{buildroot}%{_bindir}
+sed -i -e "s#%{buildroot}##" ztps
 %endif
 
 %pre
@@ -170,7 +194,8 @@ fi
 %dir %{_sysconfdir}/ztpserver
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
-%config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
+%%config(noreplace) %%{httpd_dir}/%%{name}-wsgi.conf
+#%config(noreplace) %{_sysconfdir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
 %dir %{_datadir}/ztpserver
@@ -189,10 +214,14 @@ fi
 %config(noreplace) %{_datadir}/ztpserver/neighbordb
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 
 %changelog
+* Fri Nov 21 2014 Jere Julian <jere@arista.com> - 1.2.0-dev
+- Global replace RPM_BUILD_ROOT with rpmbuildroot macro
+- Rework python setup.py install options to work in/out of virtualenv
+
 * Fri Nov 14 2014 Jere Julian <jere@arista.com>
 - Increase utilization of built-in macros
 - Replace define (runtime expansion) with global (immediate)
