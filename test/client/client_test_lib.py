@@ -86,7 +86,7 @@ def raise_exception(exception):
     # Uncomment the following line for debugging
     # import pdb; pdb.set_trace()
 
-    raise Exception('%s\nUncomment line in client_tes_lib.py:raise_'
+    raise Exception('%s\nUncomment line in client_test_lib.py:raise_'
                     'exception for debugging' % exception.message)
 
 ztps = None    #pylint: disable=C0103
@@ -279,6 +279,8 @@ class Bootstrap(object):
         self.ztps = start_ztp_server()
         self.smtp = start_smtp_server()
 
+        self.temp_folder = '/tmp/ztps-tmp'
+
         self.configure()
 
         if ztps_default_config:
@@ -286,6 +288,9 @@ class Bootstrap(object):
             self.ztps.set_node_check_response()
 
     def configure(self):
+        if not os.path.exists(self.temp_folder):
+            os.makedirs(self.temp_folder)
+
         infile = open(BOOTSTRAP_FILE)
         self.filename = '/tmp/bootstrap-%s' % os.getpid()
         outfile = open(self.filename, 'w')
@@ -310,6 +315,9 @@ class Bootstrap(object):
                 "BOOT_EXTENSIONS_FOLDER = '%s'" % 
                 BOOT_EXTENSIONS_FOLDER)
 
+            line = line.replace("TEMP = '/tmp'", "TEMP = '%s'" % 
+                                self.temp_folder)
+
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
                 line = 'HTTP_TIMEOUT = 0.01'
@@ -323,6 +331,8 @@ class Bootstrap(object):
         self.module = imp.load_source('bootstrap', self.filename)
 
     def end_test(self):
+        shutil.rmtree(self.temp_folder)
+
         # Clean up actions
         for url in self.ztps.responses.keys():
             filename = url.split('/')[-1]

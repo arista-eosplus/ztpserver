@@ -85,8 +85,6 @@ HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
 
 FLASH = '/mnt/flash'
 
-BACKUP_FOLDER = '/tmp'
-
 STARTUP_CONFIG = '%s/startup-config' % FLASH
 RC_EOS = '%s/rc.eos' % FLASH
 
@@ -141,23 +139,38 @@ def _exit(code):
         for path in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
             filename = path.split('/')[-1]
             if os.path.isfile(path):
+                log('Saving %s as %s...' % 
+                    (filename, '%s.ztp' % path))
                 shutil.move(path, '%s.ztp' % path)
-            backup_path = '%s/%s' % (BACKUP_FOLDER, filename)
+            backup_path = '%s/%s' % (TEMP, filename)
             if os.path.isfile(backup_path):
                 shutil.move(backup_path, path)
+                log('Recovering %s...' % path) 
 
         if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
+            log('Saving %s as %s...' % 
+                (BOOT_EXTENSIONS_FOLDER.split('/')[-1], 
+                 '%s.ztp' % BOOT_EXTENSIONS_FOLDER))
             shutil.move(BOOT_EXTENSIONS_FOLDER, 
                         '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
 
-        backup_path = '%s/%s' % (BACKUP_FOLDER,
+        backup_path = '%s/%s' % (TEMP,
                                  BOOT_EXTENSIONS_FOLDER.split('/')[-1])
         if os.path.isdir(backup_path):
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
+            log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
     else:
         for path in [x for x in all_files('/mnt/flash')
                      if x not in FLASH_FILES]:
-            shutil.rmtree(path)
+            log('Deleting %s...' % path)
+            if os.path.isdir(backup_path):
+                shutil.rmtree(path)
+            else:
+                try:
+                    os.remove(path)
+                except OSError:
+                    # already removed
+                    pass
 
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
@@ -214,10 +227,12 @@ def flash_snapshot():
 
     for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
         if os.path.isfile(filename):
-            shutil.move(filename, BACKUP_FOLDER)
+            log('Backing up %s...' % filename)
+            shutil.move(filename, TEMP)
 
     if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
-        shutil.move(BOOT_EXTENSIONS_FOLDER, BACKUP_FOLDER)
+        log('Backing up %s...' % BOOT_EXTENSIONS_FOLDER)
+        shutil.move(BOOT_EXTENSIONS_FOLDER, TEMP)
 
 def url_path_join(*parts):
     """Normalize URL parts and join them with a slash."""
@@ -759,6 +774,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
+
         log('Server response to GET config: contents=%s' % result.json())
 
         status = result.status_code
