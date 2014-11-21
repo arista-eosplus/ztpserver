@@ -300,7 +300,7 @@ class Node(object):
                       (self.identifier(), str(err)))
 
     def add_neighbors(self, neighbors):
-        log.info('%s: parsing LLDP Neighbor information submitted by node' %
+        log.info('%s: parsing node LLDP Neighbor information' %
                  self.identifier())
         for interface, peers in neighbors.items():
             self.add_neighbor(interface, peers)
