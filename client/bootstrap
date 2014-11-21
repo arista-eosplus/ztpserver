@@ -160,17 +160,18 @@ def _exit(code):
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
             log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
     else:
-        for path in [x for x in all_files('/mnt/flash')
-                     if x not in FLASH_FILES]:
-            log('Deleting %s...' % path)
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                try:
-                    os.remove(path)
-                except OSError:
-                    # already removed
-                    pass
+        if code:
+            for path in [x for x in all_files('/mnt/flash')
+                         if x not in FLASH_FILES]:
+                log('Deleting %s...' % path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        # already removed
+                        pass
 
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
