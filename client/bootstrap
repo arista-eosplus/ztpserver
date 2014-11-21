@@ -163,7 +163,7 @@ def _exit(code):
         for path in [x for x in all_files('/mnt/flash')
                      if x not in FLASH_FILES]:
             log('Deleting %s...' % path)
-            if os.path.isdir(backup_path):
+            if os.path.isdir(path):
                 shutil.rmtree(path)
             else:
                 try:
