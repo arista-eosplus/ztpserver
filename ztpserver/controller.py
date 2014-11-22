@@ -249,9 +249,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('%s\n' % request)
         log.info('%s: received LLDP, SystemID, Version and Model information '
-                 'from node' % request.remote_addr)
+                 'from node:\n%s' % (request.remote_addr, request.json))
 
         try:
             node = create_node(request.json)
@@ -454,7 +453,8 @@ class NodesController(BaseController):
         finally:
             fobj.write(contents, CONTENT_TYPE_JSON)
 
-        log.info('%s: saved LLDP information to %s' % (node_id, filename))
+        log.info('%s: node data written to %s:\n%s' %
+                 (node_id, filename, contents))
         
         return (response, 'set_location')
 
@@ -491,7 +491,7 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.info('%s: received request for node definition' % resource)
+        log.info('%s: received request for definition: %s' % (resource, request.url)) 
         log.debug('%s\nResource: %s\n' % (request, resource))
 
         node_id = resource.split('/')[0]
@@ -556,10 +556,10 @@ class NodesController(BaseController):
                 raise ValidationError('%s: node failed pattern '
                                       'validation (%s)' %
                                       (kwargs['resource'], filename))
-            log.debug('%s: node passed pattern validation (%s)' % 
+            log.info('%s: node passed pattern validation (%s)' % 
                       (kwargs['resource'], filename))
         else:
-            log.warning('%s: topology validation is disabled' %
+            log.warning('%s: topology validation is DISABLED' %
                         kwargs['resource'])
         return (response, 'get_startup_config')
 
@@ -751,7 +751,7 @@ class BootstrapController(BaseController):
             default_server = ztpserver.config.runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
-            log.info('%s: node beginning ZeroTouchProvisioning' %
+            log.info('%s: node beginning provisioning' %
                      request.remote_addr)
         except KeyError as err:
             log.debug('Missing variable: %s' % err)
