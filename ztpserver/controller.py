@@ -390,7 +390,7 @@ class NodesController(BaseController):
 
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
-            log.info('%s: definition location: %s' % (node_id, definition_url))
+            log.info('%s: node will inherit definition: %s' % (node_id, definition_url))
         except FileObjectNotFound:
             log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
@@ -407,7 +407,7 @@ class NodesController(BaseController):
         
         self.repository.add_folder(self.expand(node_id))
 
-        log.info('%s: new /nodes/%s folder created' % 
+        log.info('%s: new dynamically-provisioned node created: /nodes/%s' % 
                  (node_id, node_id))
 
         fobj = self.repository.add_file(definition_fn)
@@ -538,8 +538,8 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(filename)
 
             try:
-                log.info('%s: validating pattern file for topology validation '
-                         '%s' % (kwargs['resource'], filename))
+                log.info('%s: checking syntax of pattern file used for topology'
+                         ' validation: %s' % (kwargs['resource'], filename))
                 pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
             except SerializerError as err:
                 log.error(err.message)
@@ -548,7 +548,7 @@ class NodesController(BaseController):
             if not pattern:
                 raise Exception('failed to validate pattern')
 
-            log.info('%s: evaluating node info against %s' %
+            log.info('%s: evaluating node against pattern: %s' %
                      (kwargs['resource'], filename))
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
@@ -556,7 +556,7 @@ class NodesController(BaseController):
                 raise ValidationError('%s: node failed pattern '
                                       'validation (%s)' %
                                       (kwargs['resource'], filename))
-            log.info('%s: node passed pattern validation (%s)' % 
+            log.info('%s: node passed pattern validation: %s' % 
                       (kwargs['resource'], filename))
         else:
             log.warning('%s: topology validation is DISABLED' %
@@ -727,7 +727,7 @@ class BootstrapController(BaseController):
                        not body['xmpp']['rooms']:
                         log.warning('Bootstrap config: no XMPP rooms '
                                     'configured')
-                    log.info('%s: XMPP info included in bootstrap config' %
+                    log.info('%s: xmpp info included in bootstrap config' %
                              request.remote_addr)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectNotFound:

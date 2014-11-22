@@ -86,11 +86,15 @@ def load_file(filename, content_type, node_id):
 def load_neighbordb(node_id, contents=None):
     try:
         if not contents:
+            log.info('%s: loading neighbordb file: %s' % 
+                     (node_id, default_filename()))
             contents = load_file(default_filename(), CONTENT_TYPE_YAML,
                                  node_id)
 
         # neighbordb is empty
         if not contents:
+            log.info('%s: unable to load neighbordb - file is missing/empty' % 
+                     node_id)
             contents = dict()
 
         if not validate_neighbordb(contents, node_id):
