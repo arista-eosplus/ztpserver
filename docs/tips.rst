@@ -18,7 +18,7 @@ Go to the ZTPServer directory where you previously cloned the GitHub repository 
         * "vX.Y.Z-rc" - for beta testing the next X.Y.Z release-candidate
         * "develop" (DEFAULT) - for the latest bleeding-edge development branch
 
-    * <path> is the "base directory of the ztpserver installation.
+    * <path> is the base directory of the ztpserver installation.
 
         * /usr/share/ztpserver (DEFAULT)
 
