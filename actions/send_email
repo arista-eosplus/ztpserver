@@ -78,12 +78,31 @@ def main(attributes):
     This action is dual-supervisor compatible.
 
     Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        node (internal): attributes.get('NODE') API: see documentation
+        smarthost: hostname of smarthos>,
+        sender: from email addres>
+        receivers: [ <array of recipients to send email to> ]
+        subject: subject line of the message
+        body: the message body
+        attachments: [ <array of files to attach> ]
+        commands: [ <array of commands to run and attach> ]
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+            -
+              action: send_mail
+              attributes:
+                  smarthost: smtp.example.com
+                  from: noreply@example.com
+                  subject: This is a test message from a switch in ZTP
+                  receivers:
+                      bob@exmple.com
+                      helen@example.com
+                  body: Please see the attached 'show version'
+                  commands: show version
+
     '''
 
     node = attributes.get('NODE')

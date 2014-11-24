@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
@@ -14,7 +14,7 @@
 #  - Neither the name of Arista Networks nor the names of its
 # contributors may be used to endorse or promote products derived from
 # this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -31,7 +31,7 @@
 
 BOOT_CONFIG = '/mnt/flash/boot-config'
 
-def main(attributes): 
+def main(attributes):
     '''Installs software image on the switch.
 
     If the current software image is the same as the 'version'
@@ -44,12 +44,25 @@ def main(attributes):
     This action is dual-supervisor compatible.
 
     Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        node (internal): attributes.get('NODE') API: see documentation
+        url: path to .swi file
+        version: target version of the .swi file.
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+            -
+              action: install_image
+              always_execute: true
+              attributes:
+                url: files/images/vEOS.swi
+                version: 4.13.5F
+              name: "validate image"
+              onstart: "Starting to install image"
+              onsuccess: "SUCCESS: 4.13.5F installed"
+              onfailure: "FAIL: IM nick@example.com for help"
+
     '''
 
     node = attributes.get('NODE')
@@ -61,7 +74,7 @@ def main(attributes):
     version = attributes.get('version')
     if not version:
         return 'Missing attribute(\'version\')'
-    
+
     current_version = node.api_enable_cmds(['show version'])[0]['version']
     if current_version == version:
         return

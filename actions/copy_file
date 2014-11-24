@@ -71,10 +71,26 @@ def main(attributes):
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
+       node (internernal): attributes.get('NODE') API: see documentation
+       attributes:
+       src_url: Source location
+       dst_url: Destination
+       mode: Octal mode
+       overwrite: Overwrite existing files? <replace|if-missing|backup> Default: replace
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+          -
+            action: copy_file
+            always_execute: true
+            attributes:
+              dst_url: /mnt/flash/
+              mode: 777
+              overwrite: if-missing
+              src_url: files/automate/bgpautoinf.py
+            name: "automate BGP peer interface config"
+
     '''
 
     node = attributes.get('NODE')
