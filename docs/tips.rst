@@ -81,6 +81,23 @@ From a bash shell on the switch:
     # execute file
     sudo ./bootstrap
 
+What is the recommended test environment for ZTPServer?
+```````````````````````````````````````````````````````
+
+The best way to learn about and test a ZTPServer environment is to build the server and virtual (vEOS) nodes with Packer.  See https://github.com/arista-eosplus/packer-ztpserver for directions.
+
+If you setup your own environment, the following recommendations should assist greatly in visualizing the workflow and troubleshooting any issues which may arise.  The development team strongly encourages these steps as Best Practices for testing your environment, and, most of these recommendations are also Best Practices for a full deployment.
+
+* During testing, only - run the standalone server in debug mode: ``ztps --debug`` in a buffered shell.   NOTE: do NOT use this standalone server in production, however, except in the smallest environments ( Approx 10 nodes or less, consecutively).
+* Do not attempt any detailed debugging from a virtual or serial console.  Due to the quantity of information and frequent lack of copy/paste access, this if often painful.  Both suggested logging methods, below, can be configured in the :ref:`bootstrap_config`.
+
+  * (BEST) Setup XMPP logging. There are many XMPP services available, including ejabberd, and even more clients, such as Adium.  This will give you a single pane view of what is happening on all of your test switches.  Our demo includes ejabberd with the following configuration:
+
+       * Server: im.ztps-test.com (or your ZTPServer IP)
+       * XMPP admin user: ztpsadmin@im.ztps-test.com, passwd eosplus
+
+  * (Second) In place of XMPP, splecify a central syslog server in the bootstrap config.
+
 How do I override the default system-mac in vEOS?
 ``````````````````````````````````````````````````
 
