@@ -32,7 +32,7 @@
 #    Written by:
 #       EOS+, Arista Networks
 
-
+import argparse
 import datetime
 import imp
 import json
@@ -50,6 +50,7 @@ import time
 import traceback
 import urllib2
 import urlparse
+from urlparse import urlsplit, urlunsplit
 
 from collections import namedtuple
 from logging.handlers import SysLogHandler
@@ -86,10 +87,14 @@ FLASH = '/mnt/flash'
 
 STARTUP_CONFIG = '%s/startup-config' % FLASH
 RC_EOS = '%s/rc.eos' % FLASH
+
 BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH
 BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH
 
-HTTP_TIMEOUT = 10
+HTTP_TIMEOUT = 30
+
+FLASH_FILES = []
+RESTORE_FACTORY_FLASH = True
 
 #pylint: disable=C0103
 syslog_manager = None
@@ -101,19 +106,20 @@ xmpp_client = None
 # logging.basicConfig(level=logging.DEBUG,
 #                     format='%(levelname)-8s %(message)s')
 
-# You will also have to uncomment the following lines:
+# You will also have to comment out the following lines:
 for logger in ['sleekxmpp.xmlstream.xmlstream',
                'sleekxmpp.basexmpp']:
     xmpp_log = logging.getLogger(logger)
     xmpp_log.addHandler(logging.NullHandler())
 #---------------------------------XMPP------------------------
 
-#---------------------------------XMPP------------------------
-# Uncomment this section in order to enable syslog debug logging
+#---------------------------------SYSLOG----------------------
+# Comment out this section in order to enable syslog debug 
+# logging
 logging.raiseExceptions = False
 #---------------------------------XMPP------------------------
 
-# ------------------Utilities----------------------------
+# ------------------Utilities---------------------------------
 def _exit(code):
     #pylint: disable=W0702
 
@@ -129,6 +135,44 @@ def _exit(code):
     sys.stdout.flush()
     sys.stderr.flush()
 
+    if not RESTORE_FACTORY_FLASH:
+        for path in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
+            filename = path.split('/')[-1]
+            if os.path.isfile(path):
+                log('Saving %s as %s...' % 
+                    (filename, '%s.ztp' % path))
+                shutil.move(path, '%s.ztp' % path)
+            backup_path = '%s/%s' % (TEMP, filename)
+            if os.path.isfile(backup_path):
+                shutil.move(backup_path, path)
+                log('Recovering %s...' % path) 
+
+        if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
+            log('Saving %s as %s...' % 
+                (BOOT_EXTENSIONS_FOLDER.split('/')[-1], 
+                 '%s.ztp' % BOOT_EXTENSIONS_FOLDER))
+            shutil.move(BOOT_EXTENSIONS_FOLDER, 
+                        '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
+
+        backup_path = '%s/%s' % (TEMP,
+                                 BOOT_EXTENSIONS_FOLDER.split('/')[-1])
+        if os.path.isdir(backup_path):
+            shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
+            log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
+    else:
+        if code:
+            for path in [x for x in all_files('/mnt/flash')
+                         if x not in FLASH_FILES]:
+                log('Deleting %s...' % path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        # already removed
+                        pass
+
     #pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
     os._exit(code)
@@ -143,7 +187,8 @@ def log(msg, error=False, xmpp=None):
         xmpp = log_xmpp()
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    xmpp_msg = 'ZTPS:%s: %s%s' % (timestamp,
+    xmpp_msg = '%s: %s - %s%s' % (SYSTEM_ID if SYSTEM_ID else 'N/A', 
+                                  timestamp,
                                   'ERROR: ' if error else '',
                                   msg)
 
@@ -175,24 +220,61 @@ def flash_usage():
     total = stats.f_blocks * stats.f_frsize
     used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
     return _ntuple_diskusage(total, used, free)
-# ------------------Utilities----------------------------
+
+def flash_snapshot():
+    #pylint: disable=W0603
+    global FLASH_FILES
+    FLASH_FILES = all_files('/mnt/flash')
+
+    for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
+        if os.path.isfile(filename):
+            log('Backing up %s...' % filename)
+            shutil.move(filename, TEMP)
+
+    if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
+        log('Backing up %s...' % BOOT_EXTENSIONS_FOLDER)
+        shutil.move(BOOT_EXTENSIONS_FOLDER, TEMP)
+
+def url_path_join(*parts):
+    """Normalize URL parts and join them with a slash."""
+    # pylint: disable=W0142
+    schemes, netlocs, paths, queries, fragments = \
+        zip(*(urlsplit(part) for part in parts))
+    scheme = get_first_token(schemes)
+    netloc = get_first_token(netlocs)
+    path = '/'.join(x.strip('/') for x in paths if x)
+    query = get_first_token(queries)
+    fragment = get_first_token(fragments)
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+def get_first_token(sequence):
+    return next((x for x in sequence if x), '')
+
+def all_files(path):
+    result = []
+    for top, dirs, files in os.walk(path):
+        result += [os.path.join(top, d) for d in dirs]
+        result += [os.path.join(top, f) for f in files]
+
+    return result
+# ------------------Utilities---------------------------------
 
 
 # ------------------4.12.x support----------------------------
 def download_file(url, path):
     if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
-        url = urlparse.urljoin(SERVER, url)
+        url = url_path_join(SERVER, url)
 
     log('Retrieving URL: %s' % url)
 
-    url = urllib2.urlopen(url)
+    url = urllib2.urlopen(url, timeout=HTTP_TIMEOUT)
     output_file = open(path, 'wb')
     output_file.write(url.read())
     output_file.close()
 
 #pylint: disable=C0103
 REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = '%s/files/lib/%s.tar.gz' % (SERVER, REQUESTS)
+REQUESTS_URL = url_path_join(SERVER, '/files/lib/', REQUESTS+'.tar.gz')
 try:
     import requests
 except ImportError:
@@ -275,7 +357,9 @@ class Node(object):
         try:
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
-            log('unable to disable COPP: %s' % err, error=True)
+            log('WARNING: unable to disable COPP: %s '
+                '(platform/EOS version might not support this feature)' % 
+                err)
 
         global SYSTEM_ID                    #pylint: disable=W0603
         SYSTEM_ID = \
@@ -314,8 +398,9 @@ class Node(object):
                 'show management api http-commands | grep running')
 
     def _disable_copp(self):
-        # COPP does not apply to vEOS
-        if self.system()['model'] != 'vEOS':
+        # COPP does not apply to vEOS or EOS-4.11.x and earlier
+        if (self.system()['model'] != 'vEOS' and
+            int(self.system()['version'].split('.')[1]) < 12):
             self.api_config_cmds(['control-plane',
                                   'no service-policy input copp-system-policy'])
 
@@ -498,13 +583,17 @@ class Node(object):
     def retrieve_url(self, url, path):
         '''Download resource from server.
 
-        If 'path' is somewhere on flash, the client will first request the
-        metainformation for the resource from the server (in order to Check
-        whether there is enogh disk space available).
+        If 'path' is somewhere on flash and 'url' points back to
+        SERVER, then the client will request the metadata for
+        the resource from the server (in order to check whether there
+        is enogh disk space available). If 'url' points to a different
+        server, then the 'content-length' header will be used for the
+        disk space checks.
 
         Raises:
             ZtpError: resource cannot be retrieved:
-                - metainformation cannot be retrieved from server OR
+                - metadata cannot be retrieved from server OR
+                - metadata is inconsistent with request OR
                 - disk space on flash is insufficient OR
                 - file cannot be written to disk
 
@@ -600,7 +689,7 @@ class Server(object):
             request_files[entry] = open(entry,'rb')
 
         if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
-            full_url = urlparse.urljoin(SERVER, path)
+            full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
@@ -644,16 +733,29 @@ class Server(object):
                 raise ZtpError('attempting to save file to %s, but cannot'
                                'retrieve content metadata.')
 
-            _, _, metadata = self.get_metadata(url)
-            metadata = metadata.json()
+            size = int(contents.headers['content-length'])
+            if url.startswith(SERVER):
+                _, _, metadata = self.get_metadata(url)
+                metadata = metadata.json()
+                if metadata['size'] != size:
+                    raise ZtpError('"content-length" for %s does not match '
+                                   'metadata' % url)
 
             usage = flash_usage()
-            if (metadata['size'] > usage.free):
+
+            free_space = usage.free
+            potential_used_space = size + usage.used
+            if os.path.isfile(path):
+                size = os.path.getsize(path)
+                free_space += size
+                potential_used_space -= size
+
+            if (size > free_space):
                 raise ZtpError('not enough memory on flash for saving %s to %s '
                                '(free: %s bytes, required: %s bytes)' %
-                               (url, path, usage.free, metadata['size']))
-            elif (metadata['size'] + usage.used > 0.9 * usage.total):
-                percent = (metadata['size'] + usage.used) * 100.0 / usage.total
+                               (url, path, free_space, size))
+            elif (potential_used_space > 0.9 * usage.total):
+                percent = (size + usage.used) * 100.0 / usage.total
                 log('WARNING: flash disk usage will exceeed %s%% after '
                     'saving %s to %s' % (percent, url, path))
 
@@ -676,6 +778,7 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
+
         log('Server response to GET config: contents=%s' % result.json())
 
         status = result.status_code
@@ -761,14 +864,13 @@ class Server(object):
 
     def get_metadata(self, url):
         if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
-            aux = url.split('/')
-            if aux[3] != 'meta':
-                aux = aux[0:3] + ['meta'] + aux[3:]
-                url = '/'.join(aux)
+            regex = re.compile(SERVER, re.IGNORECASE)
+            if regex.match(url):
+                url = re.sub(regex, '', url)
+                url = url_path_join(SERVER, '/meta', url)
         else:
             aux = [x for x in url.split('/') if x]
-            if aux[0] != 'meta':
-                url = '/'.join(['meta'] + aux)
+            url = '/'.join(['meta'] + aux)
 
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request(url,
@@ -799,18 +901,30 @@ class Server(object):
 
     def get_resource(self, url, path):
         if not urlparse.urlsplit(url).scheme:     #pylint: disable=E1103
-            url = urlparse.urljoin(SERVER, url)
+            url = url_path_join(SERVER, url)
 
         status, content, response = self._get_request(url)
-        if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_OTHER) or
-                (status == HTTP_STATUS_NOT_FOUND and
-                 content == CONTENT_TYPE_HTML)):
-            raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('resource not found on server (status=%s)' % status)
+
+        if url.startswith(SERVER):
+            if not ((status == HTTP_STATUS_OK and
+                     content == CONTENT_TYPE_OTHER) or
+                    (status == HTTP_STATUS_NOT_FOUND and
+                     content == CONTENT_TYPE_HTML)):
+                raise ZtpUnexpectedServerResponseError(
+                    'unexpected reponse from server for %s '
+                    '(status=%s; content-type=%s)' %
+                    (url, status, content))
+        else:
+            if not (status == HTTP_STATUS_OK or
+                    status == HTTP_STATUS_NOT_FOUND):
+                raise ZtpUnexpectedServerResponseError(
+                    'unexpected reponse from server for %s '
+                    '(status=%s; content-type=%s)' %
+                    (url, status, content))
+
+        if status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError('resource %s not found on server (status=%s)' % 
+                           (url, status))
 
         self._save_file_contents(response, path, url)
 
@@ -980,19 +1094,20 @@ def execute_action(server, action_details, special_attr):
                 xmpp=True)
         raise ZtpActionError('executing action failed (%s): %s' % (action, err))
 
-def restore_factory_default():
-    for filename in [RC_EOS, BOOT_EXTENSIONS]:
-        if os.path.exists(filename):
-            os.remove(filename)
-
-    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
-
-
+            
 def main():
     #pylint: disable=W0603,R0912,R0915
-    global syslog_manager
+    global syslog_manager, RESTORE_FACTORY_FLASH
 
-    restore_factory_default()
+    usage = 'bootstrap [options]'
+    parser = argparse.ArgumentParser(usage=usage)
+    parser.add_argument('--no-flash-factory-restore', '-n',
+                        action='store_true',
+                        help='Do NOT restore flash config to factory default')
+    args = parser.parse_args()
+    RESTORE_FACTORY_FLASH = not args.no_flash_factory_restore
+
+    flash_snapshot()
 
     syslog_manager = SyslogManager()
     server = Server()
@@ -1020,11 +1135,10 @@ def main():
     # Execute actions
     definition = definition.json()
 
-    for attr in ['name', 'actions']:
-        if attr not in definition:
-            raise ZtpError('\'%s\' section missing from definition' % attr)
+    if 'actions' not in definition:
+        raise ZtpError('\'actions\' section missing from definition')
 
-    definition_name = definition['name']
+    definition_name = definition.get('name', '')
     log('Applying definition %s' % definition_name)
 
 
@@ -1066,4 +1180,3 @@ if __name__ == '__main__':
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
-

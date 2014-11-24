@@ -409,11 +409,10 @@ The format of a pattern is very similar to the format of ``neighordb``
     name: <single line description of pattern>
     definition: <defintion_url>
     interfaces:
-        - <port_name>:<system_name>:<neighbor_port_name>:<tags>
+        - <port_name>:<system_name>:<neighbor_port_name>
         - <port_name>:
             device: <system_name>
             port: <neighbor_port_name>
-            tags: <comma delimited tags list>
     ...
 
 If the pattern file is missing when the node makes a GET request for its
@@ -671,11 +670,10 @@ definition will be automatically generated for the node.
           variables:
             <variable_name>: <function>
           interfaces:
-            - <port_name>: <system_name>:<neighbor_port_name>:<tags>
+            - <port_name>: <system_name>:<neighbor_port_name>
             - <port_name>:
                 device: <system_name>
                 port: <neighbor_port_name>
-                tags: <comma delimited tags list>
     ...
 
 .. note::
@@ -833,7 +831,3 @@ Positive constraints
 8. ``INTERFACES: DEVICE:PORT``: matches if one of INTERFACES is
    connected to DEVICE:PORT
 
-tags
-''''
-
-Supported in future releases.

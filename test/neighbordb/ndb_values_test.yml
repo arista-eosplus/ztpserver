@@ -49,6 +49,10 @@ valid_patterns:
     - intf range 3
     - intf range 4
     - intf range 5
+    - intf range 6
+    - intf range 7
+    - intf range 8
+    - intf range 9
   nodes:
     - correct system mac 1
     - correct system mac 2
@@ -493,6 +497,13 @@ neighbordb:
       interfaces:
         - EthernetZ: hostname:Ethernet1/2/3
 
+    # Not provisioned
+    - name: erroneous intf range 9
+      definition: test
+      interfaces:
+        - Ethernet4-4: none:none
+
+
     - name: intf range 1
       definition: test
       interfaces:
@@ -511,12 +522,40 @@ neighbordb:
     - name: intf range 4
       definition: test
       interfaces:
-        - Ethernet4-4: none:none
+        - Ethernet4-5: none:none
 
     - name: intf range 5
       definition: test
       interfaces:
         - Ethernet5,Ethernet2-7: none:none
+
+    - name: intf range 6
+      definition: test
+      interfaces:
+        - et1: none:none
+        - Et2: none:none
+        - ethernet3/4: none:none
+        - Ethernet5/6: none:none
+        - M1/2/3: none:none
+        - m4: none:none
+        - ma6: none:none
+        - Ma7: none:none
+        - Management9: none:none
+
+    - name: intf range 7
+      definition: test
+      interfaces:
+        - e1,3-10: test:test
+
+    - name: intf range 8
+      definition: test
+      interfaces:
+        - Management1,1/2/3,Et1/2/3-1/2/6: test:test
+
+    - name: intf range 9
+      definition: test
+      interfaces:
+        - Management1-3,Ethernet2,4-5: test:test
 
     # Not provisioned
     - name: intf range error 1
@@ -524,18 +563,32 @@ neighbordb:
       interfaces:
         - Ethernet5-2: none:none
 
+    # Not provisioned
     - name: intf range error 2
       definition: test
       interfaces:
         - Ethernet2,a,3: none:none
 
+    # Not provisioned
     - name: intf range error 3
       definition: test
       interfaces:
         - Ethernet2-a: none:none
 
+    # Not provisioned
     - name: intf range error 4
       definition: test
       interfaces:
         - Ethernet0,2: none:none
 
+    # Not provisioned
+    - name: intf range error 5
+      definition: test
+      interfaces:
+        - Ethernet0-2: none:none
+
+    # Not provisioned
+    - name: intf range error 5
+      definition: test
+      interfaces:
+        - Ethernet1/2/1-1/3/2: none:none
