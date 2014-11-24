@@ -45,7 +45,7 @@ from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
-from ztpserver.utils import expand_range, parse_interface
+from ztpserver.utils import expand_range, parse_interface, url_path_join
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -107,11 +107,19 @@ def load_neighbordb(node_id, contents=None):
 
         log.debug('%s: loaded neighbordb: %s' % (node_id, neighbordb))
         return neighbordb
-    except (NeighbordbError, SerializerError):
-        log.error('%s: failed to load neighbordb' % node_id)
+    except SerializerError as err:
+        # pylint: disable=E1101
+        tokens = err.message.split('Error:')
+        log.error('%s: failed to load neighbordb: %s' % 
+                  (node_id, 
+                   'Error:'.join(tokens[1:]) 
+                   if len(tokens) > 1
+                   else err.message))
+        return None
     except Exception as err:
         log.error('%s: failed to load neighbordb because of error: %s' %
                   (node_id, err))
+        return None
 
 def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
     """ Returns an instance of Pattern """
@@ -182,7 +190,7 @@ def replace_config_action(resource, filename=None):
 
     filename = filename or 'startup-config'
     server_url = ztpserver.config.runtime.default.server_url
-    url = '%s/nodes/%s/%s' % (server_url, str(resource), filename)
+    url = url_path_join(server_url, 'nodes/', str(resource), filename)
 
     action = dict(name='install static startup-config file',
                   action='replace_config',

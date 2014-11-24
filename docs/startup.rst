@@ -16,12 +16,14 @@ Apache (mod_wsgi)
 
 If using Apache, this section provides instructions for setting up ZTPServer using mod_wsgi. This section assumes the reader is familiar with Apache and has already installed mod_wsgi. For details on how to install mod_wsgi, please see the `modwsgi Quick Installation Guide <https://code.google.com/p/modwsgi/wiki/QuickInstallationGuide>`_.
 
-To enable ZTPServer for an Apache server, we need to add the following WSGI configuration to the Apache config.  A good location might be to create ``/etc/httpd/conf.d/ztpserver.conf``:
+To enable ZTPServer for an Apache server, we need to add the following WSGI configuration to the Apache config.  A good location might be to create ``/etc/httpd/conf.d/ztpserver.conf`` or /etc/apache2/sites-enabled/ztpserver.conf:
 
 .. code-block:: apacheconf
 
+    LoadModule wsgi_module modules/mod_wsgi.so
+    Listen 8080
+
     <VirtualHost *:8080>
-        LoadModule wsgi_module modules/mod_wsgi.so
 
         WSGIDaemonProcess ztpserver user=www-data group=www-data threads=50
         WSGIScriptAlias / /etc/ztpserver/ztpserver.wsgi
@@ -42,17 +44,25 @@ To enable ZTPServer for an Apache server, we need to add the following WSGI conf
 
 
 
-WSGIScriptAlias should point to the ztpserver.wsgi file which is installed by default under /etc/ztpserver. The ``<Directory /ztpserver>`` tag assigns the path prefix for the ZTPServer url. The ZTPServer configuration must be updated to include the URL path prefix (``/ztpserver`` in this example).
+WSGIScriptAlias should point to the ztpserver.wsgi file which is installed by default under /etc/ztpserver/ztpserver.wsgi. You will notice that the ``<Location />`` directive is set to the root directory. This will enable ZTPServer to listen at the base server URL:
 
-To update the ZTPServer configuration, edit the default configuration file found at /etc/ztpserver/ztpserver.conf by modifying or adding the following line under the [default] section:
+``http://<host_ip>:8080/bootstrap``
 
-``server_url = http://192.168.1.34/ztpserver``
+If you would like to run the ZTPServer under a subdirectory, leave the Apache configuration as it is listed above and modify the ZTPServer configuration to include the URL path prefix (``/ztpserver`` in this example).
 
-where /ztpserver is the same name as the directory entry configured above.  Once completed, restart Apache and you should now be able to access your ZTPServer at the specified URL.  To test, simply use curl - for example:
+For example, edit the default configuration file found at ``/etc/ztpserver/ztpserver.conf`` by modifying or adding the following line under the [default] section:
 
-``curl http://1921.68.1.34/ztpserver/bootstrap``
+``server_url = http://<host_ip>:8080/ztpserver/``
+
+where /ztpserver/ is the subdirectory you would like the wsgi to listen. Once completed, restart Apache and you should now be able to access your ZTPServer at the specified URL.  To test, simply use curl - for example:
+
+``curl http://<host_ip>:8080/ztpserver/bootstrap``
 
 If everything is configured properly, curl should be able to retrieve the bootstrap script. If there is a problem, all of the ZTPServer log messages should be available under the Apache server error logs.
+
+.. note:: File Permissions - Apache mod_wsgi will run ztpserver.wsgi as the specified system user in your Apache config.  This use must be able to read/write to the files in ``/usr/share/ztpserver`` (or whereever you created your data_root.)
+.. note:: SELinux - Apache will need to read and write to files in ``/usr/share/ztpserver``.  Therefore, you might need to update/assign an SELinux user/role/type to these files.  You can do something like ``chcon -R -h system_u:object_r:httpd_sys_script_rw_t /usr/share/ztpserver`` to accomplish that.
+
 
 Standalone debug server
 ```````````````````````
@@ -79,5 +89,4 @@ The following options may be specified when starting the ztps binary:
     --validate FILENAME   Runs a validation check on neighbordb
     --debug               Enables debug output to the STDOUT
 
-When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration. 
-
+When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration.

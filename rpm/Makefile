@@ -23,13 +23,13 @@ VERSION := $(shell cat ../VERSION)
 
 # Spec files cannot contain extraneous strings - so just extract numbered release
 SPECVERSION := $(shell sed -n 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/p' ../VERSION)
-RPMRELEASE = 1
+RPMRELEASE = 2
 
 
 # RPM build parameters
 #ARCH = noarch
 
-RPMBUILD = rpmbuild --define "_topdir %(pwd)/rpm-build" \
+RPMBUILD = rpmbuild --define "_topdir %(pwd)/rpmbuild" \
         --define "_builddir %{_topdir}" \
         --define "_rpmdir %(pwd)/rpms" \
         --define "_srcrpmdir %{_rpmdir}" \
@@ -44,17 +44,20 @@ clean:
 	@echo "---------------------------------------------"
 	@echo "Cleaning up"
 	@echo "---------------------------------------------"
-	rm -rf dist/ build/ rpm-build/ rpms/ *~
+	rm -rf dist/ build/ rpmbuild/ rpms/ *~
 
 sdist:
+	@cp $(RPMSPEC) ../$(PACKAGE).spec
+	@sed -i -e 's/^Version:.*/Version: $(SPECVERSION)/g' ../$(PACKAGE).spec
+	@sed -i -e 's/^Release:.*/Release: $(RPMRELEASE)%{?dist}/g' ../$(PACKAGE).spec
 	mkdir -p dist/
-	tar --directory=../.. -czf dist/${PACKAGE}.tgz ${PACKAGE} --exclude=rpm
+	@ln -s ../../../${PACKAGE} dist/${PACKAGE}-${SPECVERSION}
+	tar --directory=dist --dereference -czf dist/${PACKAGE}-${SPECVERSION}.tgz ${PACKAGE}-${SPECVERSION} --exclude=rpm --exclude=.git --exclude=.gitignore --exclude=ztpserver.egg-info
+	@rm dist/${PACKAGE}-${SPECVERSION}
 	cp ${HTTPDCONF} dist/${HTTPDCONF}
-	@sed -i.bak 's/^Version:.*/Version: $(SPECVERSION)/g' $(RPMSPEC)
-	@sed -i.bak 's/^Release:.*/Release: $(RPMRELEASE)%{?dist}/g' $(RPMSPEC)
 
 prep_rpmbuild: sdist
-	mkdir -p rpm-build
+	mkdir -p rpmbuild
 	mkdir -p rpms
 
 rpm: prep_rpmbuild

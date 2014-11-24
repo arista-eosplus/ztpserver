@@ -1,29 +1,31 @@
 #################################
 # Application specific settings #
 #################################
-%define app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
-%define app_user            ztpserver
+%global app_summary         "Arista Zero Touch Provisioning Server for Arista EOS Devices."
+%global app_url             https://github.com/arista-eosplus/ztpserver/
+%global app_user            ztpserver
+
 %if 0%{?rhel} == 6
-%define httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
-%define app_virtualenv_dir  /opt/ztpsrv_env
-%define ztps_bin            /bin
-%global python2_sitelib     /lib/python2.7/site-packages
-%global python2_sitearch    /lib64/python2.7/site-packages
+%global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
+%global app_virtualenv_dir  /opt/ztpsrv_env
+%global basedatadir         %{_datadir}
+%global basesysconfdir      %{_sysconfdir}
 %else
-%define httpd_dir           /etc/httpd/conf.d
-%define app_virtualenv_dir  /
-%define ztps_bin            /usr/bin
+%global httpd_dir           %{_sysconfdir}/httpd/conf.d
 %endif
 
+# We don't need the -debug package
+%global debug_package %{nil}
+
 Name:    ztpserver
-Version: 1.2.0
-Release: 1%{?dist}
+Version: BLANK
+Release: 2%{?dist}
 Summary: %{app_summary}
 
-Group:    Network
+Group:    Applications/Communications
 License:  BSD-3
 URL:      %{app_url}
-Source0:  %{name}.tgz
+Source0:  %{name}-%{version}.tgz
 Source1:  %{name}-wsgi.conf
 
 ### Don't allow rpmbuild to modify dependencies 
@@ -35,10 +37,11 @@ BuildRequires: python-pip
 BuildRequires: python27
 BuildRequires: python-virtualenv
 BuildRequires: python27-python-virtualenv
+BuildRequires: python27-python-setuptools
 %else
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
-BuildRequires: python-virtualenv
+BuildRequires: python-setuptools
 %endif
 
 %if 0%{?rhel} == 6
@@ -50,14 +53,11 @@ Requires: python27-mod_wsgi
 %else
 Requires: python >= 2.7
 Requires: python < 3
-Requires: python-virtualenv
 Requires: httpd
 Requires: mod_wsgi
 %endif
 
-Requires: shadow-utils
-
-BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-%{id -un}
+Requires(pre): shadow-utils
 
 %description
 ZTPServer provides a bootstrap environment for Arista EOS based products.
@@ -79,64 +79,60 @@ bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
+%setup -q
 
+%build
 %if 0%{?rhel} == 6
 ## Prepare virtualenv w/ python27 for build of ztpserver source
 export X_SCLS=python27
 source /opt/rh/python27/enable
-virtualenv-2.7 -v --system-site-packages %{app_virtualenv_dir}
-source %{app_virtualenv_dir}/bin/activate
+virtualenv-2.7 -v --system-site-packages $RPM_BUILD_DIR%{app_virtualenv_dir}
+source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
 %endif
 
-%setup -q -c -n %{name}-%{version}
-
-pip install setuptools --upgrade
-
-#%build
-cd ztpserver
 python setup.py build
 
-%install
 
+%install
 %if 0%{?rhel} == 6
-## Export virtualenv vars again and activate it (apparently \install macro has its own shell/env):
+## Set into the virtualenv w/ python27
 export X_SCLS=python27
 source /opt/rh/python27/enable
-source %{app_virtualenv_dir}/bin/activate
+source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
+%python2_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+%python2_sitearch %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
+
+# Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
+%{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
+cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
 %endif
 
-cd ztpserver
-python setup.py install --root=$RPM_BUILD_ROOT
+# Allow us to install libs in to RPM_BUILD_ROOT
+# Force some paths for install to handle the virtual_env case for RHEL
+%{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
+PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
+python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
+--install-lib=%{python2_sitelib}
 
-# clean-up gitsrc dir after install:
-cd ..
-rm -rf ztpserver
+%{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
-# install everything into RPM_BUILD_ROOT:
-mkdir -p $RPM_BUILD_ROOT%{httpd_dir}
-cp -rp %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
-%if 0%{?rhel} == 6
 getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d /%{app_virtualenv_dir} -s /bin/bash \
+  useradd -m -g %{app_user} -d %{_datadir}/ztpserver/ -s /bin/false \
   -c "%{name} - Server" %{app_user}
-%else
-getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d /home/%{app_user} -s /bin/bash \
-  -c "%{name} - Server" %{app_user}
-%endif
+exit 0
 
 %posttrans
 
 
 %post
-%if 0%{?rhel} == 6
-ln -s %{app_virtualenv_dir}/usr/share/ztpserver /usr/share/
-ln -s %{app_virtualenv_dir}/etc/ztpserver /etc/
-%endif
-chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
+# Ensure the server can read/write the necessary files.
+# ZTPServer operators may be put in to this group to allow them to configure the service
+chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
+chmod -R ug+rw %{_datadir}/ztpserver
+chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -146,31 +142,70 @@ chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-#if [ $1 -eq 0 ]; then
-#    userdel -r %{app_user}
-#    #groupdel %{app_user}
-#fi
-# remove symlink relics:
-rm /usr/share/ztpserver
-rm /etc/ztpserver
 
 
 %files
 # all the files to be included in this RPM:
 %defattr(-,root,root,)
-%{app_virtualenv_dir}%{python2_sitelib}/ztpserver/*
-%{app_virtualenv_dir}%{python2_sitelib}/%{name}-%{version}*.egg-info
-%{app_virtualenv_dir}%{ztps_bin}/ztps
-%config(noreplace) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.conf
-%attr(0755,%{app_user},root) %{app_virtualenv_dir}/etc/ztpserver/ztpserver.wsgi
-%attr(0755,%{app_user},root) %{app_virtualenv_dir}/usr/share/ztpserver/*
-%attr(0755,%{app_user},root) %{httpd_dir}/%{name}-wsgi.conf
+%if 0%{?rhel} == 6
+%{app_virtualenv_dir}
+%else
+%{python2_sitelib}/%{name}
+%{python2_sitelib}/%{name}-%{version}*.egg-info
+%endif
+
+%{_bindir}/ztps
+
+%dir %{_sysconfdir}/ztpserver
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
+%config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
+
+%defattr(0775,%{app_user},%{app_user},)
+%dir %{_datadir}/ztpserver
+%dir %{_datadir}/ztpserver/actions
+%dir %{_datadir}/ztpserver/bootstrap
+%dir %{_datadir}/ztpserver/definitions
+%dir %{_datadir}/ztpserver/files
+%dir %{_datadir}/ztpserver/files/lib
+%dir %{_datadir}/ztpserver/nodes
+%dir %{_datadir}/ztpserver/resources
+
+%defattr(0665,%{app_user},%{app_user},)
+%{_datadir}/ztpserver/files/lib/*
+%config(noreplace) %{_datadir}/ztpserver/actions/*
+%config(noreplace) %{_datadir}/ztpserver/bootstrap/*
+%config(noreplace) %{_datadir}/ztpserver/neighbordb
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Nov 14 2014 Jere Julian <jere@arista.com>
+- Increase utilization of built-in macros
+- Replace define (runtime expansion) with global (immediate)
+- Add app_url
+- Disable the -debug package fro being built
+- Source0 now has version-info and unpacks in to a versioned dir
+- Remove manual override of BuildRoot
+- Move python setup.py install to install
+- Force some install path info for python setup so it properly places files, both in and out of a virtualenv
+- Replace "cp -rp and mkdir -p" with __install
+- Consolidate useradd code in pre and change the user/s HOME
+- Remove symlinks on virtualenv systems (rhel6) as paths are fixed
+- Remove userdel from preun as we can't guarantee other file ownership
+- Specifically call out directories, config files, and permissions in files
+- Fix rpmlint issues
+  - Make setup quiet
+  - dynamically define python2_sitelib and sitearch
+  - Use a standard Group:
+
+* Mon Nov 03 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-2
+- Add logic to work with virtualenv installs versus standard installs
+- For virtualenv installs, all python dependencies will be installed
+- For standard installs, only ztpserver egg and /usr/share/ztpserver files are included (as well as config in /etc/ztpserver and /usr/bin/ztps)
+
 * Tue Oct 28 2014 Arista Networks <eosplus-dev@arista.com> - 1.2.0-1
 - Remove standalone ZTPServer functions from SPEC
 - Remove ztpserver.init script
@@ -212,4 +247,3 @@ TODO:
 
 * Wed Aug 27 2014 tzhnape1 <peter.najdenik@swisscom.com>
 - Initial release/build of ztpserver
-
