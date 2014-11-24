@@ -206,6 +206,8 @@ The ZTPServer side components are housed in a single directory defined by the ``
         resources/
         neighbordb
 
+.. _bootstrap_config:
+
 Bootstrap configuration
 ^^^^^^^^^^^^^^^^^^^^^^^
 
