@@ -43,12 +43,20 @@ def main(attributes):
     This action is NOT dual-supervisor compatible.
 
     Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        node (internal): attributes.get('NODE') API: see documentation
+        url: path to the cli plugin
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+          -
+            action: install_image
+            always_execute: true
+            attributes:
+              url: files/my_cli_plugin
+            name: "install cli plugin"
+
     '''
 
     node = attributes.get('NODE')
@@ -65,7 +73,7 @@ def main(attributes):
 
     name = url.split('/')[ -1 ]
     try:
-        node.retrieve_url(url, '%s/%s' % 
+        node.retrieve_url(url, '%s/%s' %
                           (PERSISTENT_PLUGIN_DIR, name))
     except Exception as exc:
         return 'Unable to retrieve CliPlugin from URL (%s)' % exc

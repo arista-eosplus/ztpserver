@@ -42,13 +42,29 @@ def main(attributes):
 
     This action is dual-supervisor compatible.
 
-    Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
+    Accepts:
+         A list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Args:
+        url: path to config snippet/template
+        substitution_mode: loose|strict Default: loose
+        variables: A list of variable: value substitutions
+        Special_attributes: node: attributes.get('NODE') API: see documentation
+
+    Example:
+        ::
+
+          -
+            action: add_config
+            attributes:
+              url: files/templates/ma1.template
+              variables:
+                ipaddress: allocate('mgmt_subnet')
+            name: "configure ma1"
+            onstart: "Starting to configure ma1"
+            onsuccess: "SUCCESS: ma1 configure"
+            onfailure: "FAIL: IM provisioning@example.com for help"
+
     '''
 
     node = attributes.get('NODE')
