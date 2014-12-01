@@ -43,14 +43,14 @@ GET bootstrap script
     For every request, the bootstrap controller on the
     ZTPServer will attempt to perform the following string replacement
     in the bootstrap script): **“$SERVER“ ---> the value of the
-    “server\_url” variable in the server’s configuration file** This
-    string-replacement will point the bootstrap client back to the
-    server, in order to enable it to make additional requests for
-    further resources.
+    “server\_url” variable in the server’s global configuration file**. This
+    string replacement will point the bootstrap client back to the
+    server in order to enable the client to make additional requests for
+    further resources on the server.
 
--  if the ``server_url`` variable is missing in the server’s
+-  if the ``server_url`` variable is missing from the server’s global
    configuration file, 'http://ztpserver:8080' is used by default
--  if the ``$SERVER`` string does not exist in the bootstrap script, the
+-  if the ``$SERVER`` string is missing from the bootstrap script, the
    controller will log a warning message and continue
 
 GET logging configuration
