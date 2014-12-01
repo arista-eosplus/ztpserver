@@ -400,6 +400,7 @@ class Node(object):
     def _disable_copp(self):
         # COPP does not apply to vEOS or EOS-4.11.x and earlier
         if (self.system()['model'] != 'vEOS' and
+            len(self.system()['version'].split('.')) > 2 and
             int(self.system()['version'].split('.')[1]) < 12):
             self.api_config_cmds(['control-plane',
                                   'no service-policy input copp-system-policy'])

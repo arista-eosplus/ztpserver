@@ -1,0 +1,36 @@
+debug: true
+tests:
+  - pattern
+  - topology
+valid_patterns:
+  globals:
+  nodes:
+    - node pattern
+    - wrong node pattern
+
+
+nodes:
+  pass:
+    - name: 2b3c
+      match: node pattern
+
+
+2b3c:
+  serialnumber:  001c731a2b3c
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+
+neighbordb:
+
+  patterns:
+
+    - name: node pattern
+      definition: test
+      node:  001c731a2b3c
+
+    - name: wrong node pattern
+      definition: test
+      node:  001c731a2b00
+
