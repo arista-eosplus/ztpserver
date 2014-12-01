@@ -21,12 +21,8 @@ Requirements
 
   **Client:**
 
-  * |EOS| 4.12.0 or later (ZTPServer 1.1+)
-  * |EOS| 4.13.3 or later (ZTPServer 1.0)
-
-.. |EOS| raw:: html
-
-   <a href="HTTP://eos.arista.com/" target="_blank">Arista EOS</a>
+  * `EOS <http://eos.arista.com>`_ 4.12.0 or later (ZTPServer 1.1+)
+  * `EOS <http://eos.arista.com>`_ 4.13.3 or later (ZTPServer 1.0)
 
 .. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20. 
 
