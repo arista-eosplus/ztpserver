@@ -390,7 +390,15 @@ class Neighbordb(object):
 
             # Add pattern to neighbordb
             if kwargs['node']:
-                self.patterns['nodes'][pattern.node] = pattern
+                if pattern.node not in self.patterns['nodes']: 
+                    self.patterns['nodes'][pattern.node] = pattern
+                else:
+                    log.warning('%s: pattern \'%r\' ignored because '
+                                'another node-specific pattern is '
+                                'configured earlier in neighbordb'
+                                '\'%r\'' % 
+                                (self.node_id, pattern,
+                                 self.patterns['nodes'][pattern.node]))
             else:
                 self.patterns['globals'].append(pattern)
         except KeyError as err:
@@ -435,19 +443,25 @@ class Neighbordb(object):
         identifier = node.identifier()
         log.debug('%s: searching for eligible patterns' % 
                   identifier)
+
+        result = []
+
         pattern = self.patterns['nodes'].get(identifier, None)
         if pattern:
-            log.debug('%s: eligible pattern: %s' % (identifier, 
-                                                    pattern.name))
-            return [pattern]
+            log.debug('%s: node-specific pattern eligible in neighbordb: %s' %
+                      (identifier, 
+                       pattern.name))
+            result += [pattern]
+
+        elif self.patterns['globals']:
+            log.debug('%s: global patterns eligible in neighbordb' %
+                      identifier)
+            result += self.patterns['globals']
         else:
-            if self.patterns['globals']:
-                log.debug('%s: all global patterns are eligible' %
-                          identifier)
-            else:
-                log.debug('%s: no eligible patterns' %
-                          identifier)
-            return self.patterns['globals']
+            log.debug('%s: no patterns eligible in neighbordb' %
+                      identifier)
+
+        return result
 
     def match_node(self, node):
         identifier = node.identifier()
@@ -577,6 +591,10 @@ class Pattern(object):
 
         log.debug('%s: pattern \'%s\' - attempting to match node (%r)' % 
                   (self.node_id, self.name, str(node)))
+
+        # No need to match system ID - that it already taken care of
+        # while selecting the set of nodes which are eligible for a 
+        # match.
 
         patterns = list()
         for entry in self.interfaces:
