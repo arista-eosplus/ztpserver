@@ -163,7 +163,7 @@ Execute ``setup.py`` to build and then install ZTPServer:
 Configure additional services
 `````````````````````````````
 
-.. NOTE::: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
+.. NOTE:: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
 
 Configure the DHCP Service
 --------------------------
