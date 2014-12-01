@@ -658,6 +658,8 @@ definition, then the node’s details are attempted to be matched against
 the patterns in ``neighbordb``. If a match is successful, then a node
 definition will be automatically generated for the node.
 
+There are 2 types of patterns supported in neighbordb, node-specific (containing the **node** directive) and global patterns.   A node-specific pattern refers to the unique_id of the node.  If multiple entries reference the same unique_id, only the first will be in effect; others will be ignored.  If both the node and interfaces directives are specified and the node with the matching unique_id fails to match the interfaces pattern, then the overall match will fail; global patterns are not attempted for that node.  If there is no node-specific pattern for a node, then ZTPServer attempts to match it against the global patterns.  The first matching pattern found will be used.
+
 .. code-block:: yaml
 
     variables:
@@ -678,9 +680,9 @@ definition will be automatically generated for the node.
 
 .. note::
 
-    Mandatory items include: name, definition, and interface.
+    Mandatory items include: name, definition, and either node or interface. (Node and interfaces may both be specified.)
 
-    Optional items include: node and variables
+    Optional items include: variables
 
     Interfaces array items MUST include the port_name
 
