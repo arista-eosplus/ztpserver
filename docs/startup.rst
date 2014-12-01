@@ -5,11 +5,11 @@ Startup
 
 **HTTP Server Deployment Options**
 
-ZTPServer is a Python WSGI compliant application that can be deployed behind any WSGI web server or run as a standalone application.  This section provides details for configuring ZTPServer to run under various WSGI compliant web servers.
+ZTPServer is a Python WSGI compliant application that can be deployed behind any WSGI web server or run as a standalone application.
 
-After initial startup, any change to ``ztpserver.conf`` will require a server restart.   However, all other files are read as-needed, therefore no server restart is required to pick up changes in definitions, neighbordb, resources, etc.
+After initial startup, any change to ``ztpserver.conf`` will require a server restart.   However, all other files are read on-demand, therefore no server restart is required to pick up changes in definitions, neighbordb, resources, etc.
 
-.. note:: The ``ztps`` standalone server executable is for demo and debugging use, ONLY.   It is not recommended for production use.
+.. note:: The ``ztps`` standalone server executable is for demo and testing use ONLY.   It is NOT recommended for production use!
 
 Apache (mod_wsgi)
 `````````````````
@@ -69,7 +69,7 @@ Standalone debug server
 
 .. note:: ZTPServer ships with a single-threaded server that is sufficient for testing or demonstration, only.  It is not recommended for use with more than 10 nodes.
 
-To start the standalone ZTPServer, exec the ztps binary
+To start the standalone ZTPServer, exec the ztps binary:
 
 .. code-block:: console
 
