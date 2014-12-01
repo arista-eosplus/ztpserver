@@ -17,8 +17,8 @@ There are 2 general types of configurations supported by ZTPServer, `Static <sta
 
 .. _static_provisioning:
 
-Static provisioning:
-^^^^^^^^^^^^^^^^^^^^
+Static provisioning
+^^^^^^^^^^^^^^^^^^^
 
 Manually create node entries in /nodes and a startup-configuration. In order to do that:
 
@@ -46,8 +46,8 @@ This can be as simple as below, but must exist. See the :ref:`static_neighbordb_
 
 .. _dynamic_provisioning:
 
-Dynamic provisioning:
-^^^^^^^^^^^^^^^^^^^^^
+Dynamic provisioning
+^^^^^^^^^^^^^^^^^^^^
 
 This method assumes that you do not create a node entry for each node manually. Instead create a neighbordb entry with at least one pattern that maps to a definition. This requires editing: 
 /usr/share/ztpserver/neighbordb
