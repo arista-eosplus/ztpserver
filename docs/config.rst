@@ -713,7 +713,7 @@ includes (string)
 excludes (string)
     defines a string that must not be present in the node name
 
-itentifier
+identifier
 ''''''''''
 
 System serial number or MAC address of a node, depending on the global 'identifier' setting in ztpserver.conf.
