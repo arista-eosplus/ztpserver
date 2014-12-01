@@ -9,13 +9,6 @@ There are 3 primary installation methods:
     * :ref:`pypi_install`
     * :ref:`manual_install`
 
-Examples in this guide are based on the following:
-
- * Python 2.7
- * dhcp server - (dhcpd)
- * pip
- * git
-
 Requirements
 `````````````
 
@@ -28,7 +21,7 @@ Requirements
 
   **Client:**
 
-  * |EOS| 4.12.0 or later (ZTPServer 1.1)
+  * |EOS| 4.12.0 or later (ZTPServer 1.1+)
   * |EOS| 4.13.3 or later (ZTPServer 1.0)
 
 .. |EOS| raw:: html
@@ -53,7 +46,7 @@ VM Specification:
   * eth0 (NAT) DHCP
   * eth1 (hostonly) 172.16.130.10
 
-* Firewalld/UFW disabled.
+* Firewalld/UFW disabled
 * Users
 
   * root/eosplus
@@ -67,7 +60,7 @@ VM Specification:
 * rsyslog-ng installed; Listening on UDP and TCP (port 514)
 * ejabberd (XMPP server) configured for im.ztps-test.com
 
-  * XMPP admin user ztpsadmin, passwd eosplus
+  * XMPP admin user: ztpsadmin/eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi)
 * ZTPServer installed
 * ztpserver-demo repo files pre-loaded
@@ -127,7 +120,7 @@ Download:
 .. |tar dev| replace:: TAR
 .. _tar dev: https://github.com/arista-eosplus/ztpserver/tarball/develop
 
-Once the above system requirements are met, use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
+Once the above system requirements are met, you can use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
 
 .. code-block:: console
 
@@ -149,11 +142,11 @@ Change in to the ztpserver directory, then checkout the release desired:
     bash-3.2$ cd ztpserver
     bash-3.2$ git checkout v1.1.0
 
-Execute ``setup.py`` to build and then install ZTPServer
+Execute ``setup.py`` to build and then install ZTPServer:
 
 .. code-block:: console
 
-    [user@localhost ztpserver]$ python setup.py build
+    [user@localhost ztpserver]$ sudo python setup.py build
     running build
     running build_py
     ...
@@ -175,7 +168,7 @@ Configure additional services
 Configure the DHCP Service
 --------------------------
 
-Set up your DHCP infrastructure to server the full path to the ZTPServer bootstrap file via option 67.  This can be performed on any DHCP server.  Instructions are provided, below, for ISC dhcpd.
+Set up your DHCP infrastructure to server the full path to the ZTPServer bootstrap file via option 67.  This can be performed on any DHCP server.  Below you can see how you can do that for ISC dhcpd.
 
 Get dhcpd:
 
@@ -186,7 +179,7 @@ Get dhcpd:
         ``bash-3.2$ sudo apt-get install isc-dhcp-server``
 
 
-If using dhcpd, the following example configuration will add a network (192.168.100.0/24) for servicing DHCP requests for ZTPServer::
+Add a network (in this case 192.168.100.0/24) for servicing DHCP requests for ZTPServer::
 
     subnet 192.168.100.0 netmask 255.255.255.0 {
       range 192.168.100.200 192.168.100.205;
@@ -200,16 +193,16 @@ Enable and start the dhcpd service.
 -----------------------------------
 
 RedHat (and derivative Linux implementations)
-``bash-3.2# sudo /usr/bin/systemctl enable dhcpd.service``
-``bash-3.2# sudo /usr/bin/systemctl start dhcpd.service``
+
+  ``bash-3.2# sudo /usr/bin/systemctl enable dhcpd.service``
+  ``bash-3.2# sudo /usr/bin/systemctl start dhcpd.service``
 
 Ubuntu (and derivative Linux implementations)
-``bash-3.2# sudo /usr/sbin/service isc-dhcp-server start``
+
+  ``bash-3.2# sudo /usr/sbin/service isc-dhcp-server start``
 
 Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on boot.
 
 
 Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`global_configuration` options for more information.
-
-Now, you are ready to :doc:`startup` ZTPServer.
 
