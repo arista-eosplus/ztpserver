@@ -219,8 +219,8 @@ Sample resources
 Neighbordb pattern examples
 ```````````````````````````
 
-Example #1:
-'''''''''''
+Example #1
+''''''''''
 
 .. code-block:: yaml
 
@@ -242,8 +242,8 @@ equal to **ABC12345678**. The following interface map rules apply:
 -  Interface Ethernet50 must be connected to node pod1-spine2 on port
    Ethernet1/1
 
-Example #2:
-'''''''''''
+Example #2
+''''''''''
 
 .. code-block:: yaml
 
@@ -267,8 +267,8 @@ map rules apply:
    must be connected to a node that matches the regular expression
    'pod+-spine1' on port Ethernet2/3
 
-Example #3:
-'''''''''''
+Example #3
+''''''''''
 
 .. code-block:: yaml
 
@@ -323,8 +323,8 @@ pattern re-use.
 -  Interface Ethernet50 matches if the node is connected to port
    Ethernet50 on any node whose name does not contain ‘spine’
 
-Example #4:
-'''''''''''
+Example #4
+''''''''''
 
 .. code-block:: yaml
 
