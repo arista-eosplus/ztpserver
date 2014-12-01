@@ -421,15 +421,22 @@ definition, the server will log a message and return either:
     -  400 (BAD\_REQUEST) if topology validation is enabled
     -  200 (OK) if topology validation is disabled
 
-If topology validation is enabled, the following pattern can be used in
-order to disable it locally for a node (the pattern from below will
-match **any** node):
+If topology validation is enabled globally, the following patterns can be used in
+order to disable it for a node:
 
+    -  match **any** node which has at least one LLDP-capable neighbor:
 .. code-block:: yaml
 
     name: <pattern name>
     interfaces:
         - any: any:any   
+    -  match **any** node which has no LLDP-capable neighbors:
+    
+.. code-block:: yaml
+
+    name: <pattern name>
+    interfaces:
+        - none: none:none   
 
 Node details
 ^^^^^^^^^^^^
