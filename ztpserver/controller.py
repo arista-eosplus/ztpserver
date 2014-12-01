@@ -249,8 +249,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.info('%s: received LLDP, SystemID, Version and Model information '
-                 'from node:\n%s' % (request.remote_addr, request.json))
+        log.info('%s: received system information from node:\n%s' %
+                 (request.remote_addr, request.json))
 
         try:
             node = create_node(request.json)
@@ -267,8 +267,8 @@ class NodesController(BaseController):
             return self.response(**response)
 
         identifier = ztpserver.config.runtime.default.identifier
-        log.info('%s: successfully determined node ID(%s) based upon %s' %
-                 (request.remote_addr, node_id, identifier))
+        log.info('%s: node ID is %s:%s' %
+                 (request.remote_addr, identifier, node_id))
 
         return self.fsm('node_exists', request=request, 
                         node=node, node_id=node_id)
@@ -390,7 +390,7 @@ class NodesController(BaseController):
 
             definition_url = self.expand(match.definition, folder='definitions')
             fobj = self.repository.get_file(definition_url)
-            log.info('%s: node will inherit definition: %s' % (node_id, definition_url))
+            log.info('%s: node definition copied from: %s' % (node_id, definition_url))
         except FileObjectNotFound:
             log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
