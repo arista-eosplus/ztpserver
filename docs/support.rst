@@ -1,10 +1,9 @@
 Support
 =======
 
-ZTPServer is an Arista led open source community project.  Users and developers are encouraged to contribute to the project.  See `CONTRIBUTING.md <https://github.com/arista-eosplus/ztpserver/blob/develop/CONTRIBUTING.md>`_ in the source for more information on how.
+ZTPServer is an Arista-led open source community project.  Users and developers are encouraged to contribute to the project.  See `CONTRIBUTING <https://github.com/arista-eosplus/ztpserver/blob/develop/CONTRIBUTING.md>`_ for more details.
 
-Community based support is available through 
-
+Community-based support is available through:
 * `eosplus forum <https://groups.google.com/forum/#!forum/eosplus>`_
 * eosplus-dev@arista.com.
 * IRC: irc.freenode.net#arista
