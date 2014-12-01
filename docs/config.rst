@@ -430,8 +430,8 @@ order to disable it for a node:
     name: <pattern name>
     interfaces:
         - any: any:any   
+   
     -  match **any** node which has no LLDP-capable neighbors:
-    
 .. code-block:: yaml
 
     name: <pattern name>
