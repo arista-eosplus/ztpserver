@@ -65,7 +65,7 @@ To cancel ZTP mode, login as admin and type ``zerotouch cancel``.  **This will t
 
 To completely disable ZTP mode, login as admin and type ``zerotouch disable``.  **This will trigger an immediate reload** of the switch after which the switch will will be ready to configure manually. If you wish to re-enable ZTP, go to configure mode and run ``zerotouch enable``.  The next time you erase the startup-config and reload the switch, the switch will end up ZTP mode again.
 
-.. note: vEOS instances come with a minimal startup-config so they do not boot in to ZTP mode by default.   In order to use vEOS to test ZTP, enter ``erase startup-config`` and reload.
+.. note:: vEOS instances come with a minimal startup-config so they do not boot in to ZTP mode by default.   In order to use vEOS to test ZTP, enter ``erase startup-config`` and reload.
 
 How can I test ZTPServer without having to reboot the switch every time?
 ````````````````````````````````````````````````````````````````````````
