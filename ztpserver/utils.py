@@ -199,7 +199,7 @@ def expand_range(interfaces):
             raise TypeError('Unable to expand interface range: %s '
                             '(invalid input)' % group)
 
-    log.info('%s expanded to: %s' % (interfaces, items))
+    log.debug('%s expanded to: %s' % (interfaces, items))
     return items
 
 def parse_interface(neighbor, node_id):
