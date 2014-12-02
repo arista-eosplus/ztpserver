@@ -425,13 +425,15 @@ If topology validation is enabled globally, the following patterns can be used i
 order to disable it for a node:
 
     -  match **any** node which has at least one LLDP-capable neighbor:
+
 .. code-block:: yaml
 
     name: <pattern name>
     interfaces:
         - any: any:any   
-   
+
     -  match **any** node which has no LLDP-capable neighbors:
+
 .. code-block:: yaml
 
     name: <pattern name>
