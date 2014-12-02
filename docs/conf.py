@@ -26,6 +26,8 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 #sys.path.insert(0, os.path.join('ztpserver'))
 sys.path.insert(0, os.path.join('..', 'actions'))
 sys.path.insert(0, os.path.join('..', 'client'))
+sys.path.insert(0, os.path.join('actions'))
+sys.path.insert(0, os.path.join('client'))
 sys.path.insert(0, os.path.abspath('..'))
 
 
