@@ -3,7 +3,8 @@ Installation
 
 .. contents:: :local:
 
-There are 3 primary installation methods:
+Installation Options
+````````````````````
 
     * :ref:`packer_install`
     * :ref:`pypi_install`
@@ -156,8 +157,8 @@ Execute ``setup.py`` to build and then install ZTPServer:
 
 .. _server_config:
 
-Configure additional services
-`````````````````````````````
+Additional services
+```````````````````
 
 .. NOTE:: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
 
