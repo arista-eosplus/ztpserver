@@ -122,11 +122,13 @@ System ID-based privisioning with no topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Via node-specific folder:
+
 * a folder corresponding to the node's system ID is created on the server before bootstrap
 * a definition file, startup-config file or both is/are placed in the folder 
 * topology validation is disabled globally (in the global configuration file) or via an open pattern in the pattern file located in the node-specific folder
 
 Via neighbordb:
+
 * a pattern which matches the node's system ID is created in neighbordb before bootstrap
 * neighbordb pattern points to a definition file
 * neighbordb pattern contains no topology information (LLDP neighbors)
@@ -136,11 +138,13 @@ System ID-based privisioning with topology validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Via node-specific folder:
+
 * a folder corresponding to the node's system ID is created on the server before bootstrap
 * a definition file, startup-config file or both is/are placed in the folder 
 * topology validation is enabled globally (in the global configuration file) and the topology information is configured in the pattern file located in the node-specific folder
 
 Via neighbordb:
+
 * a pattern which matches the node's system ID is created in neighbordb before bootstrap
 * neighbordb pattern points to a definition file
 * neighbordb pattern contains topology information (LLDP neighbors)
