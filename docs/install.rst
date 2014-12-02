@@ -162,6 +162,21 @@ Additional services
 
 .. NOTE:: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
 
+Allow ZTPServer Connections In Through The Firewall
+---------------------------------------------------
+
+Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080 by default.
+
+**Firewalld** examples: 
+
+  * Open TCP/<port> through firewalld
+    ``bash-3.2$ firewall-cmd --zone=public --add-port=<port>/tcp [--permanent]``
+  * Stop firewalld
+    ``bash-3.2$ systemctl status firewalld``
+  * Disable firewalld
+    ``bash-3.2$ systemctl disable firewalld``
+
+
 Configure the DHCP Service
 --------------------------
 
