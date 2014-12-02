@@ -40,12 +40,11 @@ Features
    config
    examples
    tips
+   caveats
    internals
    glossary
    resources
    support
-   ReleaseNotes
-   caveats
-   roadmap
    license
+   ReleaseNotes
 
