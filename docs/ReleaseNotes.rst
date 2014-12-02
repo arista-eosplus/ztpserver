@@ -7,6 +7,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
+    ReleaseNotes1.2.rst
     ReleaseNotes1.1.rst
 
 
