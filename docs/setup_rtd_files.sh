@@ -5,11 +5,11 @@
 #
 
 for dir in client actions; do
-    files=`cd ../${dir}/; ls`
+    files=`cd ${dir}/; ls`
     for file in ${files}; do
-        [ -f ../${dir}/${file} ] && ln -s ../${dir}/${file} ../${dir}/${file}.py
-        #[ -d ../${dir}/${file} ] && ln -s ../${dir}/${file} ../${dir}/${file}
+        [ -f ${dir}/${file} ] && ln -s ${dir}/${file} ${dir}/${file}.py
+        #[ -d ${dir}/${file} ] && ln -s ${dir}/${file} ${dir}/${file}
     done
-    touch ../${dir}/__init__.py
+    touch ${dir}/__init__.py
 done
 
