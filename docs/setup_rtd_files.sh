@@ -11,6 +11,6 @@ for dir in client actions; do
         #[ -d ${dir}/${file} ] && ln -s ${dir}/${file} ${dir}/${file}
     done
     touch ${dir}/__init__.py
-    ln -s ${dir} docs/${dir}
+    #ln -s ${dir} docs/${dir}
 done
 

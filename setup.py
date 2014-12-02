@@ -49,7 +49,8 @@ if os.environ.get('READTHEDOCS'):
     INSTALL_ROOT = "."
     from subprocess import call
     call(['docs/setup_rtd_files.sh'])
-    PACKAGES.append('ztps')
+    PACKAGES.append('client')
+    PACKAGES.append('actions')
 
 CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
 INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
