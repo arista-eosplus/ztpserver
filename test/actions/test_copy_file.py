@@ -40,7 +40,6 @@ from stat import ST_MODE
 
 sys.path.append('test/client')
 
-from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action, remove_file
@@ -127,7 +126,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
             self.failUnless(os.path.isfile(destination_path))
             self.failUnless([contents] ==
                             file_log(destination_path))
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -175,7 +174,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
             self.failUnless(os.path.isfile(destination_path))
             self.failUnless([contents] ==
                             file_log(destination_path))
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -227,7 +226,7 @@ class SuccessPersistentTest(unittest.TestCase):
             self.failUnless(os.path.isfile(destination_path))
             self.failUnless([contents] ==
                             file_log(destination_path))
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -284,7 +283,7 @@ class SuccessPersistentTest(unittest.TestCase):
             self.failUnless(os.path.isfile(destination_path))
             self.failUnless([contents] ==
                             file_log(destination_path))
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             if mode:
                 self.failUnless(mode ==
                                 oct(os.stat(destination_path)[ST_MODE])[-3:])
@@ -341,7 +340,7 @@ class SuccessPersistentTest(unittest.TestCase):
             self.failUnless([existing_contents] ==
                             file_log(destination_path))
 
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -400,7 +399,7 @@ class SuccessPersistentTest(unittest.TestCase):
             self.failUnless([backup_contents] ==
                             file_log(backup_path))
 
-            self.failIf(os.path.isfile(RC_EOS))
+            self.failIf(os.path.isfile(bootstrap.rc_eos))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -449,8 +448,8 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.failUnless([contents] ==
                             file_log(destination_path))
 
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s %s' %
                             (destination_path, destination) in log)
@@ -508,8 +507,8 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.failUnless([contents] ==
                             file_log(destination_path))
 
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s %s' %
                             (destination_path, destination) in log)
@@ -560,8 +559,8 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.failUnless([contents] ==
                             file_log(destination_path))
 
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('[ ! -f %s ] && sudo cp %s %s' %
                             (destination, destination_path,
@@ -610,8 +609,8 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.failUnless([contents] ==
                             file_log(destination_path))
 
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s %s' %
                             (destination_path, destination) in log)

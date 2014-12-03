@@ -33,9 +33,6 @@ import os
 import os.path
 import unittest
 
-from client_test_lib import BOOT_EXTENSIONS, BOOT_EXTENSIONS_FOLDER
-from client_test_lib import RC_EOS
-
 from client_test_lib import Bootstrap
 from client_test_lib import file_log, remove_file
 from client_test_lib import startup_config_action
@@ -44,11 +41,10 @@ from client_test_lib import erroneous_action, missing_main_action
 from client_test_lib import wrong_signature_action, exception_action
 from client_test_lib import raise_exception
 
-
 class ServerNotRunningTest(unittest.TestCase):
 
     def test(self):
-        bootstrap = Bootstrap(server='127.0.0.2')
+        bootstrap = Bootstrap('127.0.0.2')
         bootstrap.start_test()
 
         try:
@@ -363,13 +359,15 @@ class MissingStartupConfigTest(unittest.TestCase):
 class FactoryDefaultTest(unittest.TestCase):
 
     def test(self):
-        open(RC_EOS, 'w').write(random_string())
-        open(BOOT_EXTENSIONS, 'w').write(random_string())
-        os.makedirs(BOOT_EXTENSIONS_FOLDER)
-        open('%s/%s' % (BOOT_EXTENSIONS_FOLDER, random_string()),
+        bootstrap = Bootstrap()
+
+        open(bootstrap.rc_eos, 'w').write(random_string())
+        open(bootstrap.boot_extensions, 'w').write(random_string())
+        os.makedirs(bootstrap.boot_extensions_folder)
+        open('%s/%s' % (bootstrap.boot_extensions_folder, 
+                        random_string()),
              'w').write(random_string())
 
-        bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
         bootstrap.ztps.set_definition_response()
@@ -378,9 +376,10 @@ class FactoryDefaultTest(unittest.TestCase):
         try:
             self.failUnless(bootstrap.eapi_node_information_collected())
             self.failUnless(bootstrap.missing_startup_config_failure())
-            self.failIf(os.path.exists(RC_EOS))
-            self.failIf(os.path.exists(BOOT_EXTENSIONS))
-            self.failIf(os.path.exists(BOOT_EXTENSIONS_FOLDER))
+            self.failIf(os.path.exists(bootstrap.rc_eos))
+            self.failIf(os.path.exists(bootstrap.boot_extensions))
+            self.failIf(os.path.exists(bootstrap.boot_extensions_folder))
+
             self.failIf(bootstrap.error)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output

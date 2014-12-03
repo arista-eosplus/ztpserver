@@ -37,7 +37,6 @@ from string import Template
 
 sys.path.append('test/client')
 
-from client_test_lib import STARTUP_CONFIG
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action
@@ -99,8 +98,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless(contents.split() == 
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -123,8 +123,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless(contents.split() == 
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -153,8 +154,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            log = file_log(STARTUP_CONFIG)
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            log = file_log(bootstrap.startup_config)
             self.failUnless(contents in log)
             self.failUnless(startup_config_text in log)
             self.failUnless(bootstrap.success())
@@ -188,8 +189,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            log = file_log(STARTUP_CONFIG)
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            log = file_log(bootstrap.startup_config)
             all_lines = startup_config_lines + contents.split()
             for line in all_lines:
                 self.failUnless(line in log)
@@ -222,8 +223,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless([expected_contents] == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless([expected_contents] ==
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -253,8 +255,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless([expected_contents] == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless([expected_contents] ==
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output

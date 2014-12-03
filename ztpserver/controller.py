@@ -416,6 +416,10 @@ class NodesController(BaseController):
             if not pattern[attr]:
                 del pattern[attr]
 
+        # Add default pattern, if 'interfaces' is not specified
+        if 'interfaces' not in pattern or not pattern['interfaces']:
+            pattern['interfaces'] = [{'any': {'any': 'any'}}]
+
         fobj.write(pattern, CONTENT_TYPE_YAML)
         response['status'] = HTTP_STATUS_CREATED
         return (response, 'dump_node')
