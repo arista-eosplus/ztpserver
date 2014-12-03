@@ -5,7 +5,7 @@ Known Caveats
 
 The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
 
-*  v1.1: The management interfaces may not be used as valid local interface names in neighbordb. When creating patterns, use ``any`` instead.  (Fixed in v1.2)
+*  v1.1: The management interfaces may not be used as valid local interface names in neighbordb. When creating patterns, use ``any`` instead.  (fixed in v1.2)
 
 * Only a single entry in a resource pool may be allocated to a node.
 

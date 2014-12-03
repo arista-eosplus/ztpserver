@@ -152,6 +152,7 @@ System ID-based provisioning with topology validation
 
 Topology-based provisioning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * a pattern which matches the topology information (LLDP neighbord) is created in neighbordb before bootstrap
 * neighbordb pattern points to a definition file
 * a node-specific folder with the definition and a pattern containing the matched toplogy information will be created during the bootstrap process

@@ -199,7 +199,10 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         m_substitute.return_value = random_string()
 
         controller = ztpserver.controller.BootstrapController()
-        resp = controller.index(None)
+
+        request = Request.blank('')
+        request.remote_addr = ''
+        resp = controller.index(request)
 
         self.assertTrue(m_substitute.called)
         self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_PYTHON)
@@ -237,7 +240,10 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         m_repository.return_value.get_file.configure_mock(**cfg)
 
         controller = ztpserver.controller.BootstrapController()
-        resp = controller.config(None)
+
+        request = Request.blank('')
+        request.remote_addr = ''
+        resp = controller.config(request)
 
         self.assertEqual(resp['body'], config.as_dict())
         self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
@@ -248,7 +254,10 @@ class BootstrapControllerUnitTests(unittest.TestCase):
         m_repository.configure_mock(**cfg)
 
         controller = ztpserver.controller.BootstrapController()
-        resp = controller.config(None)
+
+        request = Request.blank('')
+        request.remote_addr = ''
+        resp = controller.config(request)
 
         self.assertEqual(resp['body'], controller.DEFAULT_CONFIG)
         self.assertEqual(resp['content_type'], constants.CONTENT_TYPE_JSON)
@@ -617,7 +626,8 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_config(dict(), request=request,
-                                               node=node)
+                                               node=node,
+                                               node_id=node.serialnumber)
 
         self.assertEqual(state, 'post_node')
         self.assertIsInstance(resp, dict)
