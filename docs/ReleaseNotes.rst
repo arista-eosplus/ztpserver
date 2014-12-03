@@ -1,5 +1,5 @@
-Release Notes
-=============
+Releases
+========
 
 The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
 
@@ -7,7 +7,9 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
-    ReleaseNotes1.1.rst
+    roadmap
+    ReleaseNotes1.2
+    ReleaseNotes1.1
 
 
 
