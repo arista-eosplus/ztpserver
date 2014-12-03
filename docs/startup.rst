@@ -40,6 +40,10 @@ To enable ZTPServer for an Apache server, we need to add the following WSGI conf
             # For Apache >= 2.4, Allow is replaced by Require
             Require all granted
         </Location>
+
+        # Override default logging locations for Apache
+        #ErrorLog /path/to/ztpserver_error.log
+        #CustomLog /path/to/ztpserver_access.log
     </VirtualHost>
 
 
@@ -58,7 +62,7 @@ where /ztpserver/ is the subdirectory you would like the wsgi to listen. Once co
 
 ``curl http://<host_ip>:8080/ztpserver/bootstrap``
 
-If everything is configured properly, curl should be able to retrieve the bootstrap script. If there is a problem, all of the ZTPServer log messages should be available under the Apache server error logs.
+If everything is configured properly, curl should be able to retrieve the bootstrap script. If there is a problem, all of the ZTPServer log messages should be available under the Apache server error logs.   See the ``ErrorLog`` directive in your Apache configuration to determine the location of the error log.
 
 .. note:: File Permissions - Apache mod_wsgi will run ztpserver.wsgi as the specified system user in your Apache config.  This use must be able to read/write to the files in ``/usr/share/ztpserver`` (or whereever you created your data_root.)
 .. note:: SELinux - Apache will need to read and write to files in ``/usr/share/ztpserver``.  Therefore, you might need to update/assign an SELinux user/role/type to these files.  You can do something like ``chcon -R -h system_u:object_r:httpd_sys_script_rw_t /usr/share/ztpserver`` to accomplish that.

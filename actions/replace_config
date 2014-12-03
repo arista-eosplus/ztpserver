@@ -52,4 +52,5 @@ def main(attributes):
     try:
         node.retrieve_url(url, node.startup_config())
     except Exception as exc:
-        return 'Unable to retrieve config from URL (%s)' % exc
+        return 'Unable to retrieve config from URL (%s)' % exc.message
+

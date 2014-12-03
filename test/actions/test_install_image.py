@@ -36,7 +36,6 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import FLASH
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import eapi_log, remove_file, get_action
 from client_test_lib import startup_config_action, random_string
@@ -111,7 +110,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
-        image_file = '%s/EOS-%s.swi' % (FLASH, version)
+        image_file = '%s/EOS-%s.swi' % (bootstrap.flash, version)
         try:
             self.failUnless(os.path.isfile(image_file))
             self.failUnless(bootstrap.success())

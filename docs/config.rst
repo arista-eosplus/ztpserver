@@ -61,13 +61,34 @@ See the :ref:`dynamic_definition_example` example.
 
 The combination of a neighbordb match and a template definition with dynamic resource allocation allow the same definition to be used for multiple nodes. 
 
-Global configuration
-~~~~~~~~~~~~~~~~~~~~
+Data Directory Structure
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ZTPServer side components are housed in a single directory defined by the ``data_root`` variable in the global configuration file. The directory location will vary depending on the configuration in ``/etc/ztpserver/ztperserver.conf``. The data\_root is loaded when ztps is executed. The following directory structure is normally used:
+
+.. code-block:: ini
+
+    [data_root]
+        bootstrap/
+            bootstrap
+            bootstrap.conf
+        nodes/
+            <unique_id)>/
+                startup-config
+                definition
+                pattern
+                .node
+                attributes
+        actions/
+        files/
+        definitions/
+        resources/
+        neighbordb
 
 .. _global_configuration:
 
 Global configuration file
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The global ZTPServer configuration file can be found at ``/etc/ztpserver/ztpserver.conf``. It uses INI format. (For format details, see top section `Python configparser <https://docs.python.org/2/library/configparser.html>`_).
 
@@ -90,7 +111,7 @@ e.g.
 If the global configuration file is updated, the server must be restarted in order to pick up the new configuration.
 
 Sections and attributes
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: ini
 
@@ -164,7 +185,7 @@ Sections and attributes
     filename=<name>
 
 Environment Variables in the global configuration
-'''''''''''''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
 
@@ -182,34 +203,12 @@ Configuration values that support environment overrides use the ``environ`` keyw
 
 In the above example, the ``data_root`` value is normally configured in the [default] section as ``data_root``; however, if the environment variable ``ZTPS_DEFAULT_DATAROOT`` is defined, it will take precedence.
 
-Data Directory Structure
-''''''''''''''''''''''''
-
-The ZTPServer side components are housed in a single directory defined by the ``data_root`` variable in the global configuration file. The directory location will vary depending on the configuration in ``/etc/ztpserver/ztperserver.conf``. The data\_root is loaded when ztps is executed. The following directory structure is normally used:
-
-.. code-block:: ini
-
-    [data_root]
-        bootstrap/
-            bootstrap
-            bootstrap.conf
-        nodes/
-            <unique_id)>/
-                startup-config
-                definition
-                pattern
-                .node
-                attributes
-        actions/
-        files/
-        definitions/
-        resources/
-        neighbordb
+.. _bootstrap_config:
 
 .. _bootstrap_config:
 
-Bootstrap configuration
-^^^^^^^^^^^^^^^^^^^^^^^
+Bootstrap (logging) configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``[data_root]/bootstrap/`` contains files that control the bootstrap process on a node.
 
@@ -240,21 +239,21 @@ Bootstrap configuration
           - ztps
           - ztps-room2
 
-Node-specific configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Node-specific configuration Dir
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``[data_root]/nodes/`` contains node-specific configuration files.
 
-Startup configuration
-^^^^^^^^^^^^^^^^^^^^^
+Nodes - Startup configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``startup-config`` provides a static startup configuration file. If this file is present in a node’s folder, when the node sends a GET request to ``/nodes/<unique_id>`` where unique_id is either the serial number or system-mac, the server will respond with a static definition that includes:
 
 -  a **replace\_config** action which will install the configuration file on the switch (see `actions <#actions>`__ section below for more on this)
 -  all the **actions** from the local **definition** file (see definition section below for more on this) which have the ``always_execute`` attribute set to ``True``
 
-Definition file
-^^^^^^^^^^^^^^^
+Nodes - Definition file
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The **definition** file is the collection of actions which are going to be
 performed during the bootstrap process for the node. The definition file
@@ -286,7 +285,7 @@ with the matching pattern in **neighbordb**.
         <key>: <value>
 
 Attributes
-''''''''''
+^^^^^^^^^^
 
 Attributes are either key/value pairs, key/dictionary pairs, key/list pairs or key/reference pairs. They are all sent to the client in order to be passed in as arguments to actions.
 
@@ -387,8 +386,8 @@ For key/dict attributes, in case of conflicts between the scopes, the
 dictionaries are merged. In the event of dictionary key conflicts, the same
 precidence rules from above apply.
 
-Pattern file
-^^^^^^^^^^^^
+Nodes - Pattern file
+~~~~~~~~~~~~~~~~~~~~
 
 The **pattern** file provides a :ref:`statically typed <static_provisioning>` pattern match which is
 used to validate the node's neighbors during the bootstrap process (if
@@ -438,8 +437,16 @@ order to disable it for a node:
     interfaces:
         - none: none:none   
 
+    -  match **any** node which has no LLDP-capable neighbors:
+
+.. code-block:: yaml
+
+    name: <pattern name>
+    interfaces:
+        - none: none:none   
+
 Node details
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 The ``.node`` file contains a cached copy of the node’s details that were
 received during the POST request the node makes to ``/nodes (URI)``.
@@ -463,8 +470,8 @@ Example .node file:
      "systemmac": "005056b863ac"
     }
 
-Attributes file
-^^^^^^^^^^^^^^^
+Nodes - Attributes file
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ``attributes`` is a file which can be used in order to store attributes
 associated with the node’s definition. This is especially useful

@@ -29,8 +29,8 @@
 
 #pylint: disable=R0904,F0401,W0232,E1101
 
-import unittest
 import sys
+import unittest
 
 sys.path.append('test/client')
 
