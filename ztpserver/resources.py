@@ -87,7 +87,7 @@ class ResourcePool(object):
             query = "SELECT * FROM `%s` WHERE node_id='%s'"  % (pool, node_id)
 
             log.debug('%s: executing sql query:%s' % (node_id, query))
-            match = cur.execute(query).fetchall()
+            match = cur.execute(query).fetchone()
             
             if match:
                 log.debug('%s: already allocated:%s' 
