@@ -31,7 +31,7 @@
 #
 import os
 import logging
-
+import sqlite3 as lite
 import ztpserver.config
 
 from ztpserver.serializers import load, dump
@@ -70,6 +70,57 @@ class ResourcePool(object):
     def dump(self, pool):
         file_path = os.path.join(self.file_path, pool)
         dump(self, file_path, CONTENT_TYPE_YAML, self.node_id)
+
+
+    def allocate_from_db(self, pool, node):
+        node_id = node.identifier()
+
+        log.info('%s: looking for resources in sqlite DB. Table:%s' 
+                 % (node_id, pool))
+
+        #Setup connection to local sqlite database
+        con = lite.connect('/usr/share/ztpserver/db/test.db')
+
+        with con:
+            cur = con.cursor()
+
+            query = "SELECT * FROM `%s` WHERE node_id='%s'"  % (pool, node_id)
+
+            log.debug('%s: executing sql query:%s' % (node_id, query))
+            match = cur.execute(query).fetchall()
+            
+            if match:
+                log.debug('%s: already allocated:%s' 
+                          % (node_id, match[0]))
+                return match[0]
+            else:
+                log.info('%s: no existing resources matches this node '
+                         'in the db. Looking for new resource in %s' 
+                         % (node_id, pool))
+                
+                # The query must use subquery since sqlite is not
+                # typically compiled with LIMIT support for UPDATE
+                query = """UPDATE `%s`
+                           SET node_id = '%s'
+                           WHERE key IN (
+                             SELECT key
+                             FROM `%s`
+                             WHERE node_id IS NULL
+                             ORDER BY rowid ASC
+                             LIMIT 1
+                          )""" % (pool, node_id, pool)
+                log.debug('%s: executing query: %s' % (node_id, query))
+                assigned = cur.execute(query).fetchone()
+                log.debug('%s: number of rows affected:%s' % 
+                          (node_id, cur.rowcount))
+
+                if cur.rowcount == 1:
+                    # Go get the resouce that was just allocated
+                    query = "SELECT * FROM `%s` WHERE node_id='%s'" % (pool, node_id) 
+                    log.debug('%s: executing sql query:%s' % (node_id, query))
+                    match = cur.execute(query).fetchone()
+                    return match[0]
+
 
     def allocate(self, pool, node):
         node_id = node.identifier()
