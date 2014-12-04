@@ -144,7 +144,9 @@ def _exit(code):
 
                 shutil.move(path, dst)
 
-            backup_path = '%s/%s' % (TEMP, filename)
+            backup_path = url_path_join('/', TEMP, 
+                                        os.path.basename(filename))
+
             if os.path.isfile(backup_path):
                 log('Recovering %s...' % path) 
                 shutil.move(backup_path, path)
@@ -161,8 +163,8 @@ def _exit(code):
             shutil.move(BOOT_EXTENSIONS_FOLDER, 
                         '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
 
-        backup_path = '%s/%s' % (TEMP,
-                                 BOOT_EXTENSIONS_FOLDER.split('/')[-1])
+        backup_path = url_path_join('/', TEMP, 
+                                os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(backup_path):
             log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
@@ -253,7 +255,8 @@ def flash_snapshot():
             log('Backing up %s...' % filename)
 
             # Delete old folder in tmp
-            dst = url_path_join(TEMP, filename)
+            dst = url_path_join('/', TEMP, 
+                                os.path.basename(filename))
             if os.path.isfile(dst):
                 shutil.rmtree(dst)
 
@@ -263,7 +266,8 @@ def flash_snapshot():
         log('Backing up %s...' % BOOT_EXTENSIONS_FOLDER)
 
         # Delete old folder in /tmp
-        dst = url_path_join(TEMP, BOOT_EXTENSIONS_FOLDER)
+        dst = url_path_join('/', TEMP, 
+                            os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(dst):
             shutil.rmtree(dst)
 
