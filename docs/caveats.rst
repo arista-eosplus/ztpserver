@@ -1,4 +1,4 @@
-Known Caveats
+Known caveats
 ==============
 
 .. contents:: :local:
