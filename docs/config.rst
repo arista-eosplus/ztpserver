@@ -3,6 +3,9 @@ Configuration
 
 .. contents:: :local:
 
+Overview
+~~~~~~~~
+
 The ZTPServer uses a series of YAML files to provide its various
 configuration and databases. Use of the YAML format makes the files
 easier to read and makes it easier and more intuitive to add/update
