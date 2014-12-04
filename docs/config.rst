@@ -304,7 +304,7 @@ substitution will result in a value of *None*.
 
 .. note::
 
-    For release 1.0, only **one level of indirection** is
+    Only **one level of indirection** is
     allowed - if multiple levels of indirection are used, then the data
     sent to the client will contain unevaluated key/reference pairs in
     the attributes list (which might lead to failures or unexpected
