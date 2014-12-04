@@ -3,13 +3,6 @@ Installation
 
 .. contents:: :local:
 
-Installation Options
-````````````````````
-
-    * :ref:`packer_install`
-    * :ref:`pypi_install`
-    * :ref:`manual_install`
-
 Requirements
 `````````````
 
@@ -27,10 +20,17 @@ Requirements
 
 .. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20. 
 
+Installation Options
+````````````````````
+
+    * :ref:`packer_install`
+    * :ref:`pypi_install`
+    * :ref:`manual_install`
+
 .. _packer_install:
 
 Turn-key VM Creation
-````````````````````
+~~~~~~~~~~~~~~~~~~~~
 
 The turn-key VM option leverages `Packer <http://www.packer.io/>`_ to auto generate a VM on your local system. Packer.io automates the creation of the ZTPServer VM. All of the required packages and dependencies are installed and configured. The current Packer configuration allows you to choose between VirtualBox or VMWare as your hypervisor and each can support Fedora 20 or Ubuntu Server 12.04.
 
@@ -68,7 +68,7 @@ See the Packer VM `code and documentation <https://github.com/arista-eosplus/pac
 .. _pypi_install:
 
 PyPI Package (pip install)
-``````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ may be installed as a `PyPI <https://pypi.python.org/pypi/ztpserver>`_ package.
 
@@ -85,7 +85,7 @@ The pip install process will install all dependencies and run the install script
 .. _manual_install:
 
 Manual installation
-```````````````````
+~~~~~~~~~~~~~~~~~~~
 
 Download:
 
