@@ -87,25 +87,31 @@ The pip install process will install all dependencies and run the install script
 Manual installation
 ~~~~~~~~~~~~~~~~~~~
 
-Download:
+Download source:
 
-+----------------------------+-----------------+-----------------+-----------------+
-| Release                    | Git             | ZIP             | TAR             |
-+============================+=================+=================+=================+
-| 1.1.0 (Current)            | |git release|_  | |zip release|_  | |tar release|_  |
-+----------------------------+-----------------+-----------------+-----------------+
-| Development (Unstable)     | |git dev|_      | |zip dev|_      | |tar dev|_      |
-+----------------------------+-----------------+-----------------+-----------------+
+* |git release|_ on GitHub
+
+  * |prev releases|_
+
+* Active Stable: (|git master|_) (|zip master|_) (|tar master|_)
+* Development: (|git dev|_) (|zip dev|_) (|tar dev|_)
 
 
-.. |git release| replace:: GitHub
-.. _git release: https://github.com/arista-eosplus/ztpserver/tree/v1.1.0
+.. |git release| replace:: Latest Release
+.. _git release: https://github.com/arista-eosplus/ztpserver/releases/latest
 
-.. |zip release| replace:: ZIP
-.. _zip release: https://github.com/arista-eosplus/ztpserver/zipball/master
+.. |prev releases| replace:: Previous releases
+.. _prev releases: https://github.com/arista-eosplus/ztpserver/releases/
 
-.. |tar release| replace:: TAR
-.. _tar release: https://github.com/arista-eosplus/ztpserver/tarball/master
+
+.. |git master| replace:: GitHub
+.. _git master: https://github.com/arista-eosplus/ztpserver/tree/master
+
+.. |zip master| replace:: ZIP
+.. _zip master: https://github.com/arista-eosplus/ztpserver/zipball/master
+
+.. |tar master| replace:: TAR
+.. _tar master: https://github.com/arista-eosplus/ztpserver/tarball/master
 
 
 .. |git dev| replace:: GitHub
@@ -147,7 +153,7 @@ Execute ``setup.py`` to build and then install ZTPServer:
     running build
     running build_py
     ...
-    
+
     [root@localhost ztpserver]# sudo python setup.py install
     running install
     running build
