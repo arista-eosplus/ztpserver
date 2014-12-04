@@ -326,7 +326,8 @@ class NodesController(BaseController):
             # POST request for the node - will try to match neighbordb
             next_state = 'post_node'
             log.info('%s: node does not exist on the server - ' 
-                     'will try to match node against neighbordb' % kwargs['node_id'])
+                     'will try to match node against neighbordb' % 
+                     kwargs['node_id'])
         else:
             # POST request for the node's startup-config
             config = kwargs['request'].json['config']
@@ -388,9 +389,11 @@ class NodesController(BaseController):
                  (node_id, match.name))
         try:
 
-            definition_url = self.expand(match.definition, folder='definitions')
+            definition_url = self.expand(match.definition, 
+                                         folder='definitions')
             fobj = self.repository.get_file(definition_url)
-            log.info('%s: node definition copied from: %s' % (node_id, definition_url))
+            log.info('%s: node definition copied from: %s' % 
+                     (node_id, definition_url))
         except FileObjectNotFound:
             log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
@@ -495,7 +498,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.info('%s: received request for definition: %s' % (resource, request.url)) 
+        log.info('%s: received request for definition: %s' % 
+                 (resource, request.url)) 
         log.debug('%s\nResource: %s\n' % (request, resource))
 
         node_id = resource.split('/')[0]
