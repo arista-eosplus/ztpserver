@@ -169,7 +169,7 @@ Additional services
 .. NOTE:: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
 
 Allow ZTPServer Connections In Through The Firewall
----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080 by default.
 
@@ -185,7 +185,7 @@ Be sure your host firewall allows incoming connections to ZTPServer.  The standa
 .. NOTE:: If using the :ref:`packer_install`, all the steps from below will be been completed automatically.
 
 Configure the DHCP Service
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Set up your DHCP infrastructure to server the full path to the ZTPServer bootstrap file via option 67.  This can be performed on any DHCP server.  Below you can see how you can do that for ISC dhcpd.
 
@@ -208,8 +208,8 @@ Add a network (in this case 192.168.100.0/24) for servicing DHCP requests for ZT
       option bootfile-name "http://<ztp_hostname_or_ip>:<port>/bootstrap";
     }
 
-Enable and start the dhcpd service.
------------------------------------
+Enable and start the dhcpd service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 RedHat (and derivative Linux implementations)
 
