@@ -458,7 +458,8 @@ Rules:
  - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored  
  - if both the **node** and **interfaces** attributes are specified and a node's unique_id is a match, but the topology information is not, then the overall match will fail and the global patterns will not be considered
  - if there is no matching node-specific pattern for a node's unique_id, then the server will attempt to match the node against the global patterns (in the order they are specified in ``neighbordb``)
-
+ - if a node-specific node matches, the server will automatically generate an open pattern in the node's folder. This pattern will match any device with at least one LLDP-capable neighbor.
+ 
 .. code-block:: yaml
 
     variables:
