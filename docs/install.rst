@@ -176,6 +176,7 @@ Be sure your host firewall allows incoming connections to ZTPServer.  The standa
   * Disable firewalld
     ``bash-3.2$ systemctl disable firewalld``
 
+.. NOTE:: If using the :ref:`packer_install`, all the steps from below will be been completed automatically.
 
 Configure the DHCP Service
 --------------------------

@@ -44,7 +44,7 @@ from client_test_lib import raise_exception
 class ServerNotRunningTest(unittest.TestCase):
 
     def test(self):
-        bootstrap = Bootstrap('127.0.0.2')
+        bootstrap = Bootstrap(server='127.0.0.2')
         bootstrap.start_test()
 
         try:
