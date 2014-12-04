@@ -9,4 +9,4 @@ The authoritative state for any known issue can be found in `GitHub issues <http
 
 * Only a single entry in a resource pool may be allocated to a node.
 
-* Users MUST be aware of the required EOS version for various hardware components (including transcievers).  Neighbor (LLDP) validation may fail if a node boots with an EOS version that does not support the installed hardware.  Moreoever, some EOS features configured via ZTPServer might be unsupported.   Please refer to the Release Notes for more compatability information.
+* Users MUST be aware of the required EOS version for various hardware components (including transcievers).  Neighbor (LLDP) validation may fail if a node boots with an EOS version that does not support the installed hardware.  Moreoever, some EOS features configured via ZTPServer might be unsupported.   Please refer to the Release Notes for more compatability information and to the `Transceiver Guide <http://www.arista.com/assets/data/pdf/Transceiver-Guide.pdf>`_ .
