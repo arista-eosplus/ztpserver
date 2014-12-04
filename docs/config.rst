@@ -787,7 +787,7 @@ allocating a new one.
 In order to free a resource from a pool, simply turn the value
 associated to it back to ``null``, by editing the resource file.
 
-Other Files
+Other files
 ~~~~~~~~~~~
 
 ``[data_root]/files/`` contains the files that actions might request
