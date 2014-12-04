@@ -1,6 +1,9 @@
 Client - Server API
 -------------------
 
+.. The RESTful API is documented using sphinxcontrib-httpdomain.  See
+   http://pythonhosted.org/sphinxcontrib-httpdomain/
+
 .. contents:: :local:
 
 URL Endpoints
@@ -192,7 +195,7 @@ GET action
 
 .. http:get:: /actions/(NAME)
 
-I   Request action from the server.
+    Request action from the server.
 
     **Request**
 
