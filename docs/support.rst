@@ -92,3 +92,9 @@ ZTPServer documentation and other reference materials are below:
     
 
 A quick video tutorial can be found here: http://www.youtube.com/playlist?list=PL6kEnPnH7OA4oc5jzhUW0ivVX1sMdfNpV
+
+
+LICENSE
+~~~~~~~
+
+../LICENSE
