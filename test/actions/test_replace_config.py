@@ -36,7 +36,7 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import STARTUP_CONFIG, STATUS_NOT_FOUND
+from client_test_lib import STATUS_NOT_FOUND
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import raise_exception
@@ -94,8 +94,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless(contents.split() == 
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
@@ -118,8 +119,9 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(STARTUP_CONFIG))
-            self.failUnless(contents.split() == file_log(STARTUP_CONFIG))
+            self.failUnless(os.path.isfile(bootstrap.startup_config))
+            self.failUnless(contents.split() == 
+                            file_log(bootstrap.startup_config))
             self.failUnless(bootstrap.success())
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output

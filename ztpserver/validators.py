@@ -39,11 +39,10 @@ import collections
 
 from ztpserver.utils import expand_range, parse_interface
 
-REQUIRED_PATTERN_ATTRIBUTES = ['name']
-OPTIONAL_PATTERN_ATTRIBUTES = ['definition', 'interfaces', 'node', 'variables']
+REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition']
+OPTIONAL_PATTERN_ATTRIBUTES = ['node', 'variables', 'interfaces']
 INTERFACE_PATTERN_KEYWORDS = ['any', 'none']
 ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
-VALID_INTERFACE_RE = re.compile(r'^Ethernet[1-9]\d*(?:\/\d+){0,2}$')
 KW_ANY_RE = re.compile(r' *any *')
 KW_NONE_RE = re.compile(r' *none *')
 WC_PORT_RE = re.compile(r'.*')
@@ -83,6 +82,7 @@ class Validator(object):
         else:
             self.data = dict()
 
+        error = None
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         for name in methods:
             if name[0].startswith('validate_'):
@@ -97,7 +97,11 @@ class Validator(object):
                 try:
                     getattr(self, name[0])()
                 except ValidationError as err:
-                    self.error(err)
+                    if not error:
+                        error = err
+        if error:
+            self.error(err)
+
         return not self.fail
 
     def error(self, err, *args, **kwargs):
@@ -138,9 +142,9 @@ class NeighbordbValidator(Validator):
             if name and validator.validate(entry):
                 log.debug('%s: adding pattern \'%s\' (%s) to valid patterns' % 
                          (self.node_id, name, entry))
-                self.valid_patterns.add((index, name))
+                self.valid_patterns.add((index, str(name)))
             else:
-                if name:
+                if not name:
                     name = 'N/A'
                 log.debug('%s: adding pattern \'%s\' (%s) to '
                           'invalid patterns' % 
@@ -164,11 +168,17 @@ class PatternValidator(Validator):
             if attr not in self.data:
                 raise ValidationError('missing attribute: %s' % attr)
 
+        if 'node' not in self.data and 'interfaces' not in self.data:
+            raise ValidationError('missing attribute: \'node\' OR '
+                                  '\'interfaces\'')
+
         for attr in OPTIONAL_PATTERN_ATTRIBUTES:
             if attr not in self.data:
                 log.warning('%s: PatternValidator warning: \'%s\' is missing '
                             'optional attribute (%s)' % 
                             (self.node_id, self.data['name'], attr))
+
+        
 
     def validate_name(self):
         if not self.data or 'name' not in self.data:
@@ -274,18 +284,14 @@ class InterfacePatternValidator(Validator):
             except Exception as err:
                 raise ValidationError('PatternError: %s' % err)
 
-            if not VALID_INTERFACE_RE.match(interface):
-                if interface not in INTERFACE_PATTERN_KEYWORDS:
-                    try:
-                        expand_range(interface)
-                    except Exception as err:
-                        raise ValidationError('invalid interface %s (%s)' % 
-                                              (interface, err))
-
-            try:
-                for entry in expand_range(interface):
-                    self._validate_pattern(entry, device, port)
-            except TypeError:
+            if interface not in INTERFACE_PATTERN_KEYWORDS:
+                try:
+                    for entry in expand_range(interface):
+                        self._validate_pattern(entry, device, port)
+                except Exception as err:
+                    raise ValidationError('invalid interface %s (%s)' % 
+                                          (interface, err))
+            else:
                 self._validate_pattern(interface, device, port)
 
     def _validate_pattern(self, interface, device, port):

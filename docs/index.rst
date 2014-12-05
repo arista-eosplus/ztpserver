@@ -42,10 +42,6 @@ Features
    tips
    internals
    glossary
-   resources
    support
-   ReleaseNotes
-   caveats
-   roadmap
    license
 

@@ -216,11 +216,11 @@ Sample resources
 
 .. _mode_examples:
 
-Mode Examples
-``````````````
+Neighbordb pattern examples
+```````````````````````````
 
-Example #1: strongly typed definition with a strongly typed map
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Example #1
+''''''''''
 
 .. code-block:: yaml
 
@@ -234,17 +234,16 @@ Example #1: strongly typed definition with a strongly typed map
             device: pod1-spine2
             port: Ethernet1/1
 
-In example #1, the topology map would only apply to a node with serial number,
-the default ID, equal to **ABC12345678**. The following interface map rules
-apply:
+In example #1, the topology map would only apply to a node with system ID 
+equal to **ABC12345678**. The following interface map rules apply:
 
 -  Interface Ethernet49 must be connected to node pod1-spine1 on port
    Ethernet1/1
 -  Interface Ethernet50 must be connected to node pod1-spine2 on port
    Ethernet1/1
 
-Example #2: strongly typed definition with loose typed map
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Example #2
+''''''''''
 
 .. code-block:: yaml
 
@@ -259,18 +258,17 @@ Example #2: strongly typed definition with loose typed map
             port: Ethernet2/3
 
 In this example, the topology map would only apply to the node with
-system mac address equal to **001c73aabbcc**. This requires that identifier be
-set to systemmac in the global ztpserver.conf file. The following interface
+system ID equal to **001c73aabbcc**. The following interface
 map rules apply:
 
--  Any interface must be connected to node that matches the regular
+-  At least one interface interface must be connected to node that matches the regular
    expression 'pod+-spine+' on port Ethernet1/$ (any port on module 1)
--  Any interface and not the interface selected in the previous step
+-  At least one interface and not the interface which matched in the previous step
    must be connected to a node that matches the regular expression
-   'pod+-spine1' and is connected on port Ethernet2/3
+   'pod+-spine1' on port Ethernet2/3
 
-Example #3: loose typed definition with a loose typed map
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Example #3
+''''''''''
 
 .. code-block:: yaml
 
@@ -325,8 +323,8 @@ pattern re-use.
 -  Interface Ethernet50 matches if the node is connected to port
    Ethernet50 on any node whose name does not contain ‘spine’
 
-Example #4: loosely typed definition with loosely typed map
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Example #4
+''''''''''
 
 .. code-block:: yaml
 

@@ -29,7 +29,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# pylint: disable=W0622,W0402,W0613,W0142,R0201, E1103
+# pylint: disable=W0622,W0402,W0613,W0142,R0201,E1103,W0150
 #
 
 import logging
@@ -249,7 +249,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.debug('%s\n' % request)
+        log.info('%s: received system information from node:\n%s' %
+                 (request.remote_addr, request.json))
 
         try:
             node = create_node(request.json)
@@ -264,6 +265,10 @@ class NodesController(BaseController):
                       (node, request))
             response = self.http_bad_request()
             return self.response(**response)
+
+        identifier = ztpserver.config.runtime.default.identifier
+        log.info('%s: node ID is %s:%s' %
+                 (request.remote_addr, identifier, node_id))
 
         return self.fsm('node_exists', request=request, 
                         node=node, node_id=node_id)
@@ -292,6 +297,7 @@ class NodesController(BaseController):
 
         if self.repository.exists(self.expand(node_id, DEFINITION_FN)) or \
            self.repository.exists(self.expand(node_id, STARTUP_CONFIG_FN)):
+            log.info('%s: this node already exists on the server' % node_id)
             response['status'] = HTTP_STATUS_CONFLICT
             next_state = 'dump_node'
         else:
@@ -319,6 +325,9 @@ class NodesController(BaseController):
         if 'config' not in kwargs['request'].json:
             # POST request for the node - will try to match neighbordb
             next_state = 'post_node'
+            log.info('%s: node does not exist on the server - ' 
+                     'will try to match node against neighbordb' % 
+                     kwargs['node_id'])
         else:
             # POST request for the node's startup-config
             config = kwargs['request'].json['config']
@@ -362,7 +371,10 @@ class NodesController(BaseController):
         node_id = kwargs['node_id']
         
         neighbordb = load_neighbordb(node_id)
-         # pylint: disable=E1103
+        if not neighbordb:
+            return (self.http_bad_request(), None)
+            
+        # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
             log.info('%s: node matched no patterns in neighbordb' %
@@ -377,8 +389,11 @@ class NodesController(BaseController):
                  (node_id, match.name))
         try:
 
-            definition_url = self.expand(match.definition, folder='definitions')
+            definition_url = self.expand(match.definition, 
+                                         folder='definitions')
             fobj = self.repository.get_file(definition_url)
+            log.info('%s: node definition copied from: %s' % 
+                     (node_id, definition_url))
         except FileObjectNotFound:
             log.error('%s: failed to find definition (%s)' % 
                       (node_id, definition_url))
@@ -395,7 +410,7 @@ class NodesController(BaseController):
         
         self.repository.add_folder(self.expand(node_id))
 
-        log.info('%s: new /nodes/%s folder created' % 
+        log.info('%s: new dynamically-provisioned node created: /nodes/%s' % 
                  (node_id, node_id))
 
         fobj = self.repository.add_file(definition_fn)
@@ -403,10 +418,22 @@ class NodesController(BaseController):
         
         pattern_fn = self.expand(node_id, PATTERN_FN)
         fobj = self.repository.add_file(pattern_fn)
-        fobj.write(match.serialize(), CONTENT_TYPE_YAML)
-        
-        response['status'] = HTTP_STATUS_CREATED
 
+        pattern = match.serialize()
+
+        # No need to write the definition name in the apttern file
+        del pattern['definition']
+
+        for attr in ['node', 'variables']:
+            if not pattern[attr]:
+                del pattern[attr]
+
+        # Add default pattern, if 'interfaces' is not specified
+        if 'interfaces' not in pattern or not pattern['interfaces']:
+            pattern['interfaces'] = [{'any': {'any': 'any'}}]
+
+        fobj.write(pattern, CONTENT_TYPE_YAML)
+        response['status'] = HTTP_STATUS_CREATED
         return (response, 'dump_node')
 
     def dump_node(self, response, *args, **kwargs):
@@ -432,6 +459,10 @@ class NodesController(BaseController):
             fobj = self.repository.add_file(filename)
         finally:
             fobj.write(contents, CONTENT_TYPE_JSON)
+
+        log.info('%s: node data written to %s:\n%s' %
+                 (node_id, filename, contents))
+        
         return (response, 'set_location')
 
     def set_location(self, response, *args, **kwargs):
@@ -467,6 +498,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
+        log.info('%s: received request for definition: %s' % 
+                 (resource, request.url)) 
         log.debug('%s\nResource: %s\n' % (request, resource))
 
         node_id = resource.split('/')[0]
@@ -507,10 +540,14 @@ class NodesController(BaseController):
     def do_validation(self, response, *args, **kwargs):
         config = ztpserver.config.runtime
         if not config.default.disable_topology_validation:
+            log.info('%s: topology validation is ENABLED' % kwargs['resource'])
+
             filename = self.expand(kwargs['resource'], PATTERN_FN)
             fobj = self.repository.get_file(filename)
 
             try:
+                log.info('%s: checking syntax of pattern file used for topology'
+                         ' validation: %s' % (kwargs['resource'], filename))
                 pattern = load_pattern(fobj.name, node_id=kwargs['resource'])
             except SerializerError as err:
                 log.error(err.message)
@@ -519,16 +556,18 @@ class NodesController(BaseController):
             if not pattern:
                 raise Exception('failed to validate pattern')
 
+            log.info('%s: evaluating node against pattern: %s' %
+                     (kwargs['resource'], filename))
             if not pattern.match_node(kwargs['node']):
                 log.error('%s: node failed pattern validation (%s)' % 
                           (kwargs['resource'], filename))
                 raise ValidationError('%s: node failed pattern '
                                       'validation (%s)' %
                                       (kwargs['resource'], filename))
-            log.debug('%s: node passed pattern validation (%s)' % 
+            log.info('%s: node passed pattern validation: %s' % 
                       (kwargs['resource'], filename))
         else:
-            log.warning('%s: topology validation is disabled' %
+            log.warning('%s: topology validation is DISABLED' %
                         kwargs['resource'])
         return (response, 'get_startup_config')
 
@@ -683,6 +722,8 @@ class BootstrapController(BaseController):
             else:
                 if 'logging' in config:
                     body['logging'] = config['logging']
+                    log.info('%s: syslog info included in bootstrap config' %
+                             request.remote_addr)
 
                 if 'xmpp' in config:
                     body['xmpp'] = config['xmpp'] 
@@ -694,6 +735,8 @@ class BootstrapController(BaseController):
                        not body['xmpp']['rooms']:
                         log.warning('Bootstrap config: no XMPP rooms '
                                     'configured')
+                    log.info('%s: xmpp info included in bootstrap config' %
+                             request.remote_addr)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except FileObjectNotFound:
             log.warning('Bootstrap config file not found')
@@ -716,6 +759,8 @@ class BootstrapController(BaseController):
             default_server = ztpserver.config.runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
+            log.info('%s: node beginning provisioning' %
+                     request.remote_addr)
         except KeyError as err:
             log.debug('Missing variable: %s' % err)
             resp = self.http_bad_request()

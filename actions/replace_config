@@ -38,12 +38,9 @@ def main(attributes):
     This action is dual-supervisor compatible.
 
     Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
-
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        node (internal): attributes.get('NODE') API: see documentation
+        url: path to config/template
     '''
 
     node = attributes.get('NODE')
@@ -55,4 +52,5 @@ def main(attributes):
     try:
         node.retrieve_url(url, node.startup_config())
     except Exception as exc:
-        return 'Unable to retrieve config from URL (%s)' % exc
+        return 'Unable to retrieve config from URL (%s)' % exc.message
+

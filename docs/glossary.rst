@@ -1,4 +1,4 @@
-Glossary of Terms
+Glossary of terms
 =================
 
 .. glossary:: :sorted:

@@ -57,8 +57,9 @@ def load_node(node, content_type=CONTENT_TYPE_YAML):
     try:
         if not hasattr(node, 'items'):
             node = load_file(node, content_type, ID)
-        for symbol in [':', '.']:
-            node['systemmac'] = str(node['systemmac']).replace(symbol, '')
+        if 'systemmac' in node:
+            for symbol in [':', '.']:
+                node['systemmac'] = str(node['systemmac']).replace(symbol, '')
         return Node(**node)
     except TypeError:
         log.error('Failed to load node')

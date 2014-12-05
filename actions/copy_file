@@ -71,10 +71,26 @@ def main(attributes):
     Args:
        attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
                    to read attribute values
+       node (internernal): attributes.get('NODE') API: see documentation
+       attributes:
+       src_url: Source location
+       dst_url: Destination
+       mode: Octal mode
+       overwrite: Overwrite existing files? <replace|if-missing|backup> Default: replace
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+          -
+            action: copy_file
+            always_execute: true
+            attributes:
+              dst_url: /mnt/flash/
+              mode: 777
+              overwrite: if-missing
+              src_url: files/automate/bgpautoinf.py
+            name: "automate BGP peer interface config"
+
     '''
 
     node = attributes.get('NODE')
@@ -100,10 +116,15 @@ def main(attributes):
 
         if overwrite == 'if-missing':
             if os.path.exists(dst_path):
+                node.log_msg('copy_file: nothing to do: %s '
+                             'already exists' % dst_path)
                 return
         elif overwrite == 'backup':
             if os.path.exists(dst_path):
-                shutil.copy(dst_path, '%s%s' % (dst_path, BACKUP_SUFFIX))
+                backup_path = '%s%s' % (dst_path, BACKUP_SUFFIX)
+                node.log_msg('copy_file: backing up %s '
+                             'to %s' % (dst_path, backup_path))
+                shutil.copy(dst_path, backup_path)
         elif overwrite == 'replace':
             pass
         else:
@@ -117,6 +138,8 @@ def main(attributes):
 
         try:
             node.retrieve_url(src_url, dst_path)
+            node.log_msg('copy_file: saving %s '
+                         'to %s' % (src_url, dst_path))
             if mode is not None:
                 os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
@@ -151,7 +174,11 @@ def main(attributes):
         try:
             file_path = '%s/%s' % (PERSISTENT_DIR, name)
             node.retrieve_url(src_url, file_path)
+            node.log_msg('copy_file: saving %s '
+                         'to %s' % (src_url, file_path))
         except Exception as exc:
             return 'Unable to retrieve file from URL (%s)' % exc
 
+        node.log_msg('copy_file: adding rc.eos lines: \n%s$' %
+                     '\n'.join(lines))
         node.append_rc_eos_lines(lines)

@@ -50,6 +50,11 @@ from collections import namedtuple
 Response = namedtuple('Response', 'content_type status contents headers')
 #pylint: enable=C0103
 
+RC_EOS = 'rc.eos'
+BOOT_EXTENSIONS = 'boot-extensions'
+BOOT_EXTENSIONS_FOLDER = '.extensions'
+STARTUP_CONFIG = 'startup-config'
+
 ZTPS_SERVER = '127.0.0.1'
 ZTPS_PORT = 12345
 
@@ -63,13 +68,6 @@ BOOTSTRAP_FILE = 'client/bootstrap'
 
 CLI_LOG = '/tmp/FastCli-log'
 EAPI_LOG = '/tmp/eapi-log-%s' % os.getpid()
-
-FLASH = '/tmp'
-
-STARTUP_CONFIG = '%s/startup-config-%s' % (FLASH, os.getpid())
-RC_EOS = '%s/rc.eos-%s' % (FLASH, os.getpid())
-BOOT_EXTENSIONS = '%s/boot-extensions-%s' % (FLASH, os.getpid())
-BOOT_EXTENSIONS_FOLDER = '%s/.extensions-%s' % (FLASH, os.getpid())
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -86,7 +84,8 @@ def raise_exception(exception):
     # Uncomment the following line for debugging
     # import pdb; pdb.set_trace()
 
-    raise exception, 'Uncomment line in client_tes_lib.py:raise exception for debugging'
+    raise Exception('%s\nUncomment line in client_test_lib.py:raise_'
+                    'exception for debugging' % exception.message)
 
 ztps = None    #pylint: disable=C0103
 def start_ztp_server():
@@ -128,16 +127,6 @@ def clear_cli_log():
 def clear_eapi_log():
     remove_file(EAPI_LOG)
 
-def clear_startup_config():
-    remove_file(STARTUP_CONFIG)
-
-def clear_rc_eos():
-    remove_file(RC_EOS)
-
-def clear_boot_extensions():
-    remove_file(BOOT_EXTENSIONS)
-    shutil.rmtree(BOOT_EXTENSIONS_FOLDER, ignore_errors=True)
-
 def clear_logs():
     clear_cli_log()
     clear_eapi_log()
@@ -171,6 +160,7 @@ def get_action(action):
     return open('actions/%s' % action, 'r').read()
 
 def startup_config_action(lines=None):
+    startup_config = '/tmp/ztps-flash-%s/startup-config' % os.getpid()
     if not lines:
         lines = ['test']
 
@@ -189,8 +179,8 @@ def main(attributes):
 
    os.chmod('%s', 0777)
    os.chown('%s', user, group)
-''' % (user, user, STARTUP_CONFIG, '\n'.join(lines),
-       STARTUP_CONFIG, STARTUP_CONFIG)
+''' % (user, user, startup_config, '\n'.join(lines),
+       startup_config, startup_config)
 
 def print_action(msg='TEST', use_attribute=False, create_copy=False):
     #pylint: disable=E0602
@@ -278,6 +268,15 @@ class Bootstrap(object):
         self.ztps = start_ztp_server()
         self.smtp = start_smtp_server()
 
+        self.flash = '/tmp/ztps-flash-%s' % os.getpid()
+        self.temp = '/tmp/ztps-tmp-%s' % os.getpid()
+
+        self.rc_eos = '%s/%s' % (self.flash, RC_EOS)
+        self.boot_extensions = '%s/%s' % (self.flash, BOOT_EXTENSIONS)
+        self.boot_extensions_folder = '%s/%s' % (self.flash, 
+                                          BOOT_EXTENSIONS_FOLDER)
+        self.startup_config = '%s/%s' % (self.flash, STARTUP_CONFIG)
+
         self.configure()
 
         if ztps_default_config:
@@ -285,6 +284,10 @@ class Bootstrap(object):
             self.ztps.set_node_check_response()
 
     def configure(self):
+        for folder in [self.flash, self.temp]:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+
         infile = open(BOOTSTRAP_FILE)
         self.filename = '/tmp/bootstrap-%s' % os.getpid()
         outfile = open(self.filename, 'w')
@@ -294,20 +297,12 @@ class Bootstrap(object):
             line = line.replace("COMMAND_API_SERVER = 'localhost'",
                                 "COMMAND_API_SERVER = 'localhost:%s'" %
                                 self.eapi_port)
-            line = line.replace("STARTUP_CONFIG = '%s/startup-config' % FLASH",
-                                "STARTUP_CONFIG = '%s'" % 
-                                STARTUP_CONFIG)
+
             line = line.replace("FLASH = '/mnt/flash'",
-                                "FLASH = '%s'" % FLASH)
-            line = line.replace("RC_EOS = '%s/rc.eos' % FLASH",
-                                "RC_EOS = '%s'" % RC_EOS)
-            line = line.replace(
-                "BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH",
-                "BOOT_EXTENSIONS = '%s'" % BOOT_EXTENSIONS)
-            line = line.replace(
-                "BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH",
-                "BOOT_EXTENSIONS_FOLDER = '%s'" % 
-                BOOT_EXTENSIONS_FOLDER)
+                                "FLASH = '%s'" % self.flash)
+
+            line = line.replace("TEMP = '/tmp'", "TEMP = '%s'" % 
+                                self.temp)
 
            # Reduce HTTP timeout
             if re.match('^HTTP_TIMEOUT', line):
@@ -322,6 +317,9 @@ class Bootstrap(object):
         self.module = imp.load_source('bootstrap', self.filename)
 
     def end_test(self):
+        shutil.rmtree(self.temp)
+        shutil.rmtree(self.flash)
+
         # Clean up actions
         for url in self.ztps.responses.keys():
             filename = url.split('/')[-1]
@@ -339,11 +337,6 @@ class Bootstrap(object):
 
         # Clean up logs
         clear_logs()
-
-        # Other
-        clear_startup_config()
-        clear_rc_eos()
-        clear_boot_extensions()
 
     def start_test(self):
         try:
@@ -375,7 +368,8 @@ class Bootstrap(object):
         return self.eapi_configured() and self.node_information_collected()
 
     def server_connection_failure(self):
-        return 'server connection error' in self.output and \
+        return ('server connection error' in self.output or
+                'Read timed out' in self.output) and \
                self.return_code
 
     def eapi_failure(self):
@@ -503,6 +497,11 @@ class ZTPServer(object):
         self.responses['/%s' % filename ] = Response(
             content_type, status,
             output, {})
+
+        meta = { 'size': len( output ) }
+        self.responses['/meta/%s' % filename ] = Response(
+            'application/json', 200,
+            json.dumps(meta), {})
 
     def set_action_response(self, action, output,
                             content_type='text/x-python',

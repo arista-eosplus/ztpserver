@@ -3,19 +3,6 @@ Installation
 
 .. contents:: :local:
 
-There are 3 primary installation methods:
-
-    * :ref:`packer_install`
-    * :ref:`pypi_install`
-    * :ref:`manual_install`
-
-Examples in this guide are based on the following:
-
- * Python 2.7
- * dhcp server - (dhcpd)
- * pip
- * git
-
 Requirements
 `````````````
 
@@ -28,19 +15,22 @@ Requirements
 
   **Client:**
 
-  * |EOS| 4.12.0 or later (ZTPServer 1.1)
-  * |EOS| 4.13.3 or later (ZTPServer 1.0)
-
-.. |EOS| raw:: html
-
-   <a href="HTTP://eos.arista.com/" target="_blank">Arista EOS</a>
+  * `EOS <http://eos.arista.com>`_ 4.12.0 or later (ZTPServer 1.1+)
+  * `EOS <http://eos.arista.com>`_ 4.13.3 or later (ZTPServer 1.0)
 
 .. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20. 
+
+Installation Options
+````````````````````
+
+    * :ref:`packer_install`
+    * :ref:`pypi_install`
+    * :ref:`manual_install`
 
 .. _packer_install:
 
 Turn-key VM Creation
-````````````````````
+~~~~~~~~~~~~~~~~~~~~
 
 The turn-key VM option leverages `Packer <http://www.packer.io/>`_ to auto generate a VM on your local system. Packer.io automates the creation of the ZTPServer VM. All of the required packages and dependencies are installed and configured. The current Packer configuration allows you to choose between VirtualBox or VMWare as your hypervisor and each can support Fedora 20 or Ubuntu Server 12.04.
 
@@ -53,7 +43,7 @@ VM Specification:
   * eth0 (NAT) DHCP
   * eth1 (hostonly) 172.16.130.10
 
-* Firewalld/UFW disabled.
+* Firewalld/UFW disabled
 * Users
 
   * root/eosplus
@@ -67,7 +57,7 @@ VM Specification:
 * rsyslog-ng installed; Listening on UDP and TCP (port 514)
 * ejabberd (XMPP server) configured for im.ztps-test.com
 
-  * XMPP admin user ztpsadmin, passwd eosplus
+  * XMPP admin user: ztpsadmin/eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi)
 * ZTPServer installed
 * ztpserver-demo repo files pre-loaded
@@ -78,7 +68,7 @@ See the Packer VM `code and documentation <https://github.com/arista-eosplus/pac
 .. _pypi_install:
 
 PyPI Package (pip install)
-``````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ may be installed as a `PyPI <https://pypi.python.org/pypi/ztpserver>`_ package.
 
@@ -95,27 +85,33 @@ The pip install process will install all dependencies and run the install script
 .. _manual_install:
 
 Manual installation
-```````````````````
+~~~~~~~~~~~~~~~~~~~
 
-Download:
+Download source:
 
-+----------------------------+-----------------+-----------------+-----------------+
-| Release                    | Git             | ZIP             | TAR             |
-+============================+=================+=================+=================+
-| 1.1.0 (Current)            | |git release|_  | |zip release|_  | |tar release|_  |
-+----------------------------+-----------------+-----------------+-----------------+
-| Development (Unstable)     | |git dev|_      | |zip dev|_      | |tar dev|_      |
-+----------------------------+-----------------+-----------------+-----------------+
+* |git release|_ on GitHub
+
+  * |prev releases|_
+
+* Active Stable: (|git master|_) (|zip master|_) (|tar master|_)
+* Development: (|git dev|_) (|zip dev|_) (|tar dev|_)
 
 
-.. |git release| replace:: GitHub
-.. _git release: https://github.com/arista-eosplus/ztpserver/tree/v1.1.0
+.. |git release| replace:: Latest Release
+.. _git release: https://github.com/arista-eosplus/ztpserver/releases/latest
 
-.. |zip release| replace:: ZIP
-.. _zip release: https://github.com/arista-eosplus/ztpserver/zipball/master
+.. |prev releases| replace:: Previous releases
+.. _prev releases: https://github.com/arista-eosplus/ztpserver/releases/
 
-.. |tar release| replace:: TAR
-.. _tar release: https://github.com/arista-eosplus/ztpserver/tarball/master
+
+.. |git master| replace:: GitHub
+.. _git master: https://github.com/arista-eosplus/ztpserver/tree/master
+
+.. |zip master| replace:: ZIP
+.. _zip master: https://github.com/arista-eosplus/ztpserver/zipball/master
+
+.. |tar master| replace:: TAR
+.. _tar master: https://github.com/arista-eosplus/ztpserver/tarball/master
 
 
 .. |git dev| replace:: GitHub
@@ -127,7 +123,7 @@ Download:
 .. |tar dev| replace:: TAR
 .. _tar dev: https://github.com/arista-eosplus/ztpserver/tarball/develop
 
-Once the above system requirements are met, use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
+Once the above system requirements are met, you can use the following git command to pull the develop branch into a local directory on the server where you want to install ZTPServer:
 
 .. code-block:: console
 
@@ -149,15 +145,15 @@ Change in to the ztpserver directory, then checkout the release desired:
     bash-3.2$ cd ztpserver
     bash-3.2$ git checkout v1.1.0
 
-Execute ``setup.py`` to build and then install ZTPServer
+Execute ``setup.py`` to build and then install ZTPServer:
 
 .. code-block:: console
 
-    [user@localhost ztpserver]$ python setup.py build
+    [user@localhost ztpserver]$ sudo python setup.py build
     running build
     running build_py
     ...
-    
+
     [root@localhost ztpserver]# sudo python setup.py install
     running install
     running build
@@ -167,15 +163,31 @@ Execute ``setup.py`` to build and then install ZTPServer
 
 .. _server_config:
 
-Configure additional services
-`````````````````````````````
+Additional services
+```````````````````
 
-.. NOTE::: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
+.. NOTE:: If using the :ref:`packer_install`, all of the steps, below, will have been completed, please reference the VM documentation.
+
+Allow ZTPServer Connections In Through The Firewall
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080 by default.
+
+**Firewalld** examples: 
+
+  * Open TCP/<port> through firewalld
+    ``bash-3.2$ firewall-cmd --zone=public --add-port=<port>/tcp [--permanent]``
+  * Stop firewalld
+    ``bash-3.2$ systemctl status firewalld``
+  * Disable firewalld
+    ``bash-3.2$ systemctl disable firewalld``
+
+.. NOTE:: If using the :ref:`packer_install`, all the steps from below will be been completed automatically.
 
 Configure the DHCP Service
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set up your DHCP infrastructure to server the full path to the ZTPServer bootstrap file via option 67.  This can be performed on any DHCP server.  Instructions are provided, below, for ISC dhcpd.
+Set up your DHCP infrastructure to server the full path to the ZTPServer bootstrap file via option 67.  This can be performed on any DHCP server.  Below you can see how you can do that for ISC dhcpd.
 
 Get dhcpd:
 
@@ -186,7 +198,7 @@ Get dhcpd:
         ``bash-3.2$ sudo apt-get install isc-dhcp-server``
 
 
-If using dhcpd, the following example configuration will add a network (192.168.100.0/24) for servicing DHCP requests for ZTPServer::
+Add a network (in this case 192.168.100.0/24) for servicing DHCP requests for ZTPServer::
 
     subnet 192.168.100.0 netmask 255.255.255.0 {
       range 192.168.100.200 192.168.100.205;
@@ -196,20 +208,20 @@ If using dhcpd, the following example configuration will add a network (192.168.
       option bootfile-name "http://<ztp_hostname_or_ip>:<port>/bootstrap";
     }
 
-Enable and start the dhcpd service.
------------------------------------
+Enable and start the dhcpd service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 RedHat (and derivative Linux implementations)
-``bash-3.2# sudo /usr/bin/systemctl enable dhcpd.service``
-``bash-3.2# sudo /usr/bin/systemctl start dhcpd.service``
+
+  ``bash-3.2# sudo /usr/bin/systemctl enable dhcpd.service``
+  ``bash-3.2# sudo /usr/bin/systemctl start dhcpd.service``
 
 Ubuntu (and derivative Linux implementations)
-``bash-3.2# sudo /usr/sbin/service isc-dhcp-server start``
+
+  ``bash-3.2# sudo /usr/sbin/service isc-dhcp-server start``
 
 Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on boot.
 
 
 Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`global_configuration` options for more information.
-
-Now, you are ready to :doc:`startup` ZTPServer.
 

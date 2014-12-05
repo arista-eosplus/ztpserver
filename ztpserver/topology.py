@@ -45,7 +45,7 @@ from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
-from ztpserver.utils import expand_range, parse_interface
+from ztpserver.utils import expand_range, parse_interface, url_path_join
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -86,11 +86,15 @@ def load_file(filename, content_type, node_id):
 def load_neighbordb(node_id, contents=None):
     try:
         if not contents:
+            log.info('%s: loading neighbordb file: %s' % 
+                     (node_id, default_filename()))
             contents = load_file(default_filename(), CONTENT_TYPE_YAML,
                                  node_id)
 
         # neighbordb is empty
         if not contents:
+            log.info('%s: unable to load neighbordb - file is missing/empty' % 
+                     node_id)
             contents = dict()
 
         if not validate_neighbordb(contents, node_id):
@@ -107,11 +111,19 @@ def load_neighbordb(node_id, contents=None):
 
         log.debug('%s: loaded neighbordb: %s' % (node_id, neighbordb))
         return neighbordb
-    except (NeighbordbError, SerializerError):
-        log.error('%s: failed to load neighbordb' % node_id)
+    except SerializerError as err:
+        # pylint: disable=E1101
+        tokens = err.message.split('Error:')
+        log.error('%s: failed to load neighbordb: %s' % 
+                  (node_id, 
+                   'Error:'.join(tokens[1:]) 
+                   if len(tokens) > 1
+                   else err.message))
+        return None
     except Exception as err:
         log.error('%s: failed to load neighbordb because of error: %s' %
                   (node_id, err))
+        return None
 
 def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
     """ Returns an instance of Pattern """
@@ -119,6 +131,12 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
         if not isinstance(pattern, collections.Mapping):
             pattern = load_file(pattern, content_type,
                                 node_id)
+
+        # add dummy values to pass validation
+        if 'definition' not in pattern:
+            pattern['definition'] = 'definition'
+        if 'name' not in pattern:
+            pattern['name'] = 'name'
 
         if not validate_pattern(pattern, node_id):
             log.error('%s: failed to validate pattern attributes' % node_id)
@@ -176,7 +194,7 @@ def replace_config_action(resource, filename=None):
 
     filename = filename or 'startup-config'
     server_url = ztpserver.config.runtime.default.server_url
-    url = '%s/nodes/%s/%s' % (server_url, str(resource), filename)
+    url = url_path_join(server_url, 'nodes/', str(resource), filename)
 
     action = dict(name='install static startup-config file',
                   action='replace_config',
@@ -286,6 +304,8 @@ class Node(object):
                       (self.identifier(), str(err)))
 
     def add_neighbors(self, neighbors):
+        log.info('%s: parsing node\'s LLDP Neighbor information' %
+                 self.identifier())
         for interface, peers in neighbors.items():
             self.add_neighbor(interface, peers)
 
@@ -370,7 +390,15 @@ class Neighbordb(object):
 
             # Add pattern to neighbordb
             if kwargs['node']:
-                self.patterns['nodes'][pattern.node] = pattern
+                if pattern.node not in self.patterns['nodes']: 
+                    self.patterns['nodes'][pattern.node] = pattern
+                else:
+                    log.warning('%s: pattern \'%r\' ignored because '
+                                'another node-specific pattern is '
+                                'configured earlier in neighbordb'
+                                '\'%r\'' % 
+                                (self.node_id, pattern,
+                                 self.patterns['nodes'][pattern.node]))
             else:
                 self.patterns['globals'].append(pattern)
         except KeyError as err:
@@ -415,19 +443,25 @@ class Neighbordb(object):
         identifier = node.identifier()
         log.debug('%s: searching for eligible patterns' % 
                   identifier)
+
+        result = []
+
         pattern = self.patterns['nodes'].get(identifier, None)
         if pattern:
-            log.debug('%s: eligible pattern: %s' % (identifier, 
-                                                    pattern.name))
-            return [pattern]
+            log.debug('%s: node-specific pattern eligible in neighbordb: %s' %
+                      (identifier, 
+                       pattern.name))
+            result += [pattern]
+
+        elif self.patterns['globals']:
+            log.debug('%s: global patterns eligible in neighbordb' %
+                      identifier)
+            result += self.patterns['globals']
         else:
-            if self.patterns['globals']:
-                log.debug('%s: all global patterns are eligible' %
-                          identifier)
-            else:
-                log.debug('%s: no eligible patterns' %
-                          identifier)
-            return self.patterns['globals']
+            log.debug('%s: no patterns eligible in neighbordb' %
+                      identifier)
+
+        return result
 
     def match_node(self, node):
         identifier = node.identifier()
@@ -557,6 +591,10 @@ class Pattern(object):
 
         log.debug('%s: pattern \'%s\' - attempting to match node (%r)' % 
                   (self.node_id, self.name, str(node)))
+
+        # No need to match system ID - that it already taken care of
+        # while selecting the set of nodes which are eligible for a 
+        # match.
 
         patterns = list()
         for entry in self.interfaces:

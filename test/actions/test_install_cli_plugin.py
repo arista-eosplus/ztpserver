@@ -37,7 +37,6 @@ import sys
 
 sys.path.append('test/client')
 
-from client_test_lib import RC_EOS
 from client_test_lib import Bootstrap, ActionFailureTest
 from client_test_lib import file_log, get_action, random_string
 from client_test_lib import startup_config_action
@@ -86,8 +85,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s/%s %s' %
                             (persistent_dir, plugin, plugin_dir) in log)
@@ -132,8 +131,8 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(RC_EOS))
-            log = file_log(RC_EOS)
+            self.failUnless(os.path.isfile(bootstrap.rc_eos))
+            log = file_log(bootstrap.rc_eos)
             self.failUnless('#!/bin/bash' in log)
             self.failUnless('sudo cp %s/%s %s' %
                             (persistent_dir, plugin, plugin_dir) in log)

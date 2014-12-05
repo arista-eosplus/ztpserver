@@ -45,12 +45,21 @@ def main(attributes):
     This action is NOT dual-supervisor compatible.
 
     Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        node (internal): attributes.get('NODE') API: see documentation
+        url: path to the rpm or swix extension
+        force: Force installation regardless of checks.  Default: False
 
-       Special attributes:
-           node: attributes.get('NODE')
-                 API: see documentation
+    Example:
+        ::
+
+          -
+            action: install_image
+            always_execute: true
+            attributes:
+              url: files/telemetry-1.0-1.rpm
+            name: "Install Telemetry"
+
     '''
 
     node = attributes.get('NODE')
@@ -78,4 +87,12 @@ def main(attributes):
     if force:
         line = line + ' force'
 
-    open(BOOT_EXTENSIONS, 'a').write('\r\n%s' % line)
+    lines = []
+    try:
+        lines = [x.strip() for x in open(BOOT_EXTENSIONS).readlines()
+                 if x.strip()]
+    except IOError:
+        # file Missing
+        pass
+
+    open(BOOT_EXTENSIONS, 'w').write('\n'.join(lines + [line]))

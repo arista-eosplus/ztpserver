@@ -3,51 +3,51 @@ Actions
 
 .. contents:: :local:
 
-:mod:`add_config` Action
+:mod:`add_config`
+-----------------
+
+.. automodule:: actions.add_config
+    :members:
+
+:mod:`copy_file`
+----------------
+
+.. automodule:: actions.copy_file
+    :members:
+
+:mod:`install_cli_plugin`
+-------------------------
+
+.. automodule:: actions.install_cli_plugin
+    :members:
+
+:mod:`install_extension`
 ------------------------
 
-.. automodule:: ztps.add_config
+.. automodule:: actions.install_extension
     :members:
 
-:mod:`copy_file` Action
-------------------------
+:mod:`install_image`
+--------------------
 
-.. automodule:: ztps.copy_file
+.. automodule:: actions.install_image
     :members:
 
-:mod:`install_cli_plugin` Action
---------------------------------
+:mod:`replace_config`
+---------------------
 
-.. automodule:: ztps.install_cli_plugin
+.. automodule:: actions.replace_config
     :members:
 
-:mod:`install_extension` Action
--------------------------------
+:mod:`send_email`
+-----------------
 
-.. automodule:: ztps.install_extension
-    :members:
-
-:mod:`install_image` Action
----------------------------
-
-.. automodule:: ztps.install_image
-    :members:
-
-:mod:`replace_config` Action
-----------------------------
-
-.. automodule:: ztps.replace_config
-    :members:
-
-:mod:`send_email` Action
-------------------------
-
-.. automodule:: ztps.send_email
+.. automodule:: actions.send_email
     :members:
 
 ..
-   #:mod:`template` Action
-   #----------------------
+   #:mod:`template`
+   #---------------
    #
    #.. automodule:: template
    #    :members:

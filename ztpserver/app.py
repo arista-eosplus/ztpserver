@@ -148,7 +148,7 @@ def run_validator(filename=None):
 
     try:
         print 'Validating file \'%s\'\n' % filename
-        validator = NeighbordbValidator()
+        validator = NeighbordbValidator('VALIDATION_TEST')
         filename = filename or default_filename()
         validator.validate(load(filename, CONTENT_TYPE_YAML,
                                 'validator'))
@@ -164,8 +164,7 @@ def run_validator(filename=None):
         print
 
     except Exception as exc:        #pylint: disable=W0703
-        log.exception(exc)
-        print 'An unexpected error occurred trying to run the validator'
+        print 'ERROR: Failed to validate neighbordb: %s' % exc
 
 
 
