@@ -43,4 +43,5 @@ Features
    internals
    glossary
    support
+   license
 
