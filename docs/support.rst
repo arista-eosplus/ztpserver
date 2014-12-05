@@ -1,6 +1,7 @@
 Support
 =======
 
+.. contents:: :local:
 
 Contact
 ~~~~~~~
