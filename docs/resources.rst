@@ -10,9 +10,4 @@ ZTPServer documentation and other reference materials are below:
     * `YAML Code Validator <http://yamllint.com/>`_
     
 
-A quick video tutorial can be found here:
-   
-   * Automatic ZTP server deployment using Packer: http://youtu.be/9KwSMRpjVz0
-   * Automatic vEOS multi-node topology deployment using Packer: http://youtu.be/gyhiBEAIvLs
-   * ZTP provisiong using ZTP Server: http://youtu.be/LXrOevQpV-k
-   
+A quick video tutorial can be found here: http://www.youtube.com/playlist?list=PL6kEnPnH7OA4oc5jzhUW0ivVX1sMdfNpV
