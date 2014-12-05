@@ -40,11 +40,7 @@ Features
    config
    examples
    tips
-   caveats
    internals
    glossary
-   resources
    support
-   license
-   ReleaseNotes
 
