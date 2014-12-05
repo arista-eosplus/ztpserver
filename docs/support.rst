@@ -15,6 +15,19 @@ Community-based support is available through:
 
 Commercial support, customization, and integration services are available through the EOS+ team at `Arista Networks, Inc <http://arista.com/>`_.  Contact eosplus-dev@arista.com for details.
 
+Releases
+~~~~~~~~
+
+The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
+
+.. toctree::
+    :maxdepth: 2
+    :titlesonly:
+
+    roadmap
+    ReleaseNotes1.2
+    ReleaseNotes1.1
+
 Other Resources
 ~~~~~~~~~~~~~~~
 
