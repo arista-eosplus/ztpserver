@@ -70,7 +70,7 @@ If the global configuration file is updated, the server must be restarted in ord
     # default=/var/lib/ztpserver
     data_root=<PATH>
 
-    # UID used in the /nodes structure (serialnum is not supported yet)
+    # UID used in the /nodes structure
     # default=serialnum
     identifier=<serialnum | systemmac> 
 
