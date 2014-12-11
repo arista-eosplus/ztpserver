@@ -188,9 +188,10 @@ def loads(data, content_type, node_id):
 def load(file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
 
+    log.error('%s: reading %s...' % (id_string, file_path))
+
     try:
-        with threading.Lock():
-            data = open(file_path).read()
+        data = open(file_path).read()
         return loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
@@ -204,10 +205,15 @@ def dumps(data, content_type, node_id):
         data = data.serialize()
     return serializer.serialize(data, content_type)
 
+
+DUMP_LOCK = threading.Lock()
 def dump(data, file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
+
+    log.error('%s: writing %s...' % (id_string, file_path))
+
     try:
-        with threading.Lock():        
+        with DUMP_LOCK:        
             with open(file_path, 'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:

@@ -75,6 +75,7 @@ class ResourcePool(object):
         node_id = node.identifier()
         log.debug('%s: allocating resources' % node_id)
 
+        self.load(pool)
         match = self.lookup(pool, node)
 
         try:
@@ -83,11 +84,9 @@ class ResourcePool(object):
                          (node_id, pool, match))
                 return match
 
-            # file already read in lookup
-            key = next(x[0] for x in self.data.items() if x[1] is None)
+            key = next(x[0] for x in self.data.iteritems() if x[1] is None)
 
-            log.debug('%s: allocated \'%s\':\'%s\'' %
-                      (node_id, pool, key))
+            log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, key))
 
             self.data[key] = node_id
             self.dump(pool)
@@ -99,6 +98,7 @@ class ResourcePool(object):
             log.error('%s: failed to allocate resource from \'%s\'' % 
                       (node_id, pool))
             raise ResourcePoolError(exc.message)
+
         return str(key)
 
     def lookup(self, pool, node):
@@ -107,12 +107,14 @@ class ResourcePool(object):
         log.debug('%s: looking up resource in \'%s\'' % 
                   (node_id, pool))
         try:
-            self.load(pool)
-            matches = [m[0] for m in self.data.iteritems()
-                       if m[1] == node_id]
-            key = matches[0] if matches else None
+            try:
+                key = next(m[0] for m in self.data.iteritems()
+                           if m[1] == node_id)
+            except StopIteration:
+                key = None
+
             return key
         except Exception as exc:
-            log.error('%s: failed to lookup resource from \'%s\'' % 
-                      (node_id, pool))
+            log.error('%s: failed to lookup resource from \'%s\' (%s)' % 
+                      (node_id, pool, exc.message))
             raise ResourcePoolError(exc.message)
