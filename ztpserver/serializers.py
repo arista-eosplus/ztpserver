@@ -36,6 +36,7 @@ import collections
 import logging
 import json
 
+import threading
 import yaml
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
@@ -186,8 +187,10 @@ def loads(data, content_type, node_id):
 
 def load(file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
+
     try:
-        data = open(file_path).read()
+        with threading.Lock():
+            data = open(file_path).read()
         return loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
@@ -204,8 +207,9 @@ def dumps(data, content_type, node_id):
 def dump(data, file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
     try:
-        with open(file_path, 'w') as fhandler:
-            fhandler.write(dumps(data, content_type, node_id))
+        with threading.Lock():        
+            with open(file_path, 'w') as fhandler:
+                fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
         log.error('%s: failed to write file to %s (%s)' % 
                   (id_string, file_path, err))

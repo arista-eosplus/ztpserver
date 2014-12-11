@@ -83,7 +83,7 @@ class ResourcePool(object):
                          (node_id, pool, match))
                 return match
 
-            self.load(pool)
+            # file already read in lookup
             key = next(x[0] for x in self.data.items() if x[1] is None)
 
             log.debug('%s: allocated \'%s\':\'%s\'' %
