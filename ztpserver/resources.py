@@ -85,7 +85,7 @@ class ResourcePool(object):
                 return match
 
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
-
+            
             log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, key))
 
             self.data[key] = node_id
