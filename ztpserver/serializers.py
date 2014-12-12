@@ -192,12 +192,16 @@ def load(file_path, content_type, node_id=None):
 
     try:
         data = open(file_path).read()
-        return loads(data, content_type, node_id)
+        result = loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
                   (id_string, file_path, err))
         raise SerializerError('%s: failed to load file from %s (%s)' % 
                               (id_string, file_path, err))
+
+    # TODO
+    log.debug('%s: loaded %s: %s' % (id_string, file_path, result))
+    return result
 
 def dumps(data, content_type, node_id):
     serializer = Serializer(node_id)
