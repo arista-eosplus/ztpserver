@@ -40,4 +40,5 @@ conf = '/etc/ztpserver/ztpserver.conf'
 sys.stdout.write('Starting ZTPServer, ')
 sys.stdout.write('using config file %s' % conf)
 
-application = start_wsgiapp(conf)
+# TODO
+application = start_wsgiapp(conf, debug=True)

@@ -64,8 +64,13 @@ class ResourcePool(object):
         self.data = dict()
         filename = os.path.join(self.file_path, pool)
         contents = load(filename, CONTENT_TYPE_YAML, self.node_id)
-        for key, value in contents.items():
-            self.data[key] = str(value) if value is not None else None
+        if contents:
+            for key, value in contents.items():
+                self.data[key] = str(value) if value is not None else None
+        else:
+            pass
+            # TODO
+            # print warning
             
         log.debug('%s: loaded resource pool \'%s\': %s' % 
                   (self.node_id, pool, self.data))
