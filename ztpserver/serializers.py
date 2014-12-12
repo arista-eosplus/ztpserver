@@ -40,6 +40,7 @@ import threading
 import yaml
 
 READ_WRITE_LOCK = threading.Lock()
+#TODO
 ABCDEF = 1
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
@@ -194,6 +195,7 @@ def load(file_path, content_type, node_id=None):
     try:
         with READ_WRITE_LOCK:
             # TODO
+            global ABCDEF
             log.error('ABCDEF read:%s' % ABCDEF)
             ABCDEF += 1 
             with open(file_path) as fhandler:
@@ -224,7 +226,8 @@ def dump(data, file_path, content_type, node_id=None):
 
     try:
         with READ_WRITE_LOCK:
-
+            # TODO
+            global ABCDEF
             log.error('ABCDEF write:%s' % ABCDEF)
             ABCDEF += 1 
 
