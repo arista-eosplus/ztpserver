@@ -188,7 +188,7 @@ def loads(data, content_type, node_id):
 def load(file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
 
-    log.error('%s: reading %s...' % (id_string, file_path))
+    log.debug('%s: reading %s...' % (id_string, file_path))
 
     try:
         data = open(file_path).read()
@@ -210,7 +210,7 @@ DUMP_LOCK = threading.Lock()
 def dump(data, file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
 
-    log.error('%s: writing %s...' % (id_string, file_path))
+    log.debug('%s: writing %s...' % (id_string, file_path))
 
     try:
         with DUMP_LOCK:        

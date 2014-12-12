@@ -90,7 +90,7 @@ class ResourcePool(object):
                          (self.node_id, pool, match))
                 return match
 
-            if not self.data():
+            if not self.data:
                 #TODO
                 log.debug('self.data is really empty - this is crazy!')
                 self.load(pool)
@@ -117,7 +117,7 @@ class ResourcePool(object):
         log.debug('%s: looking up resource pool \'%s\': %s' % 
                   (self.node_id, pool, self.data))
 
-        if not self.data():
+        if not self.data:
                 #TODO
             log.debug('self.data is empty - this is crazy!')
             self.load(pool)
