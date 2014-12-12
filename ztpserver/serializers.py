@@ -40,7 +40,7 @@ import threading
 import yaml
 
 READ_WRITE_LOCK = threading.Lock()
-
+ABCDEF = 1
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class SerializerError(Exception):
@@ -193,7 +193,12 @@ def load(file_path, content_type, node_id=None):
 
     try:
         with READ_WRITE_LOCK:
-            data = open(file_path).read()
+            # TODO
+            log.error('ABCDEF read:%s' % ABCDEF)
+            ABCDEF += 1 
+            with open(file_path) as fhandler:
+                data = fhandler.read()
+
         result = loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
@@ -219,6 +224,10 @@ def dump(data, file_path, content_type, node_id=None):
 
     try:
         with READ_WRITE_LOCK:
+
+            log.error('ABCDEF write:%s' % ABCDEF)
+            ABCDEF += 1 
+
             with open(file_path, 'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
