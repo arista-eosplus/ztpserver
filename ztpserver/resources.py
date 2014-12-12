@@ -90,6 +90,11 @@ class ResourcePool(object):
                          (self.node_id, pool, match))
                 return match
 
+            if not self.data():
+                #TODO
+                log.debug('self.data is really empty - this is crazy!')
+                self.load(pool)
+
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
             log.debug('%s: allocated \'%s\':\'%s\'' % (self.node_id, pool, key))
 
@@ -111,6 +116,11 @@ class ResourcePool(object):
 
         log.debug('%s: looking up resource pool \'%s\': %s' % 
                   (self.node_id, pool, self.data))
+
+        if not self.data():
+                #TODO
+            log.debug('self.data is empty - this is crazy!')
+            self.load(pool)
 
         try:
             try:
