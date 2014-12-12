@@ -97,7 +97,7 @@ class ResourcePool(object):
 
             if not self.data:
                 #TODO
-                log.debug('self.data is really empty - this is crazy!')
+                log.debug('%s: self.data is really empty - this is crazy!'  % self.node_id)
                 self.load(pool)
 
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
@@ -124,7 +124,7 @@ class ResourcePool(object):
 
         if not self.data:
                 #TODO
-            log.debug('self.data is empty - this is crazy!')
+            log.debug('%s: self.data is empty - this is crazy!' % self.node_id)
             self.load(pool)
 
         try:
