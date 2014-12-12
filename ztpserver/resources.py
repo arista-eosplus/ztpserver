@@ -66,54 +66,61 @@ class ResourcePool(object):
         contents = load(filename, CONTENT_TYPE_YAML, self.node_id)
         for key, value in contents.items():
             self.data[key] = str(value) if value is not None else None
+            
+        log.debug('%s: loaded resource pool \'%s\': %s' % 
+                  (self.node_id, pool, self.data))
 
     def dump(self, pool):
+        log.debug('%s: writing resource pool \'%s\': %s' % (self.node_id, pool,
+                                                            self.data))
         file_path = os.path.join(self.file_path, pool)
         dump(self, file_path, CONTENT_TYPE_YAML, self.node_id)
 
-    def allocate(self, pool, node):
-        node_id = node.identifier()
-        log.debug('%s: allocating resources' % node_id)
-
+    def allocate(self, pool):
         self.load(pool)
-        match = self.lookup(pool, node)
+
+        log.debug('%s: allocating resources from pool \'%s\': %s' % 
+                  (self.node_id, pool, self.data))
+
+        match = self.lookup(pool)
 
         try:
             if match:
                 log.debug('%s: already allocated resource \'%s\':\'%s\'' % 
-                         (node_id, pool, match))
+                         (self.node_id, pool, match))
                 return match
 
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
-            log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, key))
+            log.debug('%s: allocated \'%s\':\'%s\'' % (self.node_id, pool, key))
 
-            self.data[key] = node_id
+            self.data[key] = self.node_id
             self.dump(pool)
         except StopIteration:
-            log.error('%s: no resource free in \'%s\'' % (node_id, pool))
+            log.error('%s: no resource free in \'%s\'' % (self.node_id, pool))
             raise ResourcePoolError('%s: no resource free in \'%s\'' % 
-                                    (node_id, pool))
+                                    (self.node_id, pool))
         except Exception as exc:
             log.error('%s: failed to allocate resource from \'%s\'' % 
-                      (node_id, pool))
+                      (self.node_id, pool))
             raise ResourcePoolError(exc.message)
 
         return str(key)
 
-    def lookup(self, pool, node):
+    def lookup(self, pool):
         ''' Return an existing allocated resource if one exists '''
-        node_id = node.identifier()
-        log.debug('%s: looking up resource in \'%s\'' % 
-                  (node_id, pool))
+
+        log.debug('%s: looking up resource pool \'%s\': %s' % 
+                  (self.node_id, pool, self.data))
+
         try:
             try:
                 key = next(m[0] for m in self.data.iteritems()
-                           if m[1] == node_id)
+                           if m[1] == self.node_id)
             except StopIteration:
                 key = None
 
             return key
         except Exception as exc:
             log.error('%s: failed to lookup resource from \'%s\' (%s)' % 
-                      (node_id, pool, exc.message))
+                      (self.node_id, pool, exc.message))
             raise ResourcePoolError(exc.message)

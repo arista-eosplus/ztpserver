@@ -191,8 +191,7 @@ def load(file_path, content_type, node_id=None):
     log.error('%s: reading %s...' % (id_string, file_path))
 
     try:
-        with threading.Lock():
-            data = open(file_path).read()
+        data = open(file_path).read()
         return loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
