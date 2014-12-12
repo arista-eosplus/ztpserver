@@ -39,8 +39,9 @@ import json
 import threading
 import yaml
 
-log = logging.getLogger(__name__)   #pylint: disable=C0103
+READ_WRITE_LOCK = threading.Lock()
 
+log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class SerializerError(Exception):
     ''' base error raised by serialization functions '''
@@ -191,7 +192,8 @@ def load(file_path, content_type, node_id=None):
     log.debug('%s: reading %s...' % (id_string, file_path))
 
     try:
-        data = open(file_path).read()
+        with READ_WRITE_LOCK:
+            data = open(file_path).read()
         result = loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
@@ -210,14 +212,13 @@ def dumps(data, content_type, node_id):
     return serializer.serialize(data, content_type)
 
 
-DUMP_LOCK = threading.Lock()
 def dump(data, file_path, content_type, node_id=None):
     id_string = '%s: ' % node_id if node_id else ''
 
     log.debug('%s: writing %s...' % (id_string, file_path))
 
     try:
-        with DUMP_LOCK:        
+        with READ_WRITE_LOCK:
             with open(file_path, 'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
