@@ -63,7 +63,8 @@ class ResourcePool(object):
     def load(self, pool):
         self.data = dict()
         filename = os.path.join(self.file_path, pool)
-        contents = load(filename, CONTENT_TYPE_YAML, self.node_id)
+        contents = load(filename, CONTENT_TYPE_YAML, self.node_id,
+                        lock=True)
         if contents:
             for key, value in contents.items():
                 self.data[key] = str(value) if value is not None else None
@@ -79,7 +80,8 @@ class ResourcePool(object):
         log.debug('%s: writing resource pool \'%s\': %s' % (self.node_id, pool,
                                                             self.data))
         file_path = os.path.join(self.file_path, pool)
-        dump(self, file_path, CONTENT_TYPE_YAML, self.node_id)
+        dump(self, file_path, CONTENT_TYPE_YAML, self.node_id,
+             lock=True)
 
     def allocate(self, pool):
         self.load(pool)
