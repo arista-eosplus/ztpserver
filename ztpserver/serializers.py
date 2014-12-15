@@ -39,9 +39,7 @@ import json
 import threading
 import yaml
 
-READ_WRITE_LOCK = threading.Lock()
-#TODO
-ABCDEF = 1
+READ_WRITE_LOCK = {}
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 class SerializerError(Exception):
@@ -192,12 +190,11 @@ def load(file_path, content_type, node_id=None):
 
     log.debug('%s: reading %s...' % (id_string, file_path))
 
+    if file_path not in READ_WRITE_LOCK:
+        READ_WRITE_LOCK[file_path] = threading.Lock()
+
     try:
-        with READ_WRITE_LOCK:
-            # TODO
-            global ABCDEF
-            log.error('ABCDEF read:%s' % ABCDEF)
-            ABCDEF += 1 
+        with READ_WRITE_LOCK[file_path]:
             with open(file_path) as fhandler:
                 data = fhandler.read()
 
@@ -224,13 +221,11 @@ def dump(data, file_path, content_type, node_id=None):
 
     log.debug('%s: writing %s...' % (id_string, file_path))
 
-    try:
-        with READ_WRITE_LOCK:
-            # TODO
-            global ABCDEF
-            log.error('ABCDEF write:%s' % ABCDEF)
-            ABCDEF += 1 
+    if file_path not in READ_WRITE_LOCK:
+        READ_WRITE_LOCK[file_path] = threading.Lock()
 
+    try:
+        with READ_WRITE_LOCK[file_path]:
             with open(file_path, 'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))
     except (OSError, IOError) as err:
