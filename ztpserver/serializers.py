@@ -185,18 +185,22 @@ def loads(data, content_type, node_id):
     serializer = Serializer(node_id)
     return serializer.deserialize(data, content_type)
 
-def load(file_path, content_type, node_id=None):
+def load(file_path, content_type, node_id=None, lock=False):
     id_string = '%s: ' % node_id if node_id else ''
 
     log.debug('%s: reading %s...' % (id_string, file_path))
 
-    if file_path not in READ_WRITE_LOCK:
+    if lock and file_path not in READ_WRITE_LOCK:
         READ_WRITE_LOCK[file_path] = threading.Lock()
 
     try:
-        with READ_WRITE_LOCK[file_path]:
+        if lock:
+            with READ_WRITE_LOCK[file_path]:
+                with open(file_path) as fhandler:
+                    data = fhandler.read()
+        else:
             with open(file_path) as fhandler:
-                data = fhandler.read()
+                data = fhandler.read()            
 
         result = loads(data, content_type, node_id)
     except (OSError, IOError) as err:
@@ -216,18 +220,22 @@ def dumps(data, content_type, node_id):
     return serializer.serialize(data, content_type)
 
 
-def dump(data, file_path, content_type, node_id=None):
+def dump(data, file_path, content_type, node_id=None, lock=False):
     id_string = '%s: ' % node_id if node_id else ''
 
     log.debug('%s: writing %s...' % (id_string, file_path))
 
-    if file_path not in READ_WRITE_LOCK:
+    if lock and file_path not in READ_WRITE_LOCK:
         READ_WRITE_LOCK[file_path] = threading.Lock()
 
     try:
-        with READ_WRITE_LOCK[file_path]:
+        if lock:
+            with READ_WRITE_LOCK[file_path]:
+                with open(file_path, 'w') as fhandler:
+                    fhandler.write(dumps(data, content_type, node_id))
+        else:
             with open(file_path, 'w') as fhandler:
-                fhandler.write(dumps(data, content_type, node_id))
+                fhandler.write(dumps(data, content_type, node_id))            
     except (OSError, IOError) as err:
         log.error('%s: failed to write file to %s (%s)' % 
                   (id_string, file_path, err))
