@@ -210,7 +210,8 @@ def load(file_path, content_type, node_id=None, lock=False):
                               (id_string, file_path, err))
 
     # TODO
-    log.debug('%s: loaded %s: %s' % (id_string, file_path, result))
+    # Enable this log if you want to see the contents of the file
+    # log.debug('%s: loaded %s: %s' % (id_string, file_path, result))
     return result
 
 def dumps(data, content_type, node_id):
