@@ -72,13 +72,15 @@ class ResourcePool(object):
             pass
             # TODO
             # print warning
-            
-        log.debug('%s: loaded resource pool \'%s\': %s' % 
-                  (self.node_id, pool, self.data))
+        
+        # Enable this log to see k:v pairs in pool    
+        # log.debug('%s: loaded resource pool \'%s\': %s' % 
+        #          (self.node_id, pool, self.data))
 
     def dump(self, pool):
-        log.debug('%s: writing resource pool \'%s\': %s' % (self.node_id, pool,
-                                                            self.data))
+        # Enable this log to see k:v pairs in pool
+        # log.debug('%s: writing resource pool \'%s\': %s' % (self.node_id, pool,
+        #                                                    self.data))
         file_path = os.path.join(self.file_path, pool)
         dump(self, file_path, CONTENT_TYPE_YAML, self.node_id,
              lock=True)
@@ -86,8 +88,9 @@ class ResourcePool(object):
     def allocate(self, pool):
         self.load(pool)
 
-        log.debug('%s: allocating resources from pool \'%s\': %s' % 
-                  (self.node_id, pool, self.data))
+        # Enable this log to see k:v pairs in pool
+        # log.debug('%s: allocating resources from pool \'%s\': %s' % 
+        #          (self.node_id, pool, self.data))
 
         match = self.lookup(pool)
 
@@ -122,8 +125,9 @@ class ResourcePool(object):
     def lookup(self, pool):
         ''' Return an existing allocated resource if one exists '''
 
-        log.debug('%s: looking up resource pool \'%s\': %s' % 
-                  (self.node_id, pool, self.data))
+        # Enable this log to see k:v pairs in pool
+        # log.debug('%s: looking up resource pool \'%s\': %s' % 
+        #          (self.node_id, pool, self.data))
 
         if not self.data:
                 #TODO
