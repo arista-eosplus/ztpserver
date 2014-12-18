@@ -99,8 +99,8 @@ python setup.py build
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
-%python2_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-%python2_sitearch %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
+%define python2_sitelib %(export X_SCLS=python27; source /opt/rh/python27/enable; source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate; python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+%define python2_sitearch %(export X_SCLS=python27; source /opt/rh/python27/enable; source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate; python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
 
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
