@@ -186,6 +186,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 18 2014 Jere Julian <jere@arista.com> - 1.2.1
+- For RHEL, only, update python sitelib and pip requirements
+  for offline-capable packages
+
 * Fri Nov 14 2014 Jere Julian <jere@arista.com>
 - Increase utilization of built-in macros
 - Replace define (runtime expansion) with global (immediate)
