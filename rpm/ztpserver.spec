@@ -8,6 +8,8 @@
 %if 0%{?rhel} == 6
 %global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
+%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
+%global python2_sitearch    %{app_virtualenv_dir}/lib64/python2.7
 %global basedatadir         %{_datadir}
 %global basesysconfdir      %{_sysconfdir}
 %else
@@ -42,6 +44,7 @@ BuildRequires: python27-python-setuptools
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
 BuildRequires: python-setuptools
+BuildRequires: python2-devel
 %endif
 
 %if 0%{?rhel} == 6
@@ -99,8 +102,9 @@ python setup.py build
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
-%python2_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-%python2_sitearch %(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
+
+# Install prerequisites to enable offline installs
+pip install -r requirements.txt
 
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
@@ -182,6 +186,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Dec 18 2014 Jere Julian <jere@arista.com> - 1.2.1
+- For RHEL, only, update python sitelib and pip requirements
+  for offline-capable packages
+
 * Fri Nov 14 2014 Jere Julian <jere@arista.com>
 - Increase utilization of built-in macros
 - Replace define (runtime expansion) with global (immediate)
