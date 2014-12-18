@@ -8,6 +8,8 @@
 %if 0%{?rhel} == 6
 %global httpd_dir           /opt/rh/httpd24/root/etc/httpd/conf.d
 %global app_virtualenv_dir  /opt/ztpsrv_env
+%global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
+%global python2_sitearch    %{app_virtualenv_dir}/lib64/python2.7
 %global basedatadir         %{_datadir}
 %global basesysconfdir      %{_sysconfdir}
 %else
@@ -100,8 +102,6 @@ python setup.py build
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
-%define python2_sitelib %(export X_SCLS=python27; source /opt/rh/python27/enable; source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate; python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-%define python2_sitearch %(export X_SCLS=python27; source /opt/rh/python27/enable; source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate; python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")
 
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
