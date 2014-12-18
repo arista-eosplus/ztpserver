@@ -103,12 +103,12 @@ export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
 
+# Install prerequisites to enable offline installs
+pip install -r requirements.txt
+
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
 cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
-
-# Install prerequisites to enable offline installs
-pip install -r requirements.txt
 %endif
 
 # Allow us to install libs in to RPM_BUILD_ROOT
