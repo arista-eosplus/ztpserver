@@ -396,7 +396,9 @@ If topology validation is enabled globally, the following patterns can be used i
     name: <pattern name>
     interfaces:
         - any: any:any   
-   
+
+OR
+
     -  match **any** node which has no LLDP-capable neighbors:
 
 .. code-block:: yaml
