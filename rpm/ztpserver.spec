@@ -42,6 +42,7 @@ BuildRequires: python27-python-setuptools
 BuildRequires: python >= 2.7
 BuildRequires: python < 3
 BuildRequires: python-setuptools
+BuildRequires: python2-devel
 %endif
 
 %if 0%{?rhel} == 6
