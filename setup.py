@@ -63,7 +63,7 @@ setup(
     author=__author__,
     author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
-    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.1.0',
+    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.2.0',
     license='BSD-3',
     install_requires=INSTALL_REQUIREMENTS,
     packages=PACKAGES,
