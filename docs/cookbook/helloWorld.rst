@@ -12,8 +12,7 @@ The following set of recipes will help you perform a basic provisioning task
 using the ZTPServer. There are some assumptions:
 
 * You have already installed the ZTPServer
-* You have performed the basic configuration to define which interface and port
-the server will run on.
+* You have performed the basic configuration to define which interface and port the server will run on.
 * You have a DHCP server running with ``option bootfile-name "http://ztpserver-url:port/bootstrap";`` `Sample config <https://github.com/arista-eosplus/packer-ztpserver/blob/master/Fedora/conf/dhcpd.conf>`_
 * Your test (v)EOS node can receive DHCP responses
 * Make sure the ztps process is not running
