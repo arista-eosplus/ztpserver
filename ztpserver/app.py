@@ -137,7 +137,7 @@ def run_server(conf, debug):
 
     httpd = make_server(host, port, app)
 
-    print "Starting server on http://%s:%s" % (host, port)
+    print "Starting ZTPServer v%s on http://%s:%s" % (VERSION, host, port)
 
     try:
         httpd.serve_forever()
@@ -199,6 +199,7 @@ def main():
 
 
     args = parser.parse_args()
+
     if args.version:
         print 'ztps version %s' % VERSION
         sys.exit()

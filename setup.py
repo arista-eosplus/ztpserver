@@ -42,7 +42,6 @@ from ztpserver import __version__, __author__
 
 PACKAGES = ['ztpserver']
 
-#INSTALL_ROOT = os.getenv('VIRTUAL_ENV', '')
 INSTALL_ROOT = ''
 if os.environ.get('READTHEDOCS'):
     print "Customizing install for ReadTheDocs.org build servers..."
@@ -63,7 +62,8 @@ setup(
     author=__author__,
     author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
-    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v1.2.0',
+    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v%s' % \
+                  __version__,
     license='BSD-3',
     install_requires=INSTALL_REQUIREMENTS,
     packages=PACKAGES,
