@@ -39,6 +39,16 @@ import ConfigParser
 
 import ztpserver.types
 
+CONF_PATH = '/etc/ztpserver'
+
+VERSION_FILE = '.VERSION'
+VERSION_FILE_PATH = '%s/%s' % (CONF_PATH, VERSION_FILE)
+
+GLOBAL_CONF_FILE = 'ztpserver.conf'
+GLOBAL_CONF_FILE_PATH = '%s/%s' % (CONF_PATH, GLOBAL_CONF_FILE)
+
+INSTALL_PATH = '/usr/share/ztpserver'
+
 log = logging.getLogger(__name__)
 
 class Attr(object):

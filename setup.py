@@ -30,57 +30,65 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from glob import glob
 import os
+import shutil
+
+from glob import glob
+from ztpserver import config
 
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-from ztpserver import __version__, __author__
+packages = ['ztpserver']
 
-PACKAGES = ['ztpserver']
+conf_path = config.CONF_PATH
+install_path = config.INSTALL_PATH
 
-INSTALL_ROOT = ''
 if os.environ.get('READTHEDOCS'):
-    print "Customizing install for ReadTheDocs.org build servers..."
-    INSTALL_ROOT = "."
+    print 'Customizing install for ReadTheDocs.org build servers...'
+    conf_path = '.' + conf_path
+    install_path = '.' +  install_path
     from subprocess import call
     call(['docs/setup_rtd_files.sh'])
-    PACKAGES.append('client')
-    PACKAGES.append('actions')
+    packages.append('client')
+    packages.append('actions')
 
-CONF_PATH = INSTALL_ROOT + '/etc/ztpserver'
-INSTALL_PATH = INSTALL_ROOT + '/usr/share/ztpserver'
-INSTALL_REQUIREMENTS = open('requirements.txt').read().split('\n')
+install_requirements = open('requirements.txt').read().split('\n')
+version = open('VERSION').read().split()[0].strip()
 
 setup(
     name='ztpserver',
-    version=__version__,
+    version=version,
     description = 'ZTP Server for EOS',
-    author=__author__,
+    author='Arista Networks',
     author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
     download_url='https://github.com/arista-eosplus/ztpserver/tarball/v%s' % \
-                  __version__,
+                  version,
     license='BSD-3',
-    install_requires=INSTALL_REQUIREMENTS,
-    packages=PACKAGES,
+    install_requires=install_requirements,
+    packages=packages,
     scripts=glob('bin/*'),
     data_files=[
-        ('%s/nodes' % INSTALL_PATH, []),
-        ('%s/definitions' % INSTALL_PATH, []),
-        ('%s/files' % INSTALL_PATH, []),
-        ('%s/resources' % INSTALL_PATH, []),
-        (CONF_PATH, glob('conf/ztpserver.conf')),
-        (CONF_PATH, glob('conf/ztpserver.wsgi')),
-        ('%s/bootstrap' % INSTALL_PATH, glob('client/bootstrap')),
-        ('%s/bootstrap' % INSTALL_PATH, glob('conf/bootstrap.conf')),
-        ('%s/actions' % INSTALL_PATH, glob('actions/*')),
-        ('%s' % INSTALL_PATH, glob('conf/neighbordb')),
+        ('%s/nodes' % install_path, []),
+        ('%s/definitions' % install_path, []),
+        ('%s/files' % install_path, []),
+        ('%s/resources' % install_path, []),
+        (conf_path, glob('conf/ztpserver.conf')),
+        (conf_path, glob('conf/ztpserver.wsgi')),
+        (conf_path, ['VERSION']),
+        ('%s/bootstrap' % install_path, glob('client/bootstrap')),
+        ('%s/bootstrap' % install_path, glob('conf/bootstrap.conf')),
+        ('%s/actions' % install_path, glob('actions/*')),
+        ('%s' % install_path, glob('conf/neighbordb')),
 
         # 4.12.x support
-        ('%s/files/lib' % INSTALL_PATH, glob('client/lib/requests-2.3.0.tar.gz')),
+        ('%s/files/lib' % install_path, glob('client/lib/requests-2.3.0.tar.gz')),
     ]
 )
+
+# Hide VERSION file
+shutil.rmtree(config.VERSION_FILE_PATH, ignore_errors=True)
+shutil.move('%s/VERSION' % conf_path, config.VERSION_FILE_PATH)

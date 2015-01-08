@@ -40,18 +40,14 @@ import logging
 
 from wsgiref.simple_server import make_server
 
-import ztpserver.config
-import ztpserver.controller
-import ztpserver.topology
+from ztpserver import config, controller
 
 from ztpserver.serializers import load
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.topology import default_filename
 
-from ztpserver import __version__ as VERSION
-
-DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
+DEFAULT_CONF = config.GLOBAL_CONF_FILE_PATH
 
 log = logging.getLogger("ztpserver")
 log.setLevel(logging.DEBUG)
@@ -60,7 +56,7 @@ log.addHandler(logging.NullHandler())
 def enable_handler_console(level=None):
     """ Enables logging to stdout """
     
-    logging_fmt = ztpserver.config.runtime.default.console_logging_format
+    logging_fmt = config.runtime.default.console_logging_format
     formatter = logging.Formatter(logging_fmt)
 
     ch = logging.StreamHandler()
@@ -87,8 +83,8 @@ def python_supported():
 def start_logging(debug):
     """ reads the runtime config and starts logging if enabled """
 
-    if ztpserver.config.runtime.default.logging:
-        if ztpserver.config.runtime.default.console_logging:
+    if config.runtime.default.logging:
+        if config.runtime.default.console_logging:
             enable_handler_console('DEBUG' if debug else 'INFO')
 
 def load_config(conf=None):
@@ -96,7 +92,7 @@ def load_config(conf=None):
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
-        ztpserver.config.runtime.read(conf)
+        config.runtime.read(conf)
 
 def start_wsgiapp(conf=None, debug=False):
     """ Provides the entry point into the application for wsgi compliant
@@ -113,14 +109,14 @@ def start_wsgiapp(conf=None, debug=False):
     start_logging(debug)
 
     log.info('Logging started for ztpserver')
-    log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
+    log.info('Using repository %s', config.runtime.default.data_root)
 
     if not python_supported():
         raise SystemExit('ERROR: ZTPServer requires Python 2.7')
 
-    return ztpserver.controller.Router()
+    return controller.Router()
 
-def run_server(conf, debug):
+def run_server(conf, debug, version):
     """ The :py:func:`run_server` is called by the main command line routine to
     run the server as standalone.   This function accepts a single argument
     that points towards the configuration file describing this server
@@ -132,12 +128,12 @@ def run_server(conf, debug):
 
     app = start_wsgiapp(conf, debug)
 
-    host = ztpserver.config.runtime.server.interface
-    port = ztpserver.config.runtime.server.port
+    host = config.runtime.server.interface
+    port = config.runtime.server.port
 
     httpd = make_server(host, port, app)
 
-    print "Starting ZTPServer v%s on http://%s:%s" % (VERSION, host, port)
+    print "Starting ZTPServer v%s on http://%s:%s" % (version, host, port)
 
     try:
         httpd.serve_forever()
@@ -200,8 +196,14 @@ def main():
 
     args = parser.parse_args()
 
+    version = 'N/A'
+    try:
+        version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
+    except IOError:
+        pass
+
     if args.version:
-        print 'ztps version %s' % VERSION
+        print 'ztps version %s' % version
         sys.exit()
 
     if args.validate is not None:
@@ -209,4 +211,4 @@ def main():
         start_logging(args.debug)
         sys.exit(run_validator(args.validate))
 
-    return run_server(args.conf, args.debug)
+    return run_server(args.conf, args.debug, version)

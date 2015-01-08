@@ -30,5 +30,4 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-__version__ = '1.2.0'
-__author__ = 'Arista Networks'
+pass
