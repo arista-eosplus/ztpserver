@@ -13,7 +13,7 @@ using the ZTPServer. There are some assumptions:
 
 * You have already installed the ZTPServer
 * You have performed the basic configuration to define which interface and port the server will run on.
-* You have a DHCP server running with ``option bootfile-name "http://ztpserver-url:port/bootstrap";`` `Sample config <https://github.com/arista-eosplus/packer-ztpserver/blob/master/Fedora/conf/dhcpd.conf>`_
+* You have a DHCP server running with ``option bootfile-name "http://<ZTPSERVER-URL>:<PORT>/bootstrap";`` `Sample config <https://github.com/arista-eosplus/packer-ztpserver/blob/master/Fedora/conf/dhcpd.conf>`_
 * Your test (v)EOS node can receive DHCP responses
 * Make sure the ztps process is not running
 
@@ -149,19 +149,19 @@ Copy and paste this startup-config, changing values where you see fit:
 
   !
   hostname test-node-1
-  ip name-server vrf default 172.16.130.10
+  ip name-server vrf default <DNS-SERVER-IP>
   !
-  ntp server 172.16.130.10
+  ntp server <NTP-SERVER-IP>
   !
   username admin privilege 15 role network-admin secret admin
   !
   interface Management1
-   ip address 172.16.130.20/24
+   ip address <MGMT-IP-ADDRESS>/<SUBNET>
   !
   ip access-list open
    10 permit ip any any
   !
-  ip route 0.0.0.0/0 172.16.130.10
+  ip route 0.0.0.0/0 <DEFAULT-GW>
   !
   ip routing
   !
@@ -223,9 +223,9 @@ Add the following lines to your startup-config, changing values where needed:
   event-handler configpush
    trigger on-startup-config
    ! For default VRF, make sure to update the ztpserver url
-   action bash export SYSMAC=`FastCli -p 15 -c 'show ver | grep MAC | cut -d" " -f 5' | sed 's/[.]*//g'`; curl http://ztpserver-url:port/nodes/$SYSMAC/startup-config -H "content-type: text/plain" --data-binary @/mnt/flash/startup-config -X PUT
+   action bash export SYSMAC=`FastCli -p 15 -c 'show ver | grep MAC | cut -d" " -f 5' | sed 's/[.]*//g'`; curl http://<ZTPSERVER-URL>:<PORT>/nodes/$SYSMAC/startup-config -H "content-type: text/plain" --data-binary @/mnt/flash/startup-config -X PUT
    ! For non-default VRF, update and use:
-   ! action bash export SYSMAC=`FastCli -p 15 -c 'show ver | grep MAC | cut -d" " -f 5' | sed 's/[.]*//g'`; ip netns exec ns-<VRF-NAME> curl http://ztpserver-url:port/nodes/$SYSMAC/startup-config -H "content-type: text/plain" --data-binary @/mnt/flash/startup-config -X PUT
+   ! action bash export SYSMAC=`FastCli -p 15 -c 'show ver | grep MAC | cut -d" " -f 5' | sed 's/[.]*//g'`; ip netns exec ns-<VRF-NAME> curl http://<ZTPSERVER-URL>:<PORT>/nodes/$SYSMAC/startup-config -H "content-type: text/plain" --data-binary @/mnt/flash/startup-config -X PUT
 
 Explanation
 ^^^^^^^^^^^
@@ -338,14 +338,14 @@ since this is just a small test. Login to your ZTPServer:
   admin@ztpserver:~# ztps
   INFO: [app:115] Logging started for ztpserver
   INFO: [app:116] Using repository /usr/share/ztpserver
-  Starting server on http://172.16.130.10:8080
+  Starting server on http://<ZTPSERVER-URL>:<PORT>
 
 Explanation
 ^^^^^^^^^^^
 
 The easiest way to run the ZTPServer is in Standalone Mode - which is done by
 typing ``ztps`` in a shell. This will cause the configured interface and port to start listening
-for HTTP requests. Your DHCP server will provide the node with ``option bootfile-name "http://ztpserver-url:port/bootstrap"``
+for HTTP requests. Your DHCP server will provide the node with ``option bootfile-name "http://<ZTPSERVER-URL>:<PORT>/bootstrap"``
 in the DHCP response, which lets the node know where to grab the bootstrap script.
 
 **A Quick Overview of the Provisioning Process for this Node**
@@ -360,6 +360,7 @@ in the DHCP response, which lets the node know where to grab the bootstrap scrip
  #. **GET /actions/replace_config**: The node retrieves the replace_config script.
  #. **GET /nodes/001122334455/startup-config**: The node retrieves the startup-config we created earlier.
  #. **GET /meta/nodes/001122334455/startup-config**: The node retrieves the checksum of the startup-config.
+ #. **Node Applies Config and Reboots**
  #. **PUT /nodes/001122334455/startup-config**: The node uploads its current startup-config.
 
 .. End of Start ZTPServer in Standalone Mode

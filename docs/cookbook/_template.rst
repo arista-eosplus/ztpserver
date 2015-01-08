@@ -25,3 +25,5 @@ Explanation
 ^^^^^^^^^^^
 
 (add explanation here)
+
+.. End of <RECIPE TITLE>
