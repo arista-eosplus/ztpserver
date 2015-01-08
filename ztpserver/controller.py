@@ -712,7 +712,7 @@ class BootstrapController(BaseController):
     def config(self, request, **kwargs):
         ''' Handles GET /bootstrap/config '''
 
-        body = self.DEFAULT_CONFIG
+        body = self.DEFAULT_CONFIG.copy()
 
         try:
             filename = self.expand(BOOTSTRAP_CONF)
@@ -720,12 +720,12 @@ class BootstrapController(BaseController):
             if not config:
                 log.warning('Bootstrap config file empty')                
             else:
-                if 'logging' in config:
+                if 'logging' in config and config['logging']:
                     body['logging'] = config['logging']
                     log.info('%s: syslog info included in bootstrap config' %
                              request.remote_addr)
 
-                if 'xmpp' in config:
+                if 'xmpp' in config and config['xmpp']:
                     body['xmpp'] = config['xmpp'] 
                     for key in ['username', 'password', 'domain']:
                         if key not in body['xmpp']:
