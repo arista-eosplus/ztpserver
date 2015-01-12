@@ -39,9 +39,6 @@ import routes
 from string import Template
 from webob.static import FileApp
 
-import ztpserver.config
-import ztpserver.config.runtime as runtime
-
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
 from ztpserver.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR
@@ -56,6 +53,7 @@ from ztpserver.topology import create_node, load_pattern
 from ztpserver.topology import load_neighbordb, resources
 from ztpserver.topology import replace_config_action
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
+from ztpserver.config import runtime
 
 
 DEFINITION_FN = 'definition'
@@ -79,7 +77,7 @@ class BaseController(WSGIController):
 
     def __init__(self, **kwargs):
         self.data_root = runtime.default.data_root
-        self.repository = create_repository(data_root)
+        self.repository = create_repository(self.data_root)
         super(BaseController, self).__init__()
 
     def expand(self, *args, **kwargs):

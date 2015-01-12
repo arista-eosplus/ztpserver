@@ -37,17 +37,13 @@ import logging
 import os
 import re
 import string # pylint: disable=W0402
-import ztpserver
-
-import ztpserver.config
-
-import ztpserver.config.runtime as runtime
 
 from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
 from ztpserver.utils import expand_range, parse_interface, url_path_join
+from ztpserver.config import runtime
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')

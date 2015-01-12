@@ -32,10 +32,9 @@
 import os
 import logging
 
-import ztpserver.config
-
 from ztpserver.serializers import load, dump
 from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.config import runtime
 
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
@@ -50,8 +49,7 @@ class ResourcePool(object):
     def __init__(self, node_id):
         self.node_id = node_id
 
-        cfg = ztpserver.config.runtime
-        self.file_path = os.path.join(cfg.default.data_root, 'resources')
+        self.file_path = os.path.join(runtime.default.data_root, 'resources')
         self.data = None
 
     def serialize(self):
