@@ -347,12 +347,6 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_FILES_FOLDER'
 ))
 
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='files',
-    environ='ZTPS_FILES_PATH_PREFIX'
-))
-
 # Group: actions
 runtime.add_attribute(StrAttr(
     name='folder',
@@ -361,24 +355,12 @@ runtime.add_attribute(StrAttr(
     environ='ZTPS_ACTIONS_FOLDER'
 ))
 
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='actions',
-    environ='ZTPS_ACTIONS_PATH_PREFIX'
-))
-
 # Group: bootstrap
 runtime.add_attribute(StrAttr(
     name='folder',
     group='bootstrap',
     default='bootstrap',
     environ='ZTPS_BOOTSTRAP_FOLDER'
-))
-
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='bootstrap',
-    environ='ZTPS_BOOTSTRAP_PATH_PREFIX'
 ))
 
 runtime.add_attribute(StrAttr(

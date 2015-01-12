@@ -35,7 +35,6 @@
 import logging
 import os
 import routes
-import urlparse
 
 from string import Template
 from webob.static import FileApp
@@ -812,21 +811,12 @@ class Router(WSGIRouter):
 
     def __init__(self):
         # pylint: disable=E1103,W0142
-
         mapper = routes.Mapper()
-
-        kwargs = {}
 
         url = ztpserver.config.runtime.default.server_url
         log.debug('server URL: %s', url)
-        parts = urlparse.urlsplit(url)
-        if parts.path:
-            path = parts.path[:-1] if parts.path.endswith('/') else parts.path
-            if path:
-                log.debug('path_prefix is %s', path)
-                kwargs['path_prefix'] = path
 
-        with mapper.submapper(**kwargs) as router_mapper:
+        with mapper.submapper() as router_mapper:
 
             # configure /bootstrap
             router_mapper.connect('bootstrap', '/bootstrap',

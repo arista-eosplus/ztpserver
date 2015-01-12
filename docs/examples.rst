@@ -43,17 +43,14 @@ Global configuration file
     [ files]
     # Path for the files directory (overriding data_root/files)
     folder = files
-    path_prefix = /usr/share/ztpserver
     
     [actions]
     # Path for the actions directory (overriding data_root/actions)
     folder = actions
-    path_prefix = /usr/share/ztpserver
     
     [bootstrap]
     # Path for the bootstrap directory (overriding data_root/bootstrap)
     folder = bootstrap
-    path_prefix = /usr/share/ztpserver
     
     # Bootstrap filename
     filename = bootstrap

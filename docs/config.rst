@@ -107,22 +107,16 @@ If the global configuration file is updated, the server must be restarted in ord
     # Path for the files directory (overriding data_root/files)
     # default=files
     folder=<path>
-    # default=data_root (from above)
-    path_prefix=<path>
 
     [actions]
     # Path for the actions directory (overriding data_root/actions)
     # default=actions
     folder=<path>
-    # default=data_root (from above)
-    path_prefix=<path>
 
     [bootstrap]
     # Path for the bootstrap directory (overriding data_root/bootstrap)
     # default=bootstrap
     folder=<path>
-    # default=data_root (from above)
-    path_prefix=<path>
 
     # Bootstrap filename
     # default=bootstrap
