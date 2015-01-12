@@ -32,6 +32,7 @@
 
 import os
 import shutil
+import sys
 
 from glob import glob
 from ztpserver import config
@@ -41,12 +42,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
-packages = ['ztpserver']
+def install():
+    return sys.argv[1:] == ['install']
 
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
 
-if os.environ.get('READTHEDOCS'):
+packages = ['ztpserver']
+if install() and os.environ.get('READTHEDOCS'):
     print 'Customizing install for ReadTheDocs.org build servers...'
     conf_path = '.' + conf_path
     install_path = '.' +  install_path
@@ -57,6 +60,60 @@ if os.environ.get('READTHEDOCS'):
 
 install_requirements = open('requirements.txt').read().split('\n')
 version = open('VERSION').read().split()[0].strip()
+
+data_files = []
+# configuration folders are not cleared on upgrade/downgrade
+for folder in ['nodes', 'definitions', 'files', 'resources',
+               'bootstrap']:
+    path = '%s/%s' % (install_path, folder)
+    if install() and not os.path.isdir(path):
+        if os.path.exists(path):
+            os.remove(path)
+        data_files += [(path, [])]
+
+for (filename, dst, src) in [('neighbordb', 
+                              install_path, 
+                              'conf/neighbordb'),
+                             ('bootstrap.conf',
+                              '%s/bootstrap' % install_path,
+                              'conf/bootstrap.conf'),
+                             ('ztpserver.conf',
+                              conf_path,
+                              'conf/ztpserver.conf'),
+                             ('ztpserver.wsgi',
+                              conf_path,
+                              'conf/ztpserver.wsgi')]:
+    file_path = '%s/%s' % (dst, filename)
+    if install() and os.path.exists(file_path):
+        if os.path.isdir(file_path):
+            shutil.rmtree(file_path, 
+                          ignore_errors=True)
+        else:
+            # do this manually
+            shutil.copy(src, file_path + '.new')
+            continue
+
+    data_files += [(dst, glob(src))]
+
+# bootstrap file, libraries and actions are always
+# overwritten
+file_list = [('bootstrap', '%s/bootstrap' % install_path, 
+              'client/bootstrap')]
+for filename in glob('actions/*'):
+    file_list += [(filename.split('/')[-1],
+                   '%s/actions' % install_path,
+                   filename)]
+for filename in glob('clent/lib/*'):
+    file_list += [(filename.split('/')[-1],
+                   '%s/files/lib' % install_path,
+                   filename)]
+for (filename, dst, src) in file_list:
+    file_path = '%s/%s' % (dst, filename)
+    if install() and os.path.exists(file_path) and \
+            os.path.isdir(file_path):
+        shutil.rmtree(file_path, 
+                      ignore_errors=True)
+    data_files += [(dst, glob(src))]
 
 setup(
     name='ztpserver',
@@ -71,24 +128,9 @@ setup(
     install_requires=install_requirements,
     packages=packages,
     scripts=glob('bin/*'),
-    data_files=[
-        ('%s/nodes' % install_path, []),
-        ('%s/definitions' % install_path, []),
-        ('%s/files' % install_path, []),
-        ('%s/resources' % install_path, []),
-        (conf_path, glob('conf/ztpserver.conf')),
-        (conf_path, glob('conf/ztpserver.wsgi')),
-        (conf_path, ['VERSION']),
-        ('%s/bootstrap' % install_path, glob('client/bootstrap')),
-        ('%s/bootstrap' % install_path, glob('conf/bootstrap.conf')),
-        ('%s/actions' % install_path, glob('actions/*')),
-        ('%s' % install_path, glob('conf/neighbordb')),
-
-        # 4.12.x support
-        ('%s/files/lib' % install_path, glob('client/lib/requests-2.3.0.tar.gz')),
-    ]
+    data_files=data_files
 )
 
-# Hide VERSION file
-shutil.rmtree(config.VERSION_FILE_PATH, ignore_errors=True)
-shutil.move('%s/VERSION' % conf_path, config.VERSION_FILE_PATH)
+# hidden version file
+if install():
+    shutil.copy('VERSION', config.VERSION_FILE_PATH)
