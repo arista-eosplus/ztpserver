@@ -40,24 +40,12 @@ Global configuration file
     # TCP listening port
     port = 8080
     
-    [ files]
-    # Path for the files directory (overriding data_root/files)
-    folder = files
-    
-    [actions]
-    # Path for the actions directory (overriding data_root/actions)
-    folder = actions
-    
     [bootstrap]
-    # Path for the bootstrap directory (overriding data_root/bootstrap)
-    folder = bootstrap
-    
-    # Bootstrap filename
+    # Bootstrap filename (file located in <data_root>/bootstrap)
     filename = bootstrap
     
     [neighbordb]
-    
-    # Neighbordb filename (file located in data_root)
+    # Neighbordb filename (file located in <data_root>)
     filename = neighbordb
 
 .. _dynamic_neighbordb_example:

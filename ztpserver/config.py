@@ -339,30 +339,7 @@ runtime.add_attribute(IntAttr(
 ))
 
 
-# Group: files
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='files',
-    default='files',
-    environ='ZTPS_FILES_FOLDER'
-))
-
-# Group: actions
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='actions',
-    default='actions',
-    environ='ZTPS_ACTIONS_FOLDER'
-))
-
 # Group: bootstrap
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='bootstrap',
-    default='bootstrap',
-    environ='ZTPS_BOOTSTRAP_FOLDER'
-))
-
 runtime.add_attribute(StrAttr(
     name='filename',
     group='bootstrap',

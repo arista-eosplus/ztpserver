@@ -40,6 +40,7 @@ from string import Template
 from webob.static import FileApp
 
 import ztpserver.config
+import ztpserver.config.runtime as runtime
 
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
@@ -77,8 +78,7 @@ class BaseController(WSGIController):
     FOLDER = None
 
     def __init__(self, **kwargs):
-        data_root = ztpserver.config.runtime.default.data_root
-        self.data_root = data_root
+        self.data_root = runtime.default.data_root
         self.repository = create_repository(data_root)
         super(BaseController, self).__init__()
 
@@ -265,7 +265,7 @@ class NodesController(BaseController):
             response = self.http_bad_request()
             return self.response(**response)
 
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         log.info('%s: node ID is %s:%s' %
                  (request.remote_addr, identifier, node_id))
 
@@ -537,8 +537,7 @@ class NodesController(BaseController):
         return (response, 'do_validation')
 
     def do_validation(self, response, *args, **kwargs):
-        config = ztpserver.config.runtime
-        if not config.default.disable_topology_validation:
+        if not runtime.default.disable_topology_validation:
             log.info('%s: topology validation is ENABLED' % kwargs['resource'])
 
             filename = self.expand(kwargs['resource'], PATTERN_FN)
@@ -753,9 +752,9 @@ class BootstrapController(BaseController):
         ''' Handles GET /bootstrap '''
 
         try:
-            filename = self.expand(ztpserver.config.runtime.bootstrap.filename)
+            filename = self.expand(runtime.bootstrap.filename)
             fobj = self.repository.get_file(filename).read(CONTENT_TYPE_PYTHON)
-            default_server = ztpserver.config.runtime.default.server_url
+            default_server = runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
             log.info('%s: node beginning provisioning' %
@@ -813,7 +812,7 @@ class Router(WSGIRouter):
         # pylint: disable=E1103,W0142
         mapper = routes.Mapper()
 
-        url = ztpserver.config.runtime.default.server_url
+        url = runtime.default.server_url
         log.debug('server URL: %s', url)
 
         with mapper.submapper() as router_mapper:

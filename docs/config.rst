@@ -103,27 +103,13 @@ If the global configuration file is updated, the server must be restarted in ord
     # default=8080
     port=<TCP port>
 
-    [files]
-    # Path for the files directory (overriding data_root/files)
-    # default=files
-    folder=<path>
-
-    [actions]
-    # Path for the actions directory (overriding data_root/actions)
-    # default=actions
-    folder=<path>
-
     [bootstrap]
-    # Path for the bootstrap directory (overriding data_root/bootstrap)
-    # default=bootstrap
-    folder=<path>
-
-    # Bootstrap filename
+    # Bootstrap filename (file located in <data_root>/bootstrap)
     # default=bootstrap
     filename=<name>
 
     [neighbordb]
-    # Neighbordb filename (file located in data_root)
+    # Neighbordb filename (file located in <data_root>)
     # default=neighbordb
     filename=<name>
 

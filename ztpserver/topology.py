@@ -41,6 +41,8 @@ import ztpserver
 
 import ztpserver.config
 
+import ztpserver.config.runtime as runtime
+
 from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
@@ -64,8 +66,8 @@ def default_filename():
     ''' Returns the path for neighbordb based on the conf file
     '''
 
-    filepath = ztpserver.config.runtime.default.data_root
-    filename = ztpserver.config.runtime.neighbordb.filename
+    filepath = runtime.default.data_root
+    filename = runtime.neighbordb.filename
     return os.path.join(filepath, filename)
 
 def load_file(filename, content_type, node_id):
@@ -193,7 +195,7 @@ def replace_config_action(resource, filename=None):
     ''' Builds a definition with a single action replace_config '''
 
     filename = filename or 'startup-config'
-    server_url = ztpserver.config.runtime.default.server_url
+    server_url = runtime.default.server_url
     url = url_path_join(server_url, 'nodes/', str(resource), filename)
 
     action = dict(name='install static startup-config file',
@@ -280,7 +282,7 @@ class Node(object):
                (self.serialnumber, self.systemmac, self.neighbors)
 
     def identifier(self):
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         return getattr(self, identifier)
 
     def add_neighbor(self, interface, peers):
@@ -436,7 +438,7 @@ class Neighbordb(object):
 
     @staticmethod
     def identifier(node):
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         return node[identifier]
         
     def find_patterns(self, node):
