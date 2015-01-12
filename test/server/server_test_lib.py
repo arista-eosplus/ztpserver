@@ -123,6 +123,7 @@ class Definition(SerializerMixin):
         action['name'] = kwargs.get('name', 'test action')
         action['action'] = kwargs.get('action', 'test_action')
         action['attributes'] = kwargs.get('attributes', dict())
+        action['always_execute'] = kwargs.get('always_execute', dict())
         self.actions.append(action)
 
     def as_dict(self):
