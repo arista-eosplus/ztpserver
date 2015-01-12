@@ -268,7 +268,7 @@ class Config(collections.Mapping):
             item['value'] = self._transform(item, item['_metadata'].default)
 
     def read(self, filename):
-        cp = ConfigParser.ConfigParser() #pylint: disable=C0103
+        cp = ConfigParser.RawConfigParser() #pylint: disable=C0103
         cp.read(filename)
 
         for section in cp.sections():

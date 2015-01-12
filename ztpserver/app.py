@@ -133,12 +133,13 @@ def run_server(conf, debug, version):
 
     httpd = make_server(host, port, app)
 
-    print "Starting ZTPServer v%s on http://%s:%s" % (version, host, port)
+    log.info("Starting ZTPServer v%s on http://%s:%s" % 
+             (version, host, port))
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print 'Shutdown'
+        log.info('Shutdown...')
 
 def run_validator(filename=None):
 
