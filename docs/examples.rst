@@ -26,6 +26,10 @@ Global configuration file
     # Enable console logging
     console_logging = True
     
+    # Console logging format
+    console_logging_format = %(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
+
+
     # Globally disable topology validation in the bootstrap process
     disable_topology_validation = False
     

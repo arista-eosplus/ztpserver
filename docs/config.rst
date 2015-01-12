@@ -86,6 +86,10 @@ If the global configuration file is updated, the server must be restarted in ord
     # default=True
     console_logging=<True | False>
 
+    # Console logging format
+    # default=%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
+    console_logging_format=<(Python)logging format> 
+
     # Globally disable topology validation in the bootstrap process
     # default=False
     disable_topology_validation=<True | False>
