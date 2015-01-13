@@ -56,7 +56,8 @@ e.g.
       -h, --help            show this help message and exit
       --version, -v         Displays the version information
       **--conf CONF, -c CONF  Specifies the configuration file to use**
-      --validate FILENAME   Runs a validation check on neighbordb
+      --validate-config, -V
+                            Validates config files
       --debug               Enables debug output to the STDOUT
     (bash)# ztps --conf /var/ztps.conf
 
