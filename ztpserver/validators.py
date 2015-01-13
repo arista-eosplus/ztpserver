@@ -38,6 +38,7 @@ import logging
 import collections
 
 from ztpserver.utils import expand_range, parse_interface
+from ztpserver.config import runtime
 
 REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition']
 OPTIONAL_PATTERN_ATTRIBUTES = ['node', 'variables', 'interfaces']
@@ -46,7 +47,6 @@ ANTINODE_PATTERN = r'[^%s]' % string.hexdigits
 KW_ANY_RE = re.compile(r' *any *')
 KW_NONE_RE = re.compile(r' *none *')
 WC_PORT_RE = re.compile(r'.*')
-
 
 INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),
                               (KW_ANY_RE, KW_NONE_RE, KW_NONE_RE),
@@ -248,10 +248,11 @@ class PatternValidator(Validator):
             return
 
         # if system MAC is used
-        node = str(self.data['node']).replace(':', '').replace('.', '')
-        if re.search(ANTINODE_PATTERN, node):
-            raise ValidationError('invalid value for \'node\' (%s)' %
-                                  self.data['node'])
+        if runtime.default.identifier == 'systemmac':
+            node = str(self.data['node']).replace(':', '').replace('.', '')
+            if re.search(ANTINODE_PATTERN, node):
+                raise ValidationError('invalid value for \'node\' (%s)' %
+                                      self.data['node'])
 
     def validate_variables(self):
         if not self.data:

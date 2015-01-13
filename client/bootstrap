@@ -170,7 +170,7 @@ def _exit(code):
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
     else:
         if code:
-            for path in [x for x in all_files(FLASH)
+            for path in [x for x in all_files_and_dirs(FLASH)
                          if x not in FLASH_FILES]:
                 log('Deleting %s...' % path)
                 if os.path.isdir(path):
@@ -248,7 +248,7 @@ def flash_usage():
 def flash_snapshot():
     #pylint: disable=W0603
     global FLASH_FILES
-    FLASH_FILES = all_files(FLASH)
+    FLASH_FILES = all_files_and_dirs(FLASH)
 
     for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
         if os.path.isfile(filename):
@@ -276,7 +276,7 @@ def flash_snapshot():
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
 
-def all_files(path):
+def all_files_and_dirs(path):
     result = []
     for top, dirs, files in os.walk(path):
         result += [os.path.join(top, d) for d in dirs]

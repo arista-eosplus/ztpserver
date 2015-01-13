@@ -58,7 +58,7 @@ log = logging.getLogger(__name__)
 
 Neighbor = collections.namedtuple('Neighbor', ['device', 'interface'])
 
-def default_filename():
+def neighbordb_path():
     ''' Returns the path for neighbordb based on the conf file
     '''
 
@@ -85,8 +85,8 @@ def load_neighbordb(node_id, contents=None):
     try:
         if not contents:
             log.info('%s: loading neighbordb file: %s' % 
-                     (node_id, default_filename()))
-            contents = load_file(default_filename(), CONTENT_TYPE_YAML,
+                     (node_id, neighbordb_path()))
+            contents = load_file(neighbordb_path(), CONTENT_TYPE_YAML,
                                  node_id)
 
         # neighbordb is empty

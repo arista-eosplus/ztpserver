@@ -40,14 +40,14 @@ import ztpserver.topology
 
 from ztpserver.topology import Neighbordb, Pattern
 from ztpserver.topology import create_node, load_file, load_neighbordb
-from ztpserver.topology import default_filename, replace_config_action
+from ztpserver.topology import neighbordb_path, replace_config_action
 from ztpserver.topology import load_pattern
 from server_test_lib import enable_logging, random_string
 
 class NeighbordbUnitTests(unittest.TestCase):
 
-    def test_default_filename(self):
-        result = default_filename()
+    def test_neighbordb_path(self):
+        result = neighbordb_path()
         self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
 
     @patch('ztpserver.topology.load')

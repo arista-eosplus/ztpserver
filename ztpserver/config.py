@@ -314,7 +314,7 @@ runtime.add_attribute(BoolAttr(
 
 runtime.add_attribute(StrAttr(
     name='console_logging_format',
-    default='%(levelname)s: [%(module)s:%(lineno)d] %(message)s',
+    default='%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s',
     environ='ZTPS_CONSOLE_LOGGING_FORMAT'
 ))
 
