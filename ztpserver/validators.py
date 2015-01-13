@@ -244,15 +244,23 @@ class PatternValidator(Validator):
         if not self.data:
             return
 
-        if not self.data.get('node', None):
+        node = self.data.get('node', None)
+        if not node:
             return
+        else:
+            if isinstance(node, int):
+                node = str(node)
+
+            if not isinstance(node, str):
+                raise ValidationError('invalid value for \'node\' (%s)' %
+                                      str(node))
 
         # if system MAC is used
         if runtime.default.identifier == 'systemmac':
-            node = str(self.data['node']).replace(':', '').replace('.', '')
+            node = node.replace(':', '').replace('.', '')
             if re.search(ANTINODE_PATTERN, node):
                 raise ValidationError('invalid value for \'node\' (%s)' %
-                                      self.data['node'])
+                                      node)
 
     def validate_variables(self):
         if not self.data:
