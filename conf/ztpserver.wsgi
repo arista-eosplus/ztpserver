@@ -41,3 +41,5 @@ sys.stdout.write('Starting ZTPServer, ')
 sys.stdout.write('using config file %s' % conf)
 
 application = start_wsgiapp(conf)
+# For debug output, use:
+# application = start_wsgiapp(conf, debug=True)

@@ -174,7 +174,7 @@ def resources(attributes, node, node_id):
                 match = FUNC_RE.match(item)
                 if match:
                     method = getattr(_resources, match.group('function'))
-                    _value.append(method(match.group('arg'), node))
+                    _value.append(method(match.group('arg')))
                 else:
                     _value.append(item)
             value = _value
@@ -182,7 +182,7 @@ def resources(attributes, node, node_id):
             match = FUNC_RE.match(str(value))
             if match:
                 method = getattr(_resources, match.group('function'))
-                value = method(match.group('arg'), node)
+                value = method(match.group('arg'))
         _attributes[key] = value
     log.debug('%s: resources: %s' % (node_id, _attributes))
     return _attributes
