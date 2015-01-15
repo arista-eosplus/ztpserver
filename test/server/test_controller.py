@@ -549,7 +549,7 @@ class NodesControllerUnitTests(unittest.TestCase):
             self.assertEqual(node.serialnumber, m_fsm.call_args[1]['node_id'])
 
     @patch('ztpserver.controller.create_repository')
-    def test_create_missing_identifier(self, m_repository):
+    def test_create_missing_identifier_systemmac(self, m_repository):
         node = Mock(systemmac=None, serialnumber=None)
         body = dict(systemmac=node.systemmac, serialnumber=node.serialnumber)
 
@@ -560,6 +560,20 @@ class NodesControllerUnitTests(unittest.TestCase):
         resp = controller.create(request)
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
+    @patch('ztpserver.controller.create_repository')
+    def test_create_missing_identifier_serialnumber(self, m_repository):
+        ztpserver.config.runtime.set_value(\
+            'identifier', 'serialnumber', 'default')
+
+        node = Mock(systemmac=None, serialnumber=None)
+        body = dict(systemmac=node.systemmac, serialnumber=node.serialnumber)
+
+        request = Request.blank('/nodes')
+        request.body = json.dumps(body)
+
+        controller = ztpserver.controller.NodesController()
+        resp = controller.create(request)
+        self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
     def test_node_exists(self, m_repository):
