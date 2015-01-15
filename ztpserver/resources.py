@@ -57,7 +57,7 @@ class ResourcePool(object):
     def serialize(self):
         data = dict()
         for key, value in self.data.items():
-            data[key] = str(value) if value is not None else None
+            data[key] = str(value) if value else None
         return data
 
     def load(self, pool):
@@ -65,46 +65,38 @@ class ResourcePool(object):
         filename = os.path.join(self.file_path, pool)
         contents = load(filename, CONTENT_TYPE_YAML, self.node_id,
                         lock=True)
-        if contents:
-            for key, value in contents.items():
-                self.data[key] = str(value) if value is not None else None
+        if contents and isinstance(contents, dict):
+            for key, value in contents.iteritems():
+                self.data[key] = str(value) if value else None
         else:
-            pass
-            # TODO
-            # print warning
-        
-        # Enable this log to see k:v pairs in pool    
-        # log.debug('%s: loaded resource pool \'%s\': %s' % 
-        #          (self.node_id, pool, self.data))
+            if not contents:
+                contents = 'empty pool'
+
+            msg = '%s: unable to load resource pool %s: %s' % \
+                (self.node_id, pool, contents)
+            log.error(msg)
+            raise ResourcePoolError(msg)
+
+        log.debug('%s: loaded resource pool \'%s\': %s' % 
+                  (self.node_id, pool, self.data))
 
     def dump(self, pool):
-        # Enable this log to see k:v pairs in pool
-        # log.debug('%s: writing resource pool \'%s\': %s' % (self.node_id, pool,
-        #                                                    self.data))
+        log.debug('%s: writing resource pool \'%s\': %s' % 
+                  (self.node_id, pool, self.data))
         file_path = os.path.join(self.file_path, pool)
         dump(self, file_path, CONTENT_TYPE_YAML, self.node_id,
              lock=True)
 
     def allocate(self, pool):
-        self.load(pool)
-
-        # Enable this log to see k:v pairs in pool
-        # log.debug('%s: allocating resources from pool \'%s\': %s' % 
-        #          (self.node_id, pool, self.data))
+        if not self.data:
+            self.load(pool)
 
         match = self.lookup(pool)
-
         try:
             if match:
                 log.debug('%s: already allocated resource \'%s\':\'%s\'' % 
                          (self.node_id, pool, match))
                 return match
-
-            if not self.data:
-                #TODO
-                log.debug('%s: self.data is really empty - this is crazy!'  % 
-                          self.node_id)
-                self.load(pool)
 
             key = next(x[0] for x in self.data.iteritems() if x[1] is None)
             log.debug('%s: allocated \'%s\':\'%s\'' % (self.node_id, pool, key))
@@ -125,13 +117,7 @@ class ResourcePool(object):
     def lookup(self, pool):
         ''' Return an existing allocated resource if one exists '''
 
-        # Enable this log to see k:v pairs in pool
-        # log.debug('%s: looking up resource pool \'%s\': %s' % 
-        #          (self.node_id, pool, self.data))
-
         if not self.data:
-                #TODO
-            log.debug('%s: self.data is empty - this is crazy!' % self.node_id)
             self.load(pool)
 
         try:

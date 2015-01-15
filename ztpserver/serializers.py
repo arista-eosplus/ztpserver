@@ -185,10 +185,8 @@ def loads(data, content_type, node_id):
     serializer = Serializer(node_id)
     return serializer.deserialize(data, content_type)
 
-def load(file_path, content_type, node_id=None, lock=False):
-    id_string = '%s: ' % node_id if node_id else ''
-
-    log.debug('%s: reading %s...' % (id_string, file_path))
+def load(file_path, content_type, node_id='N/A', lock=False):
+    log.debug('%s: reading %s...' % (node_id, file_path))
 
     if lock and file_path not in READ_WRITE_LOCK:
         READ_WRITE_LOCK[file_path] = threading.Lock()
@@ -205,13 +203,12 @@ def load(file_path, content_type, node_id=None, lock=False):
         result = loads(data, content_type, node_id)
     except (OSError, IOError) as err:
         log.error('%s: failed to load file from %s (%s)' % 
-                  (id_string, file_path, err))
+                  (node_id, file_path, err))
         raise SerializerError('%s: failed to load file from %s (%s)' % 
-                              (id_string, file_path, err))
+                              (node_id, file_path, err))
 
-    # TODO
-    # Enable this log if you want to see the contents of the file
-    # log.debug('%s: loaded %s: %s' % (id_string, file_path, result))
+    # Enable this log if you want to see the contents of the file (verbose)
+    # log.debug('%s: loaded %s: %s' % (node_id, file_path, result))
     return result
 
 def dumps(data, content_type, node_id):
@@ -221,10 +218,8 @@ def dumps(data, content_type, node_id):
     return serializer.serialize(data, content_type)
 
 
-def dump(data, file_path, content_type, node_id=None, lock=False):
-    id_string = '%s: ' % node_id if node_id else ''
-
-    log.debug('%s: writing %s...' % (id_string, file_path))
+def dump(data, file_path, content_type, node_id='N/A', lock=False):
+    log.debug('%s: writing %s...' % (node_id, file_path))
 
     if lock and file_path not in READ_WRITE_LOCK:
         READ_WRITE_LOCK[file_path] = threading.Lock()
@@ -239,6 +234,9 @@ def dump(data, file_path, content_type, node_id=None, lock=False):
                 fhandler.write(dumps(data, content_type, node_id))            
     except (OSError, IOError) as err:
         log.error('%s: failed to write file to %s (%s)' % 
-                  (id_string, file_path, err))
+                  (node_id, file_path, err))
         raise SerializerError('%s: failed to write file to %s (%s)' % 
-                              (id_string, file_path, err))
+                              (node_id, file_path, err))
+
+    # Enable this log if you want to see the contents of the file (verbose)
+    # log.debug('%s: wrote %s: %s' % (node_id, file_path, data))
