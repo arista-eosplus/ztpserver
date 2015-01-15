@@ -71,16 +71,18 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     substitution_mode = attributes.get('substitution_mode', 'loose')
     if substitution_mode not in ['loose', 'strict']:
-        return 'Invalid option specified for substitution_mode attribute'
+        raise Exception('Invalid option specified for substitution_mode '
+                        'attribute')
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
     except Exception as exc:
-        return 'Unable to retrieve config from URL (%s)' % exc
+        raise Exception('Unable to retrieve config from URL (%s)' % 
+                        exc)
 
     contents = open(TEMP_CONFIG, 'r').read()
 
@@ -90,14 +92,16 @@ def main(attributes):
 
     if not isinstance(variables, dict):
         node.log_msg('Variables: %s' % variables)
-        return 'Unable to perform variable substitution - invalid variables'
+        raise Exception('Unable to perform variable substitution - '
+                        'invalid variables')
     try:
         if substitution_mode == 'strict':
             contents = Template(contents).substitute(variables)
         else:
             contents = Template(contents).safe_substitute(variables)
     except KeyError:
-        return 'Unable to perform variable substitution - missing variable'
+        raise Exception('Unable to perform variable substitution - '
+                        'missing variable')
 
     node.append_startup_config_lines(contents.split('\n'))
     os.remove(TEMP_CONFIG)

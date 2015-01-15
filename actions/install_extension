@@ -66,7 +66,7 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     force = ast.literal_eval(
         str(attributes.get('force')))
@@ -81,7 +81,8 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % (EXTENSIONS_DIR, name))
     except Exception as exc:
-        return 'Unable to retrieve extension from URL (%s)' % exc
+        raise Exception('Unable to retrieve extension from URL (%s)' % 
+                        exc)
 
     line = name
     if force:

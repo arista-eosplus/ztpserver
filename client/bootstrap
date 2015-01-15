@@ -1112,9 +1112,10 @@ def execute_action(server, action_details, special_attr):
         local_attr = action_details['attributes'] \
                      if 'attributes' in action_details \
                      else []
-        ret = module.main(Attributes(local_attr, special_attr))
-        if ret:
-            raise ZtpActionError('%s' % ret)
+        try:
+            module.main(Attributes(local_attr, special_attr))
+        except Exception as exc:
+            raise ZtpActionError(exc)
         log('Action executed succesfully (%s)' % action)
         if 'onsuccess' in action_details:
             log('Action %s: %s' % (action, action_details['onsuccess']),
@@ -1171,7 +1172,6 @@ def main():
 
     definition_name = definition.get('name', '')
     log('Applying definition %s' % definition_name)
-
 
     special_attr = {}
     special_attr['NODE'] = node

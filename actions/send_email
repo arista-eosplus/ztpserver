@@ -109,15 +109,15 @@ def main(attributes):
 
     smarthost = attributes.get('smarthost')
     if not smarthost:
-        return 'Missing attribute(\'smarthost\')'
+        raise Exception('Missing attribute(\'smarthost\')')
 
     sender = attributes.get('sender')
     if not sender:
-        return 'Missing attribute(\'sender\')'
+        raise Exception('Missing attribute(\'sender\')')
 
     receivers = attributes.get('receivers')
     if not receivers:
-        return 'Missing attribute(\'receivers\')'
+        raise Exception('Missing attribute(\'receivers\')')
 
     msg = MIMEMultipart.MIMEMultipart()
     msg['From'] = sender

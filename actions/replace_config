@@ -47,10 +47,10 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     try:
         node.retrieve_url(url, node.startup_config())
     except Exception as exc:
-        return 'Unable to retrieve config from URL (%s)' % exc.message
-
+        raise Exception('Unable to retrieve config from URL (%s)' % 
+                        exc.message)

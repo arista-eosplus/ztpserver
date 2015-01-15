@@ -219,7 +219,7 @@ def fail_action():
     return '''#!/usr/bin/env python
 
 def main(attributes):
-   return 2
+   raise Exception('Ops! I failed! :(')
 '''
 
 def erroneous_action():

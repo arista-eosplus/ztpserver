@@ -97,11 +97,11 @@ def main(attributes):
     src_url = attributes.get('src_url')
 
     if not src_url:
-        return 'Missing attribute(\'src_url\')'
+        raise Exception('Missing attribute(\'src_url\')')
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
-        return 'Missing attribute(\'dst_url\')'
+        raise Exception('Missing attribute(\'dst_url\')')
 
     name = os.path.basename(src_url)
 
@@ -128,7 +128,7 @@ def main(attributes):
         elif overwrite == 'replace':
             pass
         else:
-            return 'Erroneous \'overwrite\' value'
+            raise Exception('Erroneous \'overwrite\' value')
 
         try:
             os.makedirs(dst_url)
@@ -143,7 +143,8 @@ def main(attributes):
             if mode is not None:
                 os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
-            return 'Unable to retrieve file from URL (%s)' % exc
+            raise Exception('Unable to retrieve file from URL (%s)' % 
+                            exc)
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
@@ -160,7 +161,7 @@ def main(attributes):
         elif overwrite == 'replace':
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         else:
-            return 'Erroneous \'overwrite\' value'
+            raise Exception('Erroneous \'overwrite\' value')
 
         if mode:
             lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
@@ -177,7 +178,8 @@ def main(attributes):
             node.log_msg('copy_file: saving %s '
                          'to %s' % (src_url, file_path))
         except Exception as exc:
-            return 'Unable to retrieve file from URL (%s)' % exc
+            raise Exception('Unable to retrieve file from URL (%s)' % 
+                            exc)
 
         node.log_msg('copy_file: adding rc.eos lines: \n%s$' %
                      '\n'.join(lines))
