@@ -12,8 +12,10 @@
 %global python2_sitearch    %{app_virtualenv_dir}/lib64/python2.7
 %global basedatadir         %{_datadir}
 %global basesysconfdir      %{_sysconfdir}
+%global apphomedir          %{app_virtualenv_dir}
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
+%global apphomedir          %{_datadir}/ztpserver
 %endif
 
 # We don't need the -debug package
@@ -124,7 +126,7 @@ python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
 %pre
 getent group %{app_user} > /dev/null || groupadd -r %{app_user}
 getent passwd %{app_user} > /dev/null || \
-  useradd -m -g %{app_user} -d %{_datadir}/ztpserver/ -s /bin/false \
+  useradd -m -g %{app_user} -d %{apphomedir} -s /bin/false \
   -c "%{name} - Server" %{app_user}
 exit 0
 
