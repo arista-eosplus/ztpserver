@@ -134,8 +134,8 @@ setup(
     data_files=data_files
 )
 
- # hidden version file
- if install():
+# hidden version file
+if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
         shutil.copy('VERSION', '%s%s' % (custom_path, config.VERSION_FILE_PATH))
