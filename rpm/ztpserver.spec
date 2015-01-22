@@ -117,6 +117,7 @@ cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir
 # Force some paths for install to handle the virtual_env case for RHEL
 %{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
 PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
+ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT \
 python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
@@ -163,6 +164,7 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %{_bindir}/ztps
 
 %dir %{_sysconfdir}/ztpserver
+%{_sysconfdir}/ztpserver/.VERSION
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
 %config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf

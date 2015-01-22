@@ -43,7 +43,10 @@ except ImportError:
     from distutils.core import setup
 
 def install():
-    return sys.argv[1:] == ['install']
+    if "install" in sys.argv:
+        return True
+    else:
+        return False
 
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
@@ -103,7 +106,7 @@ for filename in glob('actions/*'):
     file_list += [(filename.split('/')[-1],
                    '%s/actions' % install_path,
                    filename)]
-for filename in glob('clent/lib/*'):
+for filename in glob('client/lib/*'):
     file_list += [(filename.split('/')[-1],
                    '%s/files/lib' % install_path,
                    filename)]
@@ -131,6 +134,11 @@ setup(
     data_files=data_files
 )
 
-# hidden version file
-if install():
-    shutil.copy('VERSION', config.VERSION_FILE_PATH)
+ # hidden version file
+ if install():
+    custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
+    if custom_path:
+        shutil.copy('VERSION', '%s%s' % (custom_path, config.VERSION_FILE_PATH))
+    else:   
+        shutil.copy('VERSION', config.VERSION_FILE_PATH)
+
