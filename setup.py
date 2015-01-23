@@ -48,6 +48,9 @@ def install():
     else:
         return False
 
+def join_url(x, y):
+    return '/' + '/'.join([z for z in x.split('/') + y.split('/') if z])
+
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
 
@@ -138,7 +141,7 @@ setup(
 if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
-        shutil.copy('VERSION', '%s%s' % (custom_path, config.VERSION_FILE_PATH))
+        shutil.copy('VERSION', join_url(custom_path, config.VERSION_FILE_PATH)
     else:   
         shutil.copy('VERSION', config.VERSION_FILE_PATH)
 
