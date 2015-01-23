@@ -141,7 +141,7 @@ setup(
 if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
-        shutil.copy('VERSION', join_url(custom_path, config.VERSION_FILE_PATH)
+        shutil.copy('VERSION', join_url(custom_path, config.VERSION_FILE_PATH))
     else:   
         shutil.copy('VERSION', config.VERSION_FILE_PATH)
 
