@@ -137,9 +137,15 @@ exit 0
 %post
 # Ensure the server can read/write the necessary files.
 # ZTPServer operators may be put in to this group to allow them to configure the service
+%if 0%{?rhel} == 6
+chown -R %{app_user}:%{app_user} %{apphomedir}/ztpserver
+chmod -R ug+rw %{apphomedir}/ztpserver
+chcon -Rv --type=httpd_sys_content_t %{apphomedir}/ztpserver
+%else
 chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
 chmod -R ug+rw %{_datadir}/ztpserver
 chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
+%endif
 
 %preun
 # $1 --> if 0, then it is a deinstall
