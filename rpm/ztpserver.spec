@@ -32,7 +32,7 @@ URL:      %{app_url}
 Source0:  %{name}-%{version}.tgz
 Source1:  %{name}-wsgi.conf
 
-### Don't allow rpmbuild to modify dependencies 
+### Don't allow rpmbuild to modify dependencies
 AutoReqProv: no
 
 BuildRequires: python-pip
@@ -77,10 +77,10 @@ ability to define the target node through the introduction of definitions and
 templates that call pre-built actions and statically defined or dynamically
 generated attributes. The attributes and actions can also be extended to provide
 custom functionality that are specific to a given implementation. ZTPServer also
-provides a topology validation engine with a simple syntax to express LLDP 
-neighbor adjacencies. It is written mostly in Python and leverages standard 
-protocols like DHCP and DHCP options for boot functions, HTTP for 
-bi-directional transport, and XMPP and syslog for logging. Most of the files 
+provides a topology validation engine with a simple syntax to express LLDP
+neighbor adjacencies. It is written mostly in Python and leverages standard
+protocols like DHCP and DHCP options for boot functions, HTTP for
+bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
@@ -118,7 +118,7 @@ cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir
 %{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
 PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
 ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT \
-python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
+python setup.py install --root=$RPM_BUILD_ROOT/%{app_virtualenv_dir}  --install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
 %{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
@@ -161,35 +161,37 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 # all the files to be included in this RPM:
 %defattr(-,root,root,)
 %if 0%{?rhel} == 6
+%defattr(-,%{app_user},%{app_user},)
 %{app_virtualenv_dir}
+%{app_virtualenv_dir}/bin/ztps
 %else
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}-%{version}*.egg-info
+%{_bindir}/ztps
 %endif
 
-%{_bindir}/ztps
 
-%dir %{_sysconfdir}/ztpserver
-%{_sysconfdir}/ztpserver/.VERSION
-%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
-%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
+%dir %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver
+%{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/.VERSION
+%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.wsgi
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
-%dir %{_datadir}/ztpserver
-%dir %{_datadir}/ztpserver/actions
-%dir %{_datadir}/ztpserver/bootstrap
-%dir %{_datadir}/ztpserver/definitions
-%dir %{_datadir}/ztpserver/files
-%dir %{_datadir}/ztpserver/files/lib
-%dir %{_datadir}/ztpserver/nodes
-%dir %{_datadir}/ztpserver/resources
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/actions
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/bootstrap
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/definitions
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/files
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/files/lib
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/nodes
+%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/resources
 
 %defattr(0665,%{app_user},%{app_user},)
-%{_datadir}/ztpserver/files/lib/*
-%config(noreplace) %{_datadir}/ztpserver/actions/*
-%config(noreplace) %{_datadir}/ztpserver/bootstrap/*
-%config(noreplace) %{_datadir}/ztpserver/neighbordb
+%{app_virtualenv_dir}/%{_datadir}/ztpserver/files/lib/*
+%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/actions/*
+%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/bootstrap/*
+%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/neighbordb
 
 %clean
 rm -rf $RPM_BUILD_ROOT
