@@ -10,11 +10,14 @@
 %global app_virtualenv_dir  /opt/ztpsrv_env
 %global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
 %global python2_sitearch    %{app_virtualenv_dir}/lib64/python2.7
-%global basedatadir         %{_datadir}
-%global basesysconfdir      %{_sysconfdir}
+%global _datadir            %{app_virtualenv_dir}%{_datadir}
+%global _sysconfdir         %{app_virtualenv_dir}%{_sysconfdir}
+%global _bindir             %{app_virtualenv_dir}%{_bindir}
 %global apphomedir          %{app_virtualenv_dir}
+%global ztps_data_root      %{app_virtualenv_dir}/usr/share/ztpserver
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
+%global ztps_data_root      /usr/share/ztpserver
 %global apphomedir          %{_datadir}/ztpserver
 %endif
 
@@ -102,6 +105,7 @@ python setup.py build
 %if 0%{?rhel} == 6
 ## Set into the virtualenv w/ python27
 export ZTPS_INSTALL_PREFIX=%{app_virtualenv_dir}
+export ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT/%{app_virtualenv_dir}
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
@@ -118,9 +122,8 @@ cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir
 # Force some paths for install to handle the virtual_env case for RHEL
 %{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
 PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
-ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT/%{app_virtualenv_dir} \
 python setup.py install --root=$RPM_BUILD_ROOT \
---install-scripts=%{app_virtualenv_dir}%{_bindir} \
+--install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
 %{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
@@ -140,18 +143,14 @@ exit 0
 # Ensure the server can read/write the necessary files.
 # ZTPServer operators may be put in to this group to allow them to configure the service
 %if 0%{?rhel} == 6
-chown -R %{app_user}:%{app_user} %{app_virtualenv_dir}/usr/share/ztpserver
-chmod -R ug+rw %{app_virtualenv_dir}/usr/share/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
 # Create symlinks for RHEL
-ln -s -f %{app_virtualenv_dir}/usr/share/ztpserver /usr/share/ztpserver
-ln -s -f %{app_virtualenv_dir}%{_sysconfdir}/ztpserver /etc/ztpserver
-ln -s -f %{app_virtualenv_dir}%{_bindir}/ztps /usr/bin/ztps
-%else
-chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
-chmod -R ug+rw %{_datadir}/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
+ln -s -f %{ztps_data_root} /usr/share/ztpserver
+ln -s -f %{_sysconfdir}/ztpserver /etc/ztpserver
+ln -s -f %{_bindir}/ztps /usr/bin/ztps
 %endif
+chown -R %{app_user}:%{app_user} %{apphomedir}
+chmod -R ug+rw %{ztps_data_root}
+chcon -Rv --type=httpd_sys_content_t %{ztps_data_root}
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -171,36 +170,36 @@ rm -rf %{httpd_dir}/%{name}-wsgi.conf
 %defattr(-,root,root,)
 %if 0%{?rhel} == 6
 %defattr(-,%{app_user},%{app_user},)
-%{app_virtualenv_dir}
-%{app_virtualenv_dir}/%{_bindir}/ztps
+%{app_virtualenv_dir}/include
+%{app_virtualenv_dir}/bin
+%{app_virtualenv_dir}/lib*
 %else
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}-%{version}*.egg-info
-%{_bindir}/ztps
 %endif
+%{_bindir}/ztps
 
-
-%dir %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver
-%{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/.VERSION
-%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.conf
-%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.wsgi
+%dir %{_sysconfdir}/ztpserver
+%{_sysconfdir}/ztpserver/.VERSION
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/actions
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/bootstrap
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/definitions
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/files
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/files/lib
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/nodes
-%dir %{app_virtualenv_dir}/%{_datadir}/ztpserver/resources
+%dir %{ztps_data_root}
+%dir %{ztps_data_root}/actions
+%dir %{ztps_data_root}/bootstrap
+%dir %{ztps_data_root}/definitions
+%dir %{ztps_data_root}/files
+%dir %{ztps_data_root}/files/lib
+%dir %{ztps_data_root}/nodes
+%dir %{ztps_data_root}/resources
 
 %defattr(0665,%{app_user},%{app_user},)
-%{app_virtualenv_dir}/%{_datadir}/ztpserver/files/lib/*
-%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/actions/*
-%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/bootstrap/*
-%config(noreplace) %{app_virtualenv_dir}/%{_datadir}/ztpserver/neighbordb
+%{ztps_data_root}/files/lib/*
+%config(noreplace) %{ztps_data_root}/actions/*
+%config(noreplace) %{ztps_data_root}/bootstrap/*
+%config(noreplace) %{ztps_data_root}/neighbordb
 
 %clean
 rm -rf $RPM_BUILD_ROOT
