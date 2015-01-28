@@ -26,7 +26,7 @@
 
 Name:    ztpserver
 Version: BLANK
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: %{app_summary}
 
 Group:    Applications/Communications
@@ -176,13 +176,14 @@ rm -rf %{httpd_dir}/%{name}-wsgi.conf
 %else
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}-%{version}*.egg-info
+%{_bindir}/ztps
 %endif
 %{_bindir}/ztps
 
-%dir %{_sysconfdir}/ztpserver
-%{_sysconfdir}/ztpserver/.VERSION
-%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
-%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
+%dir %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver
+%{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/.VERSION
+%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.wsgi
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
@@ -206,6 +207,17 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jan 28 2015 Arista Networks <eosplus-dev@arista.com> - 1.2.0-3
+- Fixed installation path for virtual_env build
+- Fixed permissions and home directory for virtual_env build
+- Modified built-in macros for RHEL6 to simplify %files section
+- Added env var ZTPS_INSTALL_[PREFIX|ROOT] to fix issues with setup.py
+- Added symlinks from:
+  - virtual_env/usr/share/ztpserver to /usr/share/ztpserver
+  - virtual_env/%{_bindir}/ztps to /usr/bin/ztps
+  - virtual_env/%{_confdir}ztpserver.[wsgi|conf] to /etc/ztpserver/
+- Add post-un script to remove the symlinks created above
+
 * Thu Dec 18 2014 Jere Julian <jere@arista.com> - 1.2.1
 - For RHEL, only, update python sitelib and pip requirements
   for offline-capable packages
