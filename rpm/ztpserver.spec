@@ -164,6 +164,7 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 rm -rf /etc/ztpserver
 rm -rf /usr/share/ztpserver
 rm -rf /usr/bin/ztps
+rm -rf %{httpd_dir}/%{name}-wsgi.conf
 
 %files
 # all the files to be included in this RPM:
