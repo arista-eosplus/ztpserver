@@ -180,10 +180,10 @@ rm -rf %{httpd_dir}/%{name}-wsgi.conf
 %endif
 %{_bindir}/ztps
 
-%dir %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver
-%{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/.VERSION
-%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.conf
-%config(noreplace) %{app_virtualenv_dir}/%{_sysconfdir}/ztpserver/ztpserver.wsgi
+%dir %{_sysconfdir}/ztpserver
+%{_sysconfdir}/ztpserver/.VERSION
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.conf
+%config(noreplace) %{_sysconfdir}/ztpserver/ztpserver.wsgi
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
