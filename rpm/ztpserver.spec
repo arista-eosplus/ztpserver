@@ -10,11 +10,14 @@
 %global app_virtualenv_dir  /opt/ztpsrv_env
 %global python2_sitelib     %{app_virtualenv_dir}/lib/python2.7/site-packages
 %global python2_sitearch    %{app_virtualenv_dir}/lib64/python2.7
-%global basedatadir         %{_datadir}
-%global basesysconfdir      %{_sysconfdir}
+%global _datadir            %{app_virtualenv_dir}%{_datadir}
+%global _sysconfdir         %{app_virtualenv_dir}%{_sysconfdir}
+%global _bindir             %{app_virtualenv_dir}%{_bindir}
 %global apphomedir          %{app_virtualenv_dir}
+%global ztps_data_root      %{app_virtualenv_dir}/usr/share/ztpserver
 %else
 %global httpd_dir           %{_sysconfdir}/httpd/conf.d
+%global ztps_data_root      /usr/share/ztpserver
 %global apphomedir          %{_datadir}/ztpserver
 %endif
 
@@ -23,7 +26,7 @@
 
 Name:    ztpserver
 Version: BLANK
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: %{app_summary}
 
 Group:    Applications/Communications
@@ -32,7 +35,7 @@ URL:      %{app_url}
 Source0:  %{name}-%{version}.tgz
 Source1:  %{name}-wsgi.conf
 
-### Don't allow rpmbuild to modify dependencies 
+### Don't allow rpmbuild to modify dependencies
 AutoReqProv: no
 
 BuildRequires: python-pip
@@ -77,10 +80,10 @@ ability to define the target node through the introduction of definitions and
 templates that call pre-built actions and statically defined or dynamically
 generated attributes. The attributes and actions can also be extended to provide
 custom functionality that are specific to a given implementation. ZTPServer also
-provides a topology validation engine with a simple syntax to express LLDP 
-neighbor adjacencies. It is written mostly in Python and leverages standard 
-protocols like DHCP and DHCP options for boot functions, HTTP for 
-bi-directional transport, and XMPP and syslog for logging. Most of the files 
+provides a topology validation engine with a simple syntax to express LLDP
+neighbor adjacencies. It is written mostly in Python and leverages standard
+protocols like DHCP and DHCP options for boot functions, HTTP for
+bi-directional transport, and XMPP and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
@@ -101,6 +104,8 @@ python setup.py build
 %install
 %if 0%{?rhel} == 6
 ## Set into the virtualenv w/ python27
+export ZTPS_INSTALL_PREFIX=%{app_virtualenv_dir}
+export ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT/%{app_virtualenv_dir}
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
@@ -117,8 +122,8 @@ cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir
 # Force some paths for install to handle the virtual_env case for RHEL
 %{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
 PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
-ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT \
-python setup.py install --root=$RPM_BUILD_ROOT  --install-scripts=%{_bindir} \
+python setup.py install --root=$RPM_BUILD_ROOT \
+--install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
 %{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
@@ -138,14 +143,14 @@ exit 0
 # Ensure the server can read/write the necessary files.
 # ZTPServer operators may be put in to this group to allow them to configure the service
 %if 0%{?rhel} == 6
-chown -R %{app_user}:%{app_user} %{apphomedir}/ztpserver
-chmod -R ug+rw %{apphomedir}/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{apphomedir}/ztpserver
-%else
-chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
-chmod -R ug+rw %{_datadir}/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
+# Create symlinks for RHEL
+ln -s -f %{ztps_data_root} /usr/share/ztpserver
+ln -s -f %{_sysconfdir}/ztpserver /etc/ztpserver
+ln -s -f %{_bindir}/ztps /usr/bin/ztps
 %endif
+chown -R %{app_user}:%{app_user} %{apphomedir}
+chmod -R ug+rw %{ztps_data_root}
+chcon -Rv --type=httpd_sys_content_t %{ztps_data_root}
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -155,18 +160,24 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-
+rm -rf /etc/ztpserver
+rm -rf /usr/share/ztpserver
+rm -rf /usr/bin/ztps
+rm -rf %{httpd_dir}/%{name}-wsgi.conf
 
 %files
 # all the files to be included in this RPM:
 %defattr(-,root,root,)
 %if 0%{?rhel} == 6
-%{app_virtualenv_dir}
+%defattr(-,%{app_user},%{app_user},)
+%{app_virtualenv_dir}/include
+%{app_virtualenv_dir}/bin
+%{app_virtualenv_dir}/lib*
 %else
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}-%{version}*.egg-info
+%{_bindir}/ztps
 %endif
-
 %{_bindir}/ztps
 
 %dir %{_sysconfdir}/ztpserver
@@ -176,26 +187,37 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %config(noreplace) %{httpd_dir}/%{name}-wsgi.conf
 
 %defattr(0775,%{app_user},%{app_user},)
-%dir %{_datadir}/ztpserver
-%dir %{_datadir}/ztpserver/actions
-%dir %{_datadir}/ztpserver/bootstrap
-%dir %{_datadir}/ztpserver/definitions
-%dir %{_datadir}/ztpserver/files
-%dir %{_datadir}/ztpserver/files/lib
-%dir %{_datadir}/ztpserver/nodes
-%dir %{_datadir}/ztpserver/resources
+%dir %{ztps_data_root}
+%dir %{ztps_data_root}/actions
+%dir %{ztps_data_root}/bootstrap
+%dir %{ztps_data_root}/definitions
+%dir %{ztps_data_root}/files
+%dir %{ztps_data_root}/files/lib
+%dir %{ztps_data_root}/nodes
+%dir %{ztps_data_root}/resources
 
 %defattr(0665,%{app_user},%{app_user},)
-%{_datadir}/ztpserver/files/lib/*
-%config(noreplace) %{_datadir}/ztpserver/actions/*
-%config(noreplace) %{_datadir}/ztpserver/bootstrap/*
-%config(noreplace) %{_datadir}/ztpserver/neighbordb
+%{ztps_data_root}/files/lib/*
+%config(noreplace) %{ztps_data_root}/actions/*
+%config(noreplace) %{ztps_data_root}/bootstrap/*
+%config(noreplace) %{ztps_data_root}/neighbordb
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jan 28 2015 Arista Networks <eosplus-dev@arista.com> - 1.2.0-3
+- Fixed installation path for virtual_env build
+- Fixed permissions and home directory for virtual_env build
+- Modified built-in macros for RHEL6 to simplify %files section
+- Added env var ZTPS_INSTALL_[PREFIX|ROOT] to fix issues with setup.py
+- Added symlinks from:
+  - virtual_env/usr/share/ztpserver to /usr/share/ztpserver
+  - virtual_env/%{_bindir}/ztps to /usr/bin/ztps
+  - virtual_env/%{_confdir}ztpserver.[wsgi|conf] to /etc/ztpserver/
+- Add post-un script to remove the symlinks created above
+
 * Thu Dec 18 2014 Jere Julian <jere@arista.com> - 1.2.1
 - For RHEL, only, update python sitelib and pip requirements
   for offline-capable packages
