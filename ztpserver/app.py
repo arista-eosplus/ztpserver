@@ -85,6 +85,7 @@ def python_supported():
 logging_started = False
 def start_logging(debug):
     """ reads the runtime config and starts logging if enabled """
+    global logging_started     #pylint: disable=W0603
     if logging_started:
         return
 
@@ -92,7 +93,6 @@ def start_logging(debug):
         if config.runtime.default.console_logging:
             enable_handler_console('DEBUG' if debug else 'INFO')
 
-    global logging_started
     logging_started = True
 
 def load_config(conf=None):
