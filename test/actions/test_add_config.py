@@ -67,7 +67,7 @@ class FailureTest(ActionFailureTest):
         contents = random_string() + ' $missing_var'
         self.basic_test('add_config', 
                         'Unable to perform variable substitution - '
-                        'missing variable',
+                        '\'missing_var\' missing from list of substitutions',
                         attributes={'url' : url,
                                     'substitution_mode': 'strict',
                                     'variables' : {}},

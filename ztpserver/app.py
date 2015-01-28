@@ -49,14 +49,12 @@ from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.topology import neighbordb_path
 from ztpserver.utils import all_files
 
-DEFAULT_CONF = config.GLOBAL_CONF_FILE_PATH
-
-log = logging.getLogger("ztpserver")
+log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 def enable_handler_console(level=None):
-    """ Enables logging to stdout """
+    ''' Enables logging to stdout '''
     
     logging_fmt = config.runtime.default.console_logging_format
     formatter = logging.Formatter(logging_fmt)
@@ -79,12 +77,12 @@ def enable_handler_console(level=None):
     log.addHandler(ch)
 
 def python_supported():
-    """ Returns True if the current version of the python runtime is valid """
+    ''' Returns True if the current version of the python runtime is valid '''
     return sys.version_info > (2, 7) and sys.version_info < (3, 0)
 
 logging_started = False
 def start_logging(debug):
-    """ reads the runtime config and starts logging if enabled """
+    ''' reads the runtime config and starts logging if enabled '''
     global logging_started     #pylint: disable=W0603
     if logging_started:
         return
@@ -96,14 +94,14 @@ def start_logging(debug):
     logging_started = True
 
 def load_config(conf=None):
-    conf = conf or DEFAULT_CONF
+    conf = conf or config.GLOBAL_CONF_FILE_PATH
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
         config.runtime.read(conf)
 
-def start_wsgiapp(debug=False):
-    """ Provides the entry point into the application for wsgi compliant
+def start_wsgiapp(config_file=None, debug=False):
+    ''' Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
     keyword argument specifies the path the server configuration file.  The
     default value is /etc/ztpserver/ztpserver.conf.
@@ -111,9 +109,11 @@ def start_wsgiapp(debug=False):
     :param conf: string path pointing to configuration file
     :return: a wsgi application object
 
-    """
+    '''
 
+    load_config(config_file)
     start_logging(debug)
+
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', config.runtime.default.data_root)
 
@@ -122,24 +122,23 @@ def start_wsgiapp(debug=False):
 
     return controller.Router()
 
-def run_server(version):
-    """ The :py:func:`run_server` is called by the main command line routine to
+def run_server(version, config_file, debug):
+    ''' The :py:func:`run_server` is called by the main command line routine to
     run the server as standalone.   This function accepts a single argument
     that points towards the configuration file describing this server
 
     This function will block on the active thread until stopped.
 
     :param conf: string path pointing to configuration file
-    """
-
-    app = start_wsgiapp()
+    '''
+    app = start_wsgiapp(config_file, debug)
 
     host = config.runtime.server.interface
     port = config.runtime.server.port
 
     httpd = make_server(host, port, app)
 
-    log.info("Starting ZTPServer v%s on http://%s:%s" % 
+    log.info('Starting ZTPServer v%s on http://%s:%s' % 
              (version, host, port))
 
     try:
@@ -214,11 +213,11 @@ def run_validator():
                 (filename, exc)
 
 def main():
-    """ The :py:func:`main` is the main entry point for the ztpserver if called
+    ''' The :py:func:`main` is the main entry point for the ztpserver if called
     from the commmand line.   When called from the command line, the server is
     running in standalone mode as opposed to using the :py:func:`application` to
     run under a python wsgi compliant server
-    """
+    '''
 
     usage = 'ztpserver [options]'
 
@@ -230,7 +229,7 @@ def main():
 
     parser.add_argument('--conf', '-c',
                         type=str,
-                        default=DEFAULT_CONF,
+                        default=config.GLOBAL_CONF_FILE_PATH,
                         help='Specifies the configuration file to use')
 
     parser.add_argument('--validate-config', '-V',
@@ -254,10 +253,7 @@ def main():
         print 'ZTPServer version %s' % version
         sys.exit()
 
-    load_config(args.conf)
-    start_logging(args.debug)
-
     if args.validate_config:
         sys.exit(run_validator())
 
-    return run_server(version)
+    return run_server(version, args.conf, args.debug)

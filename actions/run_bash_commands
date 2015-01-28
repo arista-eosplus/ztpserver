@@ -27,21 +27,21 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,W0402,E1103
+#pylint: disable=W0703,E1103
 
 import os
 
-TEMP_CONFIG = '/tmp/tmp-add-config'
+TEMP_CONFIG = '/tmp/tmp-run-script'
 
 def main(attributes):
-    ''' Appends config section to startup-config.
+    ''' Runs a script in EOS from bash.
 
     This action is dual-supervisor compatible.
 
     Attributes:
-        url: path to source config/template
-        substitution_mode: loose|strict (default: loose)
-        variables: list of value substitutions
+        url: path to source script/template
+        variables (optional): 
+             list of value substitutions (for a script template)
         
     Special_attributes: 
         NODE: API object - see documentation for details
@@ -50,16 +50,12 @@ def main(attributes):
         ::
 
           -
-            action: add_config
+            action: run_script
             attributes:
               url: files/templates/ma1.template
               variables:
-                ipaddress: allocate('mgmt_subnet')
-            name: "configure ma1"
-            onstart: "Starting to configure ma1"
-            onsuccess: "SUCCESS: ma1 configure"
-            onfailure: "FAIL: IM provisioning@example.com for help"
-
+                version: 1.2.3
+            name: "install temp package"
     '''
 
     node = attributes.get('NODE')
@@ -91,9 +87,13 @@ def main(attributes):
         raise Exception('Unable to perform variable substitution - '
                         'invalid variables')
 
-    contents = node.substitute(contents, variables,
-                               substitution_mode == 'strict')
-    node.append_startup_config_lines(contents.split('\n'))
+    contents = node.substitute(contents, variables)
+
+    (cmd, code, out, err) = node.bash_cmds(contents.split('\n'))
+    if code:
+        raise Exception('Running %s in bash failed with'
+                        'error code %s (stdout=%s, stderr=%s)' % 
+                        (cmd, code, out, err))
     
     # Only remove this in case everything else succeeded
     # for debugging purposes

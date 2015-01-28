@@ -51,32 +51,29 @@ def main(attributes):
 
     Copies file based on the values of 'src_url' and 'dst_url'
     attributes ('dst_url' should point to the destination folder).
-    If 'overwrite' is set to:
-
-    * 'replace': the file is copied to the switch regardless
-      of whether there is already a file with the same name at the
-      destination;
-    * 'if-missing': the file is copied to the switch only if
-      there is not already a file with the same name at the
-      destination; if there is, then the action is a no-op;
-    * 'backup': the file is copied to the switch; if there is
-      already another file at the destination, that file is renamed
-      by appending the '.backup' suffix
-
-    If 'overwrite' is not set, then 'replace' is the default
-    behaviour.
 
     This action is NOT dual-supervisor compatible.
 
-    Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
-       node (internernal): attributes.get('NODE') API: see documentation
-       attributes:
-       src_url: Source location
-       dst_url: Destination
-       mode: Octal mode
-       overwrite: Overwrite existing files? <replace|if-missing|backup> Default: replace
+    Attributes:
+       src_url: path to source file
+       dst_url: path to destination
+       mode: octal mode for destination path
+       overwrite: replace|if-missing|backup (default: replace)
+
+    'overwrite' values:
+       * 'replace': the file is copied to the switch regardless
+         of whether there is already a file with the same name at the
+         destination;
+       * 'if-missing': the file is copied to the switch only if
+         there is not already a file with the same name at the
+         destination; if there is, then the action is a no-op;
+       * 'backup': the file is copied to the switch; if there is
+         already another file at the destination, that file is renamed
+         by appending the '.backup' suffix
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
+
 
     Example:
         ::

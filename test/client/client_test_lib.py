@@ -82,7 +82,7 @@ def raise_exception(exception):
     #pylint: disable=C0301, C0321
 
     # Uncomment the following line for debugging
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
 
     raise Exception('%s\nUncomment line in client_test_lib.py:raise_'
                     'exception for debugging' % exception.message)
@@ -424,8 +424,13 @@ class EAPIServer(object):
         self.serial_number = serial_number
         self.version = version
 
+        self.fail_commands = []
+
     def cleanup(self):
         self.responses = {}
+
+    def add_failing_command(self, cmd):
+        self.fail_commands += [cmd]
 
     def start(self):
         thread.start_new_thread(self._run, ())
@@ -443,6 +448,11 @@ class EAPIServer(object):
 
                 print 'EAPIServer: responding to request:%s (%s)' % (
                     req.path, ', '.join(cmds))
+
+                if [x for x in cmds if x in self.fail_commands]:
+                    print 'EAPIServer: failed on-demand'
+                    req.send_response(STATUS_BAD_REQUEST)                    
+                    return
 
                 req.send_response(STATUS_OK)
 

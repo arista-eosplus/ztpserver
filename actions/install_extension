@@ -36,19 +36,19 @@ import ast
 import os
 
 def main(attributes):
-    '''Installs EOS extension.
+    '''Installs extension.
 
-    Installs extension based on the value of the
-    'url' attribute. If 'force' is
+    If 'force' is
     set, then the dependency checks are overridden.
 
     This action is NOT dual-supervisor compatible.
 
-    Args:
-        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
-        node (internal): attributes.get('NODE') API: see documentation
-        url: path to the rpm or swix extension
-        force: Force installation regardless of checks.  Default: False
+    Attributes:
+        url: path to source extension file
+        force: ignore validation errors (default: false)
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
 
     Example:
         ::
