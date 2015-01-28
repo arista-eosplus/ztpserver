@@ -54,6 +54,11 @@ def join_url(x, y):
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
 
+if install() and os.environ.get('ZTPS_INSTALL_PREFIX'):
+    print "Customizing install for VirtualEnv install with RPM"
+    conf_path = join_url(os.environ.get('ZTPS_INSTALL_PREFIX'), config.CONF_PATH)
+    install_path = join_url(os.environ.get('ZTPS_INSTALL_PREFIX'), config.INSTALL_PATH)
+
 packages = ['ztpserver']
 if install() and os.environ.get('READTHEDOCS'):
     print 'Customizing install for ReadTheDocs.org build servers...'
@@ -101,7 +106,7 @@ for (filename, dst, src) in [('neighbordb',
 
     data_files += [(dst, glob(src))]
 
-# bootstrap file, libraries and actions are always
+# bootstrap file, libraries, VERSION and actions are always
 # overwritten
 file_list = [('bootstrap', '%s/bootstrap' % install_path, 
               'client/bootstrap')]
@@ -144,4 +149,3 @@ if install():
         shutil.copy('VERSION', join_url(custom_path, config.VERSION_FILE_PATH))
     else:   
         shutil.copy('VERSION', config.VERSION_FILE_PATH)
-

@@ -101,6 +101,7 @@ python setup.py build
 %install
 %if 0%{?rhel} == 6
 ## Set into the virtualenv w/ python27
+export ZTPS_INSTALL_PREFIX=%{app_virtualenv_dir}
 export X_SCLS=python27
 source /opt/rh/python27/enable
 source $RPM_BUILD_DIR%{app_virtualenv_dir}/bin/activate
@@ -117,8 +118,9 @@ cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir
 # Force some paths for install to handle the virtual_env case for RHEL
 %{__install} -d $RPM_BUILD_ROOT%{python2_sitelib}
 PYTHONPATH=$RPM_BUILD_ROOT%{python2_sitelib}:${PYTHONPATH} \
-ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT \
-python setup.py install --root=$RPM_BUILD_ROOT/%{app_virtualenv_dir}  --install-scripts=%{_bindir} \
+ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT/%{app_virtualenv_dir} \
+python setup.py install --root=$RPM_BUILD_ROOT \
+--install-scripts=%{app_virtualenv_dir}%{_bindir} \
 --install-lib=%{python2_sitelib}
 
 %{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
@@ -138,9 +140,13 @@ exit 0
 # Ensure the server can read/write the necessary files.
 # ZTPServer operators may be put in to this group to allow them to configure the service
 %if 0%{?rhel} == 6
-chown -R %{app_user}:%{app_user} %{apphomedir}/ztpserver
-chmod -R ug+rw %{apphomedir}/ztpserver
-chcon -Rv --type=httpd_sys_content_t %{apphomedir}/ztpserver
+chown -R %{app_user}:%{app_user} %{app_virtualenv_dir}/usr/share/ztpserver
+chmod -R ug+rw %{app_virtualenv_dir}/usr/share/ztpserver
+chcon -Rv --type=httpd_sys_content_t %{app_virtualenv_dir}/usr/share/ztpserver
+# Create symlinks for RHEL
+ln -s -f %{app_virtualenv_dir}/usr/share/ztpserver /usr/share/ztpserver
+ln -s -f %{app_virtualenv_dir}%{_sysconfdir}/ztpserver /etc/ztpserver
+ln -s -f %{app_virtualenv_dir}%{_bindir}/ztps /usr/bin/ztps
 %else
 chown -R %{app_user}:%{app_user} %{_datadir}/ztpserver
 chmod -R ug+rw %{_datadir}/ztpserver
@@ -155,7 +161,9 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-
+rm -rf /etc/ztpserver
+rm -rf /usr/share/ztpserver
+rm -rf /usr/bin/ztps
 
 %files
 # all the files to be included in this RPM:
@@ -163,7 +171,7 @@ chcon -Rv --type=httpd_sys_content_t %{_datadir}/ztpserver
 %if 0%{?rhel} == 6
 %defattr(-,%{app_user},%{app_user},)
 %{app_virtualenv_dir}
-%{app_virtualenv_dir}/bin/ztps
+%{app_virtualenv_dir}/%{_bindir}/ztps
 %else
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}-%{version}*.egg-info
