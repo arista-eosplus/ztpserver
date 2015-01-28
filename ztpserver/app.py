@@ -82,12 +82,18 @@ def python_supported():
     """ Returns True if the current version of the python runtime is valid """
     return sys.version_info > (2, 7) and sys.version_info < (3, 0)
 
+logging_started = False
 def start_logging(debug):
     """ reads the runtime config and starts logging if enabled """
+    if logging_started:
+        return
 
     if config.runtime.default.logging:
         if config.runtime.default.console_logging:
             enable_handler_console('DEBUG' if debug else 'INFO')
+
+    global logging_started
+    logging_started = True
 
 def load_config(conf=None):
     conf = conf or DEFAULT_CONF
@@ -96,7 +102,7 @@ def load_config(conf=None):
     if os.path.exists(conf):
         config.runtime.read(conf)
 
-def start_wsgiapp():
+def start_wsgiapp(debug=False):
     """ Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
     keyword argument specifies the path the server configuration file.  The
@@ -107,6 +113,7 @@ def start_wsgiapp():
 
     """
 
+    start_logging(debug)
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', config.runtime.default.data_root)
 
