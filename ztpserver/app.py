@@ -110,9 +110,15 @@ def start_wsgiapp(config_file=None, debug=False):
     :return: a wsgi application object
 
     '''
-
     load_config(config_file)
     start_logging(debug)
+
+    try:
+        version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
+    except Exception:
+        version = 'N/A'
+
+    log.info('Starting ZTPServer v%s...' % version)
 
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', config.runtime.default.data_root)
@@ -135,6 +141,8 @@ def run_server(version, config_file, debug):
 
     host = config.runtime.server.interface
     port = config.runtime.server.port
+
+    log.info('URL: http://%s:%s' % (host, port))
 
     httpd = make_server(host, port, app)
 

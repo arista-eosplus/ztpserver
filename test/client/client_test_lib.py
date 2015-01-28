@@ -82,7 +82,7 @@ def raise_exception(exception):
     #pylint: disable=C0301, C0321
 
     # Uncomment the following line for debugging
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     raise Exception('%s\nUncomment line in client_test_lib.py:raise_'
                     'exception for debugging' % exception.message)

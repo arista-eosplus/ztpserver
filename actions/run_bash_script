@@ -31,7 +31,7 @@
 
 import os
 
-TEMP_CONFIG = '/tmp/tmp-run-script'
+TEMP_FILE = '/tmp/tmp-run-script'
 
 def main(attributes):
     ''' Runs a script in EOS from bash.
@@ -50,7 +50,7 @@ def main(attributes):
         ::
 
           -
-            action: run_script
+            action: run_bash_script
             attributes:
               url: files/templates/ma1.template
               variables:
@@ -65,18 +65,15 @@ def main(attributes):
         raise Exception('Missing attribute(\'url\')')
 
 
-    substitution_mode = attributes.get('substitution_mode', 'loose')
-    if substitution_mode not in ['loose', 'strict']:
-        raise Exception('Invalid option specified for substitution_mode '
-                        'attribute')
-
     try:
-        node.retrieve_url(url, TEMP_CONFIG)
+        node.retrieve_url(url, TEMP_FILE)
     except Exception as exc:
         raise Exception('Unable to retrieve config from URL (%s)' % 
                         exc)
 
-    contents = open(TEMP_CONFIG, 'r').read()
+    exec_file = open(TEMP_FILE, 'r')
+    contents = exec_file.read()
+    exec_file.close()
 
     variables = attributes.get('variables')
     if not variables:
@@ -89,12 +86,18 @@ def main(attributes):
 
     contents = node.substitute(contents, variables)
 
-    (cmd, code, out, err) = node.bash_cmds(contents.split('\n'))
-    if code:
-        raise Exception('Running %s in bash failed with'
-                        'error code %s (stdout=%s, stderr=%s)' % 
+    exec_file = open(TEMP_FILE, 'w')
+    exec_file.write(contents)
+    exec_file.close()
+
+    os.chmod(TEMP_FILE, 0777)
+    (cmd, code, out, err) = node.bash_cmds([TEMP_FILE])
+
+    if code or err:
+        raise Exception('Running %s in bash failed '
+                        'return_code=%s, stdout=%s, stderr=%s)' % 
                         (cmd, code, out, err))
     
     # Only remove this in case everything else succeeded
     # for debugging purposes
-    os.remove(TEMP_CONFIG)
+    os.remove(TEMP_FILE)

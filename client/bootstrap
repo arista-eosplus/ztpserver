@@ -164,8 +164,9 @@ def _exit(code):
             shutil.move(BOOT_EXTENSIONS_FOLDER, 
                         '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
 
-        backup_path = url_path_join('/', TEMP, 
-                                os.path.basename(BOOT_EXTENSIONS_FOLDER))
+        backup_path = url_path_join(
+            '/', TEMP, 
+            os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(backup_path):
             log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
@@ -452,14 +453,17 @@ class Node(object):
             out:  stdout for first failing command (None otherwise)
             err:  stderr for first failing command (None otherwise)
         '''
+
         for bash_cmd in cmds:
             proc = subprocess.Popen(bash_cmd, stdin=PIPE, 
                                     stdout=PIPE, stderr=PIPE, 
                                     shell=True)
             code = proc.returncode         #pylint: disable=E1101
-            if code:
-                (out, err) = proc.communicate()
+            (out, err) = proc.communicate()
+            if code or err:
                 return (bash_cmd, code, out, err)
+            else:
+                print out
 
         return (None, None, None, None)
 

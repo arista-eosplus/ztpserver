@@ -342,7 +342,7 @@ runtime.add_attribute(IntAttr(
 runtime.add_attribute(StrAttr(
     name='filename',
     group='bootstrap',
-    default='default',
+    default='bootstrap',
     environ='ZTPS_BOOTSTRAP_FILENAME'
 ))
 
