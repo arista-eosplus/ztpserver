@@ -43,7 +43,7 @@ from wsgiref.simple_server import make_server
 
 from ztpserver import config, controller
 
-from ztpserver.serializers import load
+from ztpserver.serializers import load, dump
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.topology import neighbordb_path
@@ -115,7 +115,7 @@ def start_wsgiapp(config_file=None, debug=False):
 
     try:
         version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
-    except Exception:
+    except Exception:  # pylint: disable=W0703
         version = 'N/A'
 
     log.info('Starting ZTPServer v%s...' % version)
@@ -154,8 +154,7 @@ def run_server(version, config_file, debug):
     except KeyboardInterrupt:
         log.info('Shutdown...')
 
-def run_validator():
-
+def validate_neighbordb():
     # Validating neighbordb
     validator = NeighbordbValidator('N/A')
     neighbordb = neighbordb_path()
@@ -180,6 +179,7 @@ def run_validator():
     except Exception as exc:        #pylint: disable=W0703
         print 'ERROR: Failed to validate neighbordb\n%s' % exc
 
+def validate_definitions():
     data_root = config.runtime.default.data_root
 
     print '\nValidating definitions...'
@@ -194,17 +194,25 @@ def run_validator():
             print '\nERROR: Failed to validate %s\n%s' % \
                 (definition, exc)
 
+def validate_resources(raiseException=False):
+    data_root = config.runtime.default.data_root
+
     print '\nValidating resources...'
     for resource in all_files(os.path.join(data_root, 
-                                             'resources')):
+                                           'resources')):
         print 'Validating %s...' % resource,
         try:
             load(resource, CONTENT_TYPE_YAML,
                  'validator')
             print 'Ok!'
-        except Exception as exc:        #pylint: disable=W0703            
+        except Exception as exc:        #pylint: disable=W0703 
             print '\nERROR: Failed to validate %s\n%s' % \
                 (resource, exc)
+            if raiseException:
+                raise exc
+
+def validate_nodes():
+    data_root = config.runtime.default.data_root
 
     print '\nValidating nodes...'
     for filename in [x for x in all_files(os.path.join(data_root, 
@@ -219,6 +227,39 @@ def run_validator():
         except Exception as exc:        #pylint: disable=W0703            
             print '\nERROR: Failed to validate %s\n%s' % \
                 (filename, exc)
+
+def clear_resources(debug):
+    start_logging(debug)
+
+    try:
+        validate_resources(raiseException=True)
+    except Exception:                   #pylint: disable=W0703 
+        sys.exit('ERROR: Unable to clear resources because of validation error')
+
+    data_root = config.runtime.default.data_root
+
+    print '\nClearing resources...'
+    for resource in all_files(os.path.join(data_root, 
+                                           'resources')):
+        print 'Clearing %s...' % resource
+        try:
+            contents = load(resource, CONTENT_TYPE_YAML,
+                            'clear_resource')
+            for key in contents:
+                contents[key] = 'None'
+            dump(contents, resource, CONTENT_TYPE_YAML,
+                 'clear_resource')
+        except Exception as exc:        #pylint: disable=W0703            
+            print '\nERROR: Failed to clear %s\n%s' % \
+                (resource, exc)
+    
+def run_validator(debug):
+    start_logging(debug)
+
+    validate_neighbordb()
+    validate_definitions()
+    validate_resources()
+    validate_nodes()
 
 def main():
     ''' The :py:func:`main` is the main entry point for the ztpserver if called
@@ -248,6 +289,10 @@ def main():
                         action='store_true',
                         help='Enables debug output to the STDOUT')
 
+    parser.add_argument('--clear-resources', '-r',
+                        action='store_true',
+                        help='Clears all resource files')
+
 
     args = parser.parse_args()
 
@@ -259,9 +304,14 @@ def main():
 
     if args.version:
         print 'ZTPServer version %s' % version
-        sys.exit()
 
     if args.validate_config:
-        sys.exit(run_validator())
+        run_validator(args.debug)
+
+    if args.clear_resources:
+        clear_resources(args.debug)
+
+    if args.version or args.validate_config or args.clear_resources:
+        sys.exit()
 
     return run_server(version, args.conf, args.debug)

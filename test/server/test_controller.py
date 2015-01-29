@@ -30,7 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=C0102,C0103,E1103,W0142,W0613,C0302
+# pylint: disable=C0102,C0103,E1103,W0142,W0613,C0302,E1120
 #
 
 import json
@@ -538,7 +538,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.NodesController()
         with patch.object(controller, 'fsm') as m_fsm:
             controller.create(request)
-            self.assertEqual(self.identifier(node), m_fsm.call_args[1]['node_id'])
+            self.assertEqual(self.identifier(node), 
+                             m_fsm.call_args[1]['node_id'])
 
     @patch('ztpserver.controller.create_repository')
     def test_create_systemmac(self, m_repository):
@@ -871,7 +872,8 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.post_node, dict(),
-                          request=request, node=node, node_id=self.identifier(node))
+                          request=request, node=node, 
+                          node_id=self.identifier(node))
 
     @patch('ztpserver.controller.load_neighbordb')
     def test_post_node_no_definition_in_pattern_systemmac(self, 
@@ -974,8 +976,9 @@ class NodesControllerUnitTests(unittest.TestCase):
 
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.get_attributes(dict(),
-                                                  resource=self.identifier(node))
+        (resp, state) = controller.get_attributes(
+            dict(),
+            resource=self.identifier(node))
 
         self.assertEqual(state, 'do_substitution')
         self.assertIsInstance(resp, dict)

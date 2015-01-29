@@ -38,7 +38,7 @@ from string import Template
 sys.path.append('test/client')
 
 from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import eapi_log, get_action, random_string
+from client_test_lib import get_action, random_string
 from client_test_lib import startup_config_action
 from client_test_lib import raise_exception
 
@@ -121,7 +121,6 @@ print "%s"''' % print_string
         bootstrap.ztps.set_action_response('test_action',
                                            get_action('run_bash_script'))
 
-        print_string = random_string()
         contents = '''#!/usr/bin/env python
 assert False'''
         bootstrap.ztps.set_file_response(config, contents)
