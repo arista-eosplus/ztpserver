@@ -215,6 +215,16 @@ def main(attributes):
         result += '    print attributes.get(\'%s\')\n' % attr
     return result
 
+def fail_flash_file_action(flash, filename):
+    '''Creates file on flash and then fails'''
+
+    return '''#!/usr/bin/env python
+
+def main(attributes):
+   open('%s/%s', 'w').write('test')
+   raise Exception('Ops! I failed! :(')
+''' % (flash, filename)
+
 def fail_action():
     return '''#!/usr/bin/env python
 
