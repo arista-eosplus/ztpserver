@@ -241,7 +241,7 @@ def clear_resources(debug):
     print '\nClearing resources...'
     for resource in all_files(os.path.join(data_root, 
                                            'resources')):
-        print 'Clearing %s...' % resource
+        print 'Clearing %s...' % resource,
         try:
             contents = load(resource, CONTENT_TYPE_YAML,
                             'clear_resource')
@@ -249,6 +249,7 @@ def clear_resources(debug):
                 contents[key] = 'None'
             dump(contents, resource, CONTENT_TYPE_YAML,
                  'clear_resource')
+            print 'Ok!'            
         except Exception as exc:        #pylint: disable=W0703            
             print '\nERROR: Failed to clear %s\n%s' % \
                 (resource, exc)
