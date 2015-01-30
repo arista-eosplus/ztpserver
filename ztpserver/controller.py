@@ -208,7 +208,6 @@ class NodesController(BaseController):
         log.debug('%s: startup-config PUT request: \n%s\n' % 
                   (kwargs['resource'], request))
 
-        response = dict()
         fobj = None
         try:
             body = str(request.body)
@@ -226,7 +225,7 @@ class NodesController(BaseController):
                 log.error('%s: unable to write %s' % 
                           (kwargs['resource'], filename))
                 return self.http_bad_request()
-        return response
+        return {}
 
     #-------------------------------------------------------------------
 
@@ -752,8 +751,10 @@ class BootstrapController(BaseController):
         try:
             filename = self.expand(runtime.bootstrap.filename)
             fobj = self.repository.get_file(filename).read(CONTENT_TYPE_PYTHON)
+
             default_server = runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
+
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
             log.info('%s: node beginning provisioning' %
                      request.remote_addr)
