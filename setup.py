@@ -75,7 +75,7 @@ version = open('VERSION').read().split()[0].strip()
 data_files = []
 # configuration folders are not cleared on upgrade/downgrade
 for folder in ['nodes', 'definitions', 'files', 'resources',
-               'bootstrap']:
+               'bootstrap', 'config-handlers']:
     path = '%s/%s' % (install_path, folder)
     if install() and not os.path.isdir(path):
         if os.path.exists(path):

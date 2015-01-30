@@ -257,6 +257,7 @@ class Repository(object):
         obj = FileObject(file_path)
         if contents:
             obj.write(contents, content_type)
+            os.chmod(file_path, 0774)
         return obj
 
     def exists(self, file_path):

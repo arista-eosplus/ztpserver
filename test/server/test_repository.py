@@ -88,13 +88,16 @@ class RepositoryUnitTests(unittest.TestCase):
         self.assertRaises(RepositoryError, store.add_folder, random_string())
 
     @patch('ztpserver.repository.FileObject')
-    def test_create_file_success(self, m_fileobj):
+    @patch('os.chmod')
+    def test_create_file_success(self, _, m_fileobj):
         store = Repository(random_string())
         store.add_file(random_string())
         self.assertFalse(m_fileobj.return_value.write.called)
 
     @patch('ztpserver.repository.FileObject')
-    def test_create_file_with_contents_success(self, m_fileobj):
+    @patch('os.chmod')
+    def test_create_file_with_contents_success(self, _,
+                                               m_fileobj):
         store = Repository(random_string())
         store.add_file(random_string(), random_string())
         self.assertTrue(m_fileobj.return_value.write.called)

@@ -35,8 +35,10 @@
 import logging
 import os
 import routes
+import subprocess
 
 from string import Template
+from subprocess import PIPE
 from webob.static import FileApp
 
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
@@ -57,6 +59,7 @@ from ztpserver.config import runtime
 
 
 DEFINITION_FN = 'definition'
+CONFIG_HANDLER_FN = 'config-handler'
 STARTUP_CONFIG_FN = 'startup-config'
 PATTERN_FN = 'pattern'
 NODE_FN = '.node'
@@ -205,26 +208,51 @@ class NodesController(BaseController):
     #-------------------------------------------------------------------
 
     def put_config(self, request, **kwargs):
+        node_id = kwargs['resource']
+
         log.debug('%s: startup-config PUT request: \n%s\n' % 
-                  (kwargs['resource'], request))
+                  (node_id, request))
 
         fobj = None
         try:
             body = str(request.body)
             content_type = str(request.content_type)
-            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            filename = self.expand(node_id, STARTUP_CONFIG_FN)
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
             log.debug('%s: file not found: %s (adding it)' % 
-                      (kwargs['resource'], filename))
+                      (node_id, filename))
             fobj = self.repository.add_file(filename)
         finally:
             if fobj:
                 fobj.write(body, content_type)
             else:
                 log.error('%s: unable to write %s' % 
-                          (kwargs['resource'], filename))
+                          (node_id, filename))
                 return self.http_bad_request()
+
+        # Execute event-handler
+        script = self.expand(node_id, CONFIG_HANDLER_FN)
+        if os.path.isfile(script):
+            proc = subprocess.Popen(script, stdin=PIPE, 
+                                    stdout=PIPE, stderr=PIPE, 
+                                    shell=True)
+            code = proc.returncode         #pylint: disable=E1101
+            (out, err) = proc.communicate()
+            if code or err:
+                log.warn('Startup-config saved for %s '
+                         '(%s failed: return code=%s, stderr=%s)' % 
+                         (node_id, script, code, err))
+                log.debug('%s output: \n%s' % (script, out))
+            else:
+                log.info('Startup-config saved for %s '
+                         '(%s executed successfully)' % 
+                         (node_id, script))
+                log.debug('%s output: \n%s' % (script, out))
+        else:
+            log.info('Startup-config saved for %s (no config-handler)' % 
+                     node_id)
+
         return {}
 
     #-------------------------------------------------------------------
@@ -383,8 +411,9 @@ class NodesController(BaseController):
 
         log.info('%s: node matched \'%s\' pattern in neighbordb' % 
                  (node_id, match.name))
-        try:
 
+        # Load definition
+        try:
             definition_url = self.expand(match.definition, 
                                          folder='definitions')
             fobj = self.repository.get_file(definition_url)
@@ -404,20 +433,45 @@ class NodesController(BaseController):
 
         definition_fn = self.expand(node_id, DEFINITION_FN)
         
+        # Load config-handler
+        if match.config_handler:
+            try:
+                config_handler_url = self.expand(match.config_handler, 
+                                                 folder='config-handlers')
+                fobj = self.repository.get_file(config_handler_url)
+                log.info('%s: node config-handler copied from: %s' % 
+                         (node_id, config_handler_url))
+            except FileObjectNotFound:
+                log.error('%s: failed to find config-handler (%s)' % 
+                          (node_id, config_handler_url))
+                raise
+
+            try:
+                config_handler = fobj.read(content_type=CONTENT_TYPE_OTHER)
+            except FileObjectError:
+                log.error('%s: failed to load config-handler' % 
+                          (node_id))
+                raise
+            
+            config_handler_fn = self.expand(node_id, CONFIG_HANDLER_FN)
+            
+        # Create node folder
         self.repository.add_folder(self.expand(node_id))
 
         log.info('%s: new dynamically-provisioned node created: /nodes/%s' % 
                  (node_id, node_id))
 
+        # Add definition
         fobj = self.repository.add_file(definition_fn)
         fobj.write(definition, CONTENT_TYPE_YAML)
-        
+
+        # Add pattern
         pattern_fn = self.expand(node_id, PATTERN_FN)
         fobj = self.repository.add_file(pattern_fn)
 
         pattern = match.serialize()
 
-        # No need to write the definition name in the apttern file
+        # No need to write the definition name in the pattern file
         del pattern['definition']
 
         for attr in ['node', 'variables']:
@@ -429,6 +483,12 @@ class NodesController(BaseController):
             pattern['interfaces'] = [{'any': {'any': 'any'}}]
 
         fobj.write(pattern, CONTENT_TYPE_YAML)
+
+        # Add config-handler
+        if match.config_handler:
+            fobj = self.repository.add_file(config_handler_fn)
+            fobj.write(config_handler, CONTENT_TYPE_OTHER)
+
         response['status'] = HTTP_STATUS_CREATED
         return (response, 'dump_node')
 

@@ -32,10 +32,14 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=R0201
 #
+
+from ztpserver.constants import CONTENT_TYPE_OTHER
+from ztpserver.constants import CONTENT_TYPE_JSON
+from ztpserver.constants import CONTENT_TYPE_YAML
+
 import collections
 import logging
 import json
-
 import threading
 import yaml
 
@@ -137,9 +141,9 @@ class Serializer(object):
         self.node_id = node_id
 
         self._handlers = {
-            'text/plain': TextSerializer(self.node_id),
-            'application/json': JSONSerializer(self.node_id),
-            'application/yaml': YAMLSerializer(self.node_id)
+            CONTENT_TYPE_OTHER: TextSerializer(self.node_id),
+            CONTENT_TYPE_JSON: JSONSerializer(self.node_id),
+            CONTENT_TYPE_YAML: YAMLSerializer(self.node_id)
         }
 
     @property

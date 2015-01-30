@@ -1159,7 +1159,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         # 'definition' is not written to the pattern file
         # Empty 'variables', 'node' are not written to the 
         # pattern file either
-        self.assertEqual(sorted(write_mock.call_args[0][0].keys()),
+        self.assertEqual(sorted(write_mock.call_args_list[1][0][0].keys()),
                          ['interfaces', 'name'])
 
         location = 'http://localhost/nodes/%s' % node.serialnumber

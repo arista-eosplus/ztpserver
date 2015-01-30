@@ -238,7 +238,7 @@ class TestPattern(unittest.TestCase):
         self.assertEqual(1, len(obj.interfaces))
 
     def test_add_interface(self):
-        obj = Pattern(None, None, [{'Ethernet1': 'any'}])
+        obj = Pattern(interfaces=[{'Ethernet1': 'any'}])
         self.assertEqual(len(obj.interfaces), 1)
 
 
