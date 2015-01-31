@@ -56,6 +56,61 @@ Did you know?
 
 Check out `YAML syntax checker <http://yamllint.com/>`_ for more.
 
+How do I validate the format of my config files?
+````````````````````````````````````````````````
+
+To validate config files use ``ztps --validate``:
+
+.. code-block:: console
+
+    [ztpsadmin@ztps ~]$ ztps --validate
+    Validating neighbordb ('/usr/share/ztpserver/neighbordb')... Ok!
+
+    Validating definitions...
+    Validating /usr/share/ztpserver/definitions/torb-withImageUpgrade... Ok!
+    Validating /usr/share/ztpserver/definitions/torb... Ok!
+    Validating /usr/share/ztpserver/definitions/tora-withImageUpgrade... Ok!
+    Validating /usr/share/ztpserver/definitions/tora... Ok!
+
+    Validating resources...
+    Validating /usr/share/ztpserver/resources/tor_hostnames... Ok!
+    Validating /usr/share/ztpserver/resources/ip_loopback... Ok!
+    Validating /usr/share/ztpserver/resources/ip_vlan100... Ok!
+    Validating /usr/share/ztpserver/resources/mgmt_subnet... Ok!
+
+    Validating nodes...
+    Validating /usr/share/ztpserver/nodes/001122334456/pattern... Ok!
+    Validating /usr/share/ztpserver/nodes/001122334456/definition... Ok!
+    Validating /usr/share/ztpserver/nodes/001122334455/pattern... Ok!
+    Validating /usr/share/ztpserver/nodes/001122334455/definition... Ok!
+    Validating /usr/share/ztpserver/nodes/001122334457/pattern... Ok!
+    Validating /usr/share/ztpserver/nodes/001122334457/definition... Ok!
+
+
+How do I debug the ZTP Server provisioning process?
+```````````````````````````````````````````````````
+
+* If ZTP Server is running via wsgi, Check the Apache log files.  Separate log files can be designated for ZTP Server's wsgi with the following::
+
+    <VirtualHost *:8080>
+        CustomLog logs/ztpserver-access_log common
+        ErrorLog logs/ztpserver-error_log
+        ...
+    </VirtualHost>
+
+* Run the standalone ZTP Server binary in debug mode and log the output to a file:
+  ``ztps --debug 2>&1 | tee ztps.log``
+
+* After changing configuration directives in neighbordb, a definition, etc, you may need to remove the node directory of the node-under-test before retrying ZTP on the node.   This will ensure that ZTP Server matches the node against neighbordb instead of ``nodes/<serialnum>/pattern``.
+
+* The ``bootstrap`` script may be manually run from a switch, if it iw up with IP connectivity to the ZTP Server instead of going through an entire reload/ZTP cycle.  To do this, download the script to the switch, then run it locally::
+
+    switch# bash wget http://ztpserver:8080/bootstrap
+    switch# bash chmod +x bootstrap
+    switch# bash sudo ./bootstrap
+
+* When requesting support, please include the output from ztpserver in debug mode and the console/log output from the switch.
+
 How do I disable / enable ZTP mode on a switch
 ``````````````````````````````````````````````
 
