@@ -8,14 +8,15 @@ Contact
 
 ZTPServer is an Arista-led open source community project.  Users and developers are encouraged to contribute to the project.  See `CONTRIBUTING <https://github.com/arista-eosplus/ztpserver/blob/develop/CONTRIBUTING.md>`_ for more details.
 
+Commercial support may be purchased through your Arista account team.
+
 Community-based support is available through:
 
 * `eosplus forum <https://groups.google.com/forum/#!forum/eosplus>`_
 * eosplus-dev@arista.com.
 * IRC: irc.freenode.net#arista
 
-Commercial support, customization, and integration services are available through the EOS+ team at `Arista Networks, Inc <http://arista.com/>`_.  Contact eosplus-dev@arista.com for details.
-
+Customization, and integration services are available through the EOS+ team at `Arista Networks, Inc <http://arista.com/>`_.  Contact eosplus-dev@arista.com  or your account team for details.
 
 Known caveats
 ~~~~~~~~~~~~~
