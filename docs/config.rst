@@ -445,10 +445,11 @@ Rules:
  - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored  
  - if both the **node** and **interfaces** attributes are specified and a node's unique_id is a match, but the topology information is not, then the overall match will fail and the global patterns will not be considered
  - if there is no matching node-specific pattern for a node's unique_id, then the server will attempt to match the node against the global patterns (in the order they are specified in ``neighbordb``)
- - if a node-specific pattern matches, the server will automatically generate an open pattern in the node's folder. This pattern will match any device with at least one LLDP-capable neighbor.
+ - if a node-specific pattern matches, the server will automatically generate an open pattern in the node's folder. This pattern will match any device with at least one LLDP-capable neighbor.  Example: ``any: any:any``
  
 .. code-block:: yaml
 
+    ---
     variables:
         variable_name: function
     ...
@@ -487,13 +488,13 @@ includes (string)
 excludes (string)
     defines a string that must not be present in system/port name
 
-unique_id
-'''''''''
+node: unique_id
+'''''''''''''''
 
 Serial number or MAC address, depending on the global 'identifier' attribute in **ztpserver.conf**.
 
-port\_name
-''''''''''
+interfaces: port\_name
+''''''''''''''''''''''
 
 Local interface name - supported values:
 
@@ -600,7 +601,7 @@ Negative constraints
 Positive constraints
                     
 
-1. ``any: any:any``: matches anything
+1. ``any: any:any``: "Open pattern" matches anything
 2. ``any: any:PORT``: matches any interface connected to any device’s
    PORT
 3. ``any: DEVICE:any``: matches any interface connected to DEVICE
