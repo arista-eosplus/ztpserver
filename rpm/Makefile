@@ -23,7 +23,7 @@ VERSION := $(shell cat ../VERSION)
 
 # Spec files cannot contain extraneous strings - so just extract numbered release
 SPECVERSION := $(shell sed -n 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/p' ../VERSION)
-RPMRELEASE = 2
+RPMRELEASE = 3
 
 
 # RPM build parameters

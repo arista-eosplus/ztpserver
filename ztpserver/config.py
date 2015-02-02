@@ -270,7 +270,6 @@ class Config(collections.Mapping):
     def read(self, filename):
         cp = ConfigParser.RawConfigParser() #pylint: disable=C0103
         cp.read(filename)
-
         for section in cp.sections():
             for key, value in cp.items(section):
                 try:
@@ -285,7 +284,7 @@ runtime = Config()
 # Group: default
 runtime.add_attribute(StrAttr(
     name='data_root',
-    default='/usr/share/ztpserver',
+    default=INSTALL_PATH,
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
@@ -343,7 +342,7 @@ runtime.add_attribute(IntAttr(
 runtime.add_attribute(StrAttr(
     name='filename',
     group='bootstrap',
-    default='default',
+    default='bootstrap',
     environ='ZTPS_BOOTSTRAP_FILENAME'
 ))
 

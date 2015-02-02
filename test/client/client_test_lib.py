@@ -215,6 +215,16 @@ def main(attributes):
         result += '    print attributes.get(\'%s\')\n' % attr
     return result
 
+def fail_flash_file_action(flash, filename):
+    '''Creates file on flash and then fails'''
+
+    return '''#!/usr/bin/env python
+
+def main(attributes):
+   open('%s/%s', 'w').write('test')
+   raise Exception('Ops! I failed! :(')
+''' % (flash, filename)
+
 def fail_action():
     return '''#!/usr/bin/env python
 
@@ -424,8 +434,13 @@ class EAPIServer(object):
         self.serial_number = serial_number
         self.version = version
 
+        self.fail_commands = []
+
     def cleanup(self):
         self.responses = {}
+
+    def add_failing_command(self, cmd):
+        self.fail_commands += [cmd]
 
     def start(self):
         thread.start_new_thread(self._run, ())
@@ -443,6 +458,11 @@ class EAPIServer(object):
 
                 print 'EAPIServer: responding to request:%s (%s)' % (
                     req.path, ', '.join(cmds))
+
+                if [x for x in cmds if x in self.fail_commands]:
+                    print 'EAPIServer: failed on-demand'
+                    req.send_response(STATUS_BAD_REQUEST)                    
+                    return
 
                 req.send_response(STATUS_OK)
 

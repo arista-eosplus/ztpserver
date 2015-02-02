@@ -43,20 +43,18 @@ from wsgiref.simple_server import make_server
 
 from ztpserver import config, controller
 
-from ztpserver.serializers import load
+from ztpserver.serializers import load, dump
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.topology import neighbordb_path
 from ztpserver.utils import all_files
 
-DEFAULT_CONF = config.GLOBAL_CONF_FILE_PATH
-
-log = logging.getLogger("ztpserver")
+log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 def enable_handler_console(level=None):
-    """ Enables logging to stdout """
+    ''' Enables logging to stdout '''
     
     logging_fmt = config.runtime.default.console_logging_format
     formatter = logging.Formatter(logging_fmt)
@@ -79,25 +77,31 @@ def enable_handler_console(level=None):
     log.addHandler(ch)
 
 def python_supported():
-    """ Returns True if the current version of the python runtime is valid """
+    ''' Returns True if the current version of the python runtime is valid '''
     return sys.version_info > (2, 7) and sys.version_info < (3, 0)
 
+logging_started = False
 def start_logging(debug):
-    """ reads the runtime config and starts logging if enabled """
+    ''' reads the runtime config and starts logging if enabled '''
+    global logging_started     #pylint: disable=W0603
+    if logging_started:
+        return
 
     if config.runtime.default.logging:
         if config.runtime.default.console_logging:
             enable_handler_console('DEBUG' if debug else 'INFO')
 
+    logging_started = True
+
 def load_config(conf=None):
-    conf = conf or DEFAULT_CONF
+    conf = conf or config.GLOBAL_CONF_FILE_PATH
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
         config.runtime.read(conf)
 
-def start_wsgiapp():
-    """ Provides the entry point into the application for wsgi compliant
+def start_wsgiapp(config_file=None, debug=False):
+    ''' Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
     keyword argument specifies the path the server configuration file.  The
     default value is /etc/ztpserver/ztpserver.conf.
@@ -105,7 +109,16 @@ def start_wsgiapp():
     :param conf: string path pointing to configuration file
     :return: a wsgi application object
 
-    """
+    '''
+    load_config(config_file)
+    start_logging(debug)
+
+    try:
+        version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
+    except Exception:  # pylint: disable=W0703
+        version = 'N/A'
+
+    log.info('Starting ZTPServer v%s...' % version)
 
     log.info('Logging started for ztpserver')
     log.info('Using repository %s', config.runtime.default.data_root)
@@ -115,24 +128,25 @@ def start_wsgiapp():
 
     return controller.Router()
 
-def run_server(version):
-    """ The :py:func:`run_server` is called by the main command line routine to
+def run_server(version, config_file, debug):
+    ''' The :py:func:`run_server` is called by the main command line routine to
     run the server as standalone.   This function accepts a single argument
     that points towards the configuration file describing this server
 
     This function will block on the active thread until stopped.
 
     :param conf: string path pointing to configuration file
-    """
-
-    app = start_wsgiapp()
+    '''
+    app = start_wsgiapp(config_file, debug)
 
     host = config.runtime.server.interface
     port = config.runtime.server.port
 
+    log.info('URL: http://%s:%s' % (host, port))
+
     httpd = make_server(host, port, app)
 
-    log.info("Starting ZTPServer v%s on http://%s:%s" % 
+    log.info('Starting ZTPServer v%s on http://%s:%s' % 
              (version, host, port))
 
     try:
@@ -140,8 +154,7 @@ def run_server(version):
     except KeyboardInterrupt:
         log.info('Shutdown...')
 
-def run_validator():
-
+def validate_neighbordb():
     # Validating neighbordb
     validator = NeighbordbValidator('N/A')
     neighbordb = neighbordb_path()
@@ -166,6 +179,7 @@ def run_validator():
     except Exception as exc:        #pylint: disable=W0703
         print 'ERROR: Failed to validate neighbordb\n%s' % exc
 
+def validate_definitions():
     data_root = config.runtime.default.data_root
 
     print '\nValidating definitions...'
@@ -180,17 +194,25 @@ def run_validator():
             print '\nERROR: Failed to validate %s\n%s' % \
                 (definition, exc)
 
+def validate_resources(raiseException=False):
+    data_root = config.runtime.default.data_root
+
     print '\nValidating resources...'
     for resource in all_files(os.path.join(data_root, 
-                                             'resources')):
+                                           'resources')):
         print 'Validating %s...' % resource,
         try:
             load(resource, CONTENT_TYPE_YAML,
                  'validator')
             print 'Ok!'
-        except Exception as exc:        #pylint: disable=W0703            
+        except Exception as exc:        #pylint: disable=W0703 
             print '\nERROR: Failed to validate %s\n%s' % \
                 (resource, exc)
+            if raiseException:
+                raise exc
+
+def validate_nodes():
+    data_root = config.runtime.default.data_root
 
     print '\nValidating nodes...'
     for filename in [x for x in all_files(os.path.join(data_root, 
@@ -206,12 +228,46 @@ def run_validator():
             print '\nERROR: Failed to validate %s\n%s' % \
                 (filename, exc)
 
+def clear_resources(debug):
+    start_logging(debug)
+
+    try:
+        validate_resources(raiseException=True)
+    except Exception:                   #pylint: disable=W0703 
+        sys.exit('ERROR: Unable to clear resources because of validation error')
+
+    data_root = config.runtime.default.data_root
+
+    print '\nClearing resources...'
+    for resource in all_files(os.path.join(data_root, 
+                                           'resources')):
+        print 'Clearing %s...' % resource,
+        try:
+            contents = load(resource, CONTENT_TYPE_YAML,
+                            'clear_resource')
+            for key in contents:
+                contents[key] = 'None'
+            dump(contents, resource, CONTENT_TYPE_YAML,
+                 'clear_resource')
+            print 'Ok!'            
+        except Exception as exc:        #pylint: disable=W0703            
+            print '\nERROR: Failed to clear %s\n%s' % \
+                (resource, exc)
+    
+def run_validator(debug):
+    start_logging(debug)
+
+    validate_neighbordb()
+    validate_definitions()
+    validate_resources()
+    validate_nodes()
+
 def main():
-    """ The :py:func:`main` is the main entry point for the ztpserver if called
+    ''' The :py:func:`main` is the main entry point for the ztpserver if called
     from the commmand line.   When called from the command line, the server is
     running in standalone mode as opposed to using the :py:func:`application` to
     run under a python wsgi compliant server
-    """
+    '''
 
     usage = 'ztpserver [options]'
 
@@ -223,7 +279,7 @@ def main():
 
     parser.add_argument('--conf', '-c',
                         type=str,
-                        default=DEFAULT_CONF,
+                        default=config.GLOBAL_CONF_FILE_PATH,
                         help='Specifies the configuration file to use')
 
     parser.add_argument('--validate-config', '-V',
@@ -233,6 +289,10 @@ def main():
     parser.add_argument('--debug',
                         action='store_true',
                         help='Enables debug output to the STDOUT')
+
+    parser.add_argument('--clear-resources', '-r',
+                        action='store_true',
+                        help='Clears all resource files')
 
 
     args = parser.parse_args()
@@ -245,12 +305,14 @@ def main():
 
     if args.version:
         print 'ZTPServer version %s' % version
-        sys.exit()
-
-    load_config(args.conf)
-    start_logging(args.debug)
 
     if args.validate_config:
-        sys.exit(run_validator())
+        run_validator(args.debug)
 
-    return run_server(version)
+    if args.clear_resources:
+        clear_resources(args.debug)
+
+    if args.version or args.validate_config or args.clear_resources:
+        sys.exit()
+
+    return run_server(version, args.conf, args.debug)

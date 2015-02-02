@@ -131,10 +131,9 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
                                 node_id)
 
         # add dummy values to pass validation
-        if 'definition' not in pattern:
-            pattern['definition'] = 'definition'
-        if 'name' not in pattern:
-            pattern['name'] = 'name'
+        for dummy in ['definition', 'name', 'config_handler']:
+            if dummy not in pattern:
+                pattern[dummy] = dummy
 
         if not validate_pattern(pattern, node_id):
             log.error('%s: failed to validate pattern attributes' % node_id)
@@ -374,6 +373,7 @@ class Neighbordb(object):
 
             kwargs['node'] = kwargs.get('node')
             kwargs['definition'] = kwargs.get('definition')
+            kwargs['config_handler'] = kwargs.get('config-handler')
             kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
@@ -479,11 +479,13 @@ class Neighbordb(object):
 
 class Pattern(object):
 
-    def __init__(self, name=None, definition=None, interfaces=None,
+    def __init__(self, name=None, definition=None, 
+                 config_handler=None, interfaces=None,
                  node=None, variables=None, node_id=None):
 
         self.name = name
         self.definition = definition
+        self.config_handler = config_handler
 
         self.node = node
         self.node_id = node_id
@@ -520,9 +522,10 @@ class Pattern(object):
                                (self.node_id, self.name, str(exc)))
 
     def serialize(self):
-        data = dict(name=self.name, definition=self.definition)
-        data['variables'] = self.variables
-        data['node'] = self.node
+        data = dict(name=self.name, definition=self.definition,
+                    variables=self.variables, node=self.node)
+
+        data['config-handler'] = self.config_handler
 
         interfaces = []
         for item in self.interfaces:
