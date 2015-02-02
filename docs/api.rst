@@ -9,23 +9,28 @@ Client - Server API
 URL Endpoints
 ~~~~~~~~~~~~~
 
-+---------------+-------------------------------+
-| HTTP Method   | URI                           |
-+===============+===============================+
-| GET           | /bootstrap/config             |
-+---------------+-------------------------------+
-| GET           | /bootstrap                    |
-+---------------+-------------------------------+
-| POST          | /nodes                        |
-+---------------+-------------------------------+
-| PUT           | /nodes/{id}                   |
-+---------------+-------------------------------+
-| GET           | /nodes/{id}                   |
-+---------------+-------------------------------+
-| GET           | /actions/{name}               |
-+---------------+-------------------------------+
-| GET           | /files/{filepath}             |
-+---------------+-------------------------------+
++---------------+-----------------------------------------+
+| HTTP Method   | URI                                     |
++===============+=========================================+
+| GET           | /bootstrap                              |
++---------------+-----------------------------------------+
+| GET           | /bootstrap/config                       |
++---------------+-----------------------------------------+
+| POST          | /nodes                                  |
++---------------+-----------------------------------------+
+| GET           | /nodes/{id}                             |
++---------------+-----------------------------------------+
+| PUT           | /nodes/{id}/startup-config              |
++---------------+-----------------------------------------+
+| GET           | /nodes/{id}/startup-config              |
++---------------+-----------------------------------------+
+| GET           | /actions/{name}                         |
+|               | /action/{name}                          |
++---------------+-----------------------------------------+
+| GET           | /files/{filepath}                       |
++---------------+-----------------------------------------+
+| GET           | /meta/{actions|files|nodes}/{PATH_INFO} |
++---------------+-----------------------------------------+
 
 GET bootstrap script
 ^^^^^^^^^^^^^^^^^^^^
@@ -34,12 +39,19 @@ GET bootstrap script
 
     Returns the default bootstrap script
 
+    **Request**
+
+    .. sourcecode:: http
+
+        GET /bootstrap HTTP/1.1
+
     **Response**
 
     .. code-block:: http
 
-        Status: 200 OK
         Content-Type: text/x-python
+
+    :statuscode 200: OK
 
 .. note::
 
@@ -56,8 +68,8 @@ GET bootstrap script
 -  if the ``$SERVER`` string is missing from the bootstrap script, the
    controller will log a warning message and continue
 
-GET logging configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^
+GET bootstrap logging configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /bootstrap/config
 
@@ -68,15 +80,11 @@ GET logging configuration
     .. sourcecode:: http
 
         GET /bootstrap/config HTTP/1.1
-        Host: 
-        Accept: 
-        Content-Type: text/html
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
         Content-Type: application/json
         {
             “logging”*: [ {
@@ -99,6 +107,8 @@ GET logging configuration
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
 
+    :statuscode 200: OK
+
 POST node details
 ^^^^^^^^^^^^^^^^^
 
@@ -117,7 +127,6 @@ provisioned.
             “serialnumber”*:      <SERIAL_NUMBER>, 
             “systemmac”*:         <SYSTEM_MAC>,
             “version”*:           <INTERNAL_VERSION>, 
-
             “neighbors”*: {
                 <INTERFACE_NAME(LOCAL)>: [ {
                     'device':             <DEVICE_NAME>, 
@@ -130,18 +139,12 @@ provisioned.
 
     **Response**
 
+    Status: 201 Created OR 409 Conflict will both return:
+
     .. sourcecode:: http 
 
-        Status: 201 Created
         Content-Type: text/html
         Location: <url>
-
-        Status: 409 Conflict
-        Content-Type: text/html
-        Location: <url>
-
-        Status: 400 Bad Request
-        Content-Type: text/html
 
     :statuscode 201: Created
     :statuscode 409: Conflict
@@ -159,15 +162,12 @@ Request definition from the server.
     .. sourcecode:: http
 
         GET /nodes/{ID} HTTP/1.1
-        Host: 
         Accept: applicatino/json
-        Content-Type: text/html
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
         Content-Type: application/json
         {
             “name”*: <DEFINITION_NAME>
@@ -187,13 +187,65 @@ Request definition from the server.
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
 
+    :statuscode 200: OK
     :statuscode 400: Bad Request
     :statuscode 404: Not Found
 
-GET action
-^^^^^^^^^^
+PUT node startup-config
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This is used to backup the startup-config from a node to the server.
+
+.. http:put:: /nodes/(ID)/startup-config
+
+    **Request**
+
+    .. sourcecode:: http
+
+        Content-Type: text/plain
+        <startup-config contents>
+
+    **Response**
+
+    Status: 201 Created OR 409 Conflict will both return:
+
+    .. sourcecode:: http 
+
+         
+
+    :statuscode 201: Created
+    :statuscode 400: Bad Request
+
+GET node startup-config
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This is used to backup the startup-config from a node to the server.
+
+.. http:get:: /nodes/(ID)/startup-config
+
+    **Request**
+
+    .. sourcecode:: http
+
+        Content-Type: text/plain
+
+    **Response**
+
+    Status: 201 Created OR 409 Conflict will both return:
+
+    .. sourcecode:: http 
+
+        Content-Type: text/plain
+        <startup-config contents>
+
+    :statuscode 200: OK
+    :statuscode 400: Bad Request
+
+GET actions/(NAME)
+^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /actions/(NAME)
+.. http:get:: /action/(NAME)
 
     Request action from the server.
 
@@ -201,7 +253,7 @@ GET action
 
     .. sourcecode:: http
 
-        Content-Type: text/html
+        GET /actions/{NAME} HTTP/1.1
 
     **Response**
 
@@ -210,18 +262,10 @@ GET action
         Content-Type: text/x-python
 
     :statuscode 200: OK
-    :statuscode 400: Bad Request
     :statuscode 404: Not Found
 
-    Status: 200 OK
-    Content-Type: text/plain
-    <PYTHON SCRIPT>
-
-    Status: 200 Bad request
-    Content-Type: text/x-python
-
-GET resource
-^^^^^^^^^^^^
+GET resource files
+^^^^^^^^^^^^^^^^^^
 
 .. http:get::  /files/(RESOURCE_PATH)
 
@@ -231,16 +275,37 @@ GET resource
 
     .. sourcecode:: http
 
-        Content-Type: text/html
+        GET /files/{RESOURCE_PATH} HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
         Content-Type: text/plain
-        <resource>
+        <resource contents>
 
     :statuscode 200: OK
     :statuscode 404: Not Found
 
+GET meta data for a resource or file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. http:get::  /files/(RESOURCE_PATH)
+
+    Request action from the server.
+
+    **Request**
+
+    .. sourcecode:: http
+
+        GET /meta/(actions|files|nodes)/(PATH_INFO) HTTP/1.1
+
+    **Response**
+
+    .. sourcecode:: http
+
+        size: <bytes>
+        sha1: "<sha1 hash of the file>"
+
+    :statuscode 200: OK
+    :statuscode 500: Server Error
