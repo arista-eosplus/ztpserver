@@ -4,6 +4,11 @@ Client - Server API
 .. The RESTful API is documented using sphinxcontrib-httpdomain.  See
    http://pythonhosted.org/sphinxcontrib-httpdomain/
 
+.. Verify sync with ztpserver.controller.py using the following:
+   (PYTHONPATH=.; python)
+   my_map = controller.Router()
+   print my_map.map
+
 .. contents:: :local:
 
 URL Endpoints
@@ -25,7 +30,6 @@ URL Endpoints
 | GET           | /nodes/{id}/startup-config              |
 +---------------+-----------------------------------------+
 | GET           | /actions/{name}                         |
-|               | /action/{name}                          |
 +---------------+-----------------------------------------+
 | GET           | /files/{filepath}                       |
 +---------------+-----------------------------------------+
@@ -50,7 +54,9 @@ GET bootstrap script
     .. code-block:: http
 
         Content-Type: text/x-python
+        <contents of bootstrap client script>
 
+    :resheader Content-Type: text/x-python
     :statuscode 200: OK
 
 .. note::
@@ -100,13 +106,14 @@ GET bootstrap logging configuration
                 “domain”*:          <DOMAIN>,
                 “password”*:        <PASSWORD>,
                 “nickname”:         <NICKNAME>,             // Optional, default ‘username’
-                “rooms”*:           [ <ROOM>, … ]                     
+                “rooms”*:           [ <ROOM>, … ]
                 }
             }
         }
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
 
+    :resheader Content-Type: application/json
     :statuscode 200: OK
 
 POST node details
@@ -162,7 +169,7 @@ Request definition from the server.
     .. sourcecode:: http
 
         GET /nodes/{ID} HTTP/1.1
-        Accept: applicatino/json
+        Accept: application/json
 
     **Response**
 
@@ -187,6 +194,7 @@ Request definition from the server.
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
 
+    :resheader Content-Type: application/json
     :statuscode 200: OK
     :statuscode 400: Bad Request
     :statuscode 404: Not Found
@@ -205,21 +213,13 @@ This is used to backup the startup-config from a node to the server.
         Content-Type: text/plain
         <startup-config contents>
 
-    **Response**
-
-    Status: 201 Created OR 409 Conflict will both return:
-
-    .. sourcecode:: http 
-
-         
-
     :statuscode 201: Created
     :statuscode 400: Bad Request
 
 GET node startup-config
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This is used to backup the startup-config from a node to the server.
+This is used to retrieve the startup-config that was backed-up from a node to the server.
 
 .. http:get:: /nodes/(ID)/startup-config
 
@@ -238,6 +238,7 @@ This is used to backup the startup-config from a node to the server.
         Content-Type: text/plain
         <startup-config contents>
 
+    :resheader Content-Type: text/plain
     :statuscode 200: OK
     :statuscode 400: Bad Request
 
@@ -245,22 +246,23 @@ GET actions/(NAME)
 ^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /actions/(NAME)
-.. http:get:: /action/(NAME)
 
     Request action from the server.
 
-    **Request**
+    **Request Example**
 
     .. sourcecode:: http
 
-        GET /actions/{NAME} HTTP/1.1
+        GET /actions/add_config HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
         Content-Type: text/x-python
+        <raw action content>
 
+    :resheader Content-Type: text/x-python
     :statuscode 200: OK
     :statuscode 404: Not Found
 
@@ -271,41 +273,47 @@ GET resource files
 
     Request action from the server.
 
-    **Request**
+    **Request Examples**
 
     .. sourcecode:: http
 
-        GET /files/{RESOURCE_PATH} HTTP/1.1
+        GET /files/images/vEOS.swi HTTP/1.1
+        GET /files/templates/ma1.template HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
-        Content-Type: text/plain
-        <resource contents>
+        <raw resource contents>
 
+    :resheader Content-Type:text/plain
     :statuscode 200: OK
     :statuscode 404: Not Found
 
 GET meta data for a resource or file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. http:get::  /files/(RESOURCE_PATH)
+.. http:get::  /meta/(actions|files|nodes)/(PATH_INFO)
 
-    Request action from the server.
+    Request meta-data on a file.
 
-    **Request**
+    **Example Requests**
 
     .. sourcecode:: http
 
-        GET /meta/(actions|files|nodes)/(PATH_INFO) HTTP/1.1
+        GET /meta/actions/add_config HTTP/1.1
+        GET /meta/files/images/EOS-4.14.5F.swi HTTP/1.1
+        GET /meta/nodes/001122334455/.node HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
-        size: <bytes>
-        sha1: "<sha1 hash of the file>"
+        {
+          sha1: "d3852470a7328a4aad54ce030c543fdac0baa475"
+          size: 160
+        }
 
+    :resheader Content-Type:application/json
     :statuscode 200: OK
     :statuscode 500: Server Error
