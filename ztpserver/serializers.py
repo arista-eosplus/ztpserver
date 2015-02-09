@@ -40,6 +40,7 @@ from ztpserver.constants import CONTENT_TYPE_YAML
 import collections
 import logging
 import json
+import os
 import threading
 import yaml
 
@@ -231,10 +232,14 @@ def dump(data, file_path, content_type, node_id='N/A', lock=False):
     try:
         if lock:
             with READ_WRITE_LOCK[file_path]:
-                with open(file_path, 'w') as fhandler:
+                with os.fdopen(os.open(file_path, 
+                                       os.O_WRONLY | os.O_CREAT, 0754), 
+                               'w') as fhandler:
                     fhandler.write(dumps(data, content_type, node_id))
         else:
-            with open(file_path, 'w') as fhandler:
+            with os.fdopen(os.open(file_path, 
+                                   os.O_WRONLY | os.O_CREAT, 0754), 
+                           'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))            
     except (OSError, IOError) as err:
         log.error('%s: failed to write file to %s (%s)' % 

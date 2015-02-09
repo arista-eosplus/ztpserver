@@ -129,6 +129,8 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
         if not isinstance(pattern, collections.Mapping):
             pattern = load_file(pattern, content_type,
                                 node_id)
+            pattern['config_handler'] = pattern['config-handler']
+            del pattern['config-handler']
 
         # add dummy values to pass validation
         for dummy in ['definition', 'name', 'config_handler']:
@@ -141,8 +143,9 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
 
         pattern['node_id'] = node_id
         return Pattern(**pattern)
-    except TypeError:
-        log.error('%s: failed to load pattern \'%s\'' % (node_id, pattern))
+    except TypeError as exc:
+        log.error('%s: failed to load pattern \'%s\' (%s)' % 
+                  (node_id, pattern, exc))
 
 def create_node(nodeattrs):
     try:
@@ -371,15 +374,13 @@ class Neighbordb(object):
             kwargs['node_id'] = self.node_id
             kwargs['name'] = name
 
-            kwargs['node'] = kwargs.get('node')
-            kwargs['definition'] = kwargs.get('definition')
             kwargs['config_handler'] = kwargs.get('config-handler')
+            del kwargs['config-handler']
             kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
             for key in set(self.variables).difference(kwargs['variables']):
                 kwargs['variables'][key] = self.variables[key]
-
                 
             pattern = Pattern(**kwargs)
 
@@ -387,7 +388,7 @@ class Neighbordb(object):
                       (self.node_id, pattern))
 
             # Add pattern to neighbordb
-            if kwargs['node']:
+            if 'node' in kwargs:
                 if pattern.node not in self.patterns['nodes']: 
                     self.patterns['nodes'][pattern.node] = pattern
                 else:
