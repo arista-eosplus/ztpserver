@@ -36,6 +36,13 @@ The following directory structure is normally used:
         resources/
         neighbordb
 
+
+All configuration files can be validated using:
+
+::
+
+    (bash)# ztps --validate
+
 .. _global_configuration:
 
 Global configuration file
