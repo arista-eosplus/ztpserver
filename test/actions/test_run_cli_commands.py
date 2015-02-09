@@ -124,8 +124,8 @@ class SuccessTest(unittest.TestCase):
         try:
             self.failUnless(eapi_log()[-1] == contents)
             self.failUnless(bootstrap.action_failure())
-            self.failUnless('Running CLI commands failed' in
-                            bootstrap.output)
+            self.failUnless('Running CLI commands [\'%s\'] failed' % 
+                            contents in bootstrap.output)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error

@@ -129,8 +129,9 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
         if not isinstance(pattern, collections.Mapping):
             pattern = load_file(pattern, content_type,
                                 node_id)
-            pattern['config_handler'] = pattern['config-handler']
-            del pattern['config-handler']
+            if 'config-handler' in pattern:
+                pattern['config_handler'] = pattern['config-handler']
+                del pattern['config-handler']
 
         # add dummy values to pass validation
         for dummy in ['definition', 'name', 'config_handler']:
@@ -374,8 +375,10 @@ class Neighbordb(object):
             kwargs['node_id'] = self.node_id
             kwargs['name'] = name
 
-            kwargs['config_handler'] = kwargs.get('config-handler')
-            del kwargs['config-handler']
+            kwargs['config_handler'] = kwargs.get('config-handler', 
+                                                  None)
+            if 'config-handler' in kwargs:
+                del kwargs['config-handler']
             kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
