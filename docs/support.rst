@@ -40,6 +40,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :titlesonly:
 
     roadmap
+    ReleaseNotes1.3
     ReleaseNotes1.2
     ReleaseNotes1.1
 
