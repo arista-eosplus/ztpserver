@@ -297,3 +297,76 @@ file does not need to exist on the ZTPServer.
           documentation for more details.
 
 .. end of Copy a File to a Node During Provisioning
+
+
+
+Install a Specific EOS Image
+----------------------------
+
+Objective
+^^^^^^^^^
+
+I want a specific (v)EOS version to be automatically installed when I provision
+my node.
+
+.. note:: This assumes that you've already downloaded the desired (v)EOS image
+          from `Arista <https://www.arista.com/en/support/software-download>`_.
+
+Solution
+^^^^^^^^
+
+Let's create a place on the ZTPServer to host some SWIs:
+
+.. code-block:: shell
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create an images directory
+  admin@ztpserver:~# mkdir -p files/images
+
+  # SCP your SWI into the images directory, name it whatever you like
+  admin@ztpserver:~# scp admin@otherhost:/tmp/vEOS.swi files/images/vEOS_4.14.5F.swi
+
+Now let's create a definition that performs the ``install_image`` action:
+
+.. code-block:: shell
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create a definition file
+  admin@ztpserver:~# vi definitions/tor-definition
+
+Add the following lines to your definition, changing values where needed:
+
+.. code-block:: yaml
+
+  ---
+  name: static node definition
+  actions:
+    -
+      action: install_image
+      always_execute: true
+      attributes:
+        url: files/images/vEOS_4.14.5F.swi
+        version: 4.14.5F
+      name: "Install 4.14.5F"
+
+.. note:: The definition uses YAML syntax
+
+Explanation
+^^^^^^^^^^^
+
+In this case we are hosting the SWI on the ZTPServer, so we just define the ``url`` in relation
+to the ``data_root``. We could change the ``url`` to point to another server
+altogether - the choice is yours. The benefit of hosting the file on the
+ZTPServer is that we perform an extra checksum step to validate the integrity of
+the file.
+
+In practice, the node requests its definition during the provisioning process. It
+sees that it's supposed to perform the ``install_image`` action, so it
+requests the ``install_image`` python script. It then performs an HTTP GET for
+the ``url``.  Once it has these locally, it executes the
+`install_image <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_image>`_
+script.

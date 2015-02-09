@@ -83,7 +83,7 @@ If the global configuration file is updated, the server must be restarted in ord
 
     # UID used in the /nodes structure
     # default=serialnum
-    identifier=<serialnum | systemmac> 
+    identifier=<serialnum | systemmac>
 
     # Server URL to-be-advertised to clients (via POST replies) during the bootstrap process
     # default=http://ztpserver:8080
@@ -99,17 +99,17 @@ If the global configuration file is updated, the server must be restarted in ord
 
     # Console logging format
     # default=%(asctime)-15s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
-    console_logging_format=<(Python)logging format> 
+    console_logging_format=<(Python)logging format>
 
     # Globally disable topology validation in the bootstrap process
     # default=False
     disable_topology_validation=<True | False>
 
     [server]
-    # Note: this section only applies to using the standalone server.  If 
+    # Note: this section only applies to using the standalone server.  If
     # running under a WSGI server, these values are ignored
 
-    # Interface to which the server will bind to (0:0:0:0 will bind to 
+    # Interface to which the server will bind to (0:0:0:0 will bind to
     # all available IPv4 addresses on the local machine)
     # default=0.0.0.0
     interface=<IP addr>
@@ -130,7 +130,7 @@ If the global configuration file is updated, the server must be restarted in ord
 
 .. note::
 
-    Configuration values may be overridden by setting environment variables, if the configuration attribute supports it. This is mainly used for testing and should not be used in production deployments. 
+    Configuration values may be overridden by setting environment variables, if the configuration attribute supports it. This is mainly used for testing and should not be used in production deployments.
 
 Configuration values that support environment overrides use the ``environ`` keyword, as shown below:
 
@@ -174,7 +174,7 @@ Bootstrap configuration
         domain: im.ztps-test.com
         username: bootstrap
         password: eosplus
-        rooms: 
+        rooms:
           - ztps
           - ztps-room2
 
@@ -221,7 +221,7 @@ with the matching pattern in **neighbordb**).
     name: <system name>
 
     actions:
-      -  
+      -
         action: <action name>
 
         attributes:                     # attributes at action scope
@@ -233,7 +233,7 @@ with the matching pattern in **neighbordb**).
         onsuccess: <msg>                # message to log if action execution succeeds
         onfailure: <msg>                # message to log if action execution fails
       ...
-    
+
     attributes:                         # attributes at global scope
         <key>: <value>
         <key>: <value>
@@ -267,6 +267,7 @@ Here are a few examples:
    .. code-block:: yaml
 
        attributes:
+         list_name:
            - my_value1
            - my_value2
            - my_valueN
@@ -392,7 +393,7 @@ If topology validation is enabled globally, the following patterns can be used i
 
     name: <pattern name>
     interfaces:
-        - any: any:any   
+        - any: any:any
 
 OR
 
@@ -402,12 +403,12 @@ OR
 
     name: <pattern name>
     interfaces:
-        - none: none:none   
+        - none: none:none
 
 Static provisioning - config-handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``config-handler`` file can be any script which can be executed 
+The ``config-handler`` file can be any script which can be executed
 on the server. The script will be executed every time a PUT startup-config
 request succeeds for the node.
 
@@ -455,23 +456,23 @@ Dynamic provisioning - neighbordb
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``neighbordb`` YAML file defines mappings between patterns
-and definitions. If a node is not already configured via a static entry, 
+and definitions. If a node is not already configured via a static entry,
 then the node’s topology details are attempted to be matched against
 the patterns in ``neighbordb``. If a match is successful, then a node
 definition will be automatically generated for the node (based on the
 mapping in neighbordb).
 
-There are 2 types of patterns supported in neighbordb: 
-node-specific (containing the **node** attribute, which refers to the 
+There are 2 types of patterns supported in neighbordb:
+node-specific (containing the **node** attribute, which refers to the
 unique_id of the node) and global patterns.
 
 Rules:
 
- - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored  
+ - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored
  - if both the **node** and **interfaces** attributes are specified and a node's unique_id is a match, but the topology information is not, then the overall match will fail and the global patterns will not be considered
  - if there is no matching node-specific pattern for a node's unique_id, then the server will attempt to match the node against the global patterns (in the order they are specified in ``neighbordb``)
  - if a node-specific pattern matches, the server will automatically generate an open pattern in the node's folder. This pattern will match any device with at least one LLDP-capable neighbor.  Example: ``any: any:any``
- 
+
 .. code-block:: yaml
 
     ---
@@ -495,7 +496,7 @@ Rules:
 .. note::
 
     Mandatory attributes: **name**, **definition**, and either **node**, **interfaces** or both.
-    
+
     Optional attributes: **variables**, **config-handler**.
 
 variables
@@ -593,7 +594,7 @@ port\_name: system\_name:neighbor\_port\_name
 '''''''''''''''''''''''''''''''''''''''''''''
 
 Negative constraints
-                    
+
 
 1.  ``any: DEVICE:none``: no port is connected to DEVICE
 2.  ``none: DEVICE:any``: same as above
@@ -626,7 +627,7 @@ Negative constraints
     anything
 
 Positive constraints
-                    
+
 
 1. ``any: any:any``: "Open pattern" matches anything
 2. ``any: any:PORT``: matches any interface connected to any device’s
@@ -715,7 +716,7 @@ The configuration templates can also contains **variables**, which are
 automatically substituted during the action’s execution. A variable is
 marked in the template via the '$' symbol.
 
-e.g. 
+e.g.
 Let’s assume a need for a more generalized template that only needs
 node specific values changed (such as a hostname and management IP
 address). In this case, we’ll build an action that allows for **variable
@@ -820,9 +821,9 @@ all resources in all resource files.
 Config-handlers
 ~~~~~~~~~~~~~~~
 
-``[data_root]/config-handlers/`` contains config-handlers which can be 
+``[data_root]/config-handlers/`` contains config-handlers which can be
 associated with nodes via *neighbordb*. A config-handler script is executed
-every time a PUT startup-config request succeeds for a node which is 
+every time a PUT startup-config request succeeds for a node which is
 associated to it.
 
 Other files
