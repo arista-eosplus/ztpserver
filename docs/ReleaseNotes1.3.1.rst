@@ -1,5 +1,5 @@
-Release 1.3
------------
+Release 1.3.1
+-------------
 
 (Published February, 2015)
 
