@@ -642,7 +642,7 @@ definitions.
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | Action                    | Description                                               | Required Attributes                    |
 +===========================+===========================================================+========================================+
-| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url                                    |
+| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url, variables                         |
 |                           | file                                                      |                                        |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
@@ -658,6 +658,10 @@ definitions.
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | :mod:`send_email`         | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
 |                           | through a relay host. Can include file attachments        | body, attachments, commands            |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`run_bash_script`    | Run bash script during bootstrap.                         | url, variables                         |
++---------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`run_cli_commands`   | Run CLI commands during bootstrap.                        | url, variables                         |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 
 Additional details on each action are available in the :doc:`actions` module docs.
