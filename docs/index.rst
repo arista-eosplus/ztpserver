@@ -27,7 +27,7 @@ Features
 * Config and device templates with dynamic resource allocation
 * Zero-touch replacement and upgrade capabilities
 * User extensible actions
-* Email, XMPP, syslog based 
+* Email, XMPP, syslog based
 
 .. _an_introduction:
 
@@ -39,9 +39,9 @@ Features
    startup
    config
    examples
+   cookbook
    tips
    internals
    glossary
    support
    license
-
