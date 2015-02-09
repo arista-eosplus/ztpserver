@@ -52,10 +52,10 @@ def main(attributes):
           -
             action: run_bash_script
             attributes:
-              url: files/templates/ma1.template
+              url: files/scripts/install_script
               variables:
                 version: 1.2.3
-            name: "install temp package"
+            name: 'install temp package'
     '''
 
     node = attributes.get('NODE')

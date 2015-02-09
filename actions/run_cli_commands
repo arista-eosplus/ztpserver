@@ -55,7 +55,7 @@ def main(attributes):
               url: files/templates/ma1.template
               variables:
                 ipaddress: allocate('mgmt_subnet')
-            name: "configure ma1"
+            name: 'configure ma1'
     '''
 
     node = attributes.get('NODE')
@@ -81,14 +81,16 @@ def main(attributes):
         raise Exception('Unable to perform variable substitution - '
                         'invalid variables')
 
+
     contents = node.substitute(contents, variables)
+    commands = [x for x in contents.split('\n') if x]
 
     try:
-        node.api_enable_cmds(contents.split('\n'),
+        node.api_enable_cmds(commands,
                              text_format=True)
     except Exception as exc:
-        raise Exception('Running CLI commands failed: %s' % 
-                        exc.message)
+        raise Exception('Running CLI commands %s failed: %s' % 
+                        (commands, exc.message))
 
     # Only remove this in case everything else succeeded
     # for debugging purposes
