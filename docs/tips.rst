@@ -103,13 +103,15 @@ How do I debug the ZTP Server provisioning process?
 
 * After changing configuration directives in neighbordb, a definition, etc, you may need to remove the node directory of the node-under-test before retrying ZTP on the node.   This will ensure that ZTP Server matches the node against neighbordb instead of ``nodes/<serialnum>/pattern``.
 
-* The ``bootstrap`` script may be manually run from a switch, if it iw up with IP connectivity to the ZTP Server instead of going through an entire reload/ZTP cycle.  To do this, download the script to the switch, then run it locally::
+* The ``bootstrap`` script may be manually run from a switch instead of going through an entire reload/ZTP cycle.  To do this, download the script to the switch, then run it locally::
 
     switch# bash wget http://ztpserver:8080/bootstrap
     switch# bash chmod +x bootstrap
     switch# bash sudo ./bootstrap
 
-* When requesting support, please include the output from ztpserver in debug mode and the console/log output from the switch.
+* On the client side, make sure you use XMPP (best) or remove syslog (second best) logging - you can configure that in *bootstrap.conf*.
+
+* When requesting support, please include the output from the server (running in debug mode) and the console/log output from the switch.
 
 How do I disable / enable ZTP mode on a switch
 ``````````````````````````````````````````````
