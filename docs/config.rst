@@ -28,6 +28,7 @@ The following directory structure is normally used:
                 startup-config
                 definition
                 pattern
+                config-handler
                 .node
                 attributes
         actions/
@@ -189,9 +190,10 @@ Static provisioning - overview
 
 A node can be statically configured on the server as follows:
 
-* create a new directory under [data_root]/nodes, using the system unique_id as the name
-* create/symlink a startup-config or definition in the newly-created folder
-* if topology validation is enabled, also create/symlink a pattern file
+* create a new directory under ``[data_root]/nodes`, using the system's unique_id as the name
+* create/symlink a *startup-config* or *definition* file in the newly-created folder
+* if topology validation is enabled, also create/symlink a *pattern* file
+* optionally, create *config-handler* script which is run whenever a PUT startup-config request succeeds
 
 Static provisioning - startup_config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -401,6 +403,16 @@ OR
     interfaces:
         - none: none:none   
 
+Static provisioning - config-handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``config-handler`` file can be any script which can be executed 
+on the server. The script will be executed every time a PUT startup-config
+request succeeds for the node.
+
+The script can be used for raising alarms, performing checks, submitting
+the startup-config file to a revision control system, etc.
+
 Static provisioning - log
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -448,9 +460,12 @@ the patterns in ``neighbordb``. If a match is successful, then a node
 definition will be automatically generated for the node (based on the
 mapping in neighbordb).
 
-There are 2 types of patterns supported in neighbordb: node-specific (containing the **node** attribute, which refers to the unique_id of the node) and global patterns.
+There are 2 types of patterns supported in neighbordb: 
+node-specific (containing the **node** attribute, which refers to the 
+unique_id of the node) and global patterns.
 
 Rules:
+
  - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored  
  - if both the **node** and **interfaces** attributes are specified and a node's unique_id is a match, but the topology information is not, then the overall match will fail and the global patterns will not be considered
  - if there is no matching node-specific pattern for a node's unique_id, then the server will attempt to match the node against the global patterns (in the order they are specified in ``neighbordb``)
@@ -466,6 +481,7 @@ Rules:
         - name: <single line description of pattern>
           definition: <defintion_url>
           node: <unique_id>
+          config-handler: <config-handler>
           variables:
             <variable_name>: <function>
           interfaces:
@@ -478,7 +494,8 @@ Rules:
 .. note::
 
     Mandatory attributes: **name**, **definition**, and either **node**, **interfaces** or both.
-    Optional attributes: **variables**
+    
+    Optional attributes: **variables**, **config-handler**.
 
 variables
 '''''''''
@@ -642,7 +659,7 @@ definitions.
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | Action                    | Description                                               | Required Attributes                    |
 +===========================+===========================================================+========================================+
-| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url, variables                         |
+| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url                                    |
 |                           | file                                                      |                                        |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
@@ -659,9 +676,9 @@ definitions.
 | :mod:`send_email`         | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
 |                           | through a relay host. Can include file attachments        | body, attachments, commands            |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`run_bash_script`    | Run bash script during bootstrap.                         | url, variables                         |
+| :mod:`run_bash_script`    | Run bash script during bootstrap.                         | url                                    |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`run_cli_commands`   | Run CLI commands during bootstrap.                        | url, variables                         |
+| :mod:`run_cli_commands`   | Run CLI commands during bootstrap.                        | url                                    |
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 
 Additional details on each action are available in the :doc:`actions` module docs.
@@ -795,6 +812,14 @@ allocating a new one.
 
 In order to free a resource from a pool, simply turn the value
 associated to it back to ``null``, by editing the resource file.
+
+Resource pools
+~~~~~~~~~~~~~~
+
+``[data_root]/config-handlers/`` contains config-handlers which can be 
+associated with nodes via *neighbordb*. A config-handler script is executed
+every time a PUT startup-config request succeeds for a node which is 
+associated to it.
 
 Other files
 ~~~~~~~~~~~
