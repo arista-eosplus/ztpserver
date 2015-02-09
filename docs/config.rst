@@ -200,8 +200,9 @@ Static provisioning - startup_config
 
 ``startup-config`` provides a static startup-configuration for the node. If this file is present in a node’s folder, when the node sends a GET request to ``/nodes/<unique_id>``, the server will respond with a static definition that includes:
 
+-  a **replace\_config** action which will install the configuration file on the switch (see `actions <#actions>`__ section below for more on this). This action will be placed **first** in the definition.
 -  all the **actions** from the local **definition** file (see definition section below for more on this) which have the ``always_execute`` attribute set to ``True``
--  a **replace\_config** action which will install the configuration file on the switch (see `actions <#actions>`__ section below for more on this). This action will be placed **last** in the definition.
+
 
 .. _definition:
 
@@ -813,8 +814,11 @@ allocating a new one.
 In order to free a resource from a pool, simply turn the value
 associated to it back to ``null``, by editing the resource file.
 
-Resource pools
-~~~~~~~~~~~~~~
+Alternatively, ``$ztps --clear-resources`` can be used in order to free
+all resources in all resource files.
+
+Config-handlers
+~~~~~~~~~~~~~~~
 
 ``[data_root]/config-handlers/`` contains config-handlers which can be 
 associated with nodes via *neighbordb*. A config-handler script is executed
