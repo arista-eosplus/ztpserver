@@ -93,5 +93,8 @@ The following options may be specified when starting the ztps binary:
     --validate-config, -V
                           Validates config files
     --debug               Enables debug output to the STDOUT
+    --clear-resources, -r
+                          Clears all resource files
 
-When ZTPServer starts, it reads the path information to  neighbordb and other files from the global configuration file. Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration.
+
+Assuming that the DHCP server is serving DHCP offers which include the path to the ZTPServer bootstrap script in Option 67 and that the EOS nodes can access the bootstrap file over the network, the provisioning process should now be able to automatically start for all the nodes with no startup configuration.
