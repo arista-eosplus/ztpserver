@@ -59,6 +59,8 @@ e.g.
       --validate-config, -V
                             Validates config files
       --debug               Enables debug output to the STDOUT
+      --clear-resources, -r
+                            Clears all resource files
     (bash)# ztps --conf /var/ztps.conf
 
 If the global configuration file is updated, the server must be restarted in order to pick up the new configuration.
@@ -68,7 +70,7 @@ If the global configuration file is updated, the server must be restarted in ord
     [default]
 
     # Location of all ztps boostrap process data files
-    # default=/var/lib/ztpserver
+    # default= /usr/share/ztpserver
     data_root=<PATH>
 
     # UID used in the /nodes structure
@@ -88,7 +90,7 @@ If the global configuration file is updated, the server must be restarted in ord
     console_logging=<True | False>
 
     # Console logging format
-    # default=%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
+    # default=%(asctime)-15s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
     console_logging_format=<(Python)logging format> 
 
     # Globally disable topology validation in the bootstrap process
