@@ -51,6 +51,16 @@ Roadmap highlights
 
 The authoritative state, including the intended release, for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.   The information provided here is current at the time of publishing but is subject to change.   Please refer to the latest information in GitHub issues by filtering on the desired `milestone <https://github.com/arista-eosplus/ztpserver/milestones>`_.
 
+Release 1.4
+-----------
+
+Target: April 2015
+
+* plugin infrastructure for resource pool allocation (`121 <https://github.com/arista-eosplus/ztpserver/pull/121>`_)
+* topology-based ZTR (`103 <https://github.com/arista-eosplus/ztpserver/pull/103>`_)
+* ZTPServer Cookbook - advanced topics (`289 <https://github.com/arista-eosplus/ztpserver/pull/289>`_)
+* benchmark scale tests (`261 <https://github.com/arista-eosplus/ztpserver/pull/261>`_)
+
 Release 2.0
 -----------
 
