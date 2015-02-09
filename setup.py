@@ -71,9 +71,9 @@ if install() and os.environ.get('READTHEDOCS'):
 
 install_requirements = None
 version = None
-if install():
-    install_requirements = open('requirements.txt').read().split('\n')
-    version = open('VERSION').read().split()[0].strip()
+
+install_requirements = open('requirements.txt').read().split('\n')
+version = open('VERSION').read().split()[0].strip()
 
 data_files = []
 # configuration folders are not cleared on upgrade/downgrade
