@@ -60,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ZTPServer'
-copyright = u'2014, Arista Networks'       # pylint: disable=W0622
+copyright = u'2015, Arista Networks'       # pylint: disable=W0622
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
