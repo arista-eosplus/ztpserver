@@ -881,10 +881,10 @@ class ResourceController(BaseController):
         try:
             body['resource'] = _resource.allocate(resource_pool)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
+            return resp
         except ResourcePoolError as e:
             log.error('Error allocating resource' % e)
             return self.http_not_found()
-        return resp
 
 
 class Router(WSGIRouter):
