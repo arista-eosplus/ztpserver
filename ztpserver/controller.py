@@ -953,10 +953,10 @@ class Router(WSGIRouter):
                                      member_prefix='/{resource:.*}')
 
             # configure /resource
-            router_mapper.connect('resource', '/resource',
+            router_mapper.connect('resource',
+                                  '/resource/{resource_pool}',
                                   controller=ResourceController,
                                   action='static_pool',
-                                  member_prefix='/{resource_pool}',
                                   conditions=dict(method=['GET']))
 
         super(Router, self).__init__(mapper)
