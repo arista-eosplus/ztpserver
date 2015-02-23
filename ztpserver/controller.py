@@ -877,6 +877,7 @@ class ResourceController(BaseController):
         node_id = request.user_agent
         log.debug('node_id:%s' % node_id)
         _resource = ResourcePool(node_id)
+        log.debug('resource: %s' % _resource)
 
         try:
             body['resource'] = _resource.allocate(resource_pool)
