@@ -880,7 +880,7 @@ class ResourceController(BaseController):
 
         try:
             allocated_key = _resource.allocate(resource_pool)
-            response['body'] = {key: allocated_key}
+            response['body'] = {'key': allocated_key}
             response['content_type'] = CONTENT_TYPE_JSON
         except ResourcePoolError as e:
             log.error('Error allocating resource' % e)
