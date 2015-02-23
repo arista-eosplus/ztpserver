@@ -874,9 +874,8 @@ class ResourceController(BaseController):
         ''' Handles GET /resource/{resource_pool} '''
         log.debug('%s\nResource Pool: %s\n' % (request, resource_pool))
 
-        node = kwargs['node']
-        node_id = kwargs['node_id']
-
+        ua = request.user_agent
+        log.debug('node_id:%s' % ua)
         _resource = ResourcePool(node_id)
 
         try:
