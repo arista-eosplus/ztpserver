@@ -875,12 +875,16 @@ class ResourceController(BaseController):
         log.debug('%s\nResource Pool: %s\n' % (request, resource_pool))
 
         user_agent = request.user_agent
-        node_id = re.match('system_id:(\w+)').group(1)
-        log.debug('node_id:%s' % node_id)
-        resource = ResourcePool(node_id)
+        try:
+            node_id = re.match('system_id:(\w+)', user_agent).group(1)
+            log.debug('node_id:%s' % node_id)
+        except:
+            log.error('Error finding system_id')
+            return self.http_not_found()
 
         try:
             body = dict()
+            resource = ResourcePool(node_id)
             body['json'] = resource.allocate(resource_pool)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
             return resp
