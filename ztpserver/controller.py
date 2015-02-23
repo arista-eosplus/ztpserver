@@ -874,13 +874,14 @@ class ResourceController(BaseController):
         ''' Handles GET /resource/{resource_pool} '''
         log.debug('%s\nResource Pool: %s\n' % (request, resource_pool))
 
-        node_id = request.user_agent
+        user_agent = request.user_agent
+        node_id = re.match('system_id:(\w+)').group(1)
         log.debug('node_id:%s' % node_id)
-        _resource = ResourcePool(node_id)
-        log.debug('resource: %s' % _resource)
+        resource = ResourcePool(node_id)
 
         try:
-            body['resource'] = _resource.allocate(resource_pool)
+            body = dict()
+            body['json'] = resource.allocate(resource_pool)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
             return resp
         except ResourcePoolError as e:
