@@ -879,13 +879,12 @@ class ResourceController(BaseController):
         _resource = ResourcePool(node_id)
 
         try:
-            allocated_key = _resource.allocate(resource_pool)
-            response['body'] = {'key': allocated_key}
-            response['content_type'] = CONTENT_TYPE_JSON
+            body['resource'] = _resource.allocate(resource_pool)
+            resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
         except ResourcePoolError as e:
             log.error('Error allocating resource' % e)
             return self.http_not_found()
-        return response
+        return resp
 
 
 class Router(WSGIRouter):
