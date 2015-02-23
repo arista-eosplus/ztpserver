@@ -370,3 +370,68 @@ requests the ``install_image`` python script. It then performs an HTTP GET for
 the ``url``.  Once it has these locally, it executes the
 `install_image <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_image>`_
 script.
+
+
+.. end of Install a specific EOS image
+
+
+
+
+Install an Extension
+--------------------
+
+Objective
+^^^^^^^^^
+
+I want to install an extension on my node automatically.
+
+Solution
+^^^^^^^^
+
+Let's create a place on the ZTPServer to host the RPMs:
+
+.. code-block:: shell
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create an images directory
+  admin@ztpserver:~# mkdir -p files/rpms
+
+  # SCP your SWI into the images directory, name it whatever you like
+  admin@ztpserver:~# scp admin@otherhost:/tmp/myRPM.rpm files/rpms/myRPM.rpm
+
+Now let's create a definition that performs the ``install_extension`` action:
+
+.. code-block:: shell
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create a definition file
+  admin@ztpserver:~# vi definitions/tor-definition
+
+Add the following lines to your definition, changing values where needed:
+
+.. code-block:: yaml
+
+  ---
+  name: static node definition
+  actions:
+    -
+      action: install_extension
+      always_execute: true
+      attributes:
+        url: files/rpms/myRPM.rpm
+      name: "Install myRPM extension"
+
+.. note:: The definition uses YAML syntax
+
+Explanation
+^^^^^^^^^^^
+
+The ``install_extension`` will copy the RPM defined in the ``url`` parameter and
+copy it to the default extension directory, ``/mnt/flash/.extensions``
+
+.. note:: Please see the `copy_file <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_extension>`_
+          documentation for more details.
