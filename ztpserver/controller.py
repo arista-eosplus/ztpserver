@@ -871,21 +871,18 @@ class ResourceController(BaseController):
         return 'ResourceController(folder=%s)' % self.FOLDER
 
     def static_pool(self, request, resource_pool, **kwargs):
-        ''' Handles GET /resource/{resource_pool} '''
+        ''' Handles POST /resource/{resource_pool} '''
         log.debug('%s\nResource Pool: %s\n' % (request, resource_pool))
 
-        user_agent = request.user_agent
-        try:
-            node_id = re.match('system_id:(\w+)', user_agent).group(1)
-            log.debug('node_id:%s' % node_id)
-        except:
-            log.error('Error finding system_id')
-            return self.http_not_found()
+        identifier = runtime.default.identifier
+        log.debug(request.json['system'])
+        node_id = request.json['system'][identifier]
+        log.debug(node_id)
+        resource = ResourcePool(node_id)
 
         try:
             body = dict()
-            resource = ResourcePool(node_id)
-            body['json'] = resource.allocate(resource_pool)
+            body['key'] = resource.allocate(resource_pool)
             resp = dict(body=body, content_type=CONTENT_TYPE_JSON)
             return resp
         except ResourcePoolError as e:
@@ -961,7 +958,6 @@ class Router(WSGIRouter):
             router_mapper.connect('resource',
                                   '/resource/{resource_pool}',
                                   controller=ResourceController,
-                                  action='static_pool',
-                                  conditions=dict(method=['GET']))
+                                  action='static_pool')
 
         super(Router, self).__init__(mapper)
