@@ -32,7 +32,7 @@
 BOOT_CONFIG = '/mnt/flash/boot-config'
 
 def main(attributes):
-    '''Installs software image on the switch.
+    '''Installs new software image.
 
     If the current software image is the same as the 'version'
     attribute value, then this action is a no-op.  Otherwise, the
@@ -43,11 +43,12 @@ def main(attributes):
 
     This action is dual-supervisor compatible.
 
-    Args:
-        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
-        node (internal): attributes.get('NODE') API: see documentation
-        url: path to .swi file
-        version: target version of the .swi file.
+    Attributes:
+        url: path to source image file
+        version: EOS version of new image file
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
 
     Example:
         ::
@@ -69,11 +70,11 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     version = attributes.get('version')
     if not version:
-        return 'Missing attribute(\'version\')'
+        raise Exception('Missing attribute(\'version\')')
 
     current_version = node.api_enable_cmds(['show version'])[0]['version']
     if current_version == version:
@@ -83,6 +84,7 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % (node.flash(), image))
     except Exception as exc:
-        return 'Unable to retrieve image file from URL (%s)' % exc
+        raise Exception('Unable to retrieve image file from URL (%s)' % 
+                        exc)
 
     node.api_enable_cmds(['install source flash:%s' % image])

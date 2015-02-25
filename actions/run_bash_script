@@ -27,21 +27,21 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,W0402,E1103
+#pylint: disable=W0703,E1103
 
 import os
 
-TEMP_CONFIG = '/tmp/tmp-add-config'
+TEMP_FILE = '/tmp/tmp-run-script'
 
 def main(attributes):
-    ''' Appends config section to startup-config.
+    ''' Runs a script in EOS from bash.
 
     This action is dual-supervisor compatible.
 
     Attributes:
-        url: path to source config/template
-        substitution_mode: loose|strict (default: loose)
-        variables: list of value substitutions
+        url: path to source script/template
+        variables (optional): 
+             list of value substitutions (for a script template)
         
     Special_attributes: 
         NODE: API object - see documentation for details
@@ -50,16 +50,12 @@ def main(attributes):
         ::
 
           -
-            action: add_config
+            action: run_bash_script
             attributes:
-              url: files/templates/ma1.template
+              url: files/scripts/install_script
               variables:
-                ipaddress: allocate('mgmt_subnet')
-            name: "configure ma1"
-            onstart: "Starting to configure ma1"
-            onsuccess: "SUCCESS: ma1 configure"
-            onfailure: "FAIL: IM provisioning@example.com for help"
-
+                version: 1.2.3
+            name: 'install temp package'
     '''
 
     node = attributes.get('NODE')
@@ -69,18 +65,15 @@ def main(attributes):
         raise Exception('Missing attribute(\'url\')')
 
 
-    substitution_mode = attributes.get('substitution_mode', 'loose')
-    if substitution_mode not in ['loose', 'strict']:
-        raise Exception('Invalid option specified for substitution_mode '
-                        'attribute')
-
     try:
-        node.retrieve_url(url, TEMP_CONFIG)
+        node.retrieve_url(url, TEMP_FILE)
     except Exception as exc:
         raise Exception('Unable to retrieve config from URL (%s)' % 
                         exc)
 
-    contents = open(TEMP_CONFIG, 'r').read()
+    exec_file = open(TEMP_FILE, 'r')
+    contents = exec_file.read()
+    exec_file.close()
 
     variables = attributes.get('variables')
     if not variables:
@@ -91,10 +84,20 @@ def main(attributes):
         raise Exception('Unable to perform variable substitution - '
                         'invalid variables')
 
-    contents = node.substitute(contents, variables,
-                               substitution_mode == 'strict')
-    node.append_startup_config_lines(contents.split('\n'))
+    contents = node.substitute(contents, variables)
+
+    exec_file = open(TEMP_FILE, 'w')
+    exec_file.write(contents)
+    exec_file.close()
+
+    os.chmod(TEMP_FILE, 0777)
+    (cmd, code, out, err) = node.bash_cmds([TEMP_FILE])
+
+    if code or err:
+        raise Exception('Running %s in bash failed '
+                        'return_code=%s, stdout=%s, stderr=%s)' % 
+                        (cmd, code, out, err))
     
     # Only remove this in case everything else succeeded
     # for debugging purposes
-    os.remove(TEMP_CONFIG)
+    os.remove(TEMP_FILE)

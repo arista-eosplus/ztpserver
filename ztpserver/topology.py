@@ -37,15 +37,13 @@ import logging
 import os
 import re
 import string # pylint: disable=W0402
-import ztpserver
-
-import ztpserver.config
 
 from ztpserver.validators import validate_neighbordb, validate_pattern
 from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
 from ztpserver.utils import expand_range, parse_interface, url_path_join
+from ztpserver.config import runtime
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -60,12 +58,12 @@ log = logging.getLogger(__name__)
 
 Neighbor = collections.namedtuple('Neighbor', ['device', 'interface'])
 
-def default_filename():
+def neighbordb_path():
     ''' Returns the path for neighbordb based on the conf file
     '''
 
-    filepath = ztpserver.config.runtime.default.data_root
-    filename = ztpserver.config.runtime.neighbordb.filename
+    filepath = runtime.default.data_root
+    filename = runtime.neighbordb.filename
     return os.path.join(filepath, filename)
 
 def load_file(filename, content_type, node_id):
@@ -87,8 +85,8 @@ def load_neighbordb(node_id, contents=None):
     try:
         if not contents:
             log.info('%s: loading neighbordb file: %s' % 
-                     (node_id, default_filename()))
-            contents = load_file(default_filename(), CONTENT_TYPE_YAML,
+                     (node_id, neighbordb_path()))
+            contents = load_file(neighbordb_path(), CONTENT_TYPE_YAML,
                                  node_id)
 
         # neighbordb is empty
@@ -131,12 +129,14 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
         if not isinstance(pattern, collections.Mapping):
             pattern = load_file(pattern, content_type,
                                 node_id)
+            if 'config-handler' in pattern:
+                pattern['config_handler'] = pattern['config-handler']
+                del pattern['config-handler']
 
         # add dummy values to pass validation
-        if 'definition' not in pattern:
-            pattern['definition'] = 'definition'
-        if 'name' not in pattern:
-            pattern['name'] = 'name'
+        for dummy in ['definition', 'name', 'config_handler']:
+            if dummy not in pattern:
+                pattern[dummy] = dummy
 
         if not validate_pattern(pattern, node_id):
             log.error('%s: failed to validate pattern attributes' % node_id)
@@ -144,8 +144,9 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
 
         pattern['node_id'] = node_id
         return Pattern(**pattern)
-    except TypeError:
-        log.error('%s: failed to load pattern \'%s\'' % (node_id, pattern))
+    except TypeError as exc:
+        log.error('%s: failed to load pattern \'%s\' (%s)' % 
+                  (node_id, pattern, exc))
 
 def create_node(nodeattrs):
     try:
@@ -176,7 +177,7 @@ def resources(attributes, node, node_id):
                 match = FUNC_RE.match(item)
                 if match:
                     method = getattr(_resources, match.group('function'))
-                    _value.append(method(match.group('arg'), node))
+                    _value.append(method(match.group('arg')))
                 else:
                     _value.append(item)
             value = _value
@@ -184,7 +185,7 @@ def resources(attributes, node, node_id):
             match = FUNC_RE.match(str(value))
             if match:
                 method = getattr(_resources, match.group('function'))
-                value = method(match.group('arg'), node)
+                value = method(match.group('arg'))
         _attributes[key] = value
     log.debug('%s: resources: %s' % (node_id, _attributes))
     return _attributes
@@ -193,7 +194,7 @@ def replace_config_action(resource, filename=None):
     ''' Builds a definition with a single action replace_config '''
 
     filename = filename or 'startup-config'
-    server_url = ztpserver.config.runtime.default.server_url
+    server_url = runtime.default.server_url
     url = url_path_join(server_url, 'nodes/', str(resource), filename)
 
     action = dict(name='install static startup-config file',
@@ -280,7 +281,7 @@ class Node(object):
                (self.serialnumber, self.systemmac, self.neighbors)
 
     def identifier(self):
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         return getattr(self, identifier)
 
     def add_neighbor(self, interface, peers):
@@ -374,14 +375,15 @@ class Neighbordb(object):
             kwargs['node_id'] = self.node_id
             kwargs['name'] = name
 
-            kwargs['node'] = kwargs.get('node')
-            kwargs['definition'] = kwargs.get('definition')
+            kwargs['config_handler'] = kwargs.get('config-handler', 
+                                                  None)
+            if 'config-handler' in kwargs:
+                del kwargs['config-handler']
             kwargs['interfaces'] = kwargs.get('interfaces', list())
             kwargs['variables'] = kwargs.get('variables', dict())
 
             for key in set(self.variables).difference(kwargs['variables']):
                 kwargs['variables'][key] = self.variables[key]
-
                 
             pattern = Pattern(**kwargs)
 
@@ -389,7 +391,7 @@ class Neighbordb(object):
                       (self.node_id, pattern))
 
             # Add pattern to neighbordb
-            if kwargs['node']:
+            if 'node' in kwargs:
                 if pattern.node not in self.patterns['nodes']: 
                     self.patterns['nodes'][pattern.node] = pattern
                 else:
@@ -436,7 +438,7 @@ class Neighbordb(object):
 
     @staticmethod
     def identifier(node):
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         return node[identifier]
         
     def find_patterns(self, node):
@@ -481,11 +483,13 @@ class Neighbordb(object):
 
 class Pattern(object):
 
-    def __init__(self, name=None, definition=None, interfaces=None,
+    def __init__(self, name=None, definition=None, 
+                 config_handler=None, interfaces=None,
                  node=None, variables=None, node_id=None):
 
         self.name = name
         self.definition = definition
+        self.config_handler = config_handler
 
         self.node = node
         self.node_id = node_id
@@ -522,9 +526,10 @@ class Pattern(object):
                                (self.node_id, self.name, str(exc)))
 
     def serialize(self):
-        data = dict(name=self.name, definition=self.definition)
-        data['variables'] = self.variables
-        data['node'] = self.node
+        data = dict(name=self.name, definition=self.definition,
+                    variables=self.variables, node=self.node)
+
+        data['config-handler'] = self.config_handler
 
         interfaces = []
         for item in self.interfaces:

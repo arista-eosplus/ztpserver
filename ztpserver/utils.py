@@ -33,6 +33,8 @@
 
 import logging
 import re
+import os
+
 from urlparse import urlsplit, urlunsplit
 
 log = logging.getLogger(__name__)
@@ -258,3 +260,9 @@ def url_path_join(*parts):
 
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
+
+def all_files(path):
+    result = []
+    for top, _, files in os.walk(path):
+        result += [os.path.join(top, f) for f in files]
+    return result

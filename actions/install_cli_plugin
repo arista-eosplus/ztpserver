@@ -35,17 +35,15 @@ PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
 import os
 
 def main(attributes):
-    '''Installs EOS CliPlugin.
-
-    Installs CliPlugin based on the value of the
-    'url' attribute.
+    '''Installs CliPlugin.
 
     This action is NOT dual-supervisor compatible.
 
-    Args:
-        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
-        node (internal): attributes.get('NODE') API: see documentation
-        url: path to the cli plugin
+    Attributes:
+        url: path to the CliPlugin
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
 
     Example:
         ::
@@ -63,7 +61,7 @@ def main(attributes):
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     try:
         os.makedirs(PERSISTENT_PLUGIN_DIR)
@@ -76,7 +74,8 @@ def main(attributes):
         node.retrieve_url(url, '%s/%s' %
                           (PERSISTENT_PLUGIN_DIR, name))
     except Exception as exc:
-        return 'Unable to retrieve CliPlugin from URL (%s)' % exc
+        raise Exception('Unable to retrieve CliPlugin from URL (%s)' % 
+                        exc)
 
     lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
                                     name,

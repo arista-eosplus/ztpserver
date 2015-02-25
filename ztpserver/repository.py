@@ -225,7 +225,7 @@ class Repository(object):
         '''
         try:
             folder_path = self.expand(folder_path)
-            os.makedirs(folder_path)
+            os.makedirs(folder_path, 0774)
             return folder_path
         except OSError as err:
             log.error('Failed to add folder %s (%s)' %

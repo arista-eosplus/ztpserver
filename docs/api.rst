@@ -4,28 +4,37 @@ Client - Server API
 .. The RESTful API is documented using sphinxcontrib-httpdomain.  See
    http://pythonhosted.org/sphinxcontrib-httpdomain/
 
+.. Verify sync with ztpserver.controller.py using the following:
+   (PYTHONPATH=.; python)
+   my_map = controller.Router()
+   print my_map.map
+
 .. contents:: :local:
 
 URL Endpoints
 ~~~~~~~~~~~~~
 
-+---------------+-------------------------------+
-| HTTP Method   | URI                           |
-+===============+===============================+
-| GET           | /bootstrap/config             |
-+---------------+-------------------------------+
-| GET           | /bootstrap                    |
-+---------------+-------------------------------+
-| POST          | /nodes                        |
-+---------------+-------------------------------+
-| PUT           | /nodes/{id}                   |
-+---------------+-------------------------------+
-| GET           | /nodes/{id}                   |
-+---------------+-------------------------------+
-| GET           | /actions/{name}               |
-+---------------+-------------------------------+
-| GET           | /files/{filepath}             |
-+---------------+-------------------------------+
++---------------+-----------------------------------------+
+| HTTP Method   | URI                                     |
++===============+=========================================+
+| GET           | /bootstrap                              |
++---------------+-----------------------------------------+
+| GET           | /bootstrap/config                       |
++---------------+-----------------------------------------+
+| POST          | /nodes                                  |
++---------------+-----------------------------------------+
+| GET           | /nodes/{id}                             |
++---------------+-----------------------------------------+
+| PUT           | /nodes/{id}/startup-config              |
++---------------+-----------------------------------------+
+| GET           | /nodes/{id}/startup-config              |
++---------------+-----------------------------------------+
+| GET           | /actions/{name}                         |
++---------------+-----------------------------------------+
+| GET           | /files/{filepath}                       |
++---------------+-----------------------------------------+
+| GET           | /meta/{actions|files|nodes}/{PATH_INFO} |
++---------------+-----------------------------------------+
 
 GET bootstrap script
 ^^^^^^^^^^^^^^^^^^^^
@@ -34,12 +43,21 @@ GET bootstrap script
 
     Returns the default bootstrap script
 
+    **Request**
+
+    .. sourcecode:: http
+
+        GET /bootstrap HTTP/1.1
+
     **Response**
 
     .. code-block:: http
 
-        Status: 200 OK
         Content-Type: text/x-python
+        <contents of bootstrap client script>
+
+    :resheader Content-Type: text/x-python
+    :statuscode 200: OK
 
 .. note::
 
@@ -56,8 +74,8 @@ GET bootstrap script
 -  if the ``$SERVER`` string is missing from the bootstrap script, the
    controller will log a warning message and continue
 
-GET logging configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^
+GET bootstrap logging configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. http:get:: /bootstrap/config
 
@@ -68,15 +86,11 @@ GET logging configuration
     .. sourcecode:: http
 
         GET /bootstrap/config HTTP/1.1
-        Host: 
-        Accept: 
-        Content-Type: text/html
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
         Content-Type: application/json
         {
             “logging”*: [ {
@@ -92,12 +106,15 @@ GET logging configuration
                 “domain”*:          <DOMAIN>,
                 “password”*:        <PASSWORD>,
                 “nickname”:         <NICKNAME>,             // Optional, default ‘username’
-                “rooms”*:           [ <ROOM>, … ]                     
+                “rooms”*:           [ <ROOM>, … ]
                 }
             }
         }
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
+
+    :resheader Content-Type: application/json
+    :statuscode 200: OK
 
 POST node details
 ^^^^^^^^^^^^^^^^^
@@ -117,7 +134,6 @@ provisioned.
             “serialnumber”*:      <SERIAL_NUMBER>, 
             “systemmac”*:         <SYSTEM_MAC>,
             “version”*:           <INTERNAL_VERSION>, 
-
             “neighbors”*: {
                 <INTERFACE_NAME(LOCAL)>: [ {
                     'device':             <DEVICE_NAME>, 
@@ -130,18 +146,12 @@ provisioned.
 
     **Response**
 
+    Status: 201 Created OR 409 Conflict will both return:
+
     .. sourcecode:: http 
 
-        Status: 201 Created
         Content-Type: text/html
         Location: <url>
-
-        Status: 409 Conflict
-        Content-Type: text/html
-        Location: <url>
-
-        Status: 400 Bad Request
-        Content-Type: text/html
 
     :statuscode 201: Created
     :statuscode 409: Conflict
@@ -159,15 +169,12 @@ Request definition from the server.
     .. sourcecode:: http
 
         GET /nodes/{ID} HTTP/1.1
-        Host: 
-        Accept: applicatino/json
-        Content-Type: text/html
+        Accept: application/json
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
         Content-Type: application/json
         {
             “name”*: <DEFINITION_NAME>
@@ -187,60 +194,126 @@ Request definition from the server.
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
 
+    :resheader Content-Type: application/json
+    :statuscode 200: OK
     :statuscode 400: Bad Request
     :statuscode 404: Not Found
 
-GET action
-^^^^^^^^^^
+PUT node startup-config
+^^^^^^^^^^^^^^^^^^^^^^^
 
-.. http:get:: /actions/(NAME)
+This is used to backup the startup-config from a node to the server.
 
-    Request action from the server.
+.. http:put:: /nodes/(ID)/startup-config
 
     **Request**
 
     .. sourcecode:: http
 
-        Content-Type: text/html
+        Content-Type: text/plain
+        <startup-config contents>
+
+    :statuscode 201: Created
+    :statuscode 400: Bad Request
+
+GET node startup-config
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This is used to retrieve the startup-config that was backed-up from a node to the server.
+
+.. http:get:: /nodes/(ID)/startup-config
+
+    **Request**
+
+    .. sourcecode:: http
+
+        Content-Type: text/plain
+
+    **Response**
+
+    Status: 201 Created OR 409 Conflict will both return:
+
+    .. sourcecode:: http 
+
+        Content-Type: text/plain
+        <startup-config contents>
+
+    :resheader Content-Type: text/plain
+    :statuscode 200: OK
+    :statuscode 400: Bad Request
+
+GET actions/(NAME)
+^^^^^^^^^^^^^^^^^^
+
+.. http:get:: /actions/(NAME)
+
+    Request action from the server.
+
+    **Request Example**
+
+    .. sourcecode:: http
+
+        GET /actions/add_config HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
         Content-Type: text/x-python
+        <raw action content>
 
+    :resheader Content-Type: text/x-python
     :statuscode 200: OK
-    :statuscode 400: Bad Request
     :statuscode 404: Not Found
 
-    Status: 200 OK
-    Content-Type: text/plain
-    <PYTHON SCRIPT>
-
-    Status: 200 Bad request
-    Content-Type: text/x-python
-
-GET resource
-^^^^^^^^^^^^
+GET resource files
+^^^^^^^^^^^^^^^^^^
 
 .. http:get::  /files/(RESOURCE_PATH)
 
     Request action from the server.
 
-    **Request**
+    **Request Examples**
 
     .. sourcecode:: http
 
-        Content-Type: text/html
+        GET /files/images/vEOS.swi HTTP/1.1
+        GET /files/templates/ma1.template HTTP/1.1
 
     **Response**
 
     .. sourcecode:: http
 
-        Status: 200 OK
-        Content-Type: text/plain
-        <resource>
+        <raw resource contents>
 
+    :resheader Content-Type:text/plain
     :statuscode 200: OK
     :statuscode 404: Not Found
 
+GET meta data for a resource or file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. http:get::  /meta/(actions|files|nodes)/(PATH_INFO)
+
+    Request meta-data on a file.
+
+    **Example Requests**
+
+    .. sourcecode:: http
+
+        GET /meta/actions/add_config HTTP/1.1
+        GET /meta/files/images/EOS-4.14.5F.swi HTTP/1.1
+        GET /meta/nodes/001122334455/.node HTTP/1.1
+
+    **Response**
+
+    .. sourcecode:: http
+
+        {
+          sha1: "d3852470a7328a4aad54ce030c543fdac0baa475"
+          size: 160
+        }
+
+    :resheader Content-Type:application/json
+    :statuscode 200: OK
+    :statuscode 500: Server Error

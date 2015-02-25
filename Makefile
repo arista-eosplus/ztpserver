@@ -23,8 +23,6 @@ NAME = "ztpserver"
 PYTHON = python
 TESTNAME = discover
 
-VERSION := $(shell cat VERSION)
-
 ########################################################
 
 all: clean python

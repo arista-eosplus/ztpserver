@@ -50,11 +50,12 @@ import time
 import traceback
 import urllib2
 import urlparse
-from urlparse import urlsplit, urlunsplit
 
 from collections import namedtuple
 from logging.handlers import SysLogHandler
+from string import Template              #pylint: disable=W0402
 from subprocess import PIPE
+from urlparse import urlsplit, urlunsplit
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
@@ -140,7 +141,7 @@ def _exit(code):
                 log('Saving %s as %s...' % (filename, dst))
 
                 if os.path.isfile(dst):
-                    shutil.rmtree(dst)
+                    os.remove(dst)
 
                 shutil.move(path, dst)
 
@@ -163,14 +164,15 @@ def _exit(code):
             shutil.move(BOOT_EXTENSIONS_FOLDER, 
                         '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
 
-        backup_path = url_path_join('/', TEMP, 
-                                os.path.basename(BOOT_EXTENSIONS_FOLDER))
+        backup_path = url_path_join(
+            '/', TEMP, 
+            os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(backup_path):
             log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
     else:
         if code:
-            for path in [x for x in all_files(FLASH)
+            for path in [x for x in all_files_and_dirs(FLASH)
                          if x not in FLASH_FILES]:
                 log('Deleting %s...' % path)
                 if os.path.isdir(path):
@@ -248,7 +250,7 @@ def flash_usage():
 def flash_snapshot():
     #pylint: disable=W0603
     global FLASH_FILES
-    FLASH_FILES = all_files(FLASH)
+    FLASH_FILES = all_files_and_dirs(FLASH)
 
     for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
         if os.path.isfile(filename):
@@ -258,7 +260,7 @@ def flash_snapshot():
             dst = url_path_join('/', TEMP, 
                                 os.path.basename(filename))
             if os.path.isfile(dst):
-                shutil.rmtree(dst)
+                os.remove(dst)
 
             shutil.move(filename, TEMP)
 
@@ -276,7 +278,7 @@ def flash_snapshot():
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
 
-def all_files(path):
+def all_files_and_dirs(path):
     result = []
     for top, dirs, files in os.walk(path):
         result += [os.path.join(top, d) for d in dirs]
@@ -396,8 +398,7 @@ class Node(object):
         bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
         proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         (out, err) = proc.communicate()
-        code = proc.returncode             #pylint: disable=E1101
-        return (code, out, err)
+        return (proc.returncode, out, err)      #pylint: disable=E1101
 
     @classmethod
     def _cli_config_cmds(cls, cmds):
@@ -439,6 +440,57 @@ class Node(object):
             output.write('\n')
             output.write('\n'.join(lines))
 
+    @classmethod
+    def bash_cmds(cls, cmds):
+        '''Executes bash commands in order - stops on first failure.
+
+        Args:
+            cmds: list of bash commands
+            
+        Returns:
+            cmd:  first failing command (None otherwise)
+            code: exit code for first failing command (None otherwise)
+            out:  stdout for first failing command (None otherwise)
+            err:  stderr for first failing command (None otherwise)
+        '''
+
+        for bash_cmd in cmds:
+            proc = subprocess.Popen(bash_cmd, stdin=PIPE, 
+                                    stdout=PIPE, stderr=PIPE, 
+                                    shell=True)
+            code = proc.returncode         #pylint: disable=E1101
+            (out, err) = proc.communicate()
+            if code or err:
+                return (bash_cmd, code, out, err)
+            else:
+                print out
+
+        return (None, None, None, None)
+
+    @classmethod
+    def substitute(cls, template, substitutions, strict=True):
+        '''Perform variable substitution on a config template.
+
+        Args:
+            template (string): EOS configuration template
+            substitutions (dict): set of substitutions for the template
+            strict (bool, optional): If true, method will raise Exception
+                                     when template variables are missing 
+                                     from 'substitutions'.
+            
+        Returns:
+            string: template string with variable substitution
+        '''
+        try:
+            if strict:
+                return Template(template).substitute(substitutions)
+            else:
+                return Template(template).safe_substitute(substitutions)
+        except KeyError as exc:
+            raise Exception('Unable to perform variable substitution - '
+                            '\'%s\' missing from list of substitutions' % 
+                            exc.message)
+
     def api_enable_cmds(self, cmds, text_format=False):
         '''Run CLI commands via Command API, starting from enable mode.
 
@@ -455,8 +507,9 @@ class Node(object):
         '''
         req_format = 'text' if text_format else 'json'
         result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+
         if text_format:
-            return [x.values()[0] for x in result][1:]
+            return [x.values()[0] for x in result if x.values()][1:]
         else:
             return result[1:]
 
@@ -1112,9 +1165,10 @@ def execute_action(server, action_details, special_attr):
         local_attr = action_details['attributes'] \
                      if 'attributes' in action_details \
                      else []
-        ret = module.main(Attributes(local_attr, special_attr))
-        if ret:
-            raise ZtpActionError('%s' % ret)
+        try:
+            module.main(Attributes(local_attr, special_attr))
+        except Exception as exc:
+            raise ZtpActionError(exc)
         log('Action executed succesfully (%s)' % action)
         if 'onsuccess' in action_details:
             log('Action %s: %s' % (action, action_details['onsuccess']),
@@ -1171,7 +1225,6 @@ def main():
 
     definition_name = definition.get('name', '')
     log('Applying definition %s' % definition_name)
-
 
     special_attr = {}
     special_attr['NODE'] = node

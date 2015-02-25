@@ -44,6 +44,18 @@ Actions
 
 .. automodule:: actions.send_email
     :members:
+    
+:mod:`run_bash_script`
+-----------------
+
+.. automodule:: actions.run_bash_script
+    :members:
+    
+:mod:`run_cli_commands`
+-----------------
+
+.. automodule:: actions.run_cli_commands
+    :members:
 
 ..
    #:mod:`template`

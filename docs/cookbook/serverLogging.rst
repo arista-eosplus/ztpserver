@@ -22,13 +22,13 @@ With INFO level logging:
 
 .. code-block:: shell
 
-  admin@ztpserver:~# ztps </dev/null >~/ztps-console.log 2>&1 &
+  admin@ztpserver:~# ztps >~/ztps-console.log 2>&1 &
 
 With DEBUG level logging:
 
 .. code-block:: shell
 
-  admin@ztpserver:~# ztps --debug </dev/null >~/ztps-console.log 2>&1 &
+  admin@ztpserver:~# ztps --debug >~/ztps-console.log 2>&1 &
 
 Explanation
 ^^^^^^^^^^^

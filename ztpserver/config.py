@@ -39,6 +39,16 @@ import ConfigParser
 
 import ztpserver.types
 
+CONF_PATH = '/etc/ztpserver'
+
+VERSION_FILE = '.VERSION'
+VERSION_FILE_PATH = '%s/%s' % (CONF_PATH, VERSION_FILE)
+
+GLOBAL_CONF_FILE = 'ztpserver.conf'
+GLOBAL_CONF_FILE_PATH = '%s/%s' % (CONF_PATH, GLOBAL_CONF_FILE)
+
+INSTALL_PATH = '/usr/share/ztpserver'
+
 log = logging.getLogger(__name__)
 
 class Attr(object):
@@ -258,9 +268,8 @@ class Config(collections.Mapping):
             item['value'] = self._transform(item, item['_metadata'].default)
 
     def read(self, filename):
-        cp = ConfigParser.ConfigParser() #pylint: disable=C0103
+        cp = ConfigParser.RawConfigParser() #pylint: disable=C0103
         cp.read(filename)
-
         for section in cp.sections():
             for key, value in cp.items(section):
                 try:
@@ -275,7 +284,7 @@ runtime = Config()
 # Group: default
 runtime.add_attribute(StrAttr(
     name='data_root',
-    default='/usr/share/ztpserver',
+    default=INSTALL_PATH,
     environ='ZTPS_DEFAULT_DATAROOT'
 ))
 
@@ -304,7 +313,7 @@ runtime.add_attribute(BoolAttr(
 
 runtime.add_attribute(StrAttr(
     name='console_logging_format',
-    default='%(levelname)s: [%(module)s:%(lineno)d] %(message)s',
+    default='%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s',
     environ='ZTPS_CONSOLE_LOGGING_FORMAT'
 ))
 
@@ -329,52 +338,11 @@ runtime.add_attribute(IntAttr(
 ))
 
 
-# Group: files
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='files',
-    default='files',
-    environ='ZTPS_FILES_FOLDER'
-))
-
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='files',
-    environ='ZTPS_FILES_PATH_PREFIX'
-))
-
-# Group: actions
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='actions',
-    default='actions',
-    environ='ZTPS_ACTIONS_FOLDER'
-))
-
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='actions',
-    environ='ZTPS_ACTIONS_PATH_PREFIX'
-))
-
 # Group: bootstrap
-runtime.add_attribute(StrAttr(
-    name='folder',
-    group='bootstrap',
-    default='bootstrap',
-    environ='ZTPS_BOOTSTRAP_FOLDER'
-))
-
-runtime.add_attribute(StrAttr(
-    name='path_prefix',
-    group='bootstrap',
-    environ='ZTPS_BOOTSTRAP_PATH_PREFIX'
-))
-
 runtime.add_attribute(StrAttr(
     name='filename',
     group='bootstrap',
-    default='default',
+    default='bootstrap',
     environ='ZTPS_BOOTSTRAP_FILENAME'
 ))
 

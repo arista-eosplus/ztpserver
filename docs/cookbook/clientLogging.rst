@@ -1,3 +1,5 @@
+.. _client-logging-label:
+
 Client-Side Logging
 ===================
 

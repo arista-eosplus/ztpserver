@@ -26,6 +26,10 @@ Global configuration file
     # Enable console logging
     console_logging = True
     
+    # Console logging format
+    console_logging_format = %(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
+
+
     # Globally disable topology validation in the bootstrap process
     disable_topology_validation = False
     
@@ -40,27 +44,12 @@ Global configuration file
     # TCP listening port
     port = 8080
     
-    [ files]
-    # Path for the files directory (overriding data_root/files)
-    folder = files
-    path_prefix = /usr/share/ztpserver
-    
-    [actions]
-    # Path for the actions directory (overriding data_root/actions)
-    folder = actions
-    path_prefix = /usr/share/ztpserver
-    
     [bootstrap]
-    # Path for the bootstrap directory (overriding data_root/bootstrap)
-    folder = bootstrap
-    path_prefix = /usr/share/ztpserver
-    
-    # Bootstrap filename
+    # Bootstrap filename (file located in <data_root>/bootstrap)
     filename = bootstrap
     
     [neighbordb]
-    
-    # Neighbordb filename (file located in data_root)
+    # Neighbordb filename (file located in <data_root>)
     filename = neighbordb
 
 .. _dynamic_neighbordb_example:

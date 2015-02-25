@@ -50,33 +50,30 @@ def main(attributes):
     '''Copies file to the switch.
 
     Copies file based on the values of 'src_url' and 'dst_url'
-    attributes ('dst_url' should point to the detination folder).
-    If 'overwrite' is set to:
-
-    * 'replace': the file is copied to the switch regardless
-      of whether there is already a file with the same name at the
-      destination;
-    * 'if-missing': the file is copied to the switch only if
-      there is not already a file with the same name at the
-      destination; if there is, then the action is a no-op;
-    * 'backup': the file is copied to the switch; if there is
-      already another file at the destination, that file is renamed
-      by appending the '.backup' suffix
-
-    If 'overwrite' is not set, then 'replace' is the default
-    behaviour.
+    attributes ('dst_url' should point to the destination folder).
 
     This action is NOT dual-supervisor compatible.
 
-    Args:
-       attributes: list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
-                   to read attribute values
-       node (internernal): attributes.get('NODE') API: see documentation
-       attributes:
-       src_url: Source location
-       dst_url: Destination
-       mode: Octal mode
-       overwrite: Overwrite existing files? <replace|if-missing|backup> Default: replace
+    Attributes:
+       src_url: path to source file
+       dst_url: path to destination
+       mode: octal mode for destination path
+       overwrite: replace|if-missing|backup (default: replace)
+
+    'overwrite' values:
+       * 'replace': the file is copied to the switch regardless
+         of whether there is already a file with the same name at the
+         destination;
+       * 'if-missing': the file is copied to the switch only if
+         there is not already a file with the same name at the
+         destination; if there is, then the action is a no-op;
+       * 'backup': the file is copied to the switch; if there is
+         already another file at the destination, that file is renamed
+         by appending the '.backup' suffix
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
+
 
     Example:
         ::
@@ -97,11 +94,11 @@ def main(attributes):
     src_url = attributes.get('src_url')
 
     if not src_url:
-        return 'Missing attribute(\'src_url\')'
+        raise Exception('Missing attribute(\'src_url\')')
 
     dst_url = attributes.get('dst_url')
     if not dst_url:
-        return 'Missing attribute(\'dst_url\')'
+        raise Exception('Missing attribute(\'dst_url\')')
 
     name = os.path.basename(src_url)
 
@@ -128,7 +125,7 @@ def main(attributes):
         elif overwrite == 'replace':
             pass
         else:
-            return 'Erroneous \'overwrite\' value'
+            raise Exception('Erroneous \'overwrite\' value')
 
         try:
             os.makedirs(dst_url)
@@ -143,7 +140,8 @@ def main(attributes):
             if mode is not None:
                 os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
-            return 'Unable to retrieve file from URL (%s)' % exc
+            raise Exception('Unable to retrieve file from URL (%s)' % 
+                            exc)
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
@@ -160,7 +158,7 @@ def main(attributes):
         elif overwrite == 'replace':
             lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
         else:
-            return 'Erroneous \'overwrite\' value'
+            raise Exception('Erroneous \'overwrite\' value')
 
         if mode:
             lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
@@ -177,7 +175,8 @@ def main(attributes):
             node.log_msg('copy_file: saving %s '
                          'to %s' % (src_url, file_path))
         except Exception as exc:
-            return 'Unable to retrieve file from URL (%s)' % exc
+            raise Exception('Unable to retrieve file from URL (%s)' % 
+                            exc)
 
         node.log_msg('copy_file: adding rc.eos lines: \n%s$' %
                      '\n'.join(lines))

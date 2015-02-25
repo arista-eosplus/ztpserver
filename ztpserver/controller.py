@@ -35,12 +35,11 @@
 import logging
 import os
 import routes
-import urlparse
+import subprocess
 
 from string import Template
+from subprocess import PIPE
 from webob.static import FileApp
-
-import ztpserver.config
 
 from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED
 from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT
@@ -56,9 +55,11 @@ from ztpserver.topology import create_node, load_pattern
 from ztpserver.topology import load_neighbordb, resources
 from ztpserver.topology import replace_config_action
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
+from ztpserver.config import runtime
 
 
 DEFINITION_FN = 'definition'
+CONFIG_HANDLER_FN = 'config-handler'
 STARTUP_CONFIG_FN = 'startup-config'
 PATTERN_FN = 'pattern'
 NODE_FN = '.node'
@@ -78,9 +79,8 @@ class BaseController(WSGIController):
     FOLDER = None
 
     def __init__(self, **kwargs):
-        data_root = ztpserver.config.runtime.default.data_root
-        self.data_root = data_root
-        self.repository = create_repository(data_root)
+        self.data_root = runtime.default.data_root
+        self.repository = create_repository(self.data_root)
         super(BaseController, self).__init__()
 
     def expand(self, *args, **kwargs):
@@ -208,28 +208,52 @@ class NodesController(BaseController):
     #-------------------------------------------------------------------
 
     def put_config(self, request, **kwargs):
-        log.debug('%s: startup-config PUT request: \n%s\n' % 
-                  (kwargs['resource'], request))
+        node_id = kwargs['resource']
 
-        response = dict()
+        log.debug('%s: startup-config PUT request: \n%s\n' % 
+                  (node_id, request))
+
         fobj = None
         try:
             body = str(request.body)
             content_type = str(request.content_type)
-            filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
+            filename = self.expand(node_id, STARTUP_CONFIG_FN)
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
             log.debug('%s: file not found: %s (adding it)' % 
-                      (kwargs['resource'], filename))
+                      (node_id, filename))
             fobj = self.repository.add_file(filename)
         finally:
             if fobj:
                 fobj.write(body, content_type)
             else:
                 log.error('%s: unable to write %s' % 
-                          (kwargs['resource'], filename))
+                          (node_id, filename))
                 return self.http_bad_request()
-        return response
+
+        # Execute event-handler
+        script = self.expand(node_id, CONFIG_HANDLER_FN)
+        if os.path.isfile(script):
+            proc = subprocess.Popen(script, stdin=PIPE, 
+                                    stdout=PIPE, stderr=PIPE, 
+                                    shell=True)
+            code = proc.returncode         #pylint: disable=E1101
+            (out, err) = proc.communicate()
+            if code or err:
+                log.warn('Startup-config saved for %s '
+                         '(%s failed: return code=%s, stderr=%s)' % 
+                         (node_id, script, code, err))
+                log.debug('%s output: \n%s' % (script, out))
+            else:
+                log.info('Startup-config saved for %s '
+                         '(%s executed successfully)' % 
+                         (node_id, script))
+                log.debug('%s output: \n%s' % (script, out))
+        else:
+            log.info('Startup-config saved for %s (no config-handler)' % 
+                     node_id)
+
+        return {}
 
     #-------------------------------------------------------------------
 
@@ -266,7 +290,7 @@ class NodesController(BaseController):
             response = self.http_bad_request()
             return self.response(**response)
 
-        identifier = ztpserver.config.runtime.default.identifier
+        identifier = runtime.default.identifier
         log.info('%s: node ID is %s:%s' %
                  (request.remote_addr, identifier, node_id))
 
@@ -387,8 +411,9 @@ class NodesController(BaseController):
 
         log.info('%s: node matched \'%s\' pattern in neighbordb' % 
                  (node_id, match.name))
-        try:
 
+        # Load definition
+        try:
             definition_url = self.expand(match.definition, 
                                          folder='definitions')
             fobj = self.repository.get_file(definition_url)
@@ -408,20 +433,45 @@ class NodesController(BaseController):
 
         definition_fn = self.expand(node_id, DEFINITION_FN)
         
+        # Load config-handler
+        if match.config_handler:
+            try:
+                config_handler_url = self.expand(match.config_handler, 
+                                                 folder='config-handlers')
+                fobj = self.repository.get_file(config_handler_url)
+                log.info('%s: node config-handler copied from: %s' % 
+                         (node_id, config_handler_url))
+            except FileObjectNotFound:
+                log.error('%s: failed to find config-handler (%s)' % 
+                          (node_id, config_handler_url))
+                raise
+
+            try:
+                config_handler = fobj.read(content_type=CONTENT_TYPE_OTHER)
+            except FileObjectError:
+                log.error('%s: failed to load config-handler' % 
+                          (node_id))
+                raise
+            
+            config_handler_fn = self.expand(node_id, CONFIG_HANDLER_FN)
+            
+        # Create node folder
         self.repository.add_folder(self.expand(node_id))
 
         log.info('%s: new dynamically-provisioned node created: /nodes/%s' % 
                  (node_id, node_id))
 
+        # Add definition
         fobj = self.repository.add_file(definition_fn)
         fobj.write(definition, CONTENT_TYPE_YAML)
-        
+
+        # Add pattern
         pattern_fn = self.expand(node_id, PATTERN_FN)
         fobj = self.repository.add_file(pattern_fn)
 
         pattern = match.serialize()
 
-        # No need to write the definition name in the apttern file
+        # No need to write the definition name in the pattern file
         del pattern['definition']
 
         for attr in ['node', 'variables']:
@@ -433,6 +483,12 @@ class NodesController(BaseController):
             pattern['interfaces'] = [{'any': {'any': 'any'}}]
 
         fobj.write(pattern, CONTENT_TYPE_YAML)
+
+        # Add config-handler
+        if match.config_handler:
+            fobj = self.repository.add_file(config_handler_fn)
+            fobj.write(config_handler, CONTENT_TYPE_OTHER)
+
         response['status'] = HTTP_STATUS_CREATED
         return (response, 'dump_node')
 
@@ -512,34 +568,11 @@ class NodesController(BaseController):
             response = self.http_bad_request()
             return self.response(**response)
 
-        return self.fsm('get_definition', resource=resource, request=request,
+        return self.fsm('do_validation', resource=resource, request=request,
                         node=node, node_id=node_id)
 
-    def get_definition(self, response, *args, **kwargs):
-        ''' Reads the node specific definition from disk and stores it in the
-        repsonse dict with key `definition`
-        '''
-
-        try:
-            filename = self.expand(kwargs['resource'], DEFINITION_FN)
-            fobj = self.repository.get_file(filename)
-            definition = fobj.read(CONTENT_TYPE_YAML,
-                                   kwargs['resource'])
-            response['definition'] = definition
-            log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
-                                                    filename,
-                                                    definition['actions']))
-        except FileObjectNotFound:
-            log.warning('%s: missing definition %s' % 
-                        (kwargs['resource'], filename))
-        except FileObjectError as err:
-            log.error(err.message)
-            raise Exception('failed to load definition %s' % filename)
-        return (response, 'do_validation')
-
     def do_validation(self, response, *args, **kwargs):
-        config = ztpserver.config.runtime
-        if not config.default.disable_topology_validation:
+        if not runtime.default.disable_topology_validation:
             log.info('%s: topology validation is ENABLED' % kwargs['resource'])
 
             filename = self.expand(kwargs['resource'], PATTERN_FN)
@@ -577,39 +610,61 @@ class NodesController(BaseController):
             filename = self.expand(kwargs['resource'], STARTUP_CONFIG_FN)
             self.repository.get_file(filename)
             response['get_startup_config'] = True
-            if 'definition' not in response:
-                response['definition'] = dict(name='Autogenerated definition',
-                                              actions=list())
-            response['definition']['actions'].append(\
-                replace_config_action(kwargs['resource'],
-                                                           STARTUP_CONFIG_FN))
+            actions = [replace_config_action(kwargs['resource'],
+                                             STARTUP_CONFIG_FN)]
+            response['definition'] = dict(name='Autogenerated definition',
+                                          actions=actions)
         except FileObjectNotFound:
             log.debug('%s: no startup-config %s' % 
                       (kwargs['resource'], filename))
 
-        return (response, 'do_actions')
+        return (response, 'get_definition')
 
-    def do_actions(self, response, *args, **kwargs):
-        actions = response['definition']['actions']
-        _actions = list()
-        for action in actions:
-            always_execute = action.get('always_execute', False)
-            if always_execute:
-                _actions.append(action)
-                log.debug('%s: always_execute action %s included '
-                          'in definition' %
-                          (kwargs['resource'],  action.get('name')))
-            elif not response['get_startup_config']:
-                _actions.append(action)
-                log.debug('%s: action %s included '
-                          'in definition' %
-                          (kwargs['resource'],  action.get('name')))
+    def get_definition(self, response, *args, **kwargs):
+        ''' Reads the node specific definition from disk and stores it in the
+        repsonse dict with key `definition`
+        '''
+
+        try:
+            filename = self.expand(kwargs['resource'], DEFINITION_FN)
+            fobj = self.repository.get_file(filename)
+            definition = fobj.read(CONTENT_TYPE_YAML,
+                                   kwargs['resource'])
+            actions = []
+            if 'actions' in definition:
+                actions = definition['actions']
+
+            if 'definition' in response:
+                # startup-config already present
+                _actions = list()
+                for action in actions:
+                    always_execute = action.get('always_execute', False)
+                    if always_execute:
+                        _actions.append(action)
+                        log.debug('%s: always_execute action %s included '
+                                  'in definition' %
+                                  (kwargs['resource'],  action.get('name')))
+                    else:
+                        log.debug('%s: action %s not included '
+                                  'in definition' %
+                                  (kwargs['resource'],  action.get('name')))
+                response['definition']['actions'] += _actions
             else:
-                log.debug('%s: action %s not included '
-                          'in definition' %
-                          (kwargs['resource'],  action.get('name')))
-        response['definition']['actions'] = _actions
-            
+                # no startup-config
+                for action in actions:
+                    log.debug('%s: action %s included '
+                              'in definition' %
+                              (kwargs['resource'],  action.get('name')))
+                response['definition'] = definition
+            log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
+                                                    filename,
+                                                    definition['actions']))
+        except FileObjectNotFound:
+            log.warning('%s: missing definition %s' % 
+                        (kwargs['resource'], filename))
+        except FileObjectError as err:
+            log.error(err.message)
+            raise Exception('failed to load definition %s' % filename)
         return (response, 'get_attributes')
 
     def get_attributes(self, response, *args, **kwargs):
@@ -712,7 +767,7 @@ class BootstrapController(BaseController):
     def config(self, request, **kwargs):
         ''' Handles GET /bootstrap/config '''
 
-        body = self.DEFAULT_CONFIG
+        body = self.DEFAULT_CONFIG.copy()
 
         try:
             filename = self.expand(BOOTSTRAP_CONF)
@@ -720,12 +775,12 @@ class BootstrapController(BaseController):
             if not config:
                 log.warning('Bootstrap config file empty')                
             else:
-                if 'logging' in config:
+                if 'logging' in config and config['logging']:
                     body['logging'] = config['logging']
                     log.info('%s: syslog info included in bootstrap config' %
                              request.remote_addr)
 
-                if 'xmpp' in config:
+                if 'xmpp' in config and config['xmpp']:
                     body['xmpp'] = config['xmpp'] 
                     for key in ['username', 'password', 'domain']:
                         if key not in body['xmpp']:
@@ -754,10 +809,12 @@ class BootstrapController(BaseController):
         ''' Handles GET /bootstrap '''
 
         try:
-            filename = self.expand(ztpserver.config.runtime.bootstrap.filename)
+            filename = self.expand(runtime.bootstrap.filename)
             fobj = self.repository.get_file(filename).read(CONTENT_TYPE_PYTHON)
-            default_server = ztpserver.config.runtime.default.server_url
+
+            default_server = runtime.default.server_url
             body = Template(fobj).substitute(SERVER=default_server)
+
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
             log.info('%s: node beginning provisioning' %
                      request.remote_addr)
@@ -812,21 +869,12 @@ class Router(WSGIRouter):
 
     def __init__(self):
         # pylint: disable=E1103,W0142
-
         mapper = routes.Mapper()
 
-        kwargs = {}
-
-        url = ztpserver.config.runtime.default.server_url
+        url = runtime.default.server_url
         log.debug('server URL: %s', url)
-        parts = urlparse.urlsplit(url)
-        if parts.path:
-            path = parts.path[:-1] if parts.path.endswith('/') else parts.path
-            if path:
-                log.debug('path_prefix is %s', path)
-                kwargs['path_prefix'] = path
 
-        with mapper.submapper(**kwargs) as router_mapper:
+        with mapper.submapper() as router_mapper:
 
             # configure /bootstrap
             router_mapper.connect('bootstrap', '/bootstrap',

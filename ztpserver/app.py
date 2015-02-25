@@ -32,35 +32,31 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 # pylint: disable=C0103
 #
+
+import argparse
+import logging
 import os
 import sys
-import argparse
-
-import logging
 
 from wsgiref.simple_server import make_server
 
-import ztpserver.config
-import ztpserver.controller
-import ztpserver.topology
 
-from ztpserver.serializers import load
+from ztpserver import config, controller
+
+from ztpserver.serializers import load, dump
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
-from ztpserver.topology import default_filename
+from ztpserver.topology import neighbordb_path
+from ztpserver.utils import all_files
 
-from ztpserver import __version__ as VERSION
-
-DEFAULT_CONF = '/etc/ztpserver/ztpserver.conf'
-
-log = logging.getLogger("ztpserver")
+log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 def enable_handler_console(level=None):
-    """ Enables logging to stdout """
+    ''' Enables logging to stdout '''
     
-    logging_fmt = ztpserver.config.runtime.default.console_logging_format
+    logging_fmt = config.runtime.default.console_logging_format
     formatter = logging.Formatter(logging_fmt)
 
     ch = logging.StreamHandler()
@@ -81,25 +77,31 @@ def enable_handler_console(level=None):
     log.addHandler(ch)
 
 def python_supported():
-    """ Returns True if the current version of the python runtime is valid """
+    ''' Returns True if the current version of the python runtime is valid '''
     return sys.version_info > (2, 7) and sys.version_info < (3, 0)
 
+logging_started = False
 def start_logging(debug):
-    """ reads the runtime config and starts logging if enabled """
+    ''' reads the runtime config and starts logging if enabled '''
+    global logging_started     #pylint: disable=W0603
+    if logging_started:
+        return
 
-    if ztpserver.config.runtime.default.logging:
-        if ztpserver.config.runtime.default.console_logging:
+    if config.runtime.default.logging:
+        if config.runtime.default.console_logging:
             enable_handler_console('DEBUG' if debug else 'INFO')
 
+    logging_started = True
+
 def load_config(conf=None):
-    conf = conf or DEFAULT_CONF
+    conf = conf or config.GLOBAL_CONF_FILE_PATH
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
-        ztpserver.config.runtime.read(conf)
+        config.runtime.read(conf)
 
-def start_wsgiapp(conf=None, debug=False):
-    """ Provides the entry point into the application for wsgi compliant
+def start_wsgiapp(config_file=None, debug=False):
+    ''' Provides the entry point into the application for wsgi compliant
     servers.   Accepts a single keyword argument ``conf``.   The ``conf``
     keyword argument specifies the path the server configuration file.  The
     default value is /etc/ztpserver/ztpserver.conf.
@@ -107,73 +109,165 @@ def start_wsgiapp(conf=None, debug=False):
     :param conf: string path pointing to configuration file
     :return: a wsgi application object
 
-    """
-
-    load_config(conf)
+    '''
+    load_config(config_file)
     start_logging(debug)
 
+    try:
+        version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
+    except Exception:  # pylint: disable=W0703
+        version = 'N/A'
+
+    log.info('Starting ZTPServer v%s...' % version)
+
     log.info('Logging started for ztpserver')
-    log.info('Using repository %s', ztpserver.config.runtime.default.data_root)
+    log.info('Using repository %s', config.runtime.default.data_root)
 
     if not python_supported():
         raise SystemExit('ERROR: ZTPServer requires Python 2.7')
 
-    return ztpserver.controller.Router()
+    return controller.Router()
 
-def run_server(conf, debug):
-    """ The :py:func:`run_server` is called by the main command line routine to
+def run_server(version, config_file, debug):
+    ''' The :py:func:`run_server` is called by the main command line routine to
     run the server as standalone.   This function accepts a single argument
     that points towards the configuration file describing this server
 
     This function will block on the active thread until stopped.
 
     :param conf: string path pointing to configuration file
-    """
+    '''
+    app = start_wsgiapp(config_file, debug)
 
-    app = start_wsgiapp(conf, debug)
+    host = config.runtime.server.interface
+    port = config.runtime.server.port
 
-    host = ztpserver.config.runtime.server.interface
-    port = ztpserver.config.runtime.server.port
+    log.info('URL: http://%s:%s' % (host, port))
 
     httpd = make_server(host, port, app)
 
-    print "Starting server on http://%s:%s" % (host, port)
+    log.info('Starting ZTPServer v%s on http://%s:%s' % 
+             (version, host, port))
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print 'Shutdown'
+        log.info('Shutdown...')
 
-def run_validator(filename=None):
+def validate_neighbordb():
+    # Validating neighbordb
+    validator = NeighbordbValidator('N/A')
+    neighbordb = neighbordb_path()
+    print 'Validating neighbordb (\'%s\')...' % neighbordb
+    try:
+        validator.validate(load(neighbordb, CONTENT_TYPE_YAML,
+                                'validator'))
+        total_patterns = len(validator.valid_patterns) + \
+            len(validator.invalid_patterns)
+            
+        if validator.invalid_patterns:
+            print '\nERROR: Failed to validate neighbordb patterns'
+            print '   Invalid Patterns (count: %d/%d)' % \
+                (len(validator.invalid_patterns),
+                 total_patterns)
+            print '   ---------------------------'
+            for index, pattern in enumerate(
+                sorted(validator.invalid_patterns)):
+                print '   [%d] %s' % (index, pattern[1])
+        else:
+            print 'Ok!'            
+    except Exception as exc:        #pylint: disable=W0703
+        print 'ERROR: Failed to validate neighbordb\n%s' % exc
+
+def validate_definitions():
+    data_root = config.runtime.default.data_root
+
+    print '\nValidating definitions...'
+    for definition in all_files(os.path.join(data_root, 
+                                             'definitions')):
+        print 'Validating %s...' % definition,
+        try:
+            load(definition, CONTENT_TYPE_YAML,
+                 'validator')
+            print 'Ok!'
+        except Exception as exc:        #pylint: disable=W0703            
+            print '\nERROR: Failed to validate %s\n%s' % \
+                (definition, exc)
+
+def validate_resources(raiseException=False):
+    data_root = config.runtime.default.data_root
+
+    print '\nValidating resources...'
+    for resource in all_files(os.path.join(data_root, 
+                                           'resources')):
+        print 'Validating %s...' % resource,
+        try:
+            load(resource, CONTENT_TYPE_YAML,
+                 'validator')
+            print 'Ok!'
+        except Exception as exc:        #pylint: disable=W0703 
+            print '\nERROR: Failed to validate %s\n%s' % \
+                (resource, exc)
+            if raiseException:
+                raise exc
+
+def validate_nodes():
+    data_root = config.runtime.default.data_root
+
+    print '\nValidating nodes...'
+    for filename in [x for x in all_files(os.path.join(data_root, 
+                                                       'nodes'))
+                     if x.split('/')[-1] in ['definition',
+                                             'pattern']]:
+        print 'Validating %s...' % filename,
+        try:
+            load(filename, CONTENT_TYPE_YAML,
+                 'validator')
+            print 'Ok!'
+        except Exception as exc:        #pylint: disable=W0703            
+            print '\nERROR: Failed to validate %s\n%s' % \
+                (filename, exc)
+
+def clear_resources(debug):
+    start_logging(debug)
 
     try:
-        print 'Validating file \'%s\'\n' % filename
-        validator = NeighbordbValidator('VALIDATION_TEST')
-        filename = filename or default_filename()
-        validator.validate(load(filename, CONTENT_TYPE_YAML,
-                                'validator'))
-        print 'Valid Patterns (count: %d)' % len(validator.valid_patterns)
-        print '--------------------------'
-        for index, pattern in enumerate(sorted(validator.valid_patterns)):
-            print '[%d] %s' % (index, pattern[1])
-        print
-        print 'Failed Patterns (count: %d)' % len(validator.invalid_patterns)
-        print '---------------------------'
-        for index, pattern in enumerate(sorted(validator.invalid_patterns)):
-            print '[%d] %s' % (index, pattern[1])
-        print
+        validate_resources(raiseException=True)
+    except Exception:                   #pylint: disable=W0703 
+        sys.exit('ERROR: Unable to clear resources because of validation error')
 
-    except Exception as exc:        #pylint: disable=W0703
-        print 'ERROR: Failed to validate neighbordb: %s' % exc
+    data_root = config.runtime.default.data_root
 
+    print '\nClearing resources...'
+    for resource in all_files(os.path.join(data_root, 
+                                           'resources')):
+        print 'Clearing %s...' % resource,
+        try:
+            contents = load(resource, CONTENT_TYPE_YAML,
+                            'clear_resource')
+            for key in contents:
+                contents[key] = 'None'
+            dump(contents, resource, CONTENT_TYPE_YAML,
+                 'clear_resource')
+            print 'Ok!'            
+        except Exception as exc:        #pylint: disable=W0703            
+            print '\nERROR: Failed to clear %s\n%s' % \
+                (resource, exc)
+    
+def run_validator(debug):
+    start_logging(debug)
 
+    validate_neighbordb()
+    validate_definitions()
+    validate_resources()
+    validate_nodes()
 
 def main():
-    """ The :py:func:`main` is the main entry point for the ztpserver if called
+    ''' The :py:func:`main` is the main entry point for the ztpserver if called
     from the commmand line.   When called from the command line, the server is
     running in standalone mode as opposed to using the :py:func:`application` to
     run under a python wsgi compliant server
-    """
+    '''
 
     usage = 'ztpserver [options]'
 
@@ -185,27 +279,40 @@ def main():
 
     parser.add_argument('--conf', '-c',
                         type=str,
-                        default=DEFAULT_CONF,
+                        default=config.GLOBAL_CONF_FILE_PATH,
                         help='Specifies the configuration file to use')
 
-    parser.add_argument('--validate',
-                        type=str,
-                        metavar='FILENAME',
-                        help='Runs a validation check on neighbordb')
+    parser.add_argument('--validate-config', '-V',
+                        action='store_true',
+                        help='Validates config files')
 
     parser.add_argument('--debug',
                         action='store_true',
                         help='Enables debug output to the STDOUT')
 
+    parser.add_argument('--clear-resources', '-r',
+                        action='store_true',
+                        help='Clears all resource files')
+
 
     args = parser.parse_args()
+
+    version = 'N/A'
+    try:
+        version = open(config.VERSION_FILE_PATH).read().split()[0].strip()
+    except IOError:
+        pass
+
     if args.version:
-        print 'ztps version %s' % VERSION
+        print 'ZTPServer version %s' % version
+
+    if args.validate_config:
+        run_validator(args.debug)
+
+    if args.clear_resources:
+        clear_resources(args.debug)
+
+    if args.version or args.validate_config or args.clear_resources:
         sys.exit()
 
-    if args.validate is not None:
-        load_config(args.conf)
-        start_logging(args.debug)
-        sys.exit(run_validator(args.validate))
-
-    return run_server(args.conf, args.debug)
+    return run_server(version, args.conf, args.debug)

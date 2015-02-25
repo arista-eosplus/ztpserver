@@ -27,21 +27,21 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,W0402,E1103
+#pylint: disable=W0703,E1103
 
 import os
 
-TEMP_CONFIG = '/tmp/tmp-add-config'
+TEMP_CONFIG = '/tmp/tmp-run-commands'
 
 def main(attributes):
-    ''' Appends config section to startup-config.
+    ''' Runs a set of EOS commands, starting from enable mode.
 
     This action is dual-supervisor compatible.
 
     Attributes:
-        url: path to source config/template
-        substitution_mode: loose|strict (default: loose)
-        variables: list of value substitutions
+        url: path to source command list/template
+        variables (optional): 
+             list of value substitutions (for a template)
         
     Special_attributes: 
         NODE: API object - see documentation for details
@@ -50,16 +50,12 @@ def main(attributes):
         ::
 
           -
-            action: add_config
+            action: run_cli_commands
             attributes:
               url: files/templates/ma1.template
               variables:
                 ipaddress: allocate('mgmt_subnet')
-            name: "configure ma1"
-            onstart: "Starting to configure ma1"
-            onsuccess: "SUCCESS: ma1 configure"
-            onfailure: "FAIL: IM provisioning@example.com for help"
-
+            name: 'configure ma1'
     '''
 
     node = attributes.get('NODE')
@@ -67,12 +63,6 @@ def main(attributes):
 
     if not url:
         raise Exception('Missing attribute(\'url\')')
-
-
-    substitution_mode = attributes.get('substitution_mode', 'loose')
-    if substitution_mode not in ['loose', 'strict']:
-        raise Exception('Invalid option specified for substitution_mode '
-                        'attribute')
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
@@ -91,10 +81,17 @@ def main(attributes):
         raise Exception('Unable to perform variable substitution - '
                         'invalid variables')
 
-    contents = node.substitute(contents, variables,
-                               substitution_mode == 'strict')
-    node.append_startup_config_lines(contents.split('\n'))
-    
+
+    contents = node.substitute(contents, variables)
+    commands = [x for x in contents.split('\n') if x]
+
+    try:
+        node.api_enable_cmds(commands,
+                             text_format=True)
+    except Exception as exc:
+        raise Exception('Running CLI commands %s failed: %s' % 
+                        (commands, exc.message))
+
     # Only remove this in case everything else succeeded
     # for debugging purposes
     os.remove(TEMP_CONFIG)

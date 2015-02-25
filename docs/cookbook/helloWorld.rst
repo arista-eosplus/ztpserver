@@ -304,7 +304,7 @@ The definition is where we list all of the `actions <http://ztpserver.readthedoc
 we want the node to execute during the provisioning process. In this case we are
 hosting the SWI on the ZTPServer, so we just define the ``url`` in relation
 to the ``data_root``. We could change the ``url`` to point to another server
-all together - the choice is yours. The benefit in hosting the file on the
+altogether - the choice is yours. The benefit in hosting the file on the
 ZTPServer is that we perform an extra checksum step to validate the integrity of
 the file.
 

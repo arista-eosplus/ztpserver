@@ -30,27 +30,34 @@
 #pylint: disable=W0703,E1103
 
 def main(attributes):
-    '''Replaces stratup-config on the switch.
-
-    Replaces/adds /mnt/flash/startup-config based on the value of the
-    'url' attribute.
+    '''Replaces /mnt/flash/startup-config with new file.
 
     This action is dual-supervisor compatible.
 
-    Args:
-        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
-        node (internal): attributes.get('NODE') API: see documentation
-        url: path to config/template
+    Attributes:
+        url: path to source config/template
+
+    Special_attributes: 
+        NODE: API object - see documentation for details
+
+    Example:
+        ::
+
+          -
+            action: replace_config
+            attributes:
+              url: files/configs/tor-startup-config
+            name: "tor config"
     '''
 
     node = attributes.get('NODE')
     url = attributes.get('url')
 
     if not url:
-        return 'Missing attribute(\'url\')'
+        raise Exception('Missing attribute(\'url\')')
 
     try:
         node.retrieve_url(url, node.startup_config())
     except Exception as exc:
-        return 'Unable to retrieve config from URL (%s)' % exc.message
-
+        raise Exception('Unable to retrieve config from URL (%s)' % 
+                        exc.message)
