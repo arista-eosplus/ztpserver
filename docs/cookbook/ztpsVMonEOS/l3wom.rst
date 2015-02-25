@@ -1,4 +1,4 @@
-ZTPSERVER VM on EOS in a L3WOM
+ZTPServer VM on EOS in a L3WOM
 ==============================
 
 .. The line below adds a local TOC
@@ -9,7 +9,7 @@ ZTPSERVER VM on EOS in a L3WOM
 Files Needed
 ------------
 
-* ``ztps.vmdk``     : the VM disk image for the ZTPSERVER VM
+* ``ztps.vmdk``     : the VM disk image for the ZTPServer VM
 * ``startup-config``: a text file (with no extension)
 * ``ztps.sh``       : a bash shell script
 * ``ztps.xml``      : an xml file
@@ -30,21 +30,21 @@ ztps.vmdk
 Objective
 ^^^^^^^^^
 
-I want to create a ZTPSERVER vmdk file to use on EOS.
+I want to create a ZTPServer vmdk file to use on EOS.
 
 Solution
 ^^^^^^^^
 
-The ZTPSERVER vmdk file can be created using either methods below:
-   1) Automatically Create a Full-Featured ZTPServer: https://github.com/arista-eosplus/packer-ztpserver
-   2) Create your own VM and install ZTPSERVER as intructed in the "Installation" section
+The ZTPServer vmdk file can be created using either methods below:
+   1) Automatically Create a Full-Featured ZTPServer: https://github.com/arista-eosplus/packer-ZTPServer
+   2) Create your own VM and install ZTPServer as intructed in the "Installation" section
 
 Explanation
 ^^^^^^^^^^^
 
 The turnkey solution detailed on the github will create a full featured ztps.vmdk by executing a single command.  The vmdk created using this method comes with certain parameters pre-defined (i.e. domain-name, root user credential, IP address, etc).  If desired, you can change these parameters by logging into the VM after it's created.
 
-The second method requires more manual work compare to the first method, but may be more suitable if you already have a VM build to your needs and simply want to add ZTPSERVER to it.
+The second method requires more manual work compare to the first method, but may be more suitable if you already have a VM build to your needs and simply want to add ZTPServer to it.
 
 .. End of ztps.vmdk
 
@@ -55,7 +55,7 @@ startup-config
 Objective
 ^^^^^^^^^
 
-I need to prepare a startup-config for the first SPINE switch to enable ZTPSERVER.
+I need to prepare a startup-config for the first SPINE switch to enable ZTPServer.
 
 Solution
 ^^^^^^^^
@@ -65,7 +65,7 @@ Essential parts of the configuration:
 * ``interface Loopback2``         : need a loopback interface on the same subnet as the VM
 * ``daemon ztps``                 : used to run the ``ztps.daemon`` python script in the background
 * ``event-handler ztps``          : used to start the shell script ``ztps.sh``
-* ``virtual-machine ztps``        : used to start the ZTPSERVER VM on EOS
+* ``virtual-machine ztps``        : used to start the ZTPServer VM on EOS
 * ``management api http-commands``: need to enable eAPI for ``daemon ztps`` to function
 
 .. code-block:: shell
@@ -110,7 +110,7 @@ ztps.sh
 Objective
 ^^^^^^^^^
 
-I want to create a shell script to set up all the necessary environment for ZTPSERVER when the switch boots up.
+I want to create a shell script to set up all the necessary environment for ZTPServer when the switch boots up.
 
 Solution
 ^^^^^^^^
@@ -168,9 +168,9 @@ In order to enable connectivity to the VM from both remotely and locally (from t
 
 EOS does not come with dhcpd preinstalled, there a DHCP-Server RPM needs to be downloaded, installed and started.  Dowdload the RPM from `here <https://docs.google.com/a/arista.com/document/d/1fmhvousmZYr8Sidiv9rBf_PZDT-65QX0um215s_9K0c/edit#>`_ and rename it to ``dhcpd.rpm``. The RPM needs to be moved to the ``/mnt/flash/.extension`` location, and a ``boot-extension`` file, with the RPM specified, needs to be present in ``/mnt/flash`` in order for the RPM to be installed persistently after a reboot.
 
-The ZTPSERVER VM needs to be restarted after the switch boots up.
+The ZTPServer VM needs to be restarted after the switch boots up.
 
-.. note:: The ZTPSERVER VM needs to have its default gateway pointed to the br0 interface IP address.
+.. note:: The ZTPServer VM needs to have its default gateway pointed to the br0 interface IP address.
 
 .. End of ztps.sh
 
@@ -191,7 +191,7 @@ Key parts of the xml file to pay attention to:
 * ``<domain type='kvm' id='1'>``          : in case multiple VMs are running on the system, make sure the configured ID is unique
 * ``<driver name='qemu' type='vmdk'/>``   : make sure the type is ``vmdk``
 * ``<source file='/mnt/usb1/ztps.vmdk'/>``: make sure the path is correct
-* ``<mac address='08:00:27:85:0c:f8'/>``  : make sure this MAC matches the MAC address of the interface on the ZTPSERVER VM that you intend to use for connectivity
+* ``<mac address='08:00:27:85:0c:f8'/>``  : make sure this MAC matches the MAC address of the interface on the ZTPServer VM that you intend to use for connectivity
 * ``<target dev='vnet0'/>``               : make sure the target device type is ``vnet0``
 
 .. code-block :: shell
@@ -306,11 +306,11 @@ Explanation
 
 The ``class "ARISTA"`` section defines a match criteria so that any subnet defition that uses this class would only allocate IPs if the requestor is an Arista device.  This class also defines a bootstrap file that will be downloaded to the requestor.
 
-.. note:: The IP address and TCP port number defined for the bootfile needs to match the ZTPSERVER VM configuration.
+.. note:: The IP address and TCP port number defined for the bootfile needs to match the ZTPServer VM configuration.
 
 The subnet section provides an example to show you how it can be defined.  If you are bootstrapping a L3 ECMP network without a management network, this section needs to be repeated for every p-to-p links connecting to every leaf switches.
 
-.. note::  The ZTPSERVER VM also runs dhcpd, but in the scenario of L3 ECMP without a management network, we are unable to leverage that. This is because DHCP relay from the host switch to the VM is currently not supported in EOS.
+.. note::  The ZTPServer VM also runs dhcpd, but in the scenario of L3 ECMP without a management network, we are unable to leverage that. This is because DHCP relay from the host switch to the VM is currently not supported in EOS.
 
 .. End of dhcpd.conf
 

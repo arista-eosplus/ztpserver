@@ -1,4 +1,4 @@
-ZTPSERVER VM on EOS in a L2L3WM
+ZTPServer VM on EOS in a L2L3WM
 ===============================
 
 .. The line below adds a local TOC
@@ -9,7 +9,7 @@ ZTPSERVER VM on EOS in a L2L3WM
 Files Needed
 ------------
 
-* ``ztps.vmdk``     : the VM disk image for the ZTPSERVER VM
+* ``ztps.vmdk``     : the VM disk image for the ZTPServer VM
 * ``startup-config``: a text file (with no extension)
 * ``ztps.sh``       : a bash shell script
 * ``ztps.xml``      : an xml file
@@ -26,21 +26,21 @@ ztps.vmdk
 Objective
 ^^^^^^^^^
 
-I want to create a ZTPSERVER vmdk file to use on EOS.
+I want to create a ZTPServer vmdk file to use on EOS.
 
 Solution
 ^^^^^^^^
 
-The ZTPSERVER vmdk file can be created using either methods below:
-   1) Automatically Create a Full-Featured ZTPServer: https://github.com/arista-eosplus/packer-ztpserver
-   2) Create your own VM and install ZTPSERVER as intructed in the "Installation" section
+The ZTPServer vmdk file can be created using either methods below:
+   1) Automatically Create a Full-Featured ZTPServer: https://github.com/arista-eosplus/packer-ZTPServer
+   2) Create your own VM and install ZTPServer as intructed in the "Installation" section
 
 Explanation
 ^^^^^^^^^^^
 
 The turnkey solution detailed on the github will create a full featured ztps.vmdk by executing a single command.  The vmdk created using this method comes with certain parameters pre-defined (i.e. domain-name, root user credential, IP address, etc).  If desired, you can change these parameters by logging into the VM after it's created.
 
-The second method requires more manual work compare to the first method, but may be more suitable if you already have a VM build to your needs and simply want to add ZTPSERVER to it.
+The second method requires more manual work compare to the first method, but may be more suitable if you already have a VM build to your needs and simply want to add ZTPServer to it.
 
 .. End of ztps.vmdk
 
@@ -51,7 +51,7 @@ startup-config
 Objective
 ^^^^^^^^^
 
-I need to prepare a startup-config for the first SPINE switch to enable ZTPSERVER.
+I need to prepare a startup-config for the first SPINE switch to enable ZTPServer.
 
 Solution
 ^^^^^^^^
@@ -59,7 +59,7 @@ Solution
 Essential parts of the configuration:
 
 * ``event-handler ztps``    : used to start the shell script ``ztps.sh``
-* ``virtual-machine ztps``  : used to start the ZTPSERVER VM on EOS
+* ``virtual-machine ztps``  : used to start the ZTPServer VM on EOS
 
 .. code-block:: shell
 
@@ -79,7 +79,7 @@ Explanation
 ^^^^^^^^^^^
 The ``event-handler ztps`` is triggered on-boot to kickstart the shell script ``ztps.sh``.  There is a delay of 300 seconds before the script will be executed, to make sure all the necessary systems are in place before we run the script.  For details of the script please see the ``ztps.sh`` section.
 
-External systems will connect to the VM via the management network.  The host switch will connect to the VM via the Linux bridge (See ``ztps.sh``).  Therefore in this scenario we will need to have 2 interfaces on the ZTPSERVER VM.
+External systems will connect to the VM via the management network.  The host switch will connect to the VM via the Linux bridge (See ``ztps.sh``).  Therefore in this scenario we will need to have 2 interfaces on the ZTPServer VM.
 
 For details of the shell script ``ztps.sh`` please refer to the corresponding sectio below.
 
@@ -92,7 +92,7 @@ ztps.sh
 Objective
 ^^^^^^^^^
 
-I want to create a shell script to set up all the necessary environment for ZTPSERVER when the switch boots up.
+I want to create a shell script to set up all the necessary environment for ZTPServer when the switch boots up.
 
 Solution
 ^^^^^^^^
@@ -121,9 +121,9 @@ Explanation
 
 In order to enable connectivity to the VM locally (from the host switch), a Linux bridge interface needs to be created and assigned an IP in the same subnet as one of the interfaces on the VM.
 
-The ZTPSERVER VM needs to be restarted after the switch boots up.
+The ZTPServer VM needs to be restarted after the switch boots up.
 
-.. note:: The ZTPSERVER VM needs to have its default gateway pointed to the default gateway of the management network.
+.. note:: The ZTPServer VM needs to have its default gateway pointed to the default gateway of the management network.
 
 .. End of ztps.sh
 
@@ -141,13 +141,14 @@ Solution
 
 Key parts of the xml file to pay attention to:
 
-* ``<domain type='kvm' id='1'>``          : in case multiple VMs are running on the system, make sure the configured ID is unique
+* ``<domain type='kvm' id='1'>``          : id needs to be unique (if more than 1 VM)
 * ``<driver name='qemu' type='vmdk'/>``   : make sure the type is ``vmdk``
 * ``<source file='/mnt/usb1/ztps.vmdk'/>``: make sure the path is correct
-* Interface definition section            : 
-#. MAC address in the xml need to match the MAC address of the interfaces on the ZTPSERVER VM
-#. The first interface type is direct and is mapped to ma1.  This is the interface that will be used for other switches to reach the VM.
-#. The second interface type is bridge and is using Linux bridge.  This interface is solely used for local host switch to VM connectivity.
+* **Interface definition section**        :
+
+  * MAC address in the xml need to match the MAC address of the interfaces on the ZTPServer VM.
+  * The first interface type is direct and is mapped to ma1.  This is the interface that will be used for other switches to reach the VM.
+  * The second interface type is bridge and is using Linux bridge.  This interface is solely used for local host switch to VM connectivity.
 
 .. code-block :: shell
 

@@ -1,4 +1,4 @@
-Run ZTPSERVER as a VM on EOS
+Run ZTPServer as a VM on EOS
 ===========================================
 
 .. The line below adds a local TOC
@@ -18,9 +18,9 @@ Arista EOS provides the capability to run VMs on top of EOS, therefore making th
 
 There are 3 different deployment topologies, and your network design should fall into one of them.  Each topology requires slightly different recipes, and they are explained in the following sections.
 
-* ``L2L3WM``  : a L2 MLAG or L3 ECMP fabric with an out-of-band management network (switches managed via the management port)
-* ``L2WOM``   : a L2 MLAG fabric without an out-of-band management network (switches managed in-band via SVI)
-* ``L3WOM``   : a L3 ECMP fabric without an out-of-band management network (switches managed in-band via loopback)
+* **L2L3WM**  : a L2 MLAG or L3 ECMP fabric with an out-of-band management network (switches managed via the management port)
+* **L2WOM**   : a L2 MLAG fabric without an out-of-band management network (switches managed in-band via SVI)
+* **L3WOM**   : a L3 ECMP fabric without an out-of-band management network (switches managed in-band via loopback)
 
 .. toctree::
    :maxdepth: 1
