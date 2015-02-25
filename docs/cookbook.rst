@@ -19,3 +19,4 @@ ZTPServer Cookbook
    cookbook/templates
    cookbook/troubleshooting
    cookbook/advanced
+   cookbook/ztpsVMonEOS
