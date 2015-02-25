@@ -4,7 +4,7 @@ Hello World - A Simple Provisioning Example
 .. The line below adds a local TOC
 
 .. contents:: :local:
-  :depth: 2
+  :depth: 1
 
 **Introduction**
 
