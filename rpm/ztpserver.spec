@@ -32,8 +32,7 @@ Summary: %{app_summary}
 Group:    Applications/Communications
 License:  BSD-3
 URL:      %{app_url}
-Source0:  %{name}-%{version}.tgz
-Source1:  %{name}-wsgi.conf
+Source0:  %{name}-%{version}.tar.gz
 
 ### Don't allow rpmbuild to modify dependencies
 AutoReqProv: no
@@ -126,7 +125,7 @@ python setup.py install --root=$RPM_BUILD_ROOT \
 --install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
-%{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
+%{__install} -pD conf/%{name}-wsgi.conf $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
 
 %pre
