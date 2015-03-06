@@ -150,7 +150,7 @@ ln -s -f %{_bindir}/ztps /usr/bin/ztps
 %endif
 chown -R %{app_user}:%{app_user} %{apphomedir}
 chmod -R ug+rw %{ztps_data_root}
-chcon -Rv --type=httpd_sys_content_t %{ztps_data_root}
+chcon -Rv --type=httpd_sys_content_t %{ztps_data_root} > /dev/null 2>&1
 
 %preun
 # $1 --> if 0, then it is a deinstall
