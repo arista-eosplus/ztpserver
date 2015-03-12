@@ -233,12 +233,14 @@ def dump(data, file_path, content_type, node_id='N/A', lock=False):
         if lock:
             with READ_WRITE_LOCK[file_path]:
                 with os.fdopen(os.open(file_path, 
-                                       os.O_WRONLY | os.O_CREAT, 0754), 
+                                       os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+                                       0754),
                                'w') as fhandler:
                     fhandler.write(dumps(data, content_type, node_id))
         else:
             with os.fdopen(os.open(file_path, 
-                                   os.O_WRONLY | os.O_CREAT, 0754), 
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+                                   0754),
                            'w') as fhandler:
                 fhandler.write(dumps(data, content_type, node_id))            
     except (OSError, IOError) as err:
