@@ -563,8 +563,8 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = create_node(fobj.read(CONTENT_TYPE_JSON))
         except Exception as err:           # pylint: disable=W0703
-            log.error('%s: unable to read file resource %s: %s' % 
-                      (node_id, resource, err))
+            log.error('%s: unable to read %s file for %s: %s' % 
+                      (NODE_FN, node_id, resource, err))
             response = self.http_bad_request()
             return self.response(**response)
 

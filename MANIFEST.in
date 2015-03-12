@@ -1,4 +1,4 @@
-include README.md INSTALL.md
+include README.md INSTALL.md VERSION
 include requirements.txt
 recursive-include docs *
 recursive-include actions *
