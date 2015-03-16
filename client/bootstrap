@@ -864,7 +864,7 @@ class Server(object):
                                     headers=headers)
 
         log('Server response to GET config: contents=%s' % result.json())
-
+        
         status = result.status_code
         content = result.headers['content-type'].split(';')[0]
         if(status != HTTP_STATUS_OK or
