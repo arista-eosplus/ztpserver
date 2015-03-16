@@ -115,6 +115,8 @@ pip install -r requirements.txt
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
 cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
+%else
+export ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT
 %endif
 
 # Allow us to install libs in to RPM_BUILD_ROOT
