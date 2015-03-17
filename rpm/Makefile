@@ -58,12 +58,14 @@ clean:
 	#@rm dist/${PACKAGE}-${SPECVERSION}
 	#cp ${HTTPDCONF} dist/${HTTPDCONF}
 
-prep_rpmbuild: rpm_sdist
-	mkdir -p rpmbuild
-	mkdir -p rpms
+rpm:
+	$(MAKE) -C .. rpm
 
-rpm: ../${PACKAGE}.spec
+srpm:
+	$(MAKE) -C .. srpm
+
+rpm-pkg: ../${PACKAGE}.spec
 	${RPMBUILD} -ba ../${PACKAGE}.spec
 
-srpm: ../${PACKAGE}.spec
+srpm-pkg: ../${PACKAGE}.spec
 	${RPMBUILD} -bs ../${PACKAGE}.spec

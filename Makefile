@@ -48,10 +48,10 @@ clean:
 
 .PHONY: rpm srpm
 rpm: sdist
-	$(MAKE) -C rpm rpm
+	$(MAKE) -C rpm rpm-pkg
 
 srpm: sdist
-	$(MAKE) -C rpm srpm
+	$(MAKE) -C rpm srpm-pkg
 
 ztpserver.spec:
 	$(MAKE) -C rpm ../ztpserver.spec
