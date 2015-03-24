@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -232,7 +232,8 @@ class NodesController(BaseController):
                 return self.http_bad_request()
 
         # Execute event-handler
-        script = self.expand(node_id, CONFIG_HANDLER_FN)
+        script = self.repository.expand(
+            self.expand(node_id, CONFIG_HANDLER_FN))
         if os.path.isfile(script):
             proc = subprocess.Popen(script, stdin=PIPE, 
                                     stdout=PIPE, stderr=PIPE, 
@@ -563,8 +564,8 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = create_node(fobj.read(CONTENT_TYPE_JSON))
         except Exception as err:           # pylint: disable=W0703
-            log.error('%s: unable to read file resource %s: %s' % 
-                      (node_id, resource, err))
+            log.error('%s: unable to read %s file for %s: %s' % 
+                      (NODE_FN, node_id, resource, err))
             response = self.http_bad_request()
             return self.response(**response)
 

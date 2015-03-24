@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
         system like functionality for performing basid CRUD on
         files and well as reading and writing specific file contents.
 
-    :copyright: Copyright (c) 2014, Arista Networks
+    :copyright: Copyright (c) 2015, Arista Networks
     :license: BSD, see LICENSE for more details
 
 '''

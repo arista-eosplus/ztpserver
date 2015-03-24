@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1065,7 +1065,10 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp['definition']['actions'][0]['attributes']['foo']
         self.assertEqual(foo, var_foo)
 
-    def test_put_config_success(self):
+    @patch('os.path.isfile')
+    def test_put_config_success(self, m_is_file):
+        m_is_file.return_value = False
+
         resource = random_string()
         body = random_string()
         request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)

@@ -1,6 +1,6 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
