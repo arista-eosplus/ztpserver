@@ -50,13 +50,6 @@ clean:
 	@cp $(RPMSPEC) ../$(PACKAGE).spec
 	@sed -i -e 's/^Version:.*/Version: $(SPECVERSION)/g' ../$(PACKAGE).spec
 	@sed -i -e 's/^Release:.*/Release: $(RPMRELEASE)%{?dist}/g' ../$(PACKAGE).spec
-	#mkdir -p dist/
-	#@ln -s ../../../${PACKAGE} dist/${PACKAGE}-${SPECVERSION}
-	#tar --directory=dist --dereference -czf dist/${PACKAGE}-${SPECVERSION}.tgz \
-	#	${PACKAGE}-${SPECVERSION} --exclude=rpm --exclude=.git --exclude=.gitignore \
-	#	--exclude=ztpserver.egg-info
-	#@rm dist/${PACKAGE}-${SPECVERSION}
-	#cp ${HTTPDCONF} dist/${HTTPDCONF}
 
 rpm:
 	$(MAKE) -C .. rpm
