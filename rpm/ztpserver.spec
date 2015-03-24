@@ -136,7 +136,7 @@ getent passwd %{app_user} > /dev/null || \
   useradd -m -g %{app_user} -d %{apphomedir} -s /bin/false \
   -c "%{name} - Server" %{app_user}
 %if 0%{?rhel} == 6
-datadir=/usr/share/ztpserve
+datadir=/usr/share/ztpserver
 %else
 datadir=%{ztps_data_root}
 %endif
