@@ -190,7 +190,7 @@ Static provisioning - overview
 
 A node can be statically configured on the server as follows:
 
-* create a new directory under ``[data_root]/nodes`, using the system's unique_id as the name
+* create a new directory under ``[data_root]/nodes``, using the system's unique_id as the name
 * create/symlink a *startup-config* or *definition* file in the newly-created folder
 * if topology validation is enabled, also create/symlink a *pattern* file
 * optionally, create *config-handler* script which is run whenever a PUT startup-config request succeeds
