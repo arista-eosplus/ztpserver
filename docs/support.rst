@@ -94,4 +94,5 @@ ZTPServer documentation and other reference materials are below:
     * `Packer VM <https://github.com/arista-eosplus/packer-ztpserver>`_ build process
     * `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ Python (PyPI) package
     * `YAML Code Validator <http://yamllint.com/>`_
+    * `ZTPServer WSGI Benchmarking <https://eos.arista.com/ztpserver-benchmarking-the-webserver-gateway-interface>`_
     
