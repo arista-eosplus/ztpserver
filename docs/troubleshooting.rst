@@ -9,6 +9,15 @@ Basics
 When the ZTP process isn't behaving as expected, there are some basics that
 should be checked regularly.
 
+Updating to the latest Release is strongly encouraged
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ZTP Server is continually being enhanced and improved and its entirely possible that
+the issue you've encountered has already been addressed, either in the documentation
+such as :doc:`tips`, or in the code, itself.  Therefore, we strongly encourage anyone
+experiencing difficulty to reproduce the issue on the latest release version before
+opening an issue or requesting support.
+
 If the switch is not attempting Zero Touch Provisioning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -37,9 +46,8 @@ without reloading a switch are located on the :doc:`tips` page.
 Before Requesting Support
 `````````````````````````
 
-Before emailing for assistance or opening a support case with Arista TAC,
-please perform the following steps and collect the following data to enable
-us to help in a timely manner.
+Before requesting support, it is important to perform the following steps to
+collect sufficient data to reduce information requests and enable timely resolution.
 
 Version and Install method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -64,7 +72,9 @@ Client-side logs
 ^^^^^^^^^^^^^^^^
 
 Ensure the bootstrap client is configured to log to syslog or XMPP via
-/usr/share/ztpserver/bootstrap/bootstrap.conf and include that output.
+/usr/share/ztpserver/bootstrap/bootstrap.conf and include that output.  Attempting to
+collect client side logs from the console frequently results in missing information
+due to scroll buffers or line length.
 
 Configuration Files
 ^^^^^^^^^^^^^^^^^^^
