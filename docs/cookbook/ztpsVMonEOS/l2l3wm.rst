@@ -150,7 +150,7 @@ Key parts of the xml file to pay attention to:
   * The first interface type is direct and is mapped to ma1.  This is the interface that will be used for other switches to reach the VM.
   * The second interface type is bridge and is using Linux bridge.  This interface is solely used for local host switch to VM connectivity.
 
-.. code-block :: shell
+.. code-block :: console
 
   <domain type='kvm' id='1'>
     <name>ztps</name>

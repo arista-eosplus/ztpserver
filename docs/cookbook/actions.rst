@@ -10,7 +10,7 @@ Add a Configuration Block to a Node
 -----------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 In order to keep your provisioning data modular, you may want to break apart
 configuration blocks into small code blocks. You can use the ``add_config``
@@ -75,7 +75,7 @@ Add Configuration to a Node Using Variables
 -------------------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 I want to keep my templates flexible by using variables. In some cases, I'd like
 to assign a variable from a resource pool.
@@ -175,7 +175,7 @@ Replace Entire Startup-Config During Provisioning
 -------------------------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 I have a complete startup-config that I want to apply during provisioning. I want
 to completely replace what's already on the node.
@@ -433,5 +433,5 @@ Explanation
 The ``install_extension`` will copy the RPM defined in the ``url`` parameter and
 copy it to the default extension directory, ``/mnt/flash/.extensions``
 
-.. note:: Please see the `copy_file <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_extension>`_
+.. note:: Please see the `install_extension <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_extension>`_
           documentation for more details.

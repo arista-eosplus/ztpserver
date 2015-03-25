@@ -93,14 +93,40 @@ and ``$dst`` variables.
         overwrite: if-missing
         src_url: files/automate/superautomate.py
       name: "Copy awesome script to my node"
+    -
+      action: add_config
+      attributes:
+        url: files/templates/ma1.template
+        variables:
+          ipaddress: $ip
+      name: "configure ma1"
+    -
+      action: add_config
+      attributes:
+        url: files/templates/xmpp.template
+        variables: $variables
+      name: "configure ma1"
+
   attributes:
     dst: /mnt/flash
     mode: 777
+    ip: 192.168.0.50
+    variables:
+      domain: im.example.com
+      user: myXmmpUser
+      passwd: secret
+      room: myAwesomeRoom
+
 
 Explanation
 ^^^^^^^^^^^
 
-This example shows how to use global variables within the definition.
+This example shows how to use global variables within the definition. It's
+important to see the difference between using variables to define attributes
+of the action versus variables that get used within the template in an
+``add_config`` action.  See how the ``ipaddress`` variable is nested within
+a ``variables`` key?  Also, you can create a list in the ``attributes`` section
+and pass the entire list into the action as shown in the XMPP config action.
 
 .. note:: For more Action recipes see the Actions section.
 

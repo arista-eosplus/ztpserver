@@ -133,10 +133,10 @@ Solution
   sudo sysctl net.ipv4.conf.all.forwarding=1
   sudo sysctl net.ipv4.ip_forward=1
 
-  logger -t "ZTPS" -p local0.info "ip.forwarding enabled" 
+  logger -t "ZTPS" -p local0.info "ip.forwarding enabled"
 
   # Move the DHCP server RPM to the appropriate folder on EOS for installation
-  # Move the dhcpd.conf file to the appropriate folder 
+  # Move the dhcpd.conf file to the appropriate folder
   sudo cp /mnt/flash/dhcp-4.2.0-23.P2.fc14.i686.rpm /mnt/flash/.extensions/dhcpd.rpm
   sudo cp /mnt/flash/dhcpd.conf /etc/dhcp/
   sudo /usr/sbin/dhcpd
@@ -146,7 +146,7 @@ Solution
   ps aux | grep "dhcpd" | grep -v grep
   if [ $? -eq 0 ]
   then
-  { 
+  {
   logger -t "ZTPS" -p local0.info "DHCPD is running. Restart ZTPS VM."
 
   #Now lets restart the  ZTPS VM
@@ -155,7 +155,7 @@ Solution
   logger -t "ZTPS" -p local0.info "ZTPS VM restarted"
 
   exit 0
-  } 
+  }
   else
     logger -t "ZTPS" -p local0.info "Looks like DHCPD didn't start. Lets sleep for a few seconds and try again"
     sleep 10
@@ -194,7 +194,7 @@ Key parts of the xml file to pay attention to:
 * ``<mac address='08:00:27:85:0c:f8'/>``  : make sure this MAC matches the MAC address of the interface on the ZTPServer VM that you intend to use for connectivity
 * ``<target dev='vnet0'/>``               : make sure the target device type is ``vnet0``
 
-.. code-block :: shell
+.. code-block :: console
 
   <domain type='kvm' id='1'>
     <name>ztps</name>
@@ -283,15 +283,15 @@ I want to prepare a dhcpd.conf file for running DHCPD on EOS.
 Solution
 ^^^^^^^^
 
-.. code-block :: shell
+.. code-block :: console
 
-  class "ARISTA" {                                                          
+  class "ARISTA" {
     match if substring(option vendor-class-identifier, 0, 6) = "Arista";
-    option bootfile-name "http://172.16.130.10:8080/bootstrap";                  
+    option bootfile-name "http://172.16.130.10:8080/bootstrap";
   }
 
   # Example
-  subnet 10.1.1.0 netmask 255.255.255.252 {                                
+  subnet 10.1.1.0 netmask 255.255.255.252 {
     option routers 10.1.1.1;
     default-lease-time 86400;
     max-lease-time 86400;
@@ -328,61 +328,61 @@ Solution
 
 .. code-block:: python
 
-#!/usr/bin/env python
+  #!/usr/bin/env python
 
-import jsonrpclib
-import os
-import time
+  import jsonrpclib
+  import os
+  import time
 
-#PROTO = "https"
-#USERNAME = "admin"
-#PASSWORD = "admin"
-#HOSTNAME = "172.16.130.20"
+  #PROTO = "https"
+  #USERNAME = "admin"
+  #PASSWORD = "admin"
+  #HOSTNAME = "172.16.130.20"
 
-class EapiClient(object):
-  '''
-  Instantiate a Eapi connection client object
-  for interacting with EAPI
-  '''
+  class EapiClient(object):
+      '''
+      Instantiate a Eapi connection client object
+      for interacting with EAPI
+    '''
 
-  def __init__(self):
-    # For EOS 4.14.5F and later, you can enable locally run scripts without needing to authenticate
-    # If you are running earlier versions, just uncomment next line and also the CONSTANTS above
-    #switch_url = '{}://{}:{}@{}/command-api'.format(PROTO, USERNAME, PASSWORD, HOSTNAME)
-    switch_url = 'http://localhost:8080/command-api'
-    self.client = jsonrpclib.Server(switch_url)
+    def __init__(self):
+      # For EOS 4.14.5F and later, you can enable locally run scripts without needing to authenticate
+      # If you are running earlier versions, just uncomment next line and also the CONSTANTS above
+      #switch_url = '{}://{}:{}@{}/command-api'.format(PROTO, USERNAME, PASSWORD, HOSTNAME)
+      switch_url = 'http://localhost:8080/command-api'
+      self.client = jsonrpclib.Server(switch_url)
 
-  def connected_interfaces(self):
-    cmd = "show interfaces status connected"
-    response = self.client.runCmds(1, [cmd])[0]
-    connected_intfs = response['interfaceStatuses'].keys()
-    return connected_intfs
+    def connected_interfaces(self):
+      cmd = "show interfaces status connected"
+      response = self.client.runCmds(1, [cmd])[0]
+      connected_intfs = response['interfaceStatuses'].keys()
+      return connected_intfs
 
-def restart_dhcpd(eapi):
-  '''
-  Monitor the connected interfaces.
-  If there are newly connected interface(s), restart dhcpd
-  '''
-  connected_intfs = []
+  def restart_dhcpd(eapi):
+      '''
+      Monitor the connected interfaces.
+      If there are newly connected interface(s), restart dhcpd
+      '''
+      connected_intfs = []
 
-  while True:
-    new_connected_intfs = eapi.connected_interfaces()
-    for intf in new_connected_intfs:
-      if intf not in connected_intfs:
-        os.system('sudo service dhcpd restart')
-    
-    connected_intfs = new_connected_intfs
-    time.sleep(10)
+      while True:
+          new_connected_intfs = eapi.connected_interfaces()
+          for intf in new_connected_intfs:
+              if intf not in connected_intfs:
+                  os.system('sudo service dhcpd restart')
 
-def main():
-  eapi = EapiClient()
-  restart_dhcpd(eapi)
+      connected_intfs = new_connected_intfs
+      time.sleep(10)
 
-if __name__ == '__main__':
-  try:
-    main()
-  except KeyboardInterrupt:
-    pass
+  def main():
+    eapi = EapiClient()
+    restart_dhcpd(eapi)
+
+  if __name__ == '__main__':
+    try:
+      main()
+    except KeyboardInterrupt:
+      pass
 
 Explanation
 ^^^^^^^^^^^
