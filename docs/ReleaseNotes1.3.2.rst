@@ -8,7 +8,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
 Bug fixes
 ^^^^^^^^^
 
-* Prevented.node file from becoming corrupted on the server (`298 <https://github.com/arista-eosplus/ztpserver/issues/298>`_)
+* Prevented .node file from becoming corrupted on the server (`298 <https://github.com/arista-eosplus/ztpserver/issues/298>`_)
     .. comment
 * Added .node filename to server-side logs (`297 <https://github.com/arista-eosplus/ztpserver/issues/297>`_)
     .. comment
