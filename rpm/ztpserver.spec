@@ -26,14 +26,13 @@
 
 Name:    ztpserver
 Version: BLANK
-Release: 3%{?dist}
+Release: 1%{?dist}
 Summary: %{app_summary}
 
 Group:    Applications/Communications
 License:  BSD-3
 URL:      %{app_url}
-Source0:  %{name}-%{version}.tgz
-Source1:  %{name}-wsgi.conf
+Source0:  %{name}-%{version}.tar.gz
 
 ### Don't allow rpmbuild to modify dependencies
 AutoReqProv: no
@@ -116,6 +115,8 @@ pip install -r requirements.txt
 # Move necessary file from RPM_BUILD_DIR into RPM_BUILD_ROOT:
 %{__install} -d $RPM_BUILD_ROOT%{app_virtualenv_dir}
 cp -rp $RPM_BUILD_DIR%{app_virtualenv_dir}/* $RPM_BUILD_ROOT%{app_virtualenv_dir}
+%else
+export ZTPS_INSTALL_ROOT=$RPM_BUILD_ROOT
 %endif
 
 # Allow us to install libs in to RPM_BUILD_ROOT
@@ -126,7 +127,7 @@ python setup.py install --root=$RPM_BUILD_ROOT \
 --install-scripts=%{_bindir} \
 --install-lib=%{python2_sitelib}
 
-%{__install} -pD %{SOURCE1} $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
+%{__install} -pD conf/%{name}-wsgi.conf $RPM_BUILD_ROOT%{httpd_dir}/%{name}-wsgi.conf
 
 
 %pre
@@ -134,23 +135,44 @@ getent group %{app_user} > /dev/null || groupadd -r %{app_user}
 getent passwd %{app_user} > /dev/null || \
   useradd -m -g %{app_user} -d %{apphomedir} -s /bin/false \
   -c "%{name} - Server" %{app_user}
+%if 0%{?rhel} == 6
+datadir=/usr/share/ztpserver
+%else
+datadir=%{ztps_data_root}
+%endif
+if [ $1 -eq 0 ] ; then
+    # This is an upgrade instead of a new install
+    if [ -d %{_sysconfdir}/ztpserver ]; then
+        cp -rp %{_sysconfdir}/ztpserver %{_sysconfdir}/ztpserver.rpmbak
+    fi
+    if [ -d ${datadir} ]; then
+        # Copy the contents even if the top-level dir is a symlink
+        mkdir -p ${datadir}.rpmbak
+        cd ${datadir}.rpmbak
+        cp -rp ${datadir}/. .
+    fi
+fi
 exit 0
 
 %posttrans
 
 
 %post
-# Ensure the server can read/write the necessary files.
-# ZTPServer operators may be put in to this group to allow them to configure the service
 %if 0%{?rhel} == 6
 # Create symlinks for RHEL
-ln -s -f %{ztps_data_root} /usr/share/ztpserver
-ln -s -f %{_sysconfdir}/ztpserver /etc/ztpserver
+if [ ! -d /usr/share/ztpserver ]; then
+    ln -s %{ztps_data_root} /usr/share/ztpserver
+fi
+if [ ! -d /etc/ztpserver ]; then
+    ln -s %{_sysconfdir}/ztpserver /etc/ztpserver
+fi
 ln -s -f %{_bindir}/ztps /usr/bin/ztps
 %endif
+# Ensure the server can read/write the necessary files.
+# ZTPServer operators may be put in to this group to allow them to configure the service
 chown -R %{app_user}:%{app_user} %{apphomedir}
 chmod -R ug+rw %{ztps_data_root}
-chcon -Rv --type=httpd_sys_content_t %{ztps_data_root}
+chcon -Rv --type=httpd_sys_content_t %{ztps_data_root} > /dev/null 2>&1
 
 %preun
 # $1 --> if 0, then it is a deinstall
@@ -160,10 +182,19 @@ chcon -Rv --type=httpd_sys_content_t %{ztps_data_root}
 %postun
 # $1 --> if 0, then it is a deinstall
 # $1 --> if 1, then it is an upgrade
-rm -rf /etc/ztpserver
-rm -rf /usr/share/ztpserver
-rm -rf /usr/bin/ztps
-rm -rf %{httpd_dir}/%{name}-wsgi.conf
+if [ $1 -eq 0 ] ; then
+    # This is a removal, not an upgrade
+    #  $1 versions will remain after this uninstall
+
+    # Clean up symlinks
+    [ -L /etc/ztpserver ] && rm -rf /etc/ztpserver
+    [ -L /usr/share/ztpserver ] && rm -rf /usr/share/ztpserver
+    [ -L /usr/bin/ztps ] && rm -rf /usr/bin/ztps
+    [ -L %{httpd_dir}/%{name}-wsgi.conf ] && rm -rf %{httpd_dir}/%{name}-wsgi.conf
+%if 0%{?rhel} == 6
+    rm -rf %{app_virtualenv_dir}
+%endif
+fi
 
 %files
 # all the files to be included in this RPM:
@@ -207,6 +238,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Mar 06 2015 Arista Networks <eosplus-dev@arista.com> - 1.3.2-1
+- Update source0 to use package built by `python setup.py sdist`
+- Quiet the output of `chcon` in post
+- Move ztpserver-wsgi.conf to the primary source package
+- Fix issue where rpm upgrade will remove some config files
 * Wed Jan 28 2015 Arista Networks <eosplus-dev@arista.com> - 1.2.0-3
 - Fixed installation path for virtual_env build
 - Fixed permissions and home directory for virtual_env build

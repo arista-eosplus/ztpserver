@@ -22,13 +22,13 @@ ZTPServer Configuration
 
     Open up your ZTPServer Global Config file:
 
-    .. code-block:: shell
+    .. code-block:: console
 
       admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
     Look for the line ``data_root`` and change it to the desired directory:
 
-    .. code-block:: shell
+    .. code-block:: console
 
       [default]
       # Location of all ztps boostrap process data files
@@ -59,13 +59,13 @@ ZTPServer Configuration
 
     Open up your ZTPServer Global Config file:
 
-    .. code-block:: shell
+    .. code-block:: console
 
       admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
     Look for the line ``data_root`` and change it to the desired directory:
 
-    .. code-block:: shell
+    .. code-block:: console
 
       [default]
       # Location of all ztps boostrap process data files
@@ -97,19 +97,19 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``identifier`` and confirm it's set to ``serialnumber``:
 
-.. code-block:: shell
+.. code-block:: console
 
   identifier = serialnumber
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If using Apache WSGI
   admin@ztpserver:~# service apache2 restart
@@ -148,19 +148,19 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``identifier`` and confirm it's set to ``systemmac``:
 
-.. code-block:: shell
+.. code-block:: console
 
   identifier = systemmac
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If using Apache WSGI
   admin@ztpserver:~# service apache2 restart
@@ -200,13 +200,13 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``disable_topology_validation``
 
-.. code-block:: shell
+.. code-block:: console
 
   # To disable Topology Validation
   disable_topology_validation = True
@@ -216,7 +216,7 @@ Look for the line ``disable_topology_validation``
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If using Apache WSGI
   admin@ztpserver:~# service apache2 restart

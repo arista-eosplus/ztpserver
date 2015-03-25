@@ -22,7 +22,7 @@ Solution
 Log into your (v)EOS node to get its System ID. If it's in ZTP Mode, just log in
 with username ``admin``:
 
-.. code-block:: shell
+.. code-block:: console
 
   switch-name> show version
 
@@ -30,7 +30,7 @@ with username ``admin``:
 
 Let's create a node directory for this device:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -93,7 +93,7 @@ Create a file named ``startup-config`` in ``[data_root]/nodes/<SYSTEM_ID>/``.
 Place the desired configuration into the startup-config. Here's an example. Please
 change values where you see fit:
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   hostname test-node-1
@@ -263,7 +263,7 @@ want to execute.
 
 .. note:: Learn more about `Actions <http://ztpserver.readthedocs.org/en/master/config.html#actions>`_.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -276,7 +276,7 @@ want to execute.
 
 Now let's create a definition that performs the ``install_image`` action:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -493,7 +493,7 @@ and the **nodes/<SYSTEM_ID>/attributes**
 
 then create the symlink
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your node's unique directory
   admin@ztpserver:~# cd /usr/share/ztpserver/nodes/<SYSTEM_ID>

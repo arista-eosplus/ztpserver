@@ -8,6 +8,8 @@ Contact
 
 ZTPServer is an Arista-led open source community project.  Users and developers are encouraged to contribute to the project.  See `CONTRIBUTING <https://github.com/arista-eosplus/ztpserver/blob/develop/CONTRIBUTING.md>`_ for more details.
 
+Before requesting support, please collect the necessary data to include.   See :ref:`before-requesting-support`.
+
 Commercial support may be purchased through your Arista account team.
 
 Community-based support is available through:
@@ -16,7 +18,7 @@ Community-based support is available through:
 * eosplus-dev@arista.com.
 * IRC: irc.freenode.net#arista
 
-Customization, and integration services are available through the EOS+ team at `Arista Networks, Inc <http://arista.com/>`_.  Contact eosplus-dev@arista.com  or your account team for details.
+Customization, and integration services are available through the EOS+ Consulting Services team at `Arista Networks, Inc <http://arista.com/>`_.  Contact eosplus-dev@arista.com or your account team for details.
 
 Known caveats
 ~~~~~~~~~~~~~
@@ -40,7 +42,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
-    roadmap
+    ReleaseNotes1.3.2
     ReleaseNotes1.3.1
     ReleaseNotes1.3
     ReleaseNotes1.2
@@ -94,4 +96,4 @@ ZTPServer documentation and other reference materials are below:
     * `Packer VM <https://github.com/arista-eosplus/packer-ztpserver>`_ build process
     * `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ Python (PyPI) package
     * `YAML Code Validator <http://yamllint.com/>`_
-    
+    * `ZTPServer WSGI Benchmarking <https://eos.arista.com/ztpserver-benchmarking-the-webserver-gateway-interface>`_

@@ -161,6 +161,27 @@ Execute ``setup.py`` to build and then install ZTPServer:
     running install_lib
     ...
 
+.. _upgrade:
+
+Upgrading
+`````````
+Upgrading ZTP Server is based on the method of installation:
+
+* PyPI (pip)::
+
+    sudo pip install --upgrade ztpserver
+
+* Manual, Packer-VM, GitHub installs::
+
+    cd ztpserver/
+    sudo ./utils/refresh_ztps -b <branch>
+
+  The ztpserver/ directory, above, should be a git repository (where the files were checked out).  The ``branch`` identifier may be any version identifier (1.3.2, 1.1), or an actual branch on github such as ``master`` (released), or ``develop`` (development).
+
+* RPM::
+
+    sudo rpm -Uvh ztpserver-<version>.rpm
+
 .. _server_config:
 
 Additional services

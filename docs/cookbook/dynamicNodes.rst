@@ -22,7 +22,7 @@ You can accomplish this by using neighbordb. Neighbordb contains associations
 between LLDP neighbor patterns and definitions. So if we use a pattern that
 matches anything, we can use it to assign a simple, default definition.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -82,7 +82,7 @@ Solution
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -133,7 +133,7 @@ Solution
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver

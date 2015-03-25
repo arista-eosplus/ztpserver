@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -232,7 +232,8 @@ class NodesController(BaseController):
                 return self.http_bad_request()
 
         # Execute event-handler
-        script = self.expand(node_id, CONFIG_HANDLER_FN)
+        script = self.repository.expand(
+            self.expand(node_id, CONFIG_HANDLER_FN))
         if os.path.isfile(script):
             proc = subprocess.Popen(script, stdin=PIPE, 
                                     stdout=PIPE, stderr=PIPE, 

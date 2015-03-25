@@ -19,7 +19,7 @@ I want to send client logs to a syslog server or a local file during provisionin
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   # Edit the bootstrap configuration file
   admin@ztpserver:~# vi /usr/share/ztpserver/bootstrap/bootstrap.conf
@@ -58,7 +58,7 @@ I want to send client logs to specific XMPP server rooms.
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   # Edit the bootstrap configuration file
   admin@ztpserver:~# vi /usr/share/ztpserver/bootstrap/bootstrap.conf

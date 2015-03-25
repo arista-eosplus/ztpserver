@@ -5,6 +5,8 @@
 #
 # useful targets:
 #   make sdist -- builds a source distribution
+#   make srpm -- builds a source rpm, input to mock
+#   make rpm -- builds a binary distribution
 #   make pylint -- source code checks
 #   make tests -- run the tests
 #   make test_server -- run all server tests (including neighbordb)
@@ -41,6 +43,18 @@ clean:
 	rm -rf MANIFEST
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
+	@echo "Cleaning up rpmbuild stuff"
+	$(MAKE) -C rpm clean
+
+.PHONY: rpm srpm
+rpm: sdist
+	$(MAKE) -C rpm rpm-pkg
+
+srpm: sdist
+	$(MAKE) -C rpm srpm-pkg
+
+ztpserver.spec:
+	$(MAKE) -C rpm ../ztpserver.spec
 
 test_neighbordb: clean
 	PYTHONPATH=./ $(PYTHON)  ./test/server/test_ndb.py -v
@@ -74,5 +88,5 @@ python:
 install:
 	$(PYTHON) setup.py install
 
-sdist: clean
+sdist: clean ztpserver.spec
 	$(PYTHON) setup.py sdist 
