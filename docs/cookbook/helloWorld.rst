@@ -38,7 +38,7 @@ Solution
 
 Log into your (v)EOS node, then:
 
-.. code-block:: shell
+.. code-block:: console
 
   switch-name> enable
   switch-name# write erase
@@ -70,7 +70,7 @@ Solution
 Log into your (v)EOS node to get its MAC Address. If it's in ZTP Mode, just log in
 with username ``admin``:
 
-.. code-block:: shell
+.. code-block:: console
 
   switch-name> show version
 
@@ -78,19 +78,19 @@ with username ``admin``:
 
 Confirm your ZTPServer Configuration will identify a node based upon its MAC:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``identifier`` and confirm it's set to ``systemmac``:
 
-.. code-block:: shell
+.. code-block:: console
 
   identifier = systemmac
 
 Finally, let's create a nodes directory for this device:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -132,7 +132,7 @@ the admin user's password to admin, and enable eAPI.
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -145,7 +145,7 @@ Solution
 
 Copy and paste this startup-config, changing values where you see fit:
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   hostname test-node-1
@@ -205,7 +205,7 @@ or have to replace the node I have the latest copy.
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -218,7 +218,7 @@ Solution
 
 Add the following lines to your startup-config, changing values where needed:
 
-.. code-block:: shell
+.. code-block:: console
 
   event-handler configpush
    trigger on-startup-config
@@ -256,7 +256,7 @@ Solution
 
 Let's create a place on the ZTPServer to host some SWIs:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -269,7 +269,7 @@ Let's create a place on the ZTPServer to host some SWIs:
 
 Now let's create a definition that performs the ``install_image`` action:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -332,7 +332,7 @@ Solution
 Let's run the ZTPServer in `Standalone Mode <http://ztpserver.readthedocs.org/en/master/startup.html#standalone-debug-server>`_
 since this is just a small test. Login to your ZTPServer:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Start the ZTPServer - console loggin will appear
   admin@ztpserver:~# ztps

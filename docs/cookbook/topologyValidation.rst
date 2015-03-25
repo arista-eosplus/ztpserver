@@ -23,13 +23,13 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``disable_topology_validation``
 
-.. code-block:: shell
+.. code-block:: console
 
   # To disable Topology Validation
   disable_topology_validation = True
@@ -39,7 +39,7 @@ Look for the line ``disable_topology_validation``
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If using Apache WSGI
   admin@ztpserver:~# service apache2 restart
@@ -78,7 +78,7 @@ You can accomplish this by using neighbordb. Neighbordb contains associations
 between LLDP neighbor patterns and definitions. So if we use a pattern that
 matches anything, we can use it to assign a simple, default definition.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -139,7 +139,7 @@ Solution
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -190,7 +190,7 @@ Solution
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -246,7 +246,7 @@ Solution
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -301,7 +301,7 @@ Using the ``excludes()`` function allows you to match the inverse of the
 
 Modify your neighbordb:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver

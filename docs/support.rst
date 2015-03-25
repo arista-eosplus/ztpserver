@@ -40,7 +40,6 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
-    roadmap
     ReleaseNotes1.3
     ReleaseNotes1.2
     ReleaseNotes1.1
@@ -83,4 +82,3 @@ ZTPServer documentation and other reference materials are below:
     * `Packer VM <https://github.com/arista-eosplus/packer-ztpserver>`_ build process
     * `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ Python (PyPI) package
     * `YAML Code Validator <http://yamllint.com/>`_
-    

@@ -23,7 +23,7 @@ Solution
 
 First, create a template file with the desired configuration.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -34,7 +34,7 @@ First, create a template file with the desired configuration.
   # Create a static config block
   admin@ztpserver:~# vi files/templates/east-dns.template
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   ip name-server vrf default east.ns1.example.com
@@ -86,7 +86,7 @@ Solution
 First, create a template file with the desired configuration. In this recipe let's
 configure interface Management1.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -99,7 +99,7 @@ configure interface Management1.
 
 Paste this config into the template:
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   interface Management1
@@ -123,7 +123,7 @@ Then add the ``add_config`` action to your definition:
 
 Then create a resource pool called mgmt_subnet:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Create a resource pool
   admin@ztpserver:~# vi resources/mgmt_subnet
@@ -185,7 +185,7 @@ Solution
 
 First, create the startup-config with the desired configuration.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -196,7 +196,7 @@ First, create the startup-config with the desired configuration.
   # Create a startup-config
   admin@ztpserver:~# vi files/configs/tor-startup-config
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   hostname test-node-1
@@ -317,7 +317,7 @@ Solution
 
 Let's create a place on the ZTPServer to host some SWIs:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -330,7 +330,7 @@ Let's create a place on the ZTPServer to host some SWIs:
 
 Now let's create a definition that performs the ``install_image`` action:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -390,7 +390,7 @@ Solution
 
 Let's create a place on the ZTPServer to host the RPMs:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -403,7 +403,7 @@ Let's create a place on the ZTPServer to host the RPMs:
 
 Now let's create a definition that performs the ``install_extension`` action:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver

@@ -19,13 +19,13 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``interface`` in the [server] group.
 
-.. code-block:: shell
+.. code-block:: console
 
   # To listen on all interfaces
   interface = 0.0.0.0
@@ -35,7 +35,7 @@ Look for the line ``interface`` in the [server] group.
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If running in Standalone Mode, stop ztps
   admin@ztpserver:~# pkill ztps
@@ -68,20 +68,20 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``port`` in the [server] group.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Choose a port of your liking
   port = 8080
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If running in Standalone Mode, stop ztps
   admin@ztpserver:~# pkill ztps
@@ -114,20 +114,20 @@ Solution
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``server_url`` in the [default] group.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Choose a subdirectory
   server_url = http://ztpserver:8080/not/in/root/anymore
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # If running in Standalone Mode, stop ztps
   admin@ztpserver:~# pkill ztps
@@ -165,7 +165,7 @@ so view this simply as a suggestion.
 
 Open up your Apache configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Apache
   admin@ztpserver:~# vi /etc/apache2/sites-enabled/ztpserver.conf
@@ -205,7 +205,7 @@ Change the ``Listen`` and ``VirtualHost`` values to the desired port.
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Restart Apache
   admin@ztpserver:~# service apache2 restart
@@ -238,13 +238,13 @@ how this is done with Apache.
 
 Open up the global ZTPServer configuration file:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# vi /etc/ztpserver/ztpserver.conf
 
 Look for the line ``server_url`` in the [default] group.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Choose a subdirectory
   server_url = http://ztpserver:8080/not/in/root/anymore
@@ -283,7 +283,7 @@ Note the ``<Location />``.
 
 Restart the ztps process:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Restart Apache
   admin@ztpserver:~# service apache2 restart
@@ -314,7 +314,7 @@ user/group.
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# chown -R myUser:myGroup /usr/share/ztpserver
   admin@ztpserver:~# chmod -R ug+rw /usr/share/ztpserver
@@ -348,7 +348,7 @@ that Apache can read/write files in the data_root.
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   # For Fedora - httpd
   admin@ztpserver:~# chcon -Rv --type=httpd_sys_script_rw_t /usr/share/ztpserver

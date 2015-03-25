@@ -16,7 +16,5 @@ ZTPServer Cookbook
    cookbook/definitions
    cookbook/actions
    cookbook/resourcePools
-   cookbook/templates
-   cookbook/troubleshooting
    cookbook/advanced
    cookbook/ztpsVMonEOS

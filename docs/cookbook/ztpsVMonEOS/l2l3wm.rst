@@ -61,7 +61,7 @@ Essential parts of the configuration:
 * ``event-handler ztps``    : used to start the shell script ``ztps.sh``
 * ``virtual-machine ztps``  : used to start the ZTPServer VM on EOS
 
-.. code-block:: shell
+.. code-block:: console
 
   interface Management1
     ip address 192.168.1.10/24
@@ -97,7 +97,7 @@ I want to create a shell script to set up all the necessary environment for ZTPS
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   #!/bin/bash
   # This script is used with the event-handler so that on-boot, we will create linux bridge,

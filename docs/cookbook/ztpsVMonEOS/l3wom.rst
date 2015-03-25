@@ -68,7 +68,7 @@ Essential parts of the configuration:
 * ``virtual-machine ztps``        : used to start the ZTPServer VM on EOS
 * ``management api http-commands``: need to enable eAPI for ``daemon ztps`` to function
 
-.. code-block:: shell
+.. code-block:: console
 
   interface Loopback2
     ip address 172.16.130.253/24
@@ -115,7 +115,7 @@ I want to create a shell script to set up all the necessary environment for ZTPS
 Solution
 ^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
   #!/bin/bash
   # This script is used with the event-handler so that on-boot, we will create linux bridge,

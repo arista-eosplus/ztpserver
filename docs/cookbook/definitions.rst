@@ -66,7 +66,6 @@ Solution
 You can accomplish this by adding an ``attributes`` section at the root level of
 your definition file.
 
-TODO
 .. note:: Learn more about `Actions <http://ztpserver.readthedocs.org/en/master/config.html#actions>`_.
 
 In this example, we have two different actions that reference the same ``$mode``
