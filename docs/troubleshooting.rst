@@ -16,7 +16,7 @@ ZTP Server is continually being enhanced and improved and its entirely possible 
 the issue you've encountered has already been addressed, either in the documentation
 such as :doc:`tips`, or in the code, itself.  Therefore, we strongly encourage anyone
 experiencing difficulty to reproduce the issue on the latest release version before
-opening an issue or requesting support.
+opening an issue or requesting support.  See :ref:`upgrading`.
 
 If the switch is not attempting Zero Touch Provisioning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
