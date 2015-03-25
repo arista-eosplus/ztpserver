@@ -104,7 +104,7 @@ def main():
     parser.add_argument('-b', '--branch',
                         metavar='BRANCH',
                         nargs='?',
-                        default='develop',
+                        default='master',
                         help='ZTP Server branch to be used for the refresh',
                         action='store')
     parser.add_argument('-f', '--home-folder',
