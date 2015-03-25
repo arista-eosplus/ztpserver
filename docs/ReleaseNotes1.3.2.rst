@@ -8,9 +8,9 @@ The authoritative state for any known issue can be found in `GitHub issues <http
 Bug fixes
 ^^^^^^^^^
 
-* Fix issue with data in the .node file (`298 <https://github.com/arista-eosplus/ztpserver/issues/298>`_)
+* Prevented.node file from becoming corrupted on the server (`298 <https://github.com/arista-eosplus/ztpserver/issues/298>`_)
     .. comment
-* Controller Log needs to include the .node file (`297 <https://github.com/arista-eosplus/ztpserver/issues/297>`_)
+* Added .node filename to server-side logs (`297 <https://github.com/arista-eosplus/ztpserver/issues/297>`_)
     .. comment
 * Fixes to RPM packaging:
 
@@ -23,10 +23,10 @@ Bug fixes
 
 * Documentation updates:
 
-    - Troubleshooting chapter with what to collect before contacting support  (`272 <https://github.com/arista-eosplus/    ztpserver/issues/272>`_)
+    - Troubleshooting chapter  (`272 <https://github.com/arista-eosplus/    ztpserver/issues/272>`_)
         .. comment
     - Additional content in the ZTP Server Cookbook  (`289 <https://github.com/arista-eosplus/    ztpserver/issues/289>`_)
         .. comment
-    - Include link to Article on ZTP Server benchmarking
+    - ZTP Server benchmarking results
         .. comment
 
