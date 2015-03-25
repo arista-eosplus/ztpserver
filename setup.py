@@ -1,6 +1,6 @@
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,9 @@ if install() and os.environ.get('READTHEDOCS'):
     call(['docs/setup_rtd_files.sh'])
     packages.append('client')
     packages.append('actions')
+
+install_requirements = None
+version = None
 
 install_requirements = open('requirements.txt').read().split('\n')
 version = open('VERSION').read().split()[0].strip()

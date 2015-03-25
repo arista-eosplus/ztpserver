@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ from client_test_lib import raise_exception
 class ServerNotRunningTest(unittest.TestCase):
 
     def test(self):
-        bootstrap = Bootstrap(server='127.0.0.2')
+        bootstrap = Bootstrap(server='unkown')
         bootstrap.start_test()
 
         try:

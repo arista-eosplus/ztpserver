@@ -44,4 +44,5 @@ Features
    internals
    glossary
    support
+   troubleshooting
    license
