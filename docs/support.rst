@@ -97,4 +97,3 @@ ZTPServer documentation and other reference materials are below:
     * `ZTPServer <https://pypi.python.org/pypi/ztpserver>`_ Python (PyPI) package
     * `YAML Code Validator <http://yamllint.com/>`_
     * `ZTPServer WSGI Benchmarking <https://eos.arista.com/ztpserver-benchmarking-the-webserver-gateway-interface>`_
-    

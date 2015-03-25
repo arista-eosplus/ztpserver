@@ -10,7 +10,7 @@ Add a Configuration Block to a Node
 -----------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 In order to keep your provisioning data modular, you may want to break apart
 configuration blocks into small code blocks. You can use the ``add_config``
@@ -23,7 +23,7 @@ Solution
 
 First, create a template file with the desired configuration.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -34,7 +34,7 @@ First, create a template file with the desired configuration.
   # Create a static config block
   admin@ztpserver:~# vi files/templates/east-dns.template
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   ip name-server vrf default east.ns1.example.com
@@ -75,7 +75,7 @@ Add Configuration to a Node Using Variables
 -------------------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 I want to keep my templates flexible by using variables. In some cases, I'd like
 to assign a variable from a resource pool.
@@ -86,7 +86,7 @@ Solution
 First, create a template file with the desired configuration. In this recipe let's
 configure interface Management1.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -99,7 +99,7 @@ configure interface Management1.
 
 Paste this config into the template:
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   interface Management1
@@ -123,7 +123,7 @@ Then add the ``add_config`` action to your definition:
 
 Then create a resource pool called mgmt_subnet:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Create a resource pool
   admin@ztpserver:~# vi resources/mgmt_subnet
@@ -175,7 +175,7 @@ Replace Entire Startup-Config During Provisioning
 -------------------------------------------------
 
 Objective
-^^^^^^^^
+^^^^^^^^^
 
 I have a complete startup-config that I want to apply during provisioning. I want
 to completely replace what's already on the node.
@@ -185,7 +185,7 @@ Solution
 
 First, create the startup-config with the desired configuration.
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -196,7 +196,7 @@ First, create the startup-config with the desired configuration.
   # Create a startup-config
   admin@ztpserver:~# vi files/configs/tor-startup-config
 
-.. code-block:: shell
+.. code-block:: console
 
   !
   hostname test-node-1
@@ -317,7 +317,7 @@ Solution
 
 Let's create a place on the ZTPServer to host some SWIs:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -330,7 +330,7 @@ Let's create a place on the ZTPServer to host some SWIs:
 
 Now let's create a definition that performs the ``install_image`` action:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Go to your data_root - by default it's /usr/share/ztpserver
   admin@ztpserver:~# cd /usr/share/ztpserver
@@ -370,3 +370,68 @@ requests the ``install_image`` python script. It then performs an HTTP GET for
 the ``url``.  Once it has these locally, it executes the
 `install_image <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_image>`_
 script.
+
+
+.. end of Install a specific EOS image
+
+
+
+
+Install an Extension
+--------------------
+
+Objective
+^^^^^^^^^
+
+I want to install an extension on my node automatically.
+
+Solution
+^^^^^^^^
+
+Let's create a place on the ZTPServer to host the RPMs:
+
+.. code-block:: console
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create an images directory
+  admin@ztpserver:~# mkdir -p files/rpms
+
+  # SCP your SWI into the images directory, name it whatever you like
+  admin@ztpserver:~# scp admin@otherhost:/tmp/myRPM.rpm files/rpms/myRPM.rpm
+
+Now let's create a definition that performs the ``install_extension`` action:
+
+.. code-block:: console
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create a definition file
+  admin@ztpserver:~# vi definitions/tor-definition
+
+Add the following lines to your definition, changing values where needed:
+
+.. code-block:: yaml
+
+  ---
+  name: static node definition
+  actions:
+    -
+      action: install_extension
+      always_execute: true
+      attributes:
+        url: files/rpms/myRPM.rpm
+      name: "Install myRPM extension"
+
+.. note:: The definition uses YAML syntax
+
+Explanation
+^^^^^^^^^^^
+
+The ``install_extension`` will copy the RPM defined in the ``url`` parameter and
+copy it to the default extension directory, ``/mnt/flash/.extensions``
+
+.. note:: Please see the `install_extension <http://ztpserver.readthedocs.org/en/master/actions.html#module-actions.install_extension>`_
+          documentation for more details.

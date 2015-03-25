@@ -17,7 +17,7 @@ Objective
 Solution
 ^^^^^^^^
 
-.. code-block:: <code type>
+.. code-block:: codeType
 
   (add code here - note the empty line above and below)
 

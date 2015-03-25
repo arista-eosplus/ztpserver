@@ -20,13 +20,13 @@ Solution
 
 With INFO level logging:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# ztps >~/ztps-console.log 2>&1 &
 
 With DEBUG level logging:
 
-.. code-block:: shell
+.. code-block:: console
 
   admin@ztpserver:~# ztps --debug >~/ztps-console.log 2>&1 &
 
@@ -53,7 +53,7 @@ Solution
 
 Typically, you can see each transaction in:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Ubuntu
   admin@ztpserver:~# more /var/log/apache2/access.log
@@ -63,7 +63,7 @@ Typically, you can see each transaction in:
 
 And the ZTPServer logs will be in:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Ubuntu
   admin@ztpserver:~# more /var/log/apache2/error.log
@@ -79,7 +79,7 @@ misleading, but all levels of ZTPServer logging will end up as an Apache error.
 
 **Example**
 
-.. code-block:: shell
+.. code-block:: console
 
   [Fri Dec 12 10:49:42.186976 2014] [:error] [pid 864] INFO: [app:115] Logging started for ztpserver
   [Fri Dec 12 10:49:42.187112 2014] [:error] [pid 864] INFO: [app:116] Using repository /usr/share/ztpserver

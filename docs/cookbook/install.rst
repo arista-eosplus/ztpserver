@@ -21,7 +21,7 @@ Solution
 
 To install the latest code in `development <https://github.com/arista-eosplus/ztpserver/tree/develop>`_:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Change to desired download directory
   mkdir -p ~/arista
@@ -33,7 +33,7 @@ To install the latest code in `development <https://github.com/arista-eosplus/zt
 
 Or, to install a specific `tagged release <https://github.com/arista-eosplus/ztpserver/releases>`_:
 
-.. code-block:: shell
+.. code-block:: console
 
   # Change to desired download directory
   mkdir -p ~/arista
@@ -66,8 +66,10 @@ will produce the files below.
 
 .. End of Install ZTPServer from Github Source
 
+
+
 Install ZTPServer using PIP
-------------
+---------------------------
 
 Objective
 ^^^^^^^^^
@@ -82,7 +84,7 @@ See `installing pip <https://pip.pypa.io/en/latest/installing.html>`_.
 
 Once pip is installed, type:
 
-.. code-block:: shell
+.. code-block:: console
 
     pip install ztpserver
 
