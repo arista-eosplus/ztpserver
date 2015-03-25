@@ -12,6 +12,8 @@ Bug fixes
     .. comment
 * Added .node filename to server-side logs (`297 <https://github.com/arista-eosplus/ztpserver/issues/297>`_)
     .. comment
+* Change ``refresh_ztps`` script default to "master"
+    Refresh_ztps will, by default, update the installation to the latest released version.   Previously, the default was to the development branch which may still be accomplished with ``refresh_ztps --branch develop``.
 * Fixes to RPM packaging:
 
     - Quieted chcon during install (`295 <https://github.com/arista-eosplus/    ztpserver/issues/295>`_)
