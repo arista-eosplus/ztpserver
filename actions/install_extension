@@ -46,15 +46,16 @@ def main(attributes):
     Attributes:
         url: path to source extension file
         force: ignore validation errors (default: false)
+        always_execute: perform copy even if file exists
 
-    Special_attributes: 
+    Special_attributes:
         NODE: API object - see documentation for details
 
     Example:
         ::
 
           -
-            action: install_image
+            action: install_extension
             always_execute: true
             attributes:
               url: files/telemetry-1.0-1.rpm
@@ -81,7 +82,7 @@ def main(attributes):
     try:
         node.retrieve_url(url, '%s/%s' % (EXTENSIONS_DIR, name))
     except Exception as exc:
-        raise Exception('Unable to retrieve extension from URL (%s)' % 
+        raise Exception('Unable to retrieve extension from URL (%s)' %
                         exc)
 
     line = name
