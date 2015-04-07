@@ -1,0 +1,192 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2015, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#  - Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#  - Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#  - Neither the name of Arista Networks nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#pylint: disable=W0703,W0402,E1103
+
+import os
+import re
+import pwd
+import grp
+import subprocess
+
+TEMP_FILE = '/tmp/tmp-pub-key'
+DEF_HOME = '/persist/local/'
+DEF_USER = 'ansible'
+DEF_GROUP = 'eosadmin'
+RC_EOS = '/mnt/flash/rc.eos'
+
+def setup_user(node, user, group, home):
+    # Create user if does not already exist
+
+    try:
+        # Create User with tmp password
+        node.log_msg('About to create user')
+
+        cmd = 'sudo useradd -d %s -G %s %s' % (home, group, user)
+        node.log_msg('CMD: %s' % cmd)
+
+        subprocess.call(cmd, stdout=None, stderr=None, shell=True)
+
+        node.log_msg('About to set passwd')
+        subprocess.call('echo password | sudo passwd --stdin %s' % user,
+                         stdout=None, stderr=None, shell=True)
+
+    except subprocess.CalledProcessError, e:
+        raise Exception('Failed to create user' % e.output)
+
+    try:
+        # Create SSH Directory
+        ssh_path = os.path.join(home, '.ssh')
+        os.mkdir(ssh_path, 0700)
+
+    except OSError, e:
+        if e.errno == 17:
+            node.log_msg('About to set ownership')
+        else:
+            raise Exception('Failed to assign ownership to .ssh folder. Error:%s'
+                        % e)
+
+    return ssh_path
+
+
+def set_ownership(path, user, group):
+
+    uid = pwd.getpwnam(user).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+
+    try:
+        for root, dirs, files in os.walk(path):
+          for d in dirs:
+            os.chown(os.path.join(root, d), uid, gid)
+          for f in files:
+            os.chown(os.path.join(root, f), uid, gid)
+        return
+    except OSError, e:
+        raise Exception('Failed to assign ownership. Error:%s' % e)
+
+def write_rc_eos(node, home, user, group):
+    node.log_msg('Inside write rceos')
+    try:
+        rc = open(RC_EOS, 'ab+')
+        first_line = rc.readline()
+
+        if re.search(r'#!/', first_line):
+            content = 'useradd -d %s -G %s %s' % (home, group, user)
+        else:
+            content = '#!/bin/sh\nuseradd -d %s -G %s %s' % (home, group, user)
+
+        rc.write(content)
+    except OSError, e:
+        raise Exception('Failed to write rc.eos. Error:%s' % e)
+
+    return
+
+
+def write_keys(node, ssh_path, key):
+    key_path = os.path.join(ssh_path, 'authorized_keys')
+    try:
+        auth_keys = open(key_path, 'a')
+        auth_keys.write(key)
+
+        # Set perm to 600
+        os.chmod(key_path, 0600)
+
+    except OSError, e:
+        raise Exception('Failed to write key to ssh authorized_keys. Error:%s' % e)
+
+
+def main(attributes):
+    '''Configure SSH Keys on your node to enable faster
+    Ansible integration
+
+    Attributes:
+        user: username used by Ansible server to SSH into node
+            (default = ansible)
+        group: group assigned to user above
+            (default = eosadmin)
+        home: directory assigned to user
+            (default = /persist/local/)
+        key: location of public ssh key to be written to authorized_keys
+
+
+    Special_attributes:
+        NODE: API object - see documentation for details
+
+    Example:
+        ::
+
+          -
+            action: configure_ansible_client
+            attributes:
+              user: ansible
+              group: eosadmin
+              home: /persist/local
+              key: files/ssh/ansible_id_rsa.pub
+            name: "Configure Ansible SSH Keys"
+    '''
+
+    node = attributes.get('NODE')
+    url = attributes.get('key')
+    user = attributes.get('user')
+    group = attributes.get('group')
+    home = attributes.get('home')
+
+    if not url:
+        raise Exception('Missing attribute(\'key\')')
+
+    if not user:
+        user = DEF_USER
+
+    if not group:
+        group = DEF_GROUP
+
+    if not home:
+        home = DEF_HOME
+
+    home = os.path.join(home, user)
+
+    try:
+        node.retrieve_url(url, TEMP_FILE)
+    except Exception as exc:
+        raise Exception('Unable to retrieve config from URL (%s)' %
+                        exc)
+
+    public_keys = open(TEMP_FILE, 'r').read()
+
+    ssh_path = setup_user(node, user, group, home)
+
+    write_keys(node, ssh_path, public_keys)
+
+    write_rc_eos(node, home, user, group)
+
+    set_ownership(home, user, group)
+
+    # Only remove this in case everything else succeeded
+    # for debugging purposes
+    os.remove(TEMP_FILE)
