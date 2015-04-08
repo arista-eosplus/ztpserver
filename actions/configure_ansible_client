@@ -36,9 +36,9 @@ import grp
 import subprocess
 
 TEMP_FILE = '/tmp/tmp-pub-key'
-DEF_HOME = '/persist/local/'
-DEF_USER = 'ansible'
-DEF_GROUP = 'eosadmin'
+DEFAULT_HOME = '/persist/local/'
+DEFAULT_USER = 'ansible'
+DEFAULT_GROUP = 'eosadmin'
 RC_EOS = '/mnt/flash/rc.eos'
 
 def setup_user(node, user, group, home):
