@@ -33,92 +33,13 @@ import os
 import re
 import pwd
 import grp
+import crypt
 import subprocess
 
 TEMP_FILE = '/tmp/tmp-pub-key'
-DEFAULT_HOME = '/persist/local/'
+DEFAULT_ROOT = '/persist/local/'
 DEFAULT_USER = 'ansible'
 DEFAULT_GROUP = 'eosadmin'
-RC_EOS = '/mnt/flash/rc.eos'
-
-def setup_user(node, user, group, home):
-    # Create user if does not already exist
-
-    try:
-        # Create User with tmp password
-        node.log_msg('About to create user')
-
-        cmd = 'sudo useradd -d %s -G %s %s' % (home, group, user)
-        node.log_msg('CMD: %s' % cmd)
-
-        subprocess.call(cmd, stdout=None, stderr=None, shell=True)
-
-        node.log_msg('About to set passwd')
-        subprocess.call('echo password | sudo passwd --stdin %s' % user,
-                         stdout=None, stderr=None, shell=True)
-
-    except subprocess.CalledProcessError, e:
-        raise Exception('Failed to create user' % e.output)
-
-    try:
-        # Create SSH Directory
-        ssh_path = os.path.join(home, '.ssh')
-        os.mkdir(ssh_path, 0700)
-
-    except OSError, e:
-        if e.errno == 17:
-            node.log_msg('About to set ownership')
-        else:
-            raise Exception('Failed to assign ownership to .ssh folder. Error:%s'
-                        % e)
-
-    return ssh_path
-
-
-def set_ownership(path, user, group):
-
-    uid = pwd.getpwnam(user).pw_uid
-    gid = grp.getgrnam(group).gr_gid
-
-    try:
-        for root, dirs, files in os.walk(path):
-          for d in dirs:
-            os.chown(os.path.join(root, d), uid, gid)
-          for f in files:
-            os.chown(os.path.join(root, f), uid, gid)
-        return
-    except OSError, e:
-        raise Exception('Failed to assign ownership. Error:%s' % e)
-
-def write_rc_eos(node, home, user, group):
-    node.log_msg('Inside write rceos')
-    try:
-        rc = open(RC_EOS, 'ab+')
-        first_line = rc.readline()
-
-        if re.search(r'#!/', first_line):
-            content = 'useradd -d %s -G %s %s' % (home, group, user)
-        else:
-            content = '#!/bin/sh\nuseradd -d %s -G %s %s' % (home, group, user)
-
-        rc.write(content)
-    except OSError, e:
-        raise Exception('Failed to write rc.eos. Error:%s' % e)
-
-    return
-
-
-def write_keys(node, ssh_path, key):
-    key_path = os.path.join(ssh_path, 'authorized_keys')
-    try:
-        auth_keys = open(key_path, 'a')
-        auth_keys.write(key)
-
-        # Set perm to 600
-        os.chmod(key_path, 0600)
-
-    except OSError, e:
-        raise Exception('Failed to write key to ssh authorized_keys. Error:%s' % e)
 
 
 def main(attributes):
@@ -130,7 +51,7 @@ def main(attributes):
             (default = ansible)
         group: group assigned to user above
             (default = eosadmin)
-        home: directory assigned to user
+        root: directory assigned to user
             (default = /persist/local/)
         key: location of public ssh key to be written to authorized_keys
 
@@ -146,7 +67,7 @@ def main(attributes):
             attributes:
               user: ansible
               group: eosadmin
-              home: /persist/local
+              root: /persist/local
               key: files/ssh/ansible_id_rsa.pub
             name: "Configure Ansible SSH Keys"
     '''
@@ -155,37 +76,33 @@ def main(attributes):
     url = attributes.get('key')
     user = attributes.get('user')
     group = attributes.get('group')
-    home = attributes.get('home')
-
-    if not url:
-        raise Exception('Missing attribute(\'key\')')
+    root = attributes.get('root')
+    public_keys = None
 
     if not user:
-        user = DEF_USER
+        user = DEFAULT_USER
 
     if not group:
-        group = DEF_GROUP
+        group = DEFAULT_GROUP
 
-    if not home:
-        home = DEF_HOME
+    if not root:
+        root = DEFAULT_ROOT
 
-    home = os.path.join(home, user)
+    if url:
+        try:
+            node.retrieve_url(url, TEMP_FILE)
+            public_keys = open(TEMP_FILE, 'r').read()
+        except Exception, e:
+            raise Exception('Unable to retrieve config from URL (%s)' % e)
+
+    passwd = 'password'
+    enc_passwd = crypt.crypt(passwd,"22")
 
     try:
-        node.retrieve_url(url, TEMP_FILE)
-    except Exception as exc:
-        raise Exception('Unable to retrieve config from URL (%s)' %
-                        exc)
-
-    public_keys = open(TEMP_FILE, 'r').read()
-
-    ssh_path = setup_user(node, user, group, home)
-
-    write_keys(node, ssh_path, public_keys)
-
-    write_rc_eos(node, home, user, group)
-
-    set_ownership(home, user, group)
+        node.create_user(user, group, enc_passwd, root, public_keys)
+    except Exception, e:
+        raise Exception(e)
+    
 
     # Only remove this in case everything else succeeded
     # for debugging purposes
