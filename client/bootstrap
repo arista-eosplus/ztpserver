@@ -685,7 +685,7 @@ class Node(object):
         self.server_.get_resource(url, path)
 
 
-    def create_user(self, user, group='eosadmin', enc_passwd,
+    def create_user(self, user, group, enc_passwd,
                     root='/persist/local/', ssh_keys=None):
         '''Create a local user on the bootstrapped node.
         You can specify:
@@ -723,7 +723,7 @@ class Node(object):
         try:
             cmd = 'sudo useradd -p %s -m %s -G %s %s' % (enc_passwd, home,
                                                          group, user)
-            proc = subprocess.call(cmd, stdout=None, stderr=None, shell=True)
+            subprocess.call(cmd, stdout=None, stderr=None, shell=True)
         except subprocess.CalledProcessError, e:
             raise Exception('Failed to create user(%s)' % e.output)
 
@@ -752,11 +752,12 @@ class Node(object):
             except OSError, e:
                 raise Exception(e)
         try:
-            line = 'useradd -d %s/%s -G %s %s' % (home group, user)
+            line = 'useradd -d %s/%s -G %s %s' % (home, group, user)
             self.append_rc_eos_lines([line])
         except Exception, e:
             raise Exception('Failed to write to rc.eos(%s)' % e)
 
+        info = {}
         info['uid'] = uid
         info['gid'] = gid
 
