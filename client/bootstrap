@@ -702,7 +702,8 @@ class Node(object):
          - group: the group assigned to the user
          - passwd: cleartext password
          - root: the path where the user's home directory will reside
-         - ssh_keys: (optional) public keys that will be copied to ~$HOME/.ssh/authorized_keys
+         - ssh_keys: (optional) public keys that will be copied to
+           ~$HOME/.ssh/authorized_keys
 
         Raises:
             ZtpError

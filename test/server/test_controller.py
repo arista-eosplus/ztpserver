@@ -145,8 +145,8 @@ class MetaControllerUnitTests(unittest.TestCase):
         path = '/'.join([random_string()] * random.randint(1, 4))
 
         controller = ztpserver.controller.MetaController()
-        resp = controller.metadata(None, 
-                                   type=random.choice(['files', 'actions']), 
+        resp = controller.metadata(None,
+                                   type=random.choice(['files', 'actions']),
                                    path_info=path)
 
         self.assertEqual(resp['body'], '')
@@ -156,15 +156,15 @@ class MetaControllerUnitTests(unittest.TestCase):
     @patch('ztpserver.controller.create_repository')
     def test_bad_request_io_error(self, m_repository):
         cfg = random.choice([
-                {'return_value.get_file.return_value.hash.side_effect': 
+                {'return_value.get_file.return_value.hash.side_effect':
                  IOError},
-                {'return_value.get_file.return_value.size.side_effect': 
+                {'return_value.get_file.return_value.size.side_effect':
                  IOError}])
         m_repository.configure_mock(**cfg)
- 
+
         controller = ztpserver.controller.MetaController()
-        resp = controller.metadata(None, 
-                                   type=random.choice(['files', 'actions']), 
+        resp = controller.metadata(None,
+                                   type=random.choice(['files', 'actions']),
                                    path_info=random_string())
 
         self.assertEqual(resp['body'], '')
@@ -176,15 +176,15 @@ class MetaControllerUnitTests(unittest.TestCase):
     def test_success(self, m_repository):
         sha1 = random_string()
         size = random.randint(1, 1000000)
-        cfg = {'return_value.get_file.return_value.hash.return_value': 
+        cfg = {'return_value.get_file.return_value.hash.return_value':
                sha1,
-               'return_value.get_file.return_value.size.return_value': 
+               'return_value.get_file.return_value.size.return_value':
                size}
         m_repository.configure_mock(**cfg)
- 
+
         controller = ztpserver.controller.MetaController()
-        resp = controller.metadata(None, 
-                                   type=random.choice(['files', 'actions']), 
+        resp = controller.metadata(None,
+                                   type=random.choice(['files', 'actions']),
                                    path_info=random_string())
 
         self.assertEqual(resp['body'], {'sha1': sha1, 'size': size})
@@ -194,7 +194,7 @@ class MetaControllerUnitTests(unittest.TestCase):
 class BootstrapConfigUnitTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
-    @patch('string.Template.substitute')
+    @patch('string.Template.safe_substitute')
     def test_index_success(self, m_substitute, m_repository):
         m_substitute.return_value = random_string()
 
@@ -368,7 +368,7 @@ class BootstrapUnitTests(unittest.TestCase):
         self.m_repository = Mock()
         ztpserver.controller.create_repository = self.m_repository
 
-    @patch('string.Template.substitute')
+    @patch('string.Template.safe_substitute')
     def test_get_bootstrap_success(self, m_substitute):
         contents = random_string()
         m_substitute.return_value = contents
@@ -390,7 +390,7 @@ class BootstrapUnitTests(unittest.TestCase):
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_BAD_REQUEST)
         self.assertEqual(resp.content_type, constants.CONTENT_TYPE_HTML)
 
-    @patch('string.Template.substitute')
+    @patch('string.Template.safe_substitute')
     def test_get_bootstrap_misconfigured(self, m_substitute):
         m_substitute.side_effect = KeyError
 
@@ -538,7 +538,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         controller = ztpserver.controller.NodesController()
         with patch.object(controller, 'fsm') as m_fsm:
             controller.create(request)
-            self.assertEqual(self.identifier(node), 
+            self.assertEqual(self.identifier(node),
                              m_fsm.call_args[1]['node_id'])
 
     @patch('ztpserver.controller.create_repository')
@@ -656,7 +656,7 @@ class NodesControllerUnitTests(unittest.TestCase):
                                                node_id=self.identifier(node))
 
         self.assertEqual(state, None)
-        self.assertEqual(resp['status'], 
+        self.assertEqual(resp['status'],
                          constants.HTTP_STATUS_BAD_REQUEST)
 
     @patch('ztpserver.controller.create_repository')
@@ -755,7 +755,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         (resp, state) = controller.post_config(dict(), request=request,
-                                               node=node, 
+                                               node=node,
                                                node_id=self.identifier(node))
 
         self.assertEqual(state, 'set_location')
@@ -831,7 +831,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         self.assertEqual(resp['status'], constants.HTTP_STATUS_CREATED)
 
     @patch('ztpserver.controller.load_neighbordb')
-    def test_post_node_success_multiple_matches_systemmac(self, 
+    def test_post_node_success_multiple_matches_systemmac(self,
                                                           m_load_neighbordb):
         ztpserver.config.runtime.set_value(\
             'identifier', 'systemmac', 'default')
@@ -846,8 +846,8 @@ class NodesControllerUnitTests(unittest.TestCase):
         m_load_neighbordb.return_value.match_node.return_value = list()
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.post_node(dict(), request=request, 
-                                             node=node, 
+        (resp, state) = controller.post_node(dict(), request=request,
+                                             node=node,
                                              node_id=self.identifier(node))
         self.assertEqual(state, None)
         self.assertIsInstance(resp, dict)
@@ -872,11 +872,11 @@ class NodesControllerUnitTests(unittest.TestCase):
 
         controller = ztpserver.controller.NodesController()
         self.assertRaises(AttributeError, controller.post_node, dict(),
-                          request=request, node=node, 
+                          request=request, node=node,
                           node_id=self.identifier(node))
 
     @patch('ztpserver.controller.load_neighbordb')
-    def test_post_node_no_definition_in_pattern_systemmac(self, 
+    def test_post_node_no_definition_in_pattern_systemmac(self,
                                                           m_load_neighbordb):
         ztpserver.config.runtime.set_value(\
             'identifier', 'systemmac', 'default')
@@ -911,7 +911,7 @@ class NodesControllerUnitTests(unittest.TestCase):
 
 
     @patch('ztpserver.controller.replace_config_action')
-    def test_get_startup_config_success_no_definition(self, 
+    def test_get_startup_config_success_no_definition(self,
                                                       m_replace_config_action):
         resource = random_string()
 
@@ -1000,7 +1000,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         response = dict(definition=definition.as_dict())
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.do_substitution(response, 
+        (resp, state) = controller.do_substitution(response,
                                                    resource=random_string())
 
         self.assertEqual(state, 'do_resources')
@@ -1024,7 +1024,7 @@ class NodesControllerUnitTests(unittest.TestCase):
                         attributes=attributes.as_dict())
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.do_substitution(response, 
+        (resp, state) = controller.do_substitution(response,
                                                    resource=random_string())
 
         self.assertEqual(state, 'do_resources')
@@ -1040,7 +1040,7 @@ class NodesControllerUnitTests(unittest.TestCase):
         response = dict(definition=definition.as_dict())
 
         controller = ztpserver.controller.NodesController()
-        (resp, state) = controller.do_substitution(response, 
+        (resp, state) = controller.do_substitution(response,
                                                    resource=random_string())
 
         self.assertEqual(state, 'do_resources')
@@ -1143,7 +1143,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
         m_repository.configure_mock(**cfg)
 
         pattern_name = random_string()
-        cfg = {'return_value.match_node.return_value': 
+        cfg = {'return_value.match_node.return_value':
                [mock_match(name=pattern_name)]}
         m_load_neighbordb.configure_mock(**cfg)
 
@@ -1160,7 +1160,7 @@ class NodesControllerPostFsmIntegrationTests(unittest.TestCase):
 
         write_mock = m_repository.return_value.add_file.return_value.write
         # 'definition' is not written to the pattern file
-        # Empty 'variables', 'node' are not written to the 
+        # Empty 'variables', 'node' are not written to the
         # pattern file either
         self.assertEqual(sorted(write_mock.call_args_list[1][0][0].keys()),
                          ['interfaces', 'name'])
@@ -1335,7 +1335,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
     @patch('ztpserver.controller.load_pattern')
-    def test_get_definition_w_validation_success(self, m_load_pattern, 
+    def test_get_definition_w_validation_success(self, m_load_pattern,
                                                  m_repository):
         node = create_node()
 
@@ -1371,7 +1371,7 @@ class NodesControllerGetFsmIntegrationTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
     @patch('ztpserver.controller.load_pattern')
-    def test_get_definition_w_validation_failure(self, m_load_pattern, 
+    def test_get_definition_w_validation_failure(self, m_load_pattern,
                                                  m_repository):
         definitions_file = create_definition()
         definitions_file.add_action()
@@ -1454,7 +1454,7 @@ class DefinitionStartupConfigTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
     @patch('ztpserver.controller.load_pattern')
-    def test_get_definition_w_startuo_config(self, m_load_pattern, 
+    def test_get_definition_w_startuo_config(self, m_load_pattern,
                                              m_repository):
 
         node = create_node()
