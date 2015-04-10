@@ -49,6 +49,7 @@ import sys
 import time
 import pwd
 import grp
+import crypt
 import traceback
 import urllib2
 import urlparse
@@ -725,7 +726,6 @@ class Node(object):
         if not root:
             root = '/persist/local/'
 
-
         home = os.path.join(root, user)
         ssh_path = os.path.join(home, '.ssh')
         auth_path = os.path.join(ssh_path, 'authorized_keys')
@@ -738,13 +738,18 @@ class Node(object):
 
         # Create user
         try:
-            rc = subprocess.call(add_cmd, shell=True)
+            proc = subprocess.Popen(add_cmd, stdin=PIPE, stdout=PIPE,
+                                    stderr=PIPE, shell=True)
+            rc = proc.returncode
+            (out, err) = proc.communicate()
 
-            if rc:
+            if rc or err:
                 if rc in (4, 9):
-                    self.log_msg('User already exists - continuing. (%s)' % e)
+                    self.log_msg('User already exists - continuing. (%s:%s)'
+                                 % (rc, out))
                 else:
-                    raise ZtpError('Failed to add user:%s' % e)
+                    raise ZtpError('Failed to add user.(%s:%s)'
+                                   % (rc, out))
 
         except Exception, e:
             raise ZtpError(e)
@@ -771,7 +776,6 @@ class Node(object):
             auth_keys.close()
             os.chown(auth_path, uid, gid)
             os.chmod(auth_path, 0600)
-
 
         self.append_rc_eos_lines([add_cmd])
 
