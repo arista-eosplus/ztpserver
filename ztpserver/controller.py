@@ -170,22 +170,22 @@ class NodesController(BaseController):
                 log.debug('%s: running %s' % (kwargs['node_id'], state))
                 (response, state) = method(response, **kwargs)
         except ValidationError:            # pylint: disable=W0703
-            log.error('%s: validation error in %s' % 
+            log.error('%s: validation error in %s' %
                       (kwargs['node_id'], prev_state))
             response = self.http_bad_request()
         except Exception as err:            # pylint: disable=W0703
-            log.error('%s: error in %s: %s' % 
+            log.error('%s: error in %s: %s' %
                       (kwargs['node_id'], prev_state, str(err)))
             response = self.http_bad_request()
 
-        log.debug('%s: response to %s: %s' % 
+        log.debug('%s: response to %s: %s' %
                   (kwargs['node_id'], prev_state, response))
         return response                     # pylint: disable=W0150
 
     #-------------------------------------------------------------------
 
     def get_config(self, request, resource, **kwargs):
-        log.debug('%s: node resource GET request: \n%s\n' % 
+        log.debug('%s: node resource GET request: \n%s\n' %
                   (resource, request))
 
         response = dict()
@@ -195,7 +195,7 @@ class NodesController(BaseController):
             response['body'] = self.repository.get_file(filename).read()
             response['content_type'] = CONTENT_TYPE_OTHER
         except FileObjectNotFound:
-            log.error('%s: missing startup-config file %s' % 
+            log.error('%s: missing startup-config file %s' %
                       (resource, filename))
             response = self.http_bad_request()
         except Exception as err:
@@ -210,7 +210,7 @@ class NodesController(BaseController):
     def put_config(self, request, **kwargs):
         node_id = kwargs['resource']
 
-        log.debug('%s: startup-config PUT request: \n%s\n' % 
+        log.debug('%s: startup-config PUT request: \n%s\n' %
                   (node_id, request))
 
         fobj = None
@@ -220,14 +220,14 @@ class NodesController(BaseController):
             filename = self.expand(node_id, STARTUP_CONFIG_FN)
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
-            log.debug('%s: file not found: %s (adding it)' % 
+            log.debug('%s: file not found: %s (adding it)' %
                       (node_id, filename))
             fobj = self.repository.add_file(filename)
         finally:
             if fobj:
                 fobj.write(body, content_type)
             else:
-                log.error('%s: unable to write %s' % 
+                log.error('%s: unable to write %s' %
                           (node_id, filename))
                 return self.http_bad_request()
 
@@ -235,23 +235,23 @@ class NodesController(BaseController):
         script = self.repository.expand(
             self.expand(node_id, CONFIG_HANDLER_FN))
         if os.path.isfile(script):
-            proc = subprocess.Popen(script, stdin=PIPE, 
-                                    stdout=PIPE, stderr=PIPE, 
+            proc = subprocess.Popen(script, stdin=PIPE,
+                                    stdout=PIPE, stderr=PIPE,
                                     shell=True)
             code = proc.returncode         #pylint: disable=E1101
             (out, err) = proc.communicate()
             if code or err:
                 log.warn('Startup-config saved for %s '
-                         '(%s failed: return code=%s, stderr=%s)' % 
+                         '(%s failed: return code=%s, stderr=%s)' %
                          (node_id, script, code, err))
                 log.debug('%s output: \n%s' % (script, out))
             else:
                 log.info('Startup-config saved for %s '
-                         '(%s executed successfully)' % 
+                         '(%s executed successfully)' %
                          (node_id, script))
                 log.debug('%s output: \n%s' % (script, out))
         else:
-            log.info('Startup-config saved for %s (no config-handler)' % 
+            log.info('Startup-config saved for %s (no config-handler)' %
                      node_id)
 
         return {}
@@ -286,7 +286,7 @@ class NodesController(BaseController):
 
         node_id = node.identifier()
         if not node_id:
-            log.error('Missing node identifier: %s (request=%s)' % 
+            log.error('Missing node identifier: %s (request=%s)' %
                       (node, request))
             response = self.http_bad_request()
             return self.response(**response)
@@ -295,7 +295,7 @@ class NodesController(BaseController):
         log.info('%s: node ID is %s:%s' %
                  (request.remote_addr, identifier, node_id))
 
-        return self.fsm('node_exists', request=request, 
+        return self.fsm('node_exists', request=request,
                         node=node, node_id=node_id)
 
     def node_exists(self, response, *args, **kwargs):
@@ -350,8 +350,8 @@ class NodesController(BaseController):
         if 'config' not in kwargs['request'].json:
             # POST request for the node - will try to match neighbordb
             next_state = 'post_node'
-            log.info('%s: node does not exist on the server - ' 
-                     'will try to match node against neighbordb' % 
+            log.info('%s: node does not exist on the server - '
+                     'will try to match node against neighbordb' %
                      kwargs['node_id'])
         else:
             # POST request for the node's startup-config
@@ -394,11 +394,11 @@ class NodesController(BaseController):
 
         node = kwargs['node']
         node_id = kwargs['node_id']
-        
+
         neighbordb = load_neighbordb(node_id)
         if not neighbordb:
             return (self.http_bad_request(), None)
-            
+
         # pylint: disable=E1103
         matches = neighbordb.match_node(node)
         if not matches:
@@ -410,56 +410,56 @@ class NodesController(BaseController):
                   (node_id, len(matches)))
         match = matches[0]
 
-        log.info('%s: node matched \'%s\' pattern in neighbordb' % 
+        log.info('%s: node matched \'%s\' pattern in neighbordb' %
                  (node_id, match.name))
 
         # Load definition
         try:
-            definition_url = self.expand(match.definition, 
+            definition_url = self.expand(match.definition,
                                          folder='definitions')
             fobj = self.repository.get_file(definition_url)
-            log.info('%s: node definition copied from: %s' % 
+            log.info('%s: node definition copied from: %s' %
                      (node_id, definition_url))
         except FileObjectNotFound:
-            log.error('%s: failed to find definition (%s)' % 
+            log.error('%s: failed to find definition (%s)' %
                       (node_id, definition_url))
             raise
 
         try:
             definition = fobj.read(content_type=CONTENT_TYPE_YAML)
         except FileObjectError:
-            log.error('%s: failed to load definition' % 
+            log.error('%s: failed to load definition' %
                       (node_id))
             raise
 
         definition_fn = self.expand(node_id, DEFINITION_FN)
-        
+
         # Load config-handler
         if match.config_handler:
             try:
-                config_handler_url = self.expand(match.config_handler, 
+                config_handler_url = self.expand(match.config_handler,
                                                  folder='config-handlers')
                 fobj = self.repository.get_file(config_handler_url)
-                log.info('%s: node config-handler copied from: %s' % 
+                log.info('%s: node config-handler copied from: %s' %
                          (node_id, config_handler_url))
             except FileObjectNotFound:
-                log.error('%s: failed to find config-handler (%s)' % 
+                log.error('%s: failed to find config-handler (%s)' %
                           (node_id, config_handler_url))
                 raise
 
             try:
                 config_handler = fobj.read(content_type=CONTENT_TYPE_OTHER)
             except FileObjectError:
-                log.error('%s: failed to load config-handler' % 
+                log.error('%s: failed to load config-handler' %
                           (node_id))
                 raise
-            
+
             config_handler_fn = self.expand(node_id, CONFIG_HANDLER_FN)
-            
+
         # Create node folder
         self.repository.add_folder(self.expand(node_id))
 
-        log.info('%s: new dynamically-provisioned node created: /nodes/%s' % 
+        log.info('%s: new dynamically-provisioned node created: /nodes/%s' %
                  (node_id, node_id))
 
         # Add definition
@@ -519,7 +519,7 @@ class NodesController(BaseController):
 
         log.info('%s: node data written to %s:\n%s' %
                  (node_id, filename, contents))
-        
+
         return (response, 'set_location')
 
     def set_location(self, response, *args, **kwargs):
@@ -555,8 +555,8 @@ class NodesController(BaseController):
             create a WSGI response object.
 
         """
-        log.info('%s: received request for definition: %s' % 
-                 (resource, request.url)) 
+        log.info('%s: received request for definition: %s' %
+                 (resource, request.url))
         log.debug('%s\nResource: %s\n' % (request, resource))
 
         node_id = resource.split('/')[0]
@@ -564,7 +564,7 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(self.expand(resource, NODE_FN))
             node = create_node(fobj.read(CONTENT_TYPE_JSON))
         except Exception as err:           # pylint: disable=W0703
-            log.error('%s: unable to read %s file for %s: %s' % 
+            log.error('%s: unable to read %s file for %s: %s' %
                       (NODE_FN, node_id, resource, err))
             response = self.http_bad_request()
             return self.response(**response)
@@ -593,12 +593,12 @@ class NodesController(BaseController):
             log.info('%s: evaluating node against pattern: %s' %
                      (kwargs['resource'], filename))
             if not pattern.match_node(kwargs['node']):
-                log.error('%s: node failed pattern validation (%s)' % 
+                log.error('%s: node failed pattern validation (%s)' %
                           (kwargs['resource'], filename))
                 raise ValidationError('%s: node failed pattern '
                                       'validation (%s)' %
                                       (kwargs['resource'], filename))
-            log.info('%s: node passed pattern validation: %s' % 
+            log.info('%s: node passed pattern validation: %s' %
                       (kwargs['resource'], filename))
         else:
             log.warning('%s: topology validation is DISABLED' %
@@ -616,7 +616,7 @@ class NodesController(BaseController):
             response['definition'] = dict(name='Autogenerated definition',
                                           actions=actions)
         except FileObjectNotFound:
-            log.debug('%s: no startup-config %s' % 
+            log.debug('%s: no startup-config %s' %
                       (kwargs['resource'], filename))
 
         return (response, 'get_definition')
@@ -657,11 +657,11 @@ class NodesController(BaseController):
                               'in definition' %
                               (kwargs['resource'],  action.get('name')))
                 response['definition'] = definition
-            log.debug('%s: defintion is %s (%s)' % (kwargs['resource'], 
+            log.debug('%s: defintion is %s (%s)' % (kwargs['resource'],
                                                     filename,
                                                     definition['actions']))
         except FileObjectNotFound:
-            log.warning('%s: missing definition %s' % 
+            log.warning('%s: missing definition %s' %
                         (kwargs['resource'], filename))
         except FileObjectError as err:
             log.error(err.message)
@@ -677,7 +677,7 @@ class NodesController(BaseController):
             fileobj = self.repository.get_file(filename)
             attributes = fileobj.read(CONTENT_TYPE_YAML)
             response['attributes'] = attributes
-            log.debug('%s: loaded %s attributes from %s' % 
+            log.debug('%s: loaded %s attributes from %s' %
                       (kwargs['resource'], attributes, filename))
         except FileObjectNotFound:
             log.warning('%s: no node specific attributes file' %
@@ -694,7 +694,7 @@ class NodesController(BaseController):
         nodeattrs = response.get('attributes', dict())
 
         def lookup(name):
-            log.debug('%s: lookup up value for variable %s' % 
+            log.debug('%s: lookup up value for variable %s' %
                       (kwargs['resource'], name))
             return nodeattrs.get(name, attrs.get(name))
 
@@ -738,7 +738,7 @@ class NodesController(BaseController):
         except ResourcePoolError as exc:
             log.error(exc)
             raise Exception('failed to allocate resources')
-            
+
         definition['actions'] = _actions
         response['definition'] = definition
         return (response, 'finalize_response')
@@ -774,7 +774,7 @@ class BootstrapController(BaseController):
             filename = self.expand(BOOTSTRAP_CONF)
             config = self.repository.get_file(filename).read(CONTENT_TYPE_YAML)
             if not config:
-                log.warning('Bootstrap config file empty')                
+                log.warning('Bootstrap config file empty')
             else:
                 if 'logging' in config and config['logging']:
                     body['logging'] = config['logging']
@@ -782,7 +782,7 @@ class BootstrapController(BaseController):
                              request.remote_addr)
 
                 if 'xmpp' in config and config['xmpp']:
-                    body['xmpp'] = config['xmpp'] 
+                    body['xmpp'] = config['xmpp']
                     for key in ['username', 'password', 'domain']:
                         if key not in body['xmpp']:
                             log.warning('Bootstrap config: \'%s\' missing from '
@@ -801,7 +801,7 @@ class BootstrapController(BaseController):
             log.error('Failed to read bootstrap config file (%s)' % filename)
             resp = self.http_bad_request()
         except Exception as exc:
-            log.error('Failed to load bootstrap config file (%s): %s' % 
+            log.error('Failed to load bootstrap config file (%s): %s' %
                       (filename, exc))
             resp = self.http_bad_request()
         return resp
@@ -814,7 +814,7 @@ class BootstrapController(BaseController):
             fobj = self.repository.get_file(filename).read(CONTENT_TYPE_PYTHON)
 
             default_server = runtime.default.server_url
-            body = Template(fobj).substitute(SERVER=default_server)
+            body = Template(fobj).safe_substitute(SERVER=default_server)
 
             resp = dict(body=body, content_type=CONTENT_TYPE_PYTHON)
             log.info('%s: node beginning provisioning' %
@@ -823,7 +823,7 @@ class BootstrapController(BaseController):
             log.debug('Missing variable: %s' % err)
             resp = self.http_bad_request()
         except FileObjectNotFound:
-            log.error('Bootstrap file not found (%s)' % filename)            
+            log.error('Bootstrap file not found (%s)' % filename)
             resp = self.http_bad_request()
         except FileObjectError:
             log.error('Failed to read bootstrap file (%s)' % filename)
@@ -851,7 +851,7 @@ class MetaController(BaseController):
                 file_resource = self.repository.get_file(file_path)
             except IOError as exc:
                 # IOError is file_path points to a folder
-                log.error('%s is a folder, not a file: %s' % 
+                log.error('%s is a folder, not a file: %s' %
                           (file_path, str(exc)))
                 resp = self.http_not_found()
             else:
@@ -890,7 +890,7 @@ class Router(WSGIRouter):
 
 
             # configure /meta
-            router_mapper.connect('meta', 
+            router_mapper.connect('meta',
                                   '/meta/{type:actions|files|nodes}/'
                                   '{path_info:.*}',
                                   controller=MetaController,
