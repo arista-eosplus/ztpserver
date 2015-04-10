@@ -733,23 +733,24 @@ class Node(object):
         # Encrypt password
         enc_passwd = crypt.crypt(passwd, "22")
 
-        add_cmd = 'sudo useradd -p %s -m %s -G %s %s' % (enc_passwd, home,
+        add_cmd = 'sudo useradd -p %s -d %s -G %s %s' % (enc_passwd, home,
                                                          group, user)
 
         # Create user
         try:
             proc = subprocess.Popen(add_cmd, stdin=PIPE, stdout=PIPE,
                                     stderr=PIPE, shell=True)
-            rc = proc.returncode
+
             (out, err) = proc.communicate()
+            rc = proc.wait()
 
             if rc or err:
                 if rc in (4, 9):
                     self.log_msg('User already exists - continuing. (%s:%s)'
-                                 % (rc, out))
+                                 % (rc, err))
                 else:
                     raise ZtpError('Failed to add user.(%s:%s)'
-                                   % (rc, out))
+                                   % (rc, err))
 
         except Exception, e:
             raise ZtpError(e)
