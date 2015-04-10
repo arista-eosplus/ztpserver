@@ -731,7 +731,7 @@ class Node(object):
         auth_path = os.path.join(ssh_path, 'authorized_keys')
 
         # Encrypt password
-        enc_passwd = crypt.crypt(passwd)
+        enc_passwd = crypt.crypt(passwd, "22")
 
         add_cmd = 'sudo useradd -p %s -m %s -G %s %s' % (enc_passwd, home,
                                                          group, user)
