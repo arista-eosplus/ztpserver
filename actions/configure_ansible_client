@@ -30,30 +30,26 @@
 #pylint: disable=W0703,W0402,E1103
 
 import os
-import re
-import pwd
-import grp
-import crypt
-import subprocess
 
 TEMP_FILE = '/tmp/tmp-pub-key'
 DEFAULT_ROOT = '/persist/local/'
 DEFAULT_USER = 'ansible'
+DEFAULT_PASSWD = 'ansible'
 DEFAULT_GROUP = 'eosadmin'
 
 
 def main(attributes):
-    '''Configure SSH Keys on your node to enable faster
-    Ansible integration
+    '''Create a user and configure ssh keys (optional) to help deploy an
+    Ansible client automatically. The user that is created will be persistant
+    across reboots. For more details on user creation, see NODE documentation
+    for create_user().
 
     Attributes:
         user: username used by Ansible server to SSH into node
-            (default = ansible)
-        group: group assigned to user above
-            (default = eosadmin)
-        root: directory assigned to user
-            (default = /persist/local/)
-        key: location of public ssh key to be written to authorized_keys
+        passwd: cleartext password for user (default = ansible)
+        group: group assigned to user above (default = eosadmin)
+        root: directory assigned to user (default = /persist/local/)
+        key: (optional) location of public ssh key to be written to authorized_keys
 
 
     Special_attributes:
@@ -66,43 +62,33 @@ def main(attributes):
             action: configure_ansible_client
             attributes:
               user: ansible
+              passwd: ansible
               group: eosadmin
               root: /persist/local
-              key: files/ssh/ansible_id_rsa.pub
+              key: files/ssh/ansible_server_id_rsa.pub
             name: "Configure Ansible SSH Keys"
     '''
 
     node = attributes.get('NODE')
     url = attributes.get('key')
-    user = attributes.get('user')
-    group = attributes.get('group')
-    root = attributes.get('root')
+    user = attributes.get('user', DEFAULT_USER)
+    passwd = attributes.get('passwd', DEFAULT_PASSWD)
+    group = attributes.get('group', DEFAULT_GROUP)
+    root = attributes.get('root', DEFAULT_ROOT)
     public_keys = None
-
-    if not user:
-        user = DEFAULT_USER
-
-    if not group:
-        group = DEFAULT_GROUP
-
-    if not root:
-        root = DEFAULT_ROOT
 
     if url:
         try:
             node.retrieve_url(url, TEMP_FILE)
-            public_keys = open(TEMP_FILE, 'r').read()
         except Exception, e:
-            raise Exception('Unable to retrieve config from URL (%s)' % e)
+            raise Exception('Unable to retrieve file %s (%s)' % (url, e))
 
-    passwd = 'password'
-    enc_passwd = crypt.crypt(passwd,"22")
+        try:
+            public_keys = open(TEMP_FILE).read()
+        except Exception, e:
+            raise Exception('Unable to read file %s (%s)' % (TEMP_FILE, e))
 
-    try:
-        node.create_user(user, group, enc_passwd, root, public_keys)
-    except Exception, e:
-        raise Exception(e)
-    
+    node.create_user(user, group, passwd, root, public_keys)
 
     # Only remove this in case everything else succeeded
     # for debugging purposes

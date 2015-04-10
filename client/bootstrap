@@ -685,83 +685,97 @@ class Node(object):
         self.server_.get_resource(url, path)
 
 
-    def create_user(self, user, group, enc_passwd,
-                    root='/persist/local/', ssh_keys=None):
-        '''Create a local user on the bootstrapped node.
-        You can specify:
+    def create_user(self, user, group, passwd, root='/persist/local/',
+                    ssh_keys=None):
+
+        '''Create a local user on the bootstrapped node. If 'ssh_keys' are
+        provided, they will be copied to $HOME/.ssh/authorized_keys. Also,
+        rc.eos will be modified to add this user on every boot. If the user
+        provided already exists, the function will continue and install the
+        ssh_keys (if necessary). The $HOME/.ssh directory will be assigned
+        0700 permissions and the $HOME/.ssh/authorized_keys file will be
+        assigned 0600 permissions in accord with SSH best practices.
+
+        Args:
          - user: the username
          - group: the group assigned to the user
-         - enc_passwd: an encrypted password assigned to the user
+         - passwd: cleartext password
          - root: the path where the user's home directory will reside
-         - ssh_keys: public keys that will be copied to ~$HOME/.ssh/authorized_keys
-
-        The method will fail if the user already exists on the node. The
-        $HOME/.ssh directory will be assigned 0700 permissions and the
-        $HOME/.ssh/authorized_keys file will be assigned 0600 permissions in
-        accord with SSH best practices.
+         - ssh_keys: (optional) public keys that will be copied to ~$HOME/.ssh/authorized_keys
 
         Raises:
-            subprocess.CalledProcessError:
-             -
-            OSError
-             -
+            ZtpError
+            - missing argument: user, group, passwd
+            - useradd fails, return the error
+            - ssh_keys cannot be written to 'authorized_keys'
+            - files cannot change ownership or permissions
 
         Returns:
-            dict: User details
-
-            Format::
-
-                {'uid':  <USER_ID>,
-                 'gid':  <GROUP_ID>
-                }
+            bool: True if user created; False if otherwise
         '''
+        if not user:
+            raise ZtpError('A user must be provided for create_user()')
+
+        if not group:
+            raise ZtpError('A group must be provided for create_user()')
+
+        if not passwd:
+            raise ZtpError('A passwd must be provided for create_user()')
+
+        if not root:
+            root = '/persist/local/'
+
+
         home = os.path.join(root, user)
         ssh_path = os.path.join(home, '.ssh')
         auth_path = os.path.join(ssh_path, 'authorized_keys')
 
+        # Encrypt password
+        enc_passwd = crypt.crypt(passwd)
+
+        add_cmd = 'sudo useradd -p %s -m %s -G %s %s' % (enc_passwd, home,
+                                                         group, user)
+
         # Create user
         try:
-            cmd = 'sudo useradd -p %s -m %s -G %s %s' % (enc_passwd, home,
-                                                         group, user)
-            subprocess.call(cmd, stdout=None, stderr=None, shell=True)
-        except subprocess.CalledProcessError, e:
-            raise Exception('Failed to create user(%s)' % e.output)
+            rc = subprocess.call(add_cmd, shell=True)
 
-        # Get User ID and Group ID
+            if rc:
+                if rc in (4, 9):
+                    self.log_msg('User already exists - continuing. (%s)' % e)
+                else:
+                    raise ZtpError('Failed to add user:%s' % e)
+
+        except Exception, e:
+            raise ZtpError(e)
+
+        # Get User ID and Group ID for chown
         uid = pwd.getpwnam(user).pw_uid
         gid = grp.getgrnam(group).gr_gid
 
         # Write keys if provided
         if ssh_keys:
-            try:
-                if not os.path.exists(ssh_path):
-                    os.mkdir(ssh_path, 0700)
-                else:
-                    os.chmod(ssh_path, 0700)
 
-                os.chown(ssh_path, uid, gid)
-            except OSError, e:
-                raise Exception(e)
+            if not os.path.exists(home):
+                os.mkdir(ssh_path, 0700)
 
-            try:
-                auth_keys = open(auth_path, 'ab+')
-                auth_keys.write(ssh_keys)
-                auth_keys.close()
-                os.chown(auth_path, uid, gid)
-                os.chmod(auth_path, 0600)
-            except OSError, e:
-                raise Exception(e)
-        try:
-            line = 'useradd -d %s/%s -G %s %s' % (home, group, user)
-            self.append_rc_eos_lines([line])
-        except Exception, e:
-            raise Exception('Failed to write to rc.eos(%s)' % e)
+            if not os.path.exists(ssh_path):
+                os.mkdir(ssh_path, 0700)
+            else:
+                os.chmod(ssh_path, 0700)
 
-        info = {}
-        info['uid'] = uid
-        info['gid'] = gid
+            os.chown(ssh_path, uid, gid)
 
-        return info
+            auth_keys = open(auth_path, 'ab+')
+            auth_keys.write(ssh_keys)
+            auth_keys.close()
+            os.chown(auth_path, uid, gid)
+            os.chmod(auth_path, 0600)
+
+
+        self.append_rc_eos_lines([add_cmd])
+
+        return
 
 
     @classmethod
