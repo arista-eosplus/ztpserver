@@ -49,7 +49,8 @@ def main(attributes):
         passwd: cleartext password for user (default = ansible)
         group: group assigned to user above (default = eosadmin)
         root: directory assigned to user (default = /persist/local/)
-        key: (optional) location of public ssh key to be written to authorized_keys
+        key: (optional) location of public ssh key to be written to
+             authorized_keys
 
 
     Special_attributes:
