@@ -509,7 +509,17 @@ class Node(object):
                   input commands.
         '''
         req_format = 'text' if text_format else 'json'
-        result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+
+        result = None
+        try:
+            result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+        except Exception as e:
+            # EOS-4.14.5+: persistent connection might be have been closed
+            # on timeout - should recover on first retry
+            if e.args[0] == 32:      # Broken PIPE
+                result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+            else:
+                raise e
 
         if text_format:
             return [x.values()[0] for x in result if x.values()][1:]
