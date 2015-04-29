@@ -32,6 +32,8 @@
 #    Written by:
 #       EOS+, Arista Networks
 
+#pylint: disable=W0703
+
 import argparse
 import datetime
 import imp
@@ -513,13 +515,13 @@ class Node(object):
         result = None
         try:
             result = self.client.runCmds(1, ['enable'] + cmds, req_format)
-        except Exception as e:
+        except Exception as exc:
             # EOS-4.14.5+: persistent connection might be have been closed
             # on timeout - should recover on first retry
-            if e.args[0] == 32:      # Broken PIPE
+            if exc.args[0] == 32:      # Broken PIPE
                 result = self.client.runCmds(1, ['enable'] + cmds, req_format)
             else:
-                raise e
+                raise exc
 
         if text_format:
             return [x.values()[0] for x in result if x.values()][1:]
@@ -752,19 +754,19 @@ class Node(object):
             proc = subprocess.Popen(add_cmd, stdin=PIPE, stdout=PIPE,
                                     stderr=PIPE, shell=True)
 
-            (out, err) = proc.communicate()
-            rc = proc.wait()
+            (_, err) = proc.communicate()
+            return_code = proc.wait()       #pylint: disable=E1101
 
-            if rc or err:
-                if rc in (4, 9):
+            if return_code or err:
+                if return_code in (4, 9):
                     self.log_msg('User already exists - continuing. (%s:%s)'
-                                 % (rc, err))
+                                 % (return_code, err))
                 else:
                     raise ZtpError('Failed to add user.(%s:%s)'
-                                   % (rc, err))
+                                   % (return_code, err))
 
-        except Exception, e:
-            raise ZtpError(e)
+        except Exception as exc:
+            raise ZtpError(exc)
 
         # Get User ID and Group ID for chown
         uid = pwd.getpwnam(user).pw_uid

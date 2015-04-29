@@ -81,13 +81,13 @@ def main(attributes):
     if url:
         try:
             node.retrieve_url(url, TEMP_FILE)
-        except Exception, e:
-            raise Exception('Unable to retrieve file %s (%s)' % (url, e))
+        except Exception as exc:
+            raise Exception('Unable to retrieve file %s (%s)' % (url, exc))
 
         try:
             public_keys = open(TEMP_FILE).read()
-        except Exception, e:
-            raise Exception('Unable to read file %s (%s)' % (TEMP_FILE, e))
+        except Exception as exc:
+            raise Exception('Unable to read file %s (%s)' % (TEMP_FILE, exc))
 
     node.create_user(user, group, passwd, root, public_keys)
 

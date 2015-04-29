@@ -36,6 +36,7 @@
 import argparse
 import logging
 import os
+import re
 import sys
 
 from wsgiref.simple_server import make_server
@@ -183,13 +184,31 @@ def validate_definitions():
     data_root = config.runtime.default.data_root
 
     print '\nValidating definitions...'
+
     for definition in all_files(os.path.join(data_root, 
                                              'definitions')):
         print 'Validating %s...' % definition,
         try:
-            load(definition, CONTENT_TYPE_YAML,
-                 'validator')
-            print 'Ok!'
+            def_data = load(definition, CONTENT_TYPE_YAML,
+                            'validator')
+            resources = re.findall(r'allocate\(.(.*?).\)', 
+                                   str(def_data))
+            resources_path = os.path.join(data_root, 
+                                          'resources')
+            resource_files = [x.split('/')[-1] 
+                              for x in resources_path]
+            
+            missing_resources = [x for x in resources 
+                                 if x not in resource_files]
+                
+            if missing_resources:
+                print ''
+                for res in missing_resources:
+                    print 'ERROR: Resource file \'%s\' configured in \'%s\' ' \
+                        'is missing from \'%s\'!' % \
+                        (res, definition, resources_path)
+            else:
+                print 'Ok!'
         except Exception as exc:        #pylint: disable=W0703            
             print '\nERROR: Failed to validate %s\n%s' % \
                 (definition, exc)
