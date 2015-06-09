@@ -41,8 +41,14 @@ def match_neighbors(node, uplinks):
     match = False
     for (local_port, remote_device, remote_port) in uplinks:
         # 'Ethernet<number>'
-        local_port = 'Ethernet%s' % re.match(
-            r'^[Ee][a-z]*([\d\/]+)$', local_port).groups()[0]
+        match = re.match(
+            r'^[eE][a-z]*([\d\/]+)$', local_port)
+        if match:
+            local_port = 'Ethernet%s' % match.groups()[0]
+        else:
+            match = re.match(
+                r'^[mM][a-z]*([\d\/]+)$', local_port)
+            local_port = 'Management%s' % match.groups()[0]        
         port_neighbors = neighbors.get(local_port, [])
         for neighbor in port_neighbors:
             if(neighbor['device'] == remote_device and
@@ -79,11 +85,11 @@ def main(attributes):
     node = attributes.get('NODE')
 
     # Get JSON config
-    json_config = attributes.get('json_config')
-    if not json_config:
-        raise Exception('Missing attribute(\'json_config\')')
+    url = attributes.get('url')
+    if not url:
+        raise Exception('Missing attribute(\'url\')')
     try:
-        node.retrieve_url(json_config, TEMP_CONFIG)
+        node.retrieve_url(url, TEMP_CONFIG)
     except Exception as exc:
         raise Exception('Unable to retrieve JSON config from URL (%s)' % 
                         exc)
@@ -117,7 +123,7 @@ ip address %s''' % intf_data['ma1_ip_addr'])
             if 'image' in intf_data:
                 image = intf_data['image']
                 try:
-                    node.retrieve_url('files/images/%s', 
+                    node.retrieve_url('files/images/%s' % image, 
                                       '%s/%s' % (node.flash(), 
                                                  image))
                 except Exception as exc:
