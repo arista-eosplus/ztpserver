@@ -308,17 +308,15 @@ substitution will result in a value of *None*.
     the attributes list (which might lead to failures or unexpected
     results in the client).
 
-The values of the attributes can be either strings, numbers, lists, dictionaries, or references to other attributes or functions.
+The values of the attributes can be either strings, numbers, lists, dictionaries, or references to other attributes or plugin references for allocating resources.
 
-The supported functions are:
+Plugins can be used to allocate resources on the server side and then pass the result of the allocation back to the client via the definition. The supported plugins are:
 
--  **allocate(resource\_pool)** - allocatea an available resource from
-   a resource pool; the allocation is perform on the server side and the
-   result of the allocation is passed to the client via the definition
+-  **allocate(resource\_pool)** - allocates an available resource from a file-based resource pool
 
 .. note::
 
-    Functions can only be used with strings as arguments,
+    Plugins can only be referenced with strings as arguments,
     currently. See section on `add\_config <#actions>`__ action for
     examples.
 
@@ -760,17 +758,32 @@ This will result in the following configuration being added to the
 Note that in each of the examples, above, the template files are
 just standard EOS configuration blocks.
 
-Resource pools
-~~~~~~~~~~~~~~
+Plugins for allocating resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Plugins for allocating resources from resource pools 
+are located in ``[data_root]/plugins/`` and are referenced 
+by ``<filename>(<resource_pool>)``.
+
+Each plugin contains a ``main`` function with the following signature:
+
+    def main(node_id, pool): 
+        ...
+        
+where:
+ - ``node_id`` is the unique_id of the node being provisioned
+ - ``pool`` is the name of the resource pool from which an attribute is being allocated
+
+**allocate(resource_pool)**
 
 ``[data_root]/resources/`` contains global resource pools from which
-attributes in definitions can be allocated via the allocate(...)
-function.
+attributes in definitions can be allocated via the ``allocate(resource_pool)``
+plugin.
 
 The resource pools provide a way to dynamically allocate a resource to a
 node when the node definition is created. The resource pools are
 key/value YAML files that contain a set of resources to be allocated to
-a node (whenever the allocate(...) function is used in the definition).
+a node (whenever the ``allocate(resource_pool)`` plugin is used in the definition).
 
 .. code-block:: console
 
@@ -816,7 +829,7 @@ In order to free a resource from a pool, simply turn the value
 associated to it back to ``null``, by editing the resource file.
 
 Alternatively, ``$ztps --clear-resources`` can be used in order to free
-all resources in all resource files.
+all resources in all file-based resource files.
 
 Config-handlers
 ~~~~~~~~~~~~~~~
