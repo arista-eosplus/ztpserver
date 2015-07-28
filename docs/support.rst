@@ -27,11 +27,11 @@ Known caveats
 
 The authoritative state for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.
 
-* Only a single entry in a resource pool may be allocated to a node.
+* Only a single entry in a file-based resource pool may be allocated to a node (using the ``allocate(resource_pool`` plugin)).
 
 * Users MUST be aware of the required EOS version for various hardware components (including transcievers).  Neighbor (LLDP) validation may fail if a node boots with an EOS version that does not support the installed hardware.  Moreoever, some EOS features configured via ZTPServer might be unsupported.   Please refer to the Release Notes for more compatability information and to the `Transceiver Guide <http://www.arista.com/assets/data/pdf/Transceiver-Guide.pdf>`_ .
 
-*  If a lot of nodes are being booted at the same time and they all share the same resource files, retrieving the definition for each might be slow (5s or longer) if the resource files are very large. The workaround is to use custom actions and allocate the resources from alternative sources (other than shared files) - e.g. SQL
+*  If a lot of nodes are being booted at the same time and they all share the same file-based resource files (using the ``allocate(resource_pool`` plugin)), retrieving the definition for each might be slow (5s or longer) if the resource files are very large. The workaround is to use another plugin or custom actions and allocate the resources from alternative sources (other than shared files) - e.g. SQL
 
 Releases
 ~~~~~~~~
