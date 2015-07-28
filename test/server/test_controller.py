@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
@@ -1048,7 +1047,8 @@ class NodesControllerUnitTests(unittest.TestCase):
 
     def test_do_resources_success(self):
         var_foo = random_string()
-        ztpserver.controller.resources = Mock(return_value=dict(foo=var_foo))
+        ztpserver.controller.load_resources = \
+            Mock(return_value=dict(foo=var_foo))
 
         definition = create_definition()
         definition.add_action(name='dummy action',

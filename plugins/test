@@ -30,27 +30,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import imp
-import os
-
-from ztpserver.config import runtime
-
-def resource_plugins():
-    path = os.path.join(runtime.default.data_root, 'plugins')
-
-    plugins = []
-    for (_, _, filenames) in os.walk(path):
-        plugins.extend(filenames)
-        break
-    return plugins
-
-def run_plugin(plugin, node_id, pool):
-
-    filename = os.path.join(runtime.default.data_root, 
-                            'plugins',
-                            plugin)
-    try:
-        module = imp.load_source(plugin, filename)
-        return module.main(node_id, pool)
-    except Exception as exc:
-        raise Exception('failed to run plugin: %s' % exc)
+# Simply return a string made of the node ID and the name of 
+# the resource pool.
+def main(node_id, pool):
+    return '%s:%s' % (node_id, pool)

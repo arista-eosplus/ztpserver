@@ -47,8 +47,9 @@ from ztpserver import config, controller
 from ztpserver.serializers import load, dump
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
-from ztpserver.topology import neighbordb_path
+from ztpserver.topology import FUNC_RE, neighbordb_path
 from ztpserver.utils import all_files
+from ztpserver.resources import resource_plugins
 
 log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
@@ -191,18 +192,34 @@ def validate_definitions():
         try:
             def_data = load(definition, CONTENT_TYPE_YAML,
                             'validator')
-            resources = re.findall(r'allocate\(.(.*?).\)', 
+
+            resources = re.findall(FUNC_RE, 
                                    str(def_data))
+
+            # Validating plugins
+            plugins = resource_plugins()
+            missing_plugins = set([x for (x, _) in resources 
+                                   if x not in plugins])
+            if missing_plugins:
+                plugins_path = os.path.join(data_root, 
+                                            'plugins')
+                print ''
+                for plugin in missing_plugins:
+                    print 'ERROR: Plugin \'%s\' configured in \'%s\' ' \
+                        'is missing from \'%s\'!' % \
+                        (plugin, definition, plugins_path)
+
+            # Special validation for 'allocate' plugin
             resources_path = os.path.join(data_root, 
                                           'resources')
             resource_files = [x.split('/')[-1] 
                               for x in resources_path]
-            
-            missing_resources = [x for x in resources 
-                                 if x not in resource_files]
-                
+            missing_resources = [x for (y, x) in resources 
+                                 if x not in resource_files and
+                                 y == 'allocate']
             if missing_resources:
-                print ''
+                if not missing_plugins:
+                    print ''
                 for res in missing_resources:
                     print 'ERROR: Resource file \'%s\' configured in \'%s\' ' \
                         'is missing from \'%s\'!' % \

@@ -49,10 +49,9 @@ from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER
 
 from ztpserver.repository import create_repository
 from ztpserver.repository import FileObjectNotFound, FileObjectError
-from ztpserver.resources import ResourcePoolError
 from ztpserver.serializers import SerializerError
 from ztpserver.topology import create_node, load_pattern
-from ztpserver.topology import load_neighbordb, resources
+from ztpserver.topology import load_neighbordb, load_resources
 from ztpserver.topology import replace_config_action
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 from ztpserver.config import runtime
@@ -733,9 +732,9 @@ class NodesController(BaseController):
                 attrs = action.get('attributes', dict())
 
                 action['attributes'] = \
-                    resources(attrs, node, kwargs['resource'])
+                    load_resources(attrs, node, kwargs['resource'])
                 _actions.append(action)
-        except ResourcePoolError as exc:
+        except Exception as exc:
             log.error(exc)
             raise Exception('failed to allocate resources')
 

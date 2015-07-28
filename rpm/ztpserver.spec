@@ -220,6 +220,7 @@ fi
 %defattr(0775,%{app_user},%{app_user},)
 %dir %{ztps_data_root}
 %dir %{ztps_data_root}/actions
+%dir %{ztps_data_root}/plugins
 %dir %{ztps_data_root}/bootstrap
 %dir %{ztps_data_root}/definitions
 %dir %{ztps_data_root}/files
@@ -230,6 +231,7 @@ fi
 %defattr(0665,%{app_user},%{app_user},)
 %{ztps_data_root}/files/lib/*
 %config(noreplace) %{ztps_data_root}/actions/*
+%config(noreplace) %{ztps_data_root}/plugins/*
 %config(noreplace) %{ztps_data_root}/bootstrap/*
 %config(noreplace) %{ztps_data_root}/neighbordb
 
