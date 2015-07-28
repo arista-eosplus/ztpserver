@@ -29,7 +29,20 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Simply return a string made of the node ID and the name of 
-# the resource pool.
+'''
+Simply returns a string made of the node ID and the name of 
+the resource pool.
+
+Definition example:
+
+    actions:
+      -
+        action: add_config
+        attributes:
+          url: files/templates/demo.templates
+          variables:
+            ipaddress: test('demo')
+'''
+
 def main(node_id, pool):
     return '%s:%s' % (node_id, pool)

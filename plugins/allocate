@@ -28,8 +28,45 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import os
+
+'''
+Allocates a resource from a key/value YAML file (under
+DATA_ROOT/resources) that contains a set of resources to be
+allocated. Here is an example (DATA_ROOT/resoruces/ip_address):
+
+    192.168.1.1/24: null
+    192.168.1.2/24: null
+
+When a resource is allocated to a node’s definition, the first available
+null value will be replaced by the node’s unique_id.
+
+    192.168.1.1/24: 001c731a2b3c
+    192.168.1.2/24: null    
+
+On subsequent attempts to allocate the resource to the same node,
+ztpserver will first check to see whether the node has already been
+allocated a resource from the pool. If it has, it will reuse the
+resource instead of allocating a new one.
+
+In order to free a resource from a pool, simply turn the
+valueassociated to it back to ``null``, by editing the resource
+file. Alternatively, ``$ztps --clear-resources`` can be used in order
+to freeall resources in all file-based resource files.
+
+Definition example:
+
+    actions:
+      -
+        action: add_config
+        attributes:
+          url: files/templates/ma1.templates
+          variables:
+            ipaddress: allocate('mgmt_subnet')
+        name: "configure ma1"
+'''
+
 import logging
+import os
 
 from ztpserver.serializers import load, dump
 from ztpserver.constants import CONTENT_TYPE_YAML
