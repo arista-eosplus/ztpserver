@@ -786,13 +786,12 @@ example.
 **allocate(resource_pool)**
 
 ``[data_root]/resources/`` contains global resource pools from which
-attributes in definitions can be allocated via the ``allocate(resource_pool)``
-plugin.
+attributes in definitions can be allocated.
 
 The resource pools provide a way to dynamically allocate a resource to a
 node when the node definition is created. The resource pools are
 key/value YAML files that contain a set of resources to be allocated to
-a node (whenever the ``allocate(resource_pool)`` plugin is used in the definition).
+a node.
 
 .. code-block:: console
 
