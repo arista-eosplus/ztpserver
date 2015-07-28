@@ -74,6 +74,9 @@ install_requirements = None
 version = None
 
 install_requirements = open('requirements.txt').read().split('\n')
+install_requirements = [x.strip() for x in install_requirements
+                        if x.strip() and 
+                        'dev only' not in x]
 version = open('VERSION').read().split()[0].strip()
 
 data_files = []

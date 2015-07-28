@@ -1,7 +1,0 @@
-webob
-routes
-pyyaml
-jsonrpclib
-requests
-sleekxmpp
-mock
