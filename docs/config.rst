@@ -656,6 +656,10 @@ Actions
 ``[data_root]/actions/`` contains the set of all actions available for use in
 definitions.
 
+New custom actions to-be referenced from definitions can be added to 
+``[data_root]/actions/``. These will be loaded on-demand and do not require
+a restart of the ZTPServer. See ``[data_root]/actions`` for examples.
+
 +---------------------------+-----------------------------------------------------------+----------------------------------------+
 | Action                    | Description                                               | Required Attributes                    |
 +===========================+===========================================================+========================================+
@@ -773,6 +777,11 @@ Each plugin contains a ``main`` function with the following signature:
 where:
  - ``node_id`` is the unique_id of the node being provisioned
  - ``pool`` is the name of the resource pool from which an attribute is being allocated
+
+New custom plugins to-be referenced from definitions can be added to 
+``[data_root]/plugins/``. These will be loaded on-demand and do not require
+a restart of the ZTPServer. See ``[data_root]/plugins/test`` for a very basic 
+example.
 
 **allocate(resource_pool)**
 
