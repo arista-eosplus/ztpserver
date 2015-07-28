@@ -22,7 +22,7 @@ Glossary of terms
         neighbordb is a YAML file which contains a collection of patterns which can be used in order to map nodes to definitions
 
     resource pool
-        a resource pool is a YAML file which provides a mapping between a set or resources and the nodes to which some of the resources might have been allocated to. The nodes are uniquely identified via their system MAC.
+        a resource pool is a is a set of resources which can be allocated on the server for the clients. For example, a YAML file can provide a mapping between a set or resources and the nodes to which some of the resources might have been allocated to (the nodes are uniquely identified via their system MAC).
 
     unique_id
         the unique identifier for a node.  This can be configured, globally, to be the serial number (default) or system MAC address in the ztpserver.conf file
