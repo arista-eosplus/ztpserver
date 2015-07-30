@@ -850,29 +850,37 @@ can include multiple tables, but the value passed into the
 
 Table structure should be as follows with the exact column names:
 
-| node_id |   key   |
-|:-------:|---------|
-| NULL    | 1.1.1.1 |
-| NULL    | 1.1.1.2 |
-| NULL    | 1.1.1.3 |
+=============== ========
+    node_id       key
+=============== ========
+  NULL           1.1.1.1
+  NULL           1.1.1.2
+  NULL           1.1.1.3
+=============== ========
 
 
 Which can be created with statements like:
 
-``CREATE TABLE `mgmt_subnet`(key TEXT, node_id TEXT)``
+.. code-block:: mysql
+
+  CREATE TABLE `mgmt_subnet`(key TEXT, node_id TEXT)
 
 and add entries with:
 
-``INSERT INTO `mgmt_subnet` VALUES('1.1.1.1', NULL)``
+.. code-block:: mysql
+
+  INSERT INTO `mgmt_subnet` VALUES('1.1.1.1', NULL)
 
 When a resource is added, the node_id row will be updated
 to include the System ID from the switch.
 
-|    node_id   |   key   |
-|--------------|---------|
-| 001122334455 | 1.1.1.1 |
-| NULL         | 1.1.1.2 |
-| NULL         | 1.1.1.3 |
+=============== ========
+    node_id       key
+=============== ========
+  001122334455   1.1.1.1
+  NULL           1.1.1.2
+  NULL           1.1.1.3
+=============== ========
 
 On subsequent attempts to allocate the resource to the same node,
 ztpserver will first check to see whether the node has already been
@@ -881,7 +889,8 @@ resource instead of allocating a new one.
 
 Definition example:
 
-```
+.. code-block:: yaml
+
     actions:
       -
         action: add_config
@@ -890,7 +899,9 @@ Definition example:
           variables:
             ipaddress: sqlite('mgmt_subnet')
         name: "configure ma1"
-```
+
+.. tip::
+  Check out `create_db.py <https://raw.githubusercontent.com/arista-eosplus/ztpserver/develop/utils/create_db.py>`_ for an example script to create a sqlite database.
 
 Config-handlers
 ~~~~~~~~~~~~~~~
