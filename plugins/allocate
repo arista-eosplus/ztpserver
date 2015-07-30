@@ -68,14 +68,17 @@ Definition example:
 import logging
 import os
 
+from collections import OrderedDict
+
 from ztpserver.serializers import load, dump
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.config import runtime
 
+
 log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 def load_resource(node_id, filename):
-    data = dict()
+    data = OrderedDict()
 
     contents = load(filename, 
                     CONTENT_TYPE_YAML, 

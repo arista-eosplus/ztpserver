@@ -33,16 +33,18 @@
 # pylint: disable=R0201
 #
 
-from ztpserver.constants import CONTENT_TYPE_OTHER
-from ztpserver.constants import CONTENT_TYPE_JSON
-from ztpserver.constants import CONTENT_TYPE_YAML
-
 import collections
 import logging
 import json
 import os
 import threading
 import yaml
+
+from collections import OrderedDict
+
+from ztpserver.constants import CONTENT_TYPE_OTHER
+from ztpserver.constants import CONTENT_TYPE_JSON
+from ztpserver.constants import CONTENT_TYPE_YAML
 
 READ_WRITE_LOCK = {}
 log = logging.getLogger(__name__)   #pylint: disable=C0103
@@ -77,6 +79,47 @@ class TextSerializer(BaseSerializer):
         ''' Serialize a dict object and return text '''
         return str(data)
 
+#------------------------------------------------------------------------------
+# Source: Michael Elsdörfer (https://gist.github.com/miracle2k))
+#         https://gist.githubusercontent.com/miracle2k/
+#         3184458/raw/ae89e23502f95c4555f0643dafae8a748e3fb382/
+#         odict.py
+
+def represent_odict(dump_odict, tag, mapping, flow_style=None):
+    '''
+    Like BaseRepresenter.represent_mapping, but does not issue the sort().
+    '''
+    value = []
+    node = yaml.MappingNode(tag, value, flow_style=flow_style)
+    if dump_odict.alias_key is not None:
+        dump_odict.represented_objects[dump_odict.alias_key] = node
+    best_style = True
+    if hasattr(mapping, 'items'):
+        mapping = mapping.items()
+    for item_key, item_value in mapping:
+        node_key = dump_odict.represent_data(item_key)
+        node_value = dump_odict.represent_data(item_value)
+        if not (isinstance(node_key, yaml.ScalarNode) and 
+                not node_key.style):
+            best_style = False
+        if not (isinstance(node_value, yaml.ScalarNode) and 
+                not node_value.style):
+            best_style = False
+        value.append((node_key, node_value))
+    if flow_style is None:
+        if dump_odict.default_flow_style is not None:
+            node.flow_style = dump_odict.default_flow_style
+        else:
+            node.flow_style = best_style
+    return node
+
+yaml.SafeDumper.add_representer(
+    OrderedDict,
+    lambda dumper, 
+    value: represent_odict(dumper, 
+                           u'tag:yaml.org,2002:map', 
+                           value))
+#------------------------------------------------------------------------------
 
 class YAMLSerializer(BaseSerializer):
 
@@ -97,7 +140,7 @@ Error:
         ''' Serialize a dict object and return YAML '''
 
         try:
-            return yaml.dump(data, default_flow_style=False)
+            return yaml.safe_dump(data, default_flow_style=False)
         except yaml.YAMLError as err:
             msg = '''%s: unable to serialize YAML data:
 %s 
