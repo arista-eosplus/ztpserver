@@ -81,7 +81,7 @@ else
 	$(PYTHON)  test/server/$(TESTNAME) -v
 endif
 
-tests: clean test_neighbordb test_server test_client test_actions
+tests: clean test_server test_client test_actions
 
 python:
 	$(PYTHON) setup.py build

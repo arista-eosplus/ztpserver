@@ -80,7 +80,7 @@ class TextSerializer(BaseSerializer):
         return str(data)
 
 #------------------------------------------------------------------------------
-# Source: Michael Elsdörfer (https://gist.github.com/miracle2k))
+# Source: Michael Elsdorfer (https://gist.github.com/miracle2k))
 #         https://gist.githubusercontent.com/miracle2k/
 #         3184458/raw/ae89e23502f95c4555f0643dafae8a748e3fb382/
 #         odict.py
@@ -119,7 +119,7 @@ yaml.SafeDumper.add_representer(
     value: represent_odict(dumper, 
                            u'tag:yaml.org,2002:map', 
                            value))
-#------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 
 class YAMLSerializer(BaseSerializer):
 

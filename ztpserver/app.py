@@ -100,6 +100,7 @@ def load_config(conf=None):
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
+        log.info('Loading config file: %s' % conf)
         config.runtime.read(conf)
 
 def start_wsgiapp(config_file=None, debug=False):

@@ -46,6 +46,5 @@ class TestApp(unittest.TestCase):
         obj = ztpserver.app.start_wsgiapp()
         self.assertIsInstance(obj, ztpserver.controller.Router)
 
-
 if __name__ == '__main__':
     unittest.main()

@@ -133,6 +133,7 @@ class RouterUnitTests(unittest.TestCase):
         self.match_routes(url, 'GET,PUT', 'POST,DELETE')
 
 
+
 class MetaControllerUnitTests(unittest.TestCase):
 
     @patch('ztpserver.controller.create_repository')
@@ -512,12 +513,13 @@ class ActionsControllerIntegrationTests(unittest.TestCase):
 
 class NodesControllerUnitTests(unittest.TestCase):
 
-    def setUp(self):
+
+    def tearDown(self):
         ztpserver.config.runtime.set_value(\
             'disable_topology_validation', False, 'default')
         ztpserver.config.runtime.set_value(\
             'identifier', 'serialnumber', 'default')
-
+        
     @classmethod
     def identifier(cls, node):
         identifier = ztpserver.config.runtime.default.identifier
