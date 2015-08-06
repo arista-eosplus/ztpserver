@@ -133,7 +133,6 @@ def main(node_id, pool):
         file_path = os.path.join(file_path, pool)
 
         # serialize data
-        data = dict()
         for key, value in data.items():
             data[key] = str(value) if value else None
 
