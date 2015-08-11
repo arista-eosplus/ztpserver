@@ -42,6 +42,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
+    ReleaseNotes1.4
     ReleaseNotes1.3.2
     ReleaseNotes1.3.1
     ReleaseNotes1.3
@@ -54,12 +55,11 @@ Roadmap highlights
 
 The authoritative state, including the intended release, for any known issue can be found in `GitHub issues <https://github.com/arista-eosplus/ztpserver/issues>`_.   The information provided here is current at the time of publishing but is subject to change.   Please refer to the latest information in GitHub issues by filtering on the desired `milestone <https://github.com/arista-eosplus/ztpserver/milestones>`_.
 
-Release 1.4
+Release 1.5
 -----------
 
-Target: April 2015
+Target: January 2016
 
-* plugin infrastructure for resource pool allocation (`121 <https://github.com/arista-eosplus/ztpserver/pull/121>`_)
 * topology-based ZTR (`103 <https://github.com/arista-eosplus/ztpserver/pull/103>`_)
 * ZTPServer Cookbook - advanced topics (`289 <https://github.com/arista-eosplus/ztpserver/pull/289>`_)
 * benchmark scale tests (`261 <https://github.com/arista-eosplus/ztpserver/pull/261>`_)
@@ -67,7 +67,7 @@ Target: April 2015
 Release 2.0
 -----------
 
-Target: June 2015
+Target: March 2016
 
 * configure HTTP timeout in bootstrap.conf (`246 <https://github.com/arista-eosplus/ztpserver/pull/246>`_)
 * all requests from the client should contain the unique identifier of the node (`188 <https://github.com/arista-eosplus/ztpserver/pull/188>`_)
