@@ -123,10 +123,10 @@ def main(node_id, pool):
                      (node_id, pool, match))
             return match
 
-        key = next(x[0] for x in data.iteritems() if x[1] is None)
-        log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, key))
+        entry = next(x[0] for x in data.iteritems() if x[1] is None)
+        log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, entry))
 
-        data[key] = node_id
+        data[entry] = node_id
 
         log.debug('%s: writing resource pool \'%s\': %s' % 
                   (node_id, pool, data))
@@ -149,4 +149,4 @@ def main(node_id, pool):
         log.error(msg)
         raise Exception('%s : %s' % (msg, exc.message))
 
-    return str(key)
+    return str(entry)
