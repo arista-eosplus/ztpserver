@@ -144,16 +144,18 @@ This recipe ties a few different concepts together. From a high-level, the defin
 contains an action, ``add_config``, which references a configuration block, ``ma1.template``.
 Further, we use a variable, ``$ipaddress`` in the template file so that the template
 can be used for all nodes being provisioned.  The final piece is the use of the
-``allocate()`` function, which dynamically assigns a key from the associated
-resource pool.
+``allocate()`` plugin, which dynamically assigns a key from the associated
+file-based resource pool.
 
 In practice, when a node requests its definition the ZTPServer will execute the
-``allocate("mgmt_subnet")`` function and assign a key from the pool.
+``allocate("mgmt_subnet")`` plugin and assign a key from the pool.
 The ZTPServer will then write the SYSTEM_ID as the value, overwriting ``null``.
 
 If you wanted to use the assigned value elsewhere in the definition, simply call
-``allocate(mgmt_subnet)`` and the function will not assign a new value, rather it
-will return the key already assigned.
+``allocate(mgmt_subnet)`` and the plugin will not assign a new value, rather it
+will return the key already assigned. Note that this is an implementation-detail
+specific to this particular plugin - other plugins might vary (please read the 
+associated documentation for each).
 
 The result would look like:
 

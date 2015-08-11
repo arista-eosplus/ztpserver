@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
@@ -30,27 +29,20 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import imp
-import os
+'''
+Simply returns a string made of the node ID and the name of 
+the resource pool.
 
-from ztpserver.config import runtime
+Definition example:
 
-def resource_plugins():
-    path = os.path.join(runtime.default.data_root, 'plugins')
+    actions:
+      -
+        action: add_config
+        attributes:
+          url: files/templates/demo.templates
+          variables:
+            ipaddress: test('demo')
+'''
 
-    plugins = []
-    for (_, _, filenames) in os.walk(path):
-        plugins.extend(filenames)
-        break
-    return plugins
-
-def run_plugin(plugin, node_id, pool):
-
-    filename = os.path.join(runtime.default.data_root, 
-                            'plugins',
-                            plugin)
-    try:
-        module = imp.load_source(plugin, filename)
-        return module.main(node_id, pool)
-    except Exception as exc:
-        raise Exception('failed to run plugin: %s' % exc)
+def main(node_id, pool):
+    return '%s:%s' % (node_id, pool)

@@ -33,6 +33,7 @@ pylint:
 	find ./ztpserver -name \*.py | xargs pylint --rcfile .pylintrc
 	find ./test -name \*.py | xargs pylint --rcfile .pylintrc
 	find ./actions -name \* -xtype f | xargs pylint --rcfile .pylintrc
+	find ./plugins -name \* -xtype f | xargs pylint --rcfile .pylintrc
 	find ./client -name bootstrap | xargs pylint --rcfile .pylintrc
 
 clean:
@@ -80,7 +81,7 @@ else
 	$(PYTHON)  test/server/$(TESTNAME) -v
 endif
 
-tests: clean test_neighbordb test_server test_client test_actions
+tests: clean test_server test_client test_actions
 
 python:
 	$(PYTHON) setup.py build

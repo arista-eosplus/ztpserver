@@ -32,6 +32,8 @@
 #    Written by:
 #       EOS+, Arista Networks
 
+#pylint: disable=W0703
+
 import argparse
 import datetime
 import imp
@@ -47,6 +49,9 @@ import socket
 import subprocess
 import sys
 import time
+import pwd
+import grp
+import crypt
 import traceback
 import urllib2
 import urlparse
@@ -115,7 +120,7 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
 #---------------------------------XMPP------------------------
 
 #---------------------------------SYSLOG----------------------
-# Comment out this section in order to enable syslog debug 
+# Comment out this section in order to enable syslog debug
 # logging
 logging.raiseExceptions = False
 #---------------------------------XMPP------------------------
@@ -145,27 +150,27 @@ def _exit(code):
 
                 shutil.move(path, dst)
 
-            backup_path = url_path_join('/', TEMP, 
+            backup_path = url_path_join('/', TEMP,
                                         os.path.basename(filename))
 
             if os.path.isfile(backup_path):
-                log('Recovering %s...' % path) 
+                log('Recovering %s...' % path)
                 shutil.move(backup_path, path)
 
         if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
             dst = '%s.ztp' % BOOT_EXTENSIONS_FOLDER
-            log('Saving %s as %s...' % 
-                (BOOT_EXTENSIONS_FOLDER.split('/')[-1], 
+            log('Saving %s as %s...' %
+                (BOOT_EXTENSIONS_FOLDER.split('/')[-1],
                  dst))
 
             if os.path.isdir(dst):
                 shutil.rmtree(dst)
 
-            shutil.move(BOOT_EXTENSIONS_FOLDER, 
+            shutil.move(BOOT_EXTENSIONS_FOLDER,
                         '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
 
         backup_path = url_path_join(
-            '/', TEMP, 
+            '/', TEMP,
             os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(backup_path):
             log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
@@ -201,7 +206,7 @@ def log(msg, error=False, xmpp=None):
         xmpp = log_xmpp()
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    xmpp_msg = '%s: %s - %s%s' % (SYSTEM_ID if SYSTEM_ID else 'N/A', 
+    xmpp_msg = '%s: %s - %s%s' % (SYSTEM_ID if SYSTEM_ID else 'N/A',
                                   timestamp,
                                   'ERROR: ' if error else '',
                                   msg)
@@ -257,7 +262,7 @@ def flash_snapshot():
             log('Backing up %s...' % filename)
 
             # Delete old folder in tmp
-            dst = url_path_join('/', TEMP, 
+            dst = url_path_join('/', TEMP,
                                 os.path.basename(filename))
             if os.path.isfile(dst):
                 os.remove(dst)
@@ -268,7 +273,7 @@ def flash_snapshot():
         log('Backing up %s...' % BOOT_EXTENSIONS_FOLDER)
 
         # Delete old folder in /tmp
-        dst = url_path_join('/', TEMP, 
+        dst = url_path_join('/', TEMP,
                             os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(dst):
             shutil.rmtree(dst)
@@ -386,7 +391,7 @@ class Node(object):
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
             log('WARNING: unable to disable COPP: %s '
-                '(platform/EOS version might not support this feature)' % 
+                '(platform/EOS version might not support this feature)' %
                 err)
 
         global SYSTEM_ID                    #pylint: disable=W0603
@@ -446,7 +451,7 @@ class Node(object):
 
         Args:
             cmds: list of bash commands
-            
+
         Returns:
             cmd:  first failing command (None otherwise)
             code: exit code for first failing command (None otherwise)
@@ -455,8 +460,8 @@ class Node(object):
         '''
 
         for bash_cmd in cmds:
-            proc = subprocess.Popen(bash_cmd, stdin=PIPE, 
-                                    stdout=PIPE, stderr=PIPE, 
+            proc = subprocess.Popen(bash_cmd, stdin=PIPE,
+                                    stdout=PIPE, stderr=PIPE,
                                     shell=True)
             code = proc.returncode         #pylint: disable=E1101
             (out, err) = proc.communicate()
@@ -475,9 +480,9 @@ class Node(object):
             template (string): EOS configuration template
             substitutions (dict): set of substitutions for the template
             strict (bool, optional): If true, method will raise Exception
-                                     when template variables are missing 
+                                     when template variables are missing
                                      from 'substitutions'.
-            
+
         Returns:
             string: template string with variable substitution
         '''
@@ -488,7 +493,7 @@ class Node(object):
                 return Template(template).safe_substitute(substitutions)
         except KeyError as exc:
             raise Exception('Unable to perform variable substitution - '
-                            '\'%s\' missing from list of substitutions' % 
+                            '\'%s\' missing from list of substitutions' %
                             exc.message)
 
     def api_enable_cmds(self, cmds, text_format=False):
@@ -506,7 +511,17 @@ class Node(object):
                   input commands.
         '''
         req_format = 'text' if text_format else 'json'
-        result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+
+        result = None
+        try:
+            result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+        except Exception as exc:
+            # EOS-4.14.5+: persistent connection might be have been closed
+            # on timeout - should recover on first retry
+            if exc.args[0] == 32:      # Broken PIPE
+                result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+            else:
+                raise exc
 
         if text_format:
             return [x.values()[0] for x in result if x.values()][1:]
@@ -682,6 +697,105 @@ class Node(object):
         '''
         self.server_.get_resource(url, path)
 
+
+    def create_user(self, user, group, passwd, root='/persist/local/',
+                    ssh_keys=None):
+
+        '''Create a local user on the bootstrapped node. If 'ssh_keys' are
+        provided, they will be copied to $HOME/.ssh/authorized_keys. Also,
+        rc.eos will be modified to add this user on every boot. If the user
+        provided already exists, the function will continue and install the
+        ssh_keys (if necessary). The $HOME/.ssh directory will be assigned
+        0700 permissions and the $HOME/.ssh/authorized_keys file will be
+        assigned 0600 permissions in accord with SSH best practices.
+
+        Args:
+         - user: the username
+         - group: the group assigned to the user
+         - passwd: cleartext password
+         - root: the path where the user's home directory will reside
+         - ssh_keys: (optional) public keys that will be copied to
+           ~$HOME/.ssh/authorized_keys
+
+        Raises:
+            ZtpError
+            - missing argument: user, group, passwd
+            - useradd fails, return the error
+            - ssh_keys cannot be written to 'authorized_keys'
+            - files cannot change ownership or permissions
+
+        Returns:
+            bool: True if user created; False if otherwise
+        '''
+        if not user:
+            raise ZtpError('A user must be provided for create_user()')
+
+        if not group:
+            raise ZtpError('A group must be provided for create_user()')
+
+        if not passwd:
+            raise ZtpError('A passwd must be provided for create_user()')
+
+        if not root:
+            root = '/persist/local/'
+
+        home = os.path.join(root, user)
+        ssh_path = os.path.join(home, '.ssh')
+        auth_path = os.path.join(ssh_path, 'authorized_keys')
+
+        # Encrypt password
+        enc_passwd = crypt.crypt(passwd, "22")
+
+        add_cmd = 'sudo useradd -p %s -d %s -G %s %s' % (enc_passwd, home,
+                                                         group, user)
+
+        # Create user
+        try:
+            proc = subprocess.Popen(add_cmd, stdin=PIPE, stdout=PIPE,
+                                    stderr=PIPE, shell=True)
+
+            (_, err) = proc.communicate()
+            return_code = proc.wait()       #pylint: disable=E1101
+
+            if return_code or err:
+                if return_code in (4, 9):
+                    self.log_msg('User already exists - continuing. (%s:%s)'
+                                 % (return_code, err))
+                else:
+                    raise ZtpError('Failed to add user.(%s:%s)'
+                                   % (return_code, err))
+
+        except Exception as exc:
+            raise ZtpError(exc)
+
+        # Get User ID and Group ID for chown
+        uid = pwd.getpwnam(user).pw_uid
+        gid = grp.getgrnam(group).gr_gid
+
+        # Write keys if provided
+        if ssh_keys:
+
+            if not os.path.exists(home):
+                os.mkdir(ssh_path, 0700)
+
+            if not os.path.exists(ssh_path):
+                os.mkdir(ssh_path, 0700)
+            else:
+                os.chmod(ssh_path, 0700)
+
+            os.chown(ssh_path, uid, gid)
+
+            auth_keys = open(auth_path, 'ab+')
+            auth_keys.write(ssh_keys)
+            auth_keys.close()
+            os.chown(auth_path, uid, gid)
+            os.chmod(auth_path, 0600)
+
+        self.append_rc_eos_lines([add_cmd])
+
+        return
+
+
     @classmethod
     def server_address(cls):
         '''Get ZTP Server URL.
@@ -822,7 +936,7 @@ class Server(object):
                 metadata = metadata.json()
                 if size and metadata['size'] != size:
                     raise ZtpError('"content-length" for %s does not match '
-                                   'metadata: %s != %s' % 
+                                   'metadata: %s != %s' %
                                    (url, metadata['size'], size))
 
             usage = flash_usage()
@@ -864,7 +978,7 @@ class Server(object):
                                     headers=headers)
 
         log('Server response to GET config: contents=%s' % result.json())
-        
+
         status = result.status_code
         content = result.headers['content-type'].split(';')[0]
         if(status != HTTP_STATUS_OK or
@@ -1007,7 +1121,7 @@ class Server(object):
                     (url, status, content))
 
         if status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('resource %s not found on server (status=%s)' % 
+            raise ZtpError('resource %s not found on server (status=%s)' %
                            (url, status))
 
         self._save_file_contents(response, path, url)
@@ -1179,7 +1293,7 @@ def execute_action(server, action_details, special_attr):
                 xmpp=True)
         raise ZtpActionError('executing action failed (%s): %s' % (action, err))
 
-            
+
 def main():
     #pylint: disable=W0603,R0912,R0915
     global syslog_manager, RESTORE_FACTORY_FLASH

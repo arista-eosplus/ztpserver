@@ -68,11 +68,15 @@ if install() and os.environ.get('READTHEDOCS'):
     call(['docs/setup_rtd_files.sh'])
     packages.append('client')
     packages.append('actions')
+    packages.append('plugins')
 
 install_requirements = None
 version = None
 
 install_requirements = open('requirements.txt').read().split('\n')
+install_requirements = [x.strip() for x in install_requirements
+                        if x.strip() and 
+                        'dev only' not in x]
 version = open('VERSION').read().split()[0].strip()
 
 data_files = []
@@ -109,13 +113,17 @@ for (filename, dst, src) in [('neighbordb',
 
     data_files += [(dst, glob(src))]
 
-# bootstrap file, libraries, VERSION and actions are always
-# overwritten
+# bootstrap file, libraries, VERSION, plugins and actions are
+# always overwritten
 file_list = [('bootstrap', '%s/bootstrap' % install_path, 
               'client/bootstrap')]
 for filename in glob('actions/*'):
     file_list += [(filename.split('/')[-1],
                    '%s/actions' % install_path,
+                   filename)]
+for filename in glob('plugins/*'):
+    file_list += [(filename.split('/')[-1],
+                   '%s/plugins' % install_path,
                    filename)]
 for filename in glob('client/lib/*'):
     file_list += [(filename.split('/')[-1],

@@ -39,11 +39,11 @@ import re
 import string # pylint: disable=W0402
 
 from ztpserver.validators import validate_neighbordb, validate_pattern
-from ztpserver.resources import ResourcePool
 from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.serializers import load, SerializerError
 from ztpserver.utils import expand_range, parse_interface, url_path_join
 from ztpserver.config import runtime
+from ztpserver.resources import run_plugin
 
 ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')
 NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')
@@ -161,31 +161,33 @@ def create_node(nodeattrs):
     except KeyError as err:
         log.error('Failed to create node - missing attribute: %s' % err)
 
-def resources(attributes, node, node_id):
+def load_resources(attributes, node, node_id):
     log.debug('%s: computing resources (attr=%s)' % 
               (node_id, attributes))
 
     _attributes = dict()
-    _resources = ResourcePool(node_id)
-
     for key, value in attributes.items():
         if hasattr(value, 'items'):
-            value = resources(value, node, node_id)
+            value = load_resources(value, node, node_id)
         elif hasattr(value, '__iter__'):
             _value = list()
             for item in value:
                 match = FUNC_RE.match(item)
                 if match:
-                    method = getattr(_resources, match.group('function'))
-                    _value.append(method(match.group('arg')))
+                    plugin = match.group('function')
+                    _value.append(run_plugin(plugin, 
+                                             node_id, 
+                                             match.group('arg')))
                 else:
                     _value.append(item)
             value = _value
         else:
             match = FUNC_RE.match(str(value))
             if match:
-                method = getattr(_resources, match.group('function'))
-                value = method(match.group('arg'))
+                plugin = match.group('function')
+                value = run_plugin(plugin, 
+                                   node_id, 
+                                   match.group('arg'))
         _attributes[key] = value
     log.debug('%s: resources: %s' % (node_id, _attributes))
     return _attributes
@@ -567,7 +569,8 @@ class Pattern(object):
                                                      remote_interface, 
                                                      self.node_id))
                 else:
-                    for item in expand_range(intf):
+                    intfs = expand_range(intf)
+                    for item in intfs:
                         pattern = InterfacePattern(item, remote_device, 
                                                    remote_interface,
                                                    self.node_id)
@@ -661,7 +664,6 @@ class InterfacePattern(object):
     }
 
     def __init__(self, interface, remote_device, remote_interface, node_id):
-
         match = re.match(r'^[ehnrtE]+(\d.*)$', interface)
         if match:
             self.interface = 'Ethernet%s' % match.groups()[0]
@@ -671,9 +673,10 @@ class InterfacePattern(object):
         self.remote_device = remote_device
         self.remote_interface = remote_interface
         self.node_id = node_id
-
+        
         self.remote_device_re = self.compile(remote_device)
         self.remote_interface_re = self.compile(remote_interface)
+
 
     def __repr__(self):
         return 'InterfacePattern(interface=%s, remote_device=%s, ' \

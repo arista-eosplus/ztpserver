@@ -193,7 +193,6 @@ class NeighbordbTest(unittest.TestCase):
             debug(exc)
 
 
-
 def get_test_list(filepath):
     test_list = os.environ.get('TESTS', None)
     if not test_list:

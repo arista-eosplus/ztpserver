@@ -1,0 +1,166 @@
+# Copyright (c) 2015, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+'''
+Allocates a resource from a prefilled sqlite database. The database
+is defined by the global variable, 'DB_URL' below. The database
+can include multiple tables, but the value passed into the
+'sqlite(table)' will be used to look for an available resource.
+
+Table structure should be as follows:
+
+---------------------
+| node_id |   key   |
+---------------------
+| NULL    | 1.1.1.1 |
+| NULL    | 1.1.1.2 |
+| NULL    | 1.1.1.3 |
+---------------------
+
+Which can be created with statements like:
+
+CREATE TABLE `mgmt_subnet`(key TEXT, node_id TEXT)
+
+and add entries with:
+
+INSERT INTO `mgmt_subnet` VALUES('1.1.1.1', NULL)
+
+When a resource is added, the node_id row will be updated
+to include the System ID from the switch.
+
+--------------------------
+|    node_id   |   key   |
+--------------------------
+| 001122334455 | 1.1.1.1 |
+| NULL         | 1.1.1.2 |
+| NULL         | 1.1.1.3 |
+--------------------------
+
+On subsequent attempts to allocate the resource to the same node,
+ztpserver will first check to see whether the node has already been
+allocated a resource from the pool. If it has, it will reuse the
+resource instead of allocating a new one.
+
+Definition example:
+
+    actions:
+      -
+        action: add_config
+        attributes:
+          url: files/templates/ma1.templates
+          variables:
+            ipaddress: sqlite('mgmt_subnet')
+        name: "configure ma1"
+'''
+
+import logging
+import os
+import sqlite3 as lite
+
+log = logging.getLogger('ztpserver')   #pylint: disable=C0103
+
+# SQLITE VARIABLES
+DB_URL = "/usr/share/ztpserver/db/resources.db"
+
+
+def check_url_valid(url):
+    
+    if not url.startswith('http'):
+        log.info('checking sqlite db (%s) exists...' % DB_URL)
+        if not os.path.isfile(url):
+            raise Exception('Specified DB file %s does not exists.'
+                            % url)
+
+
+def assign_resource(node_id, table):
+
+    # Proactively check if the db file exists
+    check_url_valid(DB_URL)
+
+    log.info('%s: looking for resources in sqlite DB(%s) in table(%s)'
+             % (node_id, DB_URL, table))
+
+    #Setup connection to local sqlite database
+    con = lite.connect(DB_URL)
+
+    with con:
+        cur = con.cursor()
+
+        query = "SELECT * FROM `%s` WHERE node_id='%s'"  % (table, node_id)
+
+        log.debug('%s: executing sql query:%s' % (node_id, query))
+        match = cur.execute(query).fetchone()
+
+        if match:
+            log.debug('%s: already allocated:%s in table %s'
+                      % (node_id, match[0], table))
+            return match[0]
+        else:
+            log.info('%s: no existing resources matches this node '
+                     'in the db. Looking for new resource in %s'
+                     % (node_id, table))
+
+            # The query must use subquery since sqlite is not
+            # typically compiled with LIMIT support for UPDATE
+            query = """UPDATE `%s`
+                       SET node_id = '%s'
+                       WHERE key IN (
+                         SELECT key
+                         FROM `%s`
+                         WHERE node_id IS NULL
+                         ORDER BY rowid ASC
+                         LIMIT 1
+                      )""" % (table, node_id, table)
+            log.debug('%s: executing query: %s' % (node_id, query))
+            assigned = cur.execute(query).fetchone()
+            log.debug('%s: number of rows affected:%s' %
+                      (node_id, cur.rowcount))
+
+            if cur.rowcount == 1:
+                # Go get the resouce that was just allocated
+                query = "SELECT * FROM `%s` WHERE node_id='%s'" % (table, node_id)
+                log.debug('%s: executing sql query:%s' % (node_id, query))
+                match = cur.execute(query).fetchone()
+                return match[0]
+
+
+def main(node_id, table):
+    try:
+        key = assign_resource(node_id, table)
+        log.debug('%s: assigned resource from \'%s\': %s' % 
+                  (node_id, table, key))
+
+    except Exception as exc:
+        msg = '%s: failed to allocate resource from \'%s\'' % \
+            (node_id, table)
+        log.error(msg)
+        raise Exception('%s : %s' % (msg, exc.message))
+
+    return str(key)

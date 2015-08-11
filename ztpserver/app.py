@@ -36,6 +36,7 @@
 import argparse
 import logging
 import os
+import re
 import sys
 
 from wsgiref.simple_server import make_server
@@ -46,8 +47,9 @@ from ztpserver import config, controller
 from ztpserver.serializers import load, dump
 from ztpserver.validators import NeighbordbValidator
 from ztpserver.constants import CONTENT_TYPE_YAML
-from ztpserver.topology import neighbordb_path
+from ztpserver.topology import FUNC_RE, neighbordb_path
 from ztpserver.utils import all_files
+from ztpserver.resources import resource_plugins
 
 log = logging.getLogger('ztpserver')
 log.setLevel(logging.DEBUG)
@@ -98,6 +100,7 @@ def load_config(conf=None):
     conf = os.environ.get('ZTPS_CONFIG', conf)
 
     if os.path.exists(conf):
+        log.info('Loading config file: %s' % conf)
         config.runtime.read(conf)
 
 def start_wsgiapp(config_file=None, debug=False):
@@ -183,13 +186,47 @@ def validate_definitions():
     data_root = config.runtime.default.data_root
 
     print '\nValidating definitions...'
+
     for definition in all_files(os.path.join(data_root, 
                                              'definitions')):
         print 'Validating %s...' % definition,
         try:
-            load(definition, CONTENT_TYPE_YAML,
-                 'validator')
-            print 'Ok!'
+            def_data = load(definition, CONTENT_TYPE_YAML,
+                            'validator')
+
+            resources = re.findall(FUNC_RE, 
+                                   str(def_data))
+
+            # Validating plugins
+            plugins = resource_plugins()
+            missing_plugins = set([x for (x, _) in resources 
+                                   if x not in plugins])
+            if missing_plugins:
+                plugins_path = os.path.join(data_root, 
+                                            'plugins')
+                print ''
+                for plugin in missing_plugins:
+                    print 'ERROR: Plugin \'%s\' configured in \'%s\' ' \
+                        'is missing from \'%s\'!' % \
+                        (plugin, definition, plugins_path)
+
+            # Special validation for 'allocate' plugin
+            resources_path = os.path.join(data_root, 
+                                          'resources')
+            resource_files = [x.split('/')[-1] 
+                              for x in resources_path]
+            missing_resources = [x for (y, x) in resources 
+                                 if x not in resource_files and
+                                 y == 'allocate']
+            if missing_resources:
+                if not missing_plugins:
+                    print ''
+                for res in missing_resources:
+                    print 'ERROR: Resource file \'%s\' configured in \'%s\' ' \
+                        'is missing from \'%s\'!' % \
+                        (res, definition, resources_path)
+            else:
+                print 'Ok!'
         except Exception as exc:        #pylint: disable=W0703            
             print '\nERROR: Failed to validate %s\n%s' % \
                 (definition, exc)

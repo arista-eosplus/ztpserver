@@ -1,7 +1,7 @@
 webob
 routes
 pyyaml
-jsonrpclib
 requests
-sleekxmpp
-mock
+sleekxmpp    # dev only
+mock         # dev only
+jsonrpclib   # dev only
