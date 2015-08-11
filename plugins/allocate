@@ -37,8 +37,8 @@ allocated. Here is an example (DATA_ROOT/resoruces/ip_address):
     192.168.1.1/24: null
     192.168.1.2/24: null
 
-When a resource is allocated to a node’s definition, the first available
-null value will be replaced by the node’s unique_id.
+When a resource is allocated within a node definition, the first available
+null value will be replaced by the node unique_id.
 
     192.168.1.1/24: 001c731a2b3c
     192.168.1.2/24: null    
