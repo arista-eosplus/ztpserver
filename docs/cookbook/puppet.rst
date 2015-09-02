@@ -1,5 +1,5 @@
-Puppet Bootstrap
-================
+Puppet Agent - Bootstrap EOS
+============================
 
 .. The line below adds a local TOC
 
@@ -12,14 +12,14 @@ Bootstrap EOS to Puppet
 Objective
 ^^^^^^^^^
 
-I want to bootstrap and EOS node with the Puppet agent.
+I want to bootstrap an EOS node with the Puppet agent.
 
 Solution
 ^^^^^^^^
 
 .. note:: Prior to EOS 4.14.5, eAPI must be configured with HTTPS or HTTP and a flash:eapi.conf must be created for rbeapi.  Starting with EOS 4.14.5, rbeapi can use unix-sockets to communicate with eAPI, locally.
 
-Download the `Puppet Enterprise agent <https://puppetlabs.com/download-puppet-enterprise-all#agent>` (may be used with Puppet Enterprise or Open Source) from PuppetLabs and the `Ruby client for eAPI (pe-rbeapi)<https://github.com/arista-eosplus/rbeapi/releases>` SWIX from GitHub.  Place these files in /usr/share/ztpserver/files/puppet/``
+Download the `Puppet Enterprise agent <https://puppetlabs.com/download-puppet-enterprise-all#agent>`_ (may be used with Puppet Enterprise or Open Source) from PuppetLabs and the `Ruby client for eAPI (pe-rbeapi) <https://github.com/arista-eosplus/rbeapi/releases>`_ SWIX from GitHub.  Place these files in /usr/share/ztpserver/files/puppet/``
 
 .. code-block:: yaml
 
