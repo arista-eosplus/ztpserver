@@ -17,7 +17,7 @@ Enhancements
     - Plugin infrastructure for resource pool allocation (`121 <https://github.com/arista-eosplus/ztpserver/issues/121>`_)
 
 Bug fixes
-^^^^^^^^
+^^^^^^^^^
 
 * Starting ZTPServer fails because ``pkg_resources.DistributionNotFound: mock`` (`318 <https://github.com/arista-eosplus/ztpserver/issues/318>`_)
 
