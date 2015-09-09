@@ -70,7 +70,7 @@ if install() and os.environ.get('READTHEDOCS'):
     conf_path = '.' + conf_path
     install_path = '.' +  install_path
     #config.VERSION_FILE_PATH = '.' + config.VERSION_FILE_PATH
-    os.environ('ZTPS_INSTALL_ROOT') = '.'
+    os.environ['ZTPS_INSTALL_ROOT'] = '.'
     from subprocess import call
     call(['docs/setup_rtd_files.sh'])
     packages.append('client')
