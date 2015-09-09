@@ -164,7 +164,7 @@ setup(
 if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
-        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)
+        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)[1:]
     else:
         version_file =  config.VERSION_FILE_PATH
     ensure_dir(version_file)
