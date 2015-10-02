@@ -1,0 +1,1511 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+.DEFAULT_GOAL	docs/Makefile	/^.DEFAULT_GOAL := html$/;"	m
+ACTIONLINKS	docs/Makefile	/^ACTIONLINKS := $(shell ls ..\/actions | grep "\\.py")$/;"	m
+ACTIONS	docs/Makefile	/^ACTIONS := $(shell ls ..\/actions | grep -v "\\.py")$/;"	m
+ALLSPHINXOPTS	docs/Makefile	/^ALLSPHINXOPTS   = -d $(BUILDDIR)\/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .$/;"	m
+ALL_CHARS	ztpserver/topology.py	/^ALL_CHARS = set([chr(c) for c in range(256)])$/;"	v
+ANTINODE_PATTERN	ztpserver/validators.py	/^ANTINODE_PATTERN = r'[^%s]' % string.hexdigits$/;"	v
+ANY_DEVICE_PARSER_RE	ztpserver/topology.py	/^ANY_DEVICE_PARSER_RE = re.compile(r':(?=[any])')$/;"	v
+ATTRIBUTES_FN	ztpserver/controller.py	/^ATTRIBUTES_FN = 'attributes'$/;"	v
+ActionFailureTest	test/actions/test_add_config.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_copy_file.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_install_cli_plugin.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_install_extension.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_install_image.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_replace_config.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_run_bash_script.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_run_cli_commands.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/actions/test_send_email.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+ActionFailureTest	test/client/client_test_lib.py	/^class ActionFailureTest(unittest.TestCase):$/;"	c
+ActionFailureTest	test/client/test_bootstrap.py	/^class ActionFailureTest(unittest.TestCase):$/;"	c
+ActionsController	ztpserver/controller.py	/^class ActionsController(BaseController):$/;"	c
+ActionsControllerIntegrationTests	test/server/test_controller.py	/^class ActionsControllerIntegrationTests(unittest.TestCase):$/;"	c
+Attr	test/server/test_config.py	/^    Attr = collections.namedtuple('Attr', ['name', 'type', 'group', 'default'])$/;"	v	class:TestConfig
+Attr	ztpserver/config.py	/^class Attr(object):$/;"	c
+Attributes	test/server/server_test_lib.py	/^class Attributes(SerializerMixin):$/;"	c
+BACKUP_CONFIG_FOLDER	utils/refresh_ztps	/^BACKUP_CONFIG_FOLDER = '\/tmp\/ztps_backup\/home'$/;"	v
+BACKUP_FOLDER	utils/refresh_ztps	/^BACKUP_FOLDER = '\/tmp\/ztps_backup'$/;"	v
+BODY	ztpserver/controller.py	/^    BODY = {'size': None,$/;"	v	class:MetaController
+BOOTSTRAP_CONF	ztpserver/controller.py	/^BOOTSTRAP_CONF = 'bootstrap.conf'$/;"	v
+BOOTSTRAP_FILE	test/client/client_test_lib.py	/^BOOTSTRAP_FILE = 'client\/bootstrap'$/;"	v
+BOOT_EXTENSIONS	test/client/client_test_lib.py	/^BOOT_EXTENSIONS = 'boot-extensions'$/;"	v
+BOOT_EXTENSIONS_FOLDER	test/client/client_test_lib.py	/^BOOT_EXTENSIONS_FOLDER = '.extensions'$/;"	v
+BUILDDIR	docs/Makefile	/^BUILDDIR      = _build$/;"	m
+BaseController	ztpserver/controller.py	/^class BaseController(WSGIController):$/;"	c
+BaseHTTPServer	test/client/client_test_lib.py	/^import BaseHTTPServer$/;"	i
+BaseSerializer	ztpserver/serializers.py	/^class BaseSerializer(object):$/;"	c
+BoolAttr	ztpserver/config.py	/^class BoolAttr(Attr):$/;"	c
+Boolean	ztpserver/types.py	/^class Boolean(object):$/;"	c
+Bootstrap	test/actions/test_add_config.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_copy_file.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_install_cli_plugin.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_install_extension.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_install_image.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_replace_config.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_run_bash_script.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_run_cli_commands.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/actions/test_send_email.py	/^from client_test_lib import Bootstrap, ActionFailureTest$/;"	i
+Bootstrap	test/client/client_test_lib.py	/^class Bootstrap(object):$/;"	c
+Bootstrap	test/client/test_bootstrap.py	/^from client_test_lib import Bootstrap$/;"	i
+Bootstrap	test/client/test_bootstrap_cleanup.py	/^from client_test_lib import Bootstrap$/;"	i
+Bootstrap	test/client/test_xmpp_bootstrap.py	/^from client_test_lib import Bootstrap$/;"	i
+BootstrapCleanupTest	test/client/test_bootstrap_cleanup.py	/^class BootstrapCleanupTest(unittest.TestCase):$/;"	c
+BootstrapConf	test/server/server_test_lib.py	/^class BootstrapConf(SerializerMixin):$/;"	c
+BootstrapConfigUnitTests	test/server/test_controller.py	/^class BootstrapConfigUnitTests(unittest.TestCase):$/;"	c
+BootstrapController	ztpserver/controller.py	/^class BootstrapController(BaseController):$/;"	c
+BootstrapSuccessTest	test/client/test_bootstrap.py	/^class BootstrapSuccessTest(unittest.TestCase):$/;"	c
+BootstrapUnitTests	test/server/test_controller.py	/^class BootstrapUnitTests(unittest.TestCase):$/;"	c
+CLIENT	docs/Makefile	/^CLIENT := $(shell ls ..\/client | grep -v "\\.py")$/;"	m
+CLIENTLINKS	docs/Makefile	/^CLIENTLINKS := $(shell ls ..\/client | grep "\\.py")$/;"	m
+CLI_LOG	test/client/FastCli	/^from client_test_lib import CLI_LOG$/;"	i
+CLI_LOG	test/client/client_test_lib.py	/^CLI_LOG = '\/tmp\/FastCli-log'$/;"	v
+CONFIG_HANDLER_FN	ztpserver/controller.py	/^CONFIG_HANDLER_FN = 'config-handler'$/;"	v
+CONF_PATH	ztpserver/config.py	/^CONF_PATH = '\/etc\/ztpserver'$/;"	v
+CONTENT_TYPE_HTML	ztpserver/constants.py	/^CONTENT_TYPE_HTML = 'text\/html'$/;"	v
+CONTENT_TYPE_HTML	ztpserver/wsgiapp.py	/^from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK$/;"	i
+CONTENT_TYPE_JSON	test/server/test_serializers.py	/^from ztpserver.constants import CONTENT_TYPE_JSON$/;"	i
+CONTENT_TYPE_JSON	ztpserver/constants.py	/^CONTENT_TYPE_JSON = 'application\/json'$/;"	v
+CONTENT_TYPE_JSON	ztpserver/controller.py	/^from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON$/;"	i
+CONTENT_TYPE_JSON	ztpserver/serializers.py	/^from ztpserver.constants import CONTENT_TYPE_JSON$/;"	i
+CONTENT_TYPE_OTHER	ztpserver/constants.py	/^CONTENT_TYPE_OTHER = 'text\/plain'$/;"	v
+CONTENT_TYPE_OTHER	ztpserver/controller.py	/^from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER$/;"	i
+CONTENT_TYPE_OTHER	ztpserver/serializers.py	/^from ztpserver.constants import CONTENT_TYPE_OTHER$/;"	i
+CONTENT_TYPE_PYTHON	ztpserver/constants.py	/^CONTENT_TYPE_PYTHON = 'text\/x-python'$/;"	v
+CONTENT_TYPE_PYTHON	ztpserver/controller.py	/^from ztpserver.constants import CONTENT_TYPE_JSON, CONTENT_TYPE_PYTHON$/;"	i
+CONTENT_TYPE_YAML	test/server/test_ndb.py	/^from ztpserver.constants import CONTENT_TYPE_YAML$/;"	i
+CONTENT_TYPE_YAML	ztpserver/app.py	/^from ztpserver.constants import CONTENT_TYPE_YAML$/;"	i
+CONTENT_TYPE_YAML	ztpserver/constants.py	/^CONTENT_TYPE_YAML = 'application\/yaml'$/;"	v
+CONTENT_TYPE_YAML	ztpserver/controller.py	/^from ztpserver.constants import CONTENT_TYPE_YAML, CONTENT_TYPE_OTHER$/;"	i
+CONTENT_TYPE_YAML	ztpserver/serializers.py	/^from ztpserver.constants import CONTENT_TYPE_YAML$/;"	i
+CONTENT_TYPE_YAML	ztpserver/topology.py	/^from ztpserver.constants import CONTENT_TYPE_YAML$/;"	i
+CheckNodeErrorTest	test/client/test_bootstrap.py	/^class CheckNodeErrorTest(unittest.TestCase):$/;"	c
+Config	test/server/test_config.py	/^    class Config(object):$/;"	c	class:TestGroup
+Config	ztpserver/config.py	/^class Config(collections.Mapping):$/;"	c
+ConfigParser	ztpserver/config.py	/^import ConfigParser$/;"	i
+ConfigRequestErrorTest	test/client/test_bootstrap.py	/^class ConfigRequestErrorTest(unittest.TestCase):$/;"	c
+DEFAULT_CONFIG	ztpserver/controller.py	/^    DEFAULT_CONFIG = {$/;"	v	class:BootstrapController
+DEFINITION_FN	test/server/test_controller.py	/^from ztpserver.controller import DEFINITION_FN, PATTERN_FN$/;"	i
+DEFINITION_FN	ztpserver/controller.py	/^DEFINITION_FN = 'definition'$/;"	v
+Definition	test/server/server_test_lib.py	/^class Definition(SerializerMixin):$/;"	c
+DefinitionErrorTest	test/client/test_bootstrap.py	/^class DefinitionErrorTest(unittest.TestCase):$/;"	c
+DefinitionStartupConfigTests	test/server/test_controller.py	/^class DefinitionStartupConfigTests(unittest.TestCase):$/;"	c
+EAPIErrorTest	test/client/test_bootstrap.py	/^class EAPIErrorTest(unittest.TestCase):$/;"	c
+EAPIHandler	test/client/client_test_lib.py	/^        class EAPIHandler(BaseHTTPServer.BaseHTTPRequestHandler):$/;"	c	function:EAPIServer._run
+EAPIServer	test/client/client_test_lib.py	/^class EAPIServer(object):$/;"	c
+EAPI_LOG	test/client/client_test_lib.py	/^EAPI_LOG = '\/tmp\/eapi-log-%s' % os.getpid()$/;"	v
+EAPI_PORT	test/client/client_test_lib.py	/^EAPI_PORT = 1080$/;"	v
+EAPI_SERVER	test/client/client_test_lib.py	/^EAPI_SERVER = '127.0.0.1'$/;"	v
+ETHERNET_RE	ztpserver/utils.py	/^ETHERNET_RE = re.compile(r'^(e(t(h(ernet)?)?)?)(\\d+)(\\\/(\\d+)){0,2}$')$/;"	v
+ExactFunction	test/server/test_topology_classes.py	/^from ztpserver.topology import ExactFunction, RegexFunction$/;"	i
+ExactFunction	ztpserver/topology.py	/^class ExactFunction(Function):$/;"	c
+ExcludesFunction	test/server/test_topology_classes.py	/^from ztpserver.topology import ExcludesFunction, IncludesFunction$/;"	i
+ExcludesFunction	ztpserver/topology.py	/^class ExcludesFunction(Function):$/;"	c
+FALSEVALUES	ztpserver/types.py	/^    FALSEVALUES = ['no', 'false', '0', 'off']$/;"	v	class:Boolean
+FOLDER	ztpserver/controller.py	/^    FOLDER = 'actions'$/;"	v	class:ActionsController
+FOLDER	ztpserver/controller.py	/^    FOLDER = 'bootstrap'$/;"	v	class:BootstrapController
+FOLDER	ztpserver/controller.py	/^    FOLDER = 'files'$/;"	v	class:FilesController
+FOLDER	ztpserver/controller.py	/^    FOLDER = 'meta'$/;"	v	class:MetaController
+FOLDER	ztpserver/controller.py	/^    FOLDER = 'nodes'$/;"	v	class:NodesController
+FOLDER	ztpserver/controller.py	/^    FOLDER = None$/;"	v	class:BaseController
+FUNCTIONS	ztpserver/topology.py	/^    FUNCTIONS = {$/;"	v	class:InterfacePattern
+FUNC_RE	ztpserver/app.py	/^from ztpserver.topology import FUNC_RE, neighbordb_path$/;"	i
+FUNC_RE	ztpserver/topology.py	/^FUNC_RE = re.compile(r'(?P<function>\\w+)(?=\\(\\S+\\))\\([\\'|\\"]'$/;"	v
+FactoryDefaultTest	test/client/test_bootstrap.py	/^class FactoryDefaultTest(unittest.TestCase):$/;"	c
+FailureTest	test/actions/test_add_config.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_copy_file.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_install_cli_plugin.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_install_extension.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_install_image.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_replace_config.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_run_bash_script.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_run_cli_commands.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FailureTest	test/actions/test_send_email.py	/^class FailureTest(ActionFailureTest):$/;"	c
+FileApp	ztpserver/controller.py	/^from webob.static import FileApp$/;"	i
+FileLogConfigTest	test/client/test_bootstrap.py	/^class FileLogConfigTest(unittest.TestCase):$/;"	c
+FileObject	test/server/test_repository.py	/^from ztpserver.repository import FileObject, FileObjectError$/;"	i
+FileObject	ztpserver/repository.py	/^class FileObject(object):$/;"	c
+FileObjectError	test/server/test_controller.py	/^from ztpserver.repository import FileObjectNotFound, FileObjectError$/;"	i
+FileObjectError	test/server/test_repository.py	/^from ztpserver.repository import FileObject, FileObjectError$/;"	i
+FileObjectError	ztpserver/controller.py	/^from ztpserver.repository import FileObjectNotFound, FileObjectError$/;"	i
+FileObjectError	ztpserver/repository.py	/^class FileObjectError(Exception):$/;"	c
+FileObjectNotFound	test/server/test_controller.py	/^from ztpserver.repository import FileObjectNotFound, FileObjectError$/;"	i
+FileObjectNotFound	test/server/test_repository.py	/^from ztpserver.repository import FileObjectNotFound$/;"	i
+FileObjectNotFound	ztpserver/controller.py	/^from ztpserver.repository import FileObjectNotFound, FileObjectError$/;"	i
+FileObjectNotFound	ztpserver/repository.py	/^class FileObjectNotFound(RepositoryError):$/;"	c
+FileObjectUnitTests	test/server/test_repository.py	/^class FileObjectUnitTests(unittest.TestCase):$/;"	c
+FilesController	ztpserver/controller.py	/^class FilesController(BaseController):$/;"	c
+FilesControllerIntegrationTests	test/server/test_controller.py	/^class FilesControllerIntegrationTests(unittest.TestCase):$/;"	c
+Function	ztpserver/topology.py	/^class Function(object):$/;"	c
+FunctionsUnitTests	test/server/test_topology_classes.py	/^class FunctionsUnitTests(unittest.TestCase):$/;"	c
+GIT_REPO_FOLDER	utils/refresh_ztps	/^GIT_REPO_FOLDER = '\/tmp\/ztps'$/;"	v
+GLOBAL_CONFIG_FILE	utils/refresh_ztps	/^GLOBAL_CONFIG_FILE = '\/etc\/ztpserver\/ztpserver.conf'$/;"	v
+GLOBAL_CONF_FILE	ztpserver/config.py	/^GLOBAL_CONF_FILE = 'ztpserver.conf'$/;"	v
+GLOBAL_CONF_FILE_PATH	ztpserver/config.py	/^GLOBAL_CONF_FILE_PATH = '%s\/%s' % (CONF_PATH, GLOBAL_CONF_FILE)$/;"	v
+Group	ztpserver/config.py	/^class Group(collections.Mapping):$/;"	c
+HTTPDCONF	rpm/Makefile	/^HTTPDCONF = $(RPMSPECDIR)\/$(PACKAGE)-wsgi.conf$/;"	m
+HTTP_STATUS_BAD_REQUEST	ztpserver/constants.py	/^HTTP_STATUS_BAD_REQUEST = 400$/;"	v
+HTTP_STATUS_BAD_REQUEST	ztpserver/controller.py	/^from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT$/;"	i
+HTTP_STATUS_CONFLICT	ztpserver/constants.py	/^HTTP_STATUS_CONFLICT = 409$/;"	v
+HTTP_STATUS_CONFLICT	ztpserver/controller.py	/^from ztpserver.constants import HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT$/;"	i
+HTTP_STATUS_CREATED	ztpserver/constants.py	/^HTTP_STATUS_CREATED = 201$/;"	v
+HTTP_STATUS_CREATED	ztpserver/controller.py	/^from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED$/;"	i
+HTTP_STATUS_INTERNAL_SERVER_ERROR	ztpserver/constants.py	/^HTTP_STATUS_INTERNAL_SERVER_ERROR = 500$/;"	v
+HTTP_STATUS_INTERNAL_SERVER_ERROR	ztpserver/controller.py	/^from ztpserver.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR$/;"	i
+HTTP_STATUS_NOT_FOUND	ztpserver/constants.py	/^HTTP_STATUS_NOT_FOUND = 404$/;"	v
+HTTP_STATUS_NOT_FOUND	ztpserver/controller.py	/^from ztpserver.constants import HTTP_STATUS_NOT_FOUND, HTTP_STATUS_CREATED$/;"	i
+HTTP_STATUS_NO_CONTENT	ztpserver/constants.py	/^HTTP_STATUS_NO_CONTENT = 204$/;"	v
+HTTP_STATUS_OK	ztpserver/constants.py	/^HTTP_STATUS_OK = 200$/;"	v
+HTTP_STATUS_OK	ztpserver/wsgiapp.py	/^from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK$/;"	i
+I18NSPHINXOPTS	docs/Makefile	/^I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .$/;"	m
+ID	test/server/test_ndb.py	/^ID = random_string()$/;"	v
+INSTALL_PATH	ztpserver/config.py	/^INSTALL_PATH = '\/usr\/share\/ztpserver'$/;"	v
+INTERFACE_NO_RE	ztpserver/utils.py	/^INTERFACE_NO_RE = re.compile(r'^(\\d+)(\\\/(\\d+)){0,2}$')$/;"	v
+INTERFACE_PATTERN_KEYWORDS	ztpserver/validators.py	/^INTERFACE_PATTERN_KEYWORDS = ['any', 'none']$/;"	v
+INVALID_INTERFACE_PATTERNS	ztpserver/validators.py	/^INVALID_INTERFACE_PATTERNS = [(KW_ANY_RE, KW_ANY_RE, KW_NONE_RE),$/;"	v
+IncludesFunction	test/server/test_topology_classes.py	/^from ztpserver.topology import ExcludesFunction, IncludesFunction$/;"	i
+IncludesFunction	ztpserver/topology.py	/^class IncludesFunction(Function):$/;"	c
+IntAttr	ztpserver/config.py	/^class IntAttr(Attr):$/;"	c
+Integer	ztpserver/types.py	/^class Integer(object):$/;"	c
+InterfacePattern	test/server/test_topology_classes.py	/^from ztpserver.topology import InterfacePattern, InterfacePatternError$/;"	i
+InterfacePattern	ztpserver/topology.py	/^class InterfacePattern(object):$/;"	c
+InterfacePatternError	test/server/test_topology_classes.py	/^from ztpserver.topology import InterfacePattern, InterfacePatternError$/;"	i
+InterfacePatternError	ztpserver/topology.py	/^class InterfacePatternError(Exception):$/;"	c
+InterfacePatternValidator	ztpserver/validators.py	/^class InterfacePatternValidator(Validator):$/;"	c
+JSONSerializer	ztpserver/serializers.py	/^class JSONSerializer(BaseSerializer):$/;"	c
+KEYWORDS	ztpserver/topology.py	/^    KEYWORDS = {$/;"	v	class:InterfacePattern
+KW_ANY_RE	ztpserver/validators.py	/^KW_ANY_RE = re.compile(r' *any *')$/;"	v
+KW_NONE_RE	ztpserver/validators.py	/^KW_NONE_RE = re.compile(r' *none *')$/;"	v
+List	ztpserver/types.py	/^class List(object):$/;"	c
+ListAttr	ztpserver/config.py	/^class ListAttr(Attr):$/;"	c
+MANAGEMENT_RE	ztpserver/utils.py	/^MANAGEMENT_RE = re.compile(r'^(m(a(nagement)?)?)(\\d+)(\\\/(\\d+)){0,2}$')$/;"	v
+MagicMock	test/server/test_controller.py	/^from mock import MagicMock, Mock, patch$/;"	i
+MetaController	ztpserver/controller.py	/^class MetaController(BaseController):$/;"	c
+MetaControllerUnitTests	test/server/test_controller.py	/^class MetaControllerUnitTests(unittest.TestCase):$/;"	c
+MissingStartupConfigTest	test/client/test_bootstrap.py	/^class MissingStartupConfigTest(unittest.TestCase):$/;"	c
+Mock	test/server/server_test_lib.py	/^from mock import Mock$/;"	i
+Mock	test/server/test_controller.py	/^from mock import MagicMock, Mock, patch$/;"	i
+Mock	test/server/test_topology.py	/^from mock import patch, Mock$/;"	i
+Mock	test/server/test_topology_classes.py	/^from mock import Mock$/;"	i
+NAME	Makefile	/^NAME = "ztpserver"$/;"	m
+NODE_FN	ztpserver/controller.py	/^NODE_FN = '.node'$/;"	v
+NONE_DEVICE_PARSER_RE	ztpserver/topology.py	/^NONE_DEVICE_PARSER_RE = re.compile(r':(?=[none])')$/;"	v
+NON_HEX_CHARS	ztpserver/topology.py	/^NON_HEX_CHARS = ALL_CHARS - set(string.hexdigits)$/;"	v
+Neighbor	test/server/test_topology_classes.py	/^from ztpserver.topology import Node, NodeError, Neighbor$/;"	i
+Neighbor	ztpserver/topology.py	/^Neighbor = collections.namedtuple('Neighbor', ['device', 'interface'])$/;"	v
+NeighborDb	test/server/server_test_lib.py	/^class NeighborDb(SerializerMixin):$/;"	c
+Neighbordb	test/server/test_topology.py	/^from ztpserver.topology import Neighbordb, Pattern$/;"	i
+Neighbordb	ztpserver/topology.py	/^class Neighbordb(object):$/;"	c
+NeighbordbError	ztpserver/topology.py	/^class NeighbordbError(Exception):$/;"	c
+NeighbordbTest	test/server/test_ndb.py	/^class NeighbordbTest(unittest.TestCase):$/;"	c
+NeighbordbUnitTests	test/server/test_topology.py	/^class NeighbordbUnitTests(unittest.TestCase):$/;"	c
+NeighbordbValidator	test/server/test_ndb.py	/^from ztpserver.validators import NeighbordbValidator$/;"	i
+NeighbordbValidator	ztpserver/app.py	/^from ztpserver.validators import NeighbordbValidator$/;"	i
+NeighbordbValidator	ztpserver/validators.py	/^class NeighbordbValidator(Validator):$/;"	c
+Node	test/server/test_ndb.py	/^from ztpserver.topology import Node$/;"	i
+Node	test/server/test_topology_classes.py	/^from ztpserver.topology import Node, NodeError, Neighbor$/;"	i
+Node	ztpserver/topology.py	/^class Node(object):$/;"	c
+NodeDict	test/server/server_test_lib.py	/^class NodeDict(SerializerMixin):$/;"	c
+NodeError	test/server/test_topology_classes.py	/^from ztpserver.topology import Node, NodeError, Neighbor$/;"	i
+NodeError	ztpserver/topology.py	/^class NodeError(Exception):$/;"	c
+NodeUnitTests	test/server/test_topology_classes.py	/^class NodeUnitTests(unittest.TestCase):$/;"	c
+NodesController	ztpserver/controller.py	/^class NodesController(BaseController):$/;"	c
+NodesControllerGetFsmIntegrationTests	test/server/test_controller.py	/^class NodesControllerGetFsmIntegrationTests(unittest.TestCase):$/;"	c
+NodesControllerPostFsmIntegrationTests	test/server/test_controller.py	/^class NodesControllerPostFsmIntegrationTests(unittest.TestCase):$/;"	c
+NodesControllerUnitTests	test/server/test_controller.py	/^class NodesControllerUnitTests(unittest.TestCase):$/;"	c
+OPTIONAL_PATTERN_ATTRIBUTES	ztpserver/validators.py	/^OPTIONAL_PATTERN_ATTRIBUTES = ['node', 'variables', 'interfaces']$/;"	v
+OrderedCollection	ztpserver/topology.py	/^class OrderedCollection(collections.OrderedDict):$/;"	c
+OrderedDict	ztpserver/serializers.py	/^from collections import OrderedDict$/;"	i
+PACKAGE	rpm/Makefile	/^PACKAGE = ztpserver$/;"	m
+PAPER	docs/Makefile	/^PAPER         =$/;"	m
+PAPEROPT_a4	docs/Makefile	/^PAPEROPT_a4     = -D latex_paper_size=a4$/;"	m
+PAPEROPT_letter	docs/Makefile	/^PAPEROPT_letter = -D latex_paper_size=letter$/;"	m
+PATTERN_FN	test/server/test_controller.py	/^from ztpserver.controller import DEFINITION_FN, PATTERN_FN$/;"	i
+PATTERN_FN	ztpserver/controller.py	/^PATTERN_FN = 'pattern'$/;"	v
+PIPE	ztpserver/controller.py	/^from subprocess import PIPE$/;"	i
+PYTHON	Makefile	/^PYTHON = python$/;"	m
+PYTHONPATH	Makefile	/^	PYTHONPATH=.\/ $(PYTHON)  .\/test\/server\/test_ndb.py -v$/;"	m
+Pattern	test/server/server_test_lib.py	/^class Pattern(SerializerMixin):$/;"	c
+Pattern	test/server/test_topology.py	/^from ztpserver.topology import Neighbordb, Pattern$/;"	i
+Pattern	test/server/test_topology_classes.py	/^from ztpserver.topology import Pattern, PatternError$/;"	i
+Pattern	ztpserver/topology.py	/^class Pattern(object):$/;"	c
+PatternError	test/server/test_topology_classes.py	/^from ztpserver.topology import Pattern, PatternError$/;"	i
+PatternError	ztpserver/topology.py	/^class PatternError(Exception):$/;"	c
+PatternUnitTests	test/server/test_topology_classes.py	/^class PatternUnitTests(unittest.TestCase):$/;"	c
+PatternValidator	ztpserver/validators.py	/^class PatternValidator(Validator):$/;"	c
+RC_EOS	test/client/client_test_lib.py	/^RC_EOS = 'rc.eos'$/;"	v
+READ_WRITE_LOCK	ztpserver/serializers.py	/^READ_WRITE_LOCK = {}$/;"	v
+REQUIRED_PATTERN_ATTRIBUTES	ztpserver/validators.py	/^REQUIRED_PATTERN_ATTRIBUTES = ['name', 'definition']$/;"	v
+RESERVED_VARIABLES	ztpserver/topology.py	/^    RESERVED_VARIABLES = ['any', 'none']$/;"	v	class:Neighbordb
+RPMBUILD	rpm/Makefile	/^RPMBUILD = rpmbuild --define "_topdir %(pwd)\/rpmbuild" \\$/;"	m
+RPMRELEASE	rpm/Makefile	/^RPMRELEASE = 1$/;"	m
+RPMSPEC	rpm/Makefile	/^RPMSPEC = $(RPMSPECDIR)\/$(PACKAGE).spec$/;"	m
+RPMSPECDIR	rpm/Makefile	/^RPMSPECDIR = .$/;"	m
+RegexFunction	test/server/test_topology_classes.py	/^from ztpserver.topology import ExactFunction, RegexFunction$/;"	i
+RegexFunction	ztpserver/topology.py	/^class RegexFunction(Function):$/;"	c
+Repository	test/server/test_repository.py	/^from ztpserver.repository import Repository, RepositoryError$/;"	i
+Repository	ztpserver/repository.py	/^class Repository(object):$/;"	c
+RepositoryError	test/server/test_repository.py	/^from ztpserver.repository import Repository, RepositoryError$/;"	i
+RepositoryError	ztpserver/repository.py	/^class RepositoryError(Exception):$/;"	c
+RepositoryUnitTests	test/server/test_repository.py	/^class RepositoryUnitTests(unittest.TestCase):$/;"	c
+Request	test/server/test_controller.py	/^from webob import Request$/;"	i
+Response	test/client/client_test_lib.py	/^Response = namedtuple('Response', 'content_type status contents headers')$/;"	v
+Router	ztpserver/controller.py	/^class Router(WSGIRouter):$/;"	c
+RouterUnitTests	test/server/test_controller.py	/^class RouterUnitTests(unittest.TestCase):$/;"	c
+RoutesMiddleware	ztpserver/wsgiapp.py	/^from routes.middleware import RoutesMiddleware$/;"	i
+SHELL	rpm/Makefile	/^SHELL = \/bin\/sh$/;"	m
+SMTPServer	test/client/client_test_lib.py	/^        class SMTPServer(smtpd.SMTPServer):$/;"	c	function:SmtpServer._run
+SMTP_PORT	test/client/client_test_lib.py	/^SMTP_PORT = 2525$/;"	v
+SMTP_SERVER	test/client/client_test_lib.py	/^SMTP_SERVER = '127.0.0.1'$/;"	v
+SPECVERSION	rpm/Makefile	/^SPECVERSION := $(shell sed -n 's\/[^0-9\\.]*\\([0-9\\.]*\\)[^0-9\\.]*\/\\1\/p' ..\/VERSION)$/;"	m
+SPHINXBUILD	docs/Makefile	/^SPHINXBUILD   = sphinx-build$/;"	m
+SPHINXOPTS	docs/Makefile	/^SPHINXOPTS    =$/;"	m
+STARTUP_CONFIG	test/client/client_test_lib.py	/^STARTUP_CONFIG = 'startup-config'$/;"	v
+STARTUP_CONFIG_FN	ztpserver/controller.py	/^STARTUP_CONFIG_FN = 'startup-config'$/;"	v
+STATUS_BAD_REQUEST	test/client/client_test_lib.py	/^STATUS_BAD_REQUEST = 400$/;"	v
+STATUS_CONFLICT	test/client/client_test_lib.py	/^STATUS_CONFLICT = 409$/;"	v
+STATUS_CREATED	test/client/client_test_lib.py	/^STATUS_CREATED = 201$/;"	v
+STATUS_NOT_FOUND	test/actions/test_replace_config.py	/^from client_test_lib import STATUS_NOT_FOUND$/;"	i
+STATUS_NOT_FOUND	test/client/client_test_lib.py	/^STATUS_NOT_FOUND = 404$/;"	v
+STATUS_OK	test/client/client_test_lib.py	/^STATUS_OK = 200$/;"	v
+ST_MODE	test/actions/test_copy_file.py	/^from stat import ST_MODE$/;"	i
+SYSTEM_MAC	test/client/client_test_lib.py	/^SYSTEM_MAC = '1234567890'$/;"	v
+Serializer	ztpserver/serializers.py	/^class Serializer(object):$/;"	c
+SerializerError	test/server/test_repository.py	/^from ztpserver.serializers import SerializerError$/;"	i
+SerializerError	ztpserver/controller.py	/^from ztpserver.serializers import SerializerError$/;"	i
+SerializerError	ztpserver/repository.py	/^from ztpserver.serializers import SerializerError$/;"	i
+SerializerError	ztpserver/serializers.py	/^class SerializerError(Exception):$/;"	c
+SerializerError	ztpserver/topology.py	/^from ztpserver.serializers import load, SerializerError$/;"	i
+SerializerMixin	test/server/server_test_lib.py	/^class SerializerMixin(object):$/;"	c
+SerializersUnitTest	test/server/test_serializers.py	/^class SerializersUnitTest(unittest.TestCase):$/;"	c
+ServerNotRunningTest	test/client/test_bootstrap.py	/^class ServerNotRunningTest(unittest.TestCase):$/;"	c
+SmtpServer	test/client/client_test_lib.py	/^class SmtpServer(object):$/;"	c
+StrAttr	ztpserver/config.py	/^class StrAttr(Attr):$/;"	c
+String	ztpserver/types.py	/^class String(object):$/;"	c
+SuccessNonPersistentTest	test/actions/test_copy_file.py	/^class SuccessNonPersistentTest(unittest.TestCase):$/;"	c
+SuccessPersistentTest	test/actions/test_copy_file.py	/^class SuccessPersistentTest(unittest.TestCase):$/;"	c
+SuccessSrcUrlReplacementTests	test/actions/test_copy_file.py	/^class SuccessSrcUrlReplacementTests(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_add_config.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_install_cli_plugin.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_install_extension.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_install_image.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_replace_config.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_run_bash_script.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_run_cli_commands.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+SuccessTest	test/actions/test_send_email.py	/^class SuccessTest(unittest.TestCase):$/;"	c
+TESTNAME	Makefile	/^TESTNAME = discover$/;"	m
+TEST_DIR	test/server/test_ndb.py	/^TEST_DIR = 'test\/neighbordb'$/;"	v
+TMP_FILE	test/server/test_serializers.py	/^TMP_FILE = '\/tmp\/test_serializers-%s' % os.getpid()$/;"	v
+TRUEVALUES	ztpserver/types.py	/^    TRUEVALUES = ['yes', 'true', '1', 'on']$/;"	v	class:Boolean
+Template	test/actions/test_add_config.py	/^from string import Template$/;"	i
+Template	test/actions/test_run_bash_script.py	/^from string import Template$/;"	i
+Template	test/actions/test_run_cli_commands.py	/^from string import Template$/;"	i
+Template	ztpserver/controller.py	/^from string import Template$/;"	i
+TestApp	test/server/test_app.py	/^class TestApp(unittest.TestCase):$/;"	c
+TestAttributes	test/server/test_config.py	/^class TestAttributes(unittest.TestCase):$/;"	c
+TestConfig	test/server/test_config.py	/^class TestConfig(unittest.TestCase):$/;"	c
+TestGroup	test/server/test_config.py	/^class TestGroup(unittest.TestCase):$/;"	c
+TestInterfacePattern	test/server/test_topology_classes.py	/^class TestInterfacePattern(unittest.TestCase):$/;"	c
+TestPattern	test/server/test_topology_classes.py	/^class TestPattern(unittest.TestCase):$/;"	c
+TestTypes	test/server/test_types.py	/^class TestTypes(unittest.TestCase):$/;"	c
+TestWsgiApp	test/server/test_wsgiapp.py	/^class TestWsgiApp(unittest.TestCase):$/;"	c
+TextSerializer	ztpserver/serializers.py	/^class TextSerializer(BaseSerializer):$/;"	c
+VERSION	rpm/Makefile	/^VERSION := $(shell cat ..\/VERSION)$/;"	m
+VERSION_FILE	ztpserver/config.py	/^VERSION_FILE = '.VERSION'$/;"	v
+VERSION_FILE_PATH	ztpserver/config.py	/^VERSION_FILE_PATH = '%s\/%s' % (CONF_PATH, VERSION_FILE)$/;"	v
+ValidationError	ztpserver/controller.py	/^class ValidationError(Exception):$/;"	c
+ValidationError	ztpserver/validators.py	/^class ValidationError(Exception):$/;"	c
+Validator	ztpserver/validators.py	/^class Validator(object):$/;"	c
+W0402	test/client/client_test_lib.py	/^import string                        #pylint: disable=W0402$/;"	i
+W0402	test/server/server_test_lib.py	/^import string        #pylint: disable=W0402$/;"	i
+W0402	ztpserver/topology.py	/^import string # pylint: disable=W0402$/;"	i
+W0402	ztpserver/validators.py	/^import string    #pylint: disable=W0402$/;"	i
+W0611	test/server/test_topology_classes.py	/^from ztpserver.app import enable_handler_console    # pylint: disable=W0611$/;"	i
+WC_PORT_RE	ztpserver/validators.py	/^WC_PORT_RE = re.compile(r'.*')$/;"	v
+WORKINGDIR	test/server/server_test_lib.py	/^WORKINGDIR = '\/tmp\/ztpserver'$/;"	v
+WSGIController	test/server/test_wsgiapp.py	/^from ztpserver.wsgiapp import WSGIController, WSGIRouter$/;"	i
+WSGIController	ztpserver/controller.py	/^from ztpserver.wsgiapp import WSGIController, WSGIRouter$/;"	i
+WSGIController	ztpserver/wsgiapp.py	/^class WSGIController(object):$/;"	c
+WSGIRouter	test/server/test_wsgiapp.py	/^from ztpserver.wsgiapp import WSGIController, WSGIRouter$/;"	i
+WSGIRouter	ztpserver/controller.py	/^from ztpserver.wsgiapp import WSGIController, WSGIRouter$/;"	i
+WSGIRouter	ztpserver/wsgiapp.py	/^class WSGIRouter(object):$/;"	c
+XmppConfigTest	test/client/test_xmpp_bootstrap.py	/^class XmppConfigTest(unittest.TestCase):$/;"	c
+YAMLSerializer	ztpserver/serializers.py	/^class YAMLSerializer(BaseSerializer):$/;"	c
+ZTPSHandler	test/client/client_test_lib.py	/^        class ZTPSHandler(BaseHTTPServer.BaseHTTPRequestHandler):$/;"	c	function:ZTPServer._run
+ZTPS_PORT	test/client/client_test_lib.py	/^ZTPS_PORT = 12345$/;"	v
+ZTPS_SERVER	test/client/client_test_lib.py	/^ZTPS_SERVER = '127.0.0.1'$/;"	v
+ZTPServer	test/client/client_test_lib.py	/^class ZTPServer(object):$/;"	c
+__call__	ztpserver/topology.py	/^    def __call__(self, key=None):$/;"	m	class:OrderedCollection	file:
+__call__	ztpserver/types.py	/^    def __call__(self, value):$/;"	m	class:Boolean	file:
+__call__	ztpserver/types.py	/^    def __call__(self, value):$/;"	m	class:Integer	file:
+__call__	ztpserver/types.py	/^    def __call__(self, value):$/;"	m	class:List	file:
+__call__	ztpserver/types.py	/^    def __call__(self, value):$/;"	m	class:String	file:
+__call__	ztpserver/wsgiapp.py	/^    def __call__(self, request):$/;"	m	class:WSGIController	file:
+__call__	ztpserver/wsgiapp.py	/^    def __call__(self, request):$/;"	m	class:WSGIRouter	file:
+__delitem__	ztpserver/config.py	/^    def __delitem__(self):$/;"	m	class:Config	file:
+__delitem__	ztpserver/config.py	/^    def __delitem__(self):$/;"	m	class:Group	file:
+__get_attribute__	test/server/test_config.py	/^        def __get_attribute__(cls, name, group_name):$/;"	m	class:TestGroup.Config	file:
+__get_attribute__	ztpserver/config.py	/^    def __get_attribute__(self, name, group=None):$/;"	m	class:Config	file:
+__getattr__	ztpserver/config.py	/^    def __getattr__(self, name):$/;"	m	class:Config	file:
+__getattr__	ztpserver/config.py	/^    def __getattr__(self, name):$/;"	m	class:Group	file:
+__getitem__	ztpserver/config.py	/^    def __getitem__(self, name):$/;"	m	class:Config	file:
+__getitem__	ztpserver/config.py	/^    def __getitem__(self, name):$/;"	m	class:Group	file:
+__init__	test/client/client_test_lib.py	/^            def __init__(*args, **kwargs):$/;"	m	class:SmtpServer._run.SMTPServer
+__init__	test/client/client_test_lib.py	/^    def __init__(self, mac=SYSTEM_MAC, model='',$/;"	m	class:EAPIServer
+__init__	test/client/client_test_lib.py	/^    def __init__(self, server=None, eapi_port=None,$/;"	m	class:Bootstrap
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:Attributes
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:BootstrapConf
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:Definition
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:NeighborDb
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:NodeDict
+__init__	test/server/server_test_lib.py	/^    def __init__(self, **kwargs):$/;"	m	class:Pattern
+__init__	test/server/test_config.py	/^        def __init__(self):$/;"	m	class:TestGroup.Config
+__init__	test/server/test_ndb.py	/^    def __init__(self, test_name, ndb, **kwargs):$/;"	m	class:NeighbordbTest
+__init__	ztpserver/config.py	/^    def __init__(self):$/;"	m	class:Config
+__init__	ztpserver/config.py	/^    def __init__(self, name, **kwargs):$/;"	m	class:Attr
+__init__	ztpserver/config.py	/^    def __init__(self, name, **kwargs):$/;"	m	class:BoolAttr
+__init__	ztpserver/config.py	/^    def __init__(self, name, choices=None, **kwargs):$/;"	m	class:StrAttr
+__init__	ztpserver/config.py	/^    def __init__(self, name, config):$/;"	m	class:Group
+__init__	ztpserver/config.py	/^    def __init__(self, name, delimiter=',', **kwargs):$/;"	m	class:ListAttr
+__init__	ztpserver/config.py	/^    def __init__(self, name, min_value=None, max_value=None, **kwargs):$/;"	m	class:IntAttr
+__init__	ztpserver/controller.py	/^    def __init__(self):$/;"	m	class:Router
+__init__	ztpserver/controller.py	/^    def __init__(self, **kwargs):$/;"	m	class:BaseController
+__init__	ztpserver/repository.py	/^    def __init__(self, name, path=None, **kwargs):$/;"	m	class:FileObject
+__init__	ztpserver/repository.py	/^    def __init__(self, path):$/;"	m	class:Repository
+__init__	ztpserver/serializers.py	/^    def __init__(self, node_id):$/;"	m	class:BaseSerializer
+__init__	ztpserver/serializers.py	/^    def __init__(self, node_id):$/;"	m	class:Serializer
+__init__	ztpserver/topology.py	/^    def __init__(self, **kwargs):$/;"	m	class:Node
+__init__	ztpserver/topology.py	/^    def __init__(self, interface, remote_device, remote_interface, node_id):$/;"	m	class:InterfacePattern
+__init__	ztpserver/topology.py	/^    def __init__(self, name=None, definition=None, $/;"	m	class:Pattern
+__init__	ztpserver/topology.py	/^    def __init__(self, node_id):$/;"	m	class:Neighbordb
+__init__	ztpserver/topology.py	/^    def __init__(self, value):$/;"	m	class:Function
+__init__	ztpserver/types.py	/^    def __init__(self, choices=None):$/;"	m	class:String
+__init__	ztpserver/types.py	/^    def __init__(self, delimiter=','):$/;"	m	class:List
+__init__	ztpserver/types.py	/^    def __init__(self, min_value=None, max_value=None):$/;"	m	class:Integer
+__init__	ztpserver/validators.py	/^    def __init__(self, node_id):$/;"	m	class:InterfacePatternValidator
+__init__	ztpserver/validators.py	/^    def __init__(self, node_id):$/;"	m	class:NeighbordbValidator
+__init__	ztpserver/validators.py	/^    def __init__(self, node_id):$/;"	m	class:PatternValidator
+__init__	ztpserver/validators.py	/^    def __init__(self, node_id):$/;"	m	class:Validator
+__init__	ztpserver/wsgiapp.py	/^    def __init__(self, mapper):$/;"	m	class:WSGIRouter
+__iter__	ztpserver/config.py	/^    def __iter__(self):$/;"	m	class:Config	file:
+__iter__	ztpserver/config.py	/^    def __iter__(self):$/;"	m	class:Group	file:
+__len__	ztpserver/config.py	/^    def __len__(self):$/;"	m	class:Config	file:
+__len__	ztpserver/config.py	/^    def __len__(self):$/;"	m	class:Group	file:
+__repr__	test/server/test_config.py	/^        def __repr__(self):$/;"	m	class:TestGroup.Config	file:
+__repr__	ztpserver/config.py	/^    def __repr__(self):$/;"	m	class:Attr	file:
+__repr__	ztpserver/config.py	/^    def __repr__(self):$/;"	m	class:Config	file:
+__repr__	ztpserver/controller.py	/^    def __repr__(self):$/;"	m	class:ActionsController	file:
+__repr__	ztpserver/controller.py	/^    def __repr__(self):$/;"	m	class:BootstrapController	file:
+__repr__	ztpserver/controller.py	/^    def __repr__(self):$/;"	m	class:FilesController	file:
+__repr__	ztpserver/controller.py	/^    def __repr__(self):$/;"	m	class:MetaController	file:
+__repr__	ztpserver/controller.py	/^    def __repr__(self):$/;"	m	class:NodesController	file:
+__repr__	ztpserver/repository.py	/^    def __repr__(self):$/;"	m	class:FileObject	file:
+__repr__	ztpserver/repository.py	/^    def __repr__(self):$/;"	m	class:Repository	file:
+__repr__	ztpserver/topology.py	/^    def __repr__(self):$/;"	m	class:InterfacePattern	file:
+__repr__	ztpserver/topology.py	/^    def __repr__(self):$/;"	m	class:Neighbordb	file:
+__repr__	ztpserver/topology.py	/^    def __repr__(self):$/;"	m	class:Node	file:
+__repr__	ztpserver/topology.py	/^    def __repr__(self):$/;"	m	class:Pattern	file:
+__repr__	ztpserver/types.py	/^    def __repr__(self):$/;"	m	class:Boolean	file:
+__repr__	ztpserver/types.py	/^    def __repr__(self):$/;"	m	class:Integer	file:
+__repr__	ztpserver/types.py	/^    def __repr__(self):$/;"	m	class:List	file:
+__repr__	ztpserver/types.py	/^    def __repr__(self):$/;"	m	class:String	file:
+__setitem__	ztpserver/config.py	/^    def __setitem__(self):$/;"	m	class:Config	file:
+__setitem__	ztpserver/config.py	/^    def __setitem__(self):$/;"	m	class:Group	file:
+_convert_from_unicode	ztpserver/serializers.py	/^    def _convert_from_unicode(data):$/;"	m	class:Serializer
+_keys	ztpserver/config.py	/^    def _keys(self):$/;"	m	class:Group
+_load_neighbordb	test/server/test_ndb.py	/^    def _load_neighbordb(self):$/;"	m	class:NeighbordbTest
+_run	test/client/client_test_lib.py	/^    def _run(cls):$/;"	m	class:SmtpServer
+_run	test/client/client_test_lib.py	/^    def _run(self):$/;"	m	class:EAPIServer
+_run	test/client/client_test_lib.py	/^    def _run(self):$/;"	m	class:ZTPServer
+_transform	ztpserver/config.py	/^    def _transform(self, item, value):$/;"	m	class:Config
+_validate_neighbordb	test/server/test_ndb.py	/^    def _validate_neighbordb(self):$/;"	m	class:NeighbordbTest
+_validate_pattern	ztpserver/validators.py	/^    def _validate_pattern(self, interface, device, port):$/;"	m	class:InterfacePatternValidator
+_validator	ztpserver/validators.py	/^def _validator(contents, cls, node_id):$/;"	f
+action_fail_test	test/client/test_bootstrap.py	/^    def action_fail_test(self, action):$/;"	m	class:ActionFailureTest
+action_failure	test/client/client_test_lib.py	/^    def action_failure(self):$/;"	m	class:Bootstrap
+action_not_found_failure	test/client/client_test_lib.py	/^    def action_not_found_failure(self):$/;"	m	class:Bootstrap
+add_action	test/server/server_test_lib.py	/^    def add_action(self, **kwargs):$/;"	m	class:Definition
+add_attribute	test/server/server_test_lib.py	/^    def add_attribute(self, key, value):$/;"	m	class:Attributes
+add_attribute	test/server/server_test_lib.py	/^    def add_attribute(self, key, value):$/;"	m	class:Definition
+add_attribute	test/server/test_config.py	/^        def add_attribute(self, item, group_name):$/;"	m	class:TestGroup.Config
+add_attribute	ztpserver/config.py	/^    def add_attribute(self, item):$/;"	m	class:Group
+add_attribute	ztpserver/config.py	/^    def add_attribute(self, item, group=None):$/;"	m	class:Config
+add_attributes	test/server/server_test_lib.py	/^    def add_attributes(self, attributes):$/;"	m	class:Attributes
+add_failing_command	test/client/client_test_lib.py	/^    def add_failing_command(self, cmd):$/;"	m	class:EAPIServer
+add_file	ztpserver/repository.py	/^    def add_file(self, file_path, contents=None, content_type=None):$/;"	m	class:Repository
+add_folder	test/server/server_test_lib.py	/^def add_folder(name=None):$/;"	f
+add_folder	ztpserver/repository.py	/^    def add_folder(self, folder_path):$/;"	m	class:Repository
+add_group	ztpserver/config.py	/^    def add_group(self, group):$/;"	m	class:Config
+add_handler	ztpserver/serializers.py	/^    def add_handler(self, content_type, instance):$/;"	m	class:Serializer
+add_interface	test/server/server_test_lib.py	/^    def add_interface(self, local_intf, remote_device, remote_intf):$/;"	m	class:Pattern
+add_interface	ztpserver/topology.py	/^    def add_interface(self, interface):$/;"	m	class:Pattern
+add_interfaces	ztpserver/topology.py	/^    def add_interfaces(self, interfaces):$/;"	m	class:Pattern
+add_logging	test/server/server_test_lib.py	/^    def add_logging(self, entry):$/;"	m	class:BootstrapConf
+add_module_names	docs/conf.py	/^add_module_names = False$/;"	v
+add_neighbor	test/server/server_test_lib.py	/^    def add_neighbor(self, interface, peer):$/;"	m	class:NodeDict
+add_neighbor	ztpserver/topology.py	/^    def add_neighbor(self, interface, peers):$/;"	m	class:Node
+add_neighbors	test/server/server_test_lib.py	/^    def add_neighbors(self, neighbors):$/;"	m	class:NodeDict
+add_neighbors	ztpserver/topology.py	/^    def add_neighbors(self, neighbors):$/;"	m	class:Node
+add_pattern	test/server/server_test_lib.py	/^    def add_pattern(self, pattern=None):$/;"	m	class:NeighborDb
+add_pattern	ztpserver/topology.py	/^    def add_pattern(self, name, **kwargs):$/;"	m	class:Neighbordb
+add_patterns	ztpserver/topology.py	/^    def add_patterns(self, patterns):$/;"	m	class:Neighbordb
+add_random_interface	test/server/server_test_lib.py	/^    def add_random_interface(self, count=1):$/;"	m	class:Pattern
+add_random_neighbor	test/server/server_test_lib.py	/^    def add_random_neighbor(self, interface):$/;"	m	class:NodeDict
+add_variable	test/server/server_test_lib.py	/^    def add_variable(self, key, value):$/;"	m	class:NeighborDb
+add_variable	ztpserver/topology.py	/^    def add_variable(self, key, value, overwrite=False):$/;"	m	class:Neighbordb
+add_variables	ztpserver/topology.py	/^    def add_variables(self, variables):$/;"	m	class:Neighbordb
+all_files	utils/refresh_ztps	/^def all_files(path):$/;"	f
+all_files	ztpserver/app.py	/^from ztpserver.utils import all_files$/;"	i
+all_files	ztpserver/utils.py	/^def all_files(path):$/;"	f
+and	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+app	bin/ztps	/^import ztpserver.app$/;"	i
+app	test/server/test_app.py	/^import ztpserver.app$/;"	i
+argparse	utils/refresh_ztps	/^import argparse$/;"	i
+argparse	ztpserver/app.py	/^import argparse$/;"	i
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:Attributes
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:BootstrapConf
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:Definition
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:NeighborDb
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:NodeDict
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:Pattern
+as_dict	test/server/server_test_lib.py	/^    def as_dict(self):$/;"	m	class:SerializerMixin
+as_json	test/server/server_test_lib.py	/^    def as_json(self):$/;"	m	class:SerializerMixin
+as_yaml	test/server/server_test_lib.py	/^    def as_yaml(self):$/;"	m	class:SerializerMixin
+asyncore	test/client/client_test_lib.py	/^import asyncore$/;"	i
+atoi	ztpserver/utils.py	/^def atoi(text):$/;"	f
+author	setup.py	/^    author='Arista Networks',$/;"	v
+author_email	setup.py	/^    author_email='eosplus-dev@arista.com',$/;"	v
+base	utils/create_db.py	/^            base = "1.1.1."$/;"	v
+base	utils/create_db.py	/^            base = "10.100.1."$/;"	v
+base	utils/create_db.py	/^            base = "172.16.130."$/;"	v
+base	utils/create_db.py	/^            base = "veos-dc1-pod1-tor"$/;"	v
+basic_test	test/client/client_test_lib.py	/^    def basic_test(self, action, return_string, attributes=None,$/;"	m	class:ActionFailureTest
+bootstrap	test/client/test_xmpp_bootstrap.py	/^    def bootstrap(cls, xmpp):$/;"	m	class:XmppConfigTest
+call	setup.py	/^    from subprocess import call$/;"	i
+choices	ztpserver/config.py	/^    choices=['systemmac', 'serialnumber'],$/;"	v
+cleanup	test/client/client_test_lib.py	/^    def cleanup(self):$/;"	m	class:EAPIServer
+cleanup	test/client/client_test_lib.py	/^    def cleanup(self):$/;"	m	class:ZTPServer
+clear_cli_log	test/client/client_test_lib.py	/^def clear_cli_log():$/;"	f
+clear_eapi_log	test/client/client_test_lib.py	/^def clear_eapi_log():$/;"	f
+clear_logs	test/client/client_test_lib.py	/^def clear_logs():$/;"	f
+clear_resources	ztpserver/app.py	/^def clear_resources(debug):$/;"	f
+clear_value	ztpserver/config.py	/^    def clear_value(self, name, group=None):$/;"	m	class:Config
+cli_log	test/client/client_test_lib.py	/^def cli_log():$/;"	f
+collections	test/server/test_config.py	/^import collections$/;"	i
+collections	ztpserver/config.py	/^import collections$/;"	i
+collections	ztpserver/serializers.py	/^import collections$/;"	i
+collections	ztpserver/topology.py	/^import collections$/;"	i
+collections	ztpserver/validators.py	/^import collections$/;"	i
+compile	ztpserver/topology.py	/^    def compile(self, value):$/;"	m	class:InterfacePattern
+compile_known_function	test/server/test_topology_classes.py	/^    def compile_known_function(self, interface, cls):$/;"	m	class:TestInterfacePattern
+con	utils/create_db.py	/^con = lite.connect('\/usr\/share\/ztpserver\/db\/resources.db')$/;"	v
+conf_path	setup.py	/^    conf_path = '.' + conf_path$/;"	v
+conf_path	setup.py	/^conf_path = config.CONF_PATH$/;"	v
+config	setup.py	/^from ztpserver import config$/;"	i
+config	test/server/test_config.py	/^import ztpserver.config$/;"	i
+config	test/server/test_controller.py	/^import ztpserver.config$/;"	i
+config	ztpserver/app.py	/^from ztpserver import config, controller$/;"	i
+config	ztpserver/controller.py	/^    def config(self, request, **kwargs):$/;"	m	class:BootstrapController
+configure	test/client/client_test_lib.py	/^    def configure(self):$/;"	m	class:Bootstrap
+constants	test/server/test_controller.py	/^import ztpserver.constants as constants$/;"	i
+controller	test/server/test_controller.py	/^import ztpserver.controller$/;"	i
+controller	ztpserver/app.py	/^from ztpserver import config, controller$/;"	i
+copyright	docs/conf.py	/^copyright = u'2015, Arista Networks'       # pylint: disable=W0622$/;"	v
+create	ztpserver/controller.py	/^    def create(self, request, **kwargs):$/;"	m	class:NodesController
+create	ztpserver/wsgiapp.py	/^    def create(self, request, **kwargs):$/;"	m	class:WSGIController
+create_attributes	test/server/server_test_lib.py	/^def create_attributes():$/;"	f
+create_attributes	test/server/test_controller.py	/^from server_test_lib import create_definition, create_attributes, create_node$/;"	i
+create_bootstrap_conf	test/server/server_test_lib.py	/^def create_bootstrap_conf():$/;"	f
+create_bootstrap_conf	test/server/test_controller.py	/^from server_test_lib import create_bootstrap_conf$/;"	i
+create_definition	test/server/server_test_lib.py	/^def create_definition():$/;"	f
+create_definition	test/server/test_controller.py	/^from server_test_lib import create_definition, create_attributes, create_node$/;"	i
+create_folder	utils/refresh_ztps	/^def create_folder(path):$/;"	f
+create_neighbordb	test/server/server_test_lib.py	/^def create_neighbordb():$/;"	f
+create_node	test/server/server_test_lib.py	/^def create_node():$/;"	f
+create_node	test/server/test_controller.py	/^from server_test_lib import create_definition, create_attributes, create_node$/;"	i
+create_node	test/server/test_topology.py	/^from ztpserver.topology import create_node, load_file, load_neighbordb$/;"	i
+create_node	test/server/test_topology_classes.py	/^from server_test_lib import create_node$/;"	i
+create_node	ztpserver/controller.py	/^from ztpserver.topology import create_node, load_pattern$/;"	i
+create_node	ztpserver/topology.py	/^def create_node(nodeattrs):$/;"	f
+create_pattern	test/server/server_test_lib.py	/^def create_pattern():$/;"	f
+create_repository	ztpserver/controller.py	/^from ztpserver.repository import create_repository$/;"	i
+create_repository	ztpserver/repository.py	/^def create_repository(path):$/;"	f
+cur	utils/create_db.py	/^        cur = con.cursor()$/;"	v
+custom_path	setup.py	/^    custom_path = os.environ.get('ZTPS_INSTALL_ROOT')$/;"	v
+data_files	setup.py	/^    data_files=data_files$/;"	v
+data_files	setup.py	/^data_files = []$/;"	v
+debug	test/server/test_ndb.py	/^def debug(exc):$/;"	f
+dec	ztpserver/wsgiapp.py	/^import webob.dec$/;"	i
+default	ztpserver/config.py	/^    default='%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s',$/;"	v
+default	ztpserver/config.py	/^    default='0.0.0.0'$/;"	v
+default	ztpserver/config.py	/^    default='bootstrap',$/;"	v
+default	ztpserver/config.py	/^    default='http:\/\/ztpserver:8080',$/;"	v
+default	ztpserver/config.py	/^    default='neighbordb',$/;"	v
+default	ztpserver/config.py	/^    default='serialnumber'$/;"	v
+default	ztpserver/config.py	/^    default=8080$/;"	v
+default	ztpserver/config.py	/^    default=False$/;"	v
+default	ztpserver/config.py	/^    default=INSTALL_PATH,$/;"	v	class:Config
+default	ztpserver/config.py	/^    default=True$/;"	v
+default	ztpserver/config.py	/^    default=True,$/;"	v
+delete	ztpserver/wsgiapp.py	/^    def delete(self, request, resource, **kwargs):$/;"	m	class:WSGIController
+delete_file	ztpserver/repository.py	/^    def delete_file(self, file_path):$/;"	m	class:Repository
+delete_url	test/server/test_wsgiapp.py	/^    def delete_url(self, url, expected_status=httplib.OK, **kwargs):$/;"	m	class:TestWsgiApp
+description	setup.py	/^    description = 'ZTP Server for EOS',$/;"	v
+deserialize	ztpserver/serializers.py	/^    def deserialize(self, data):$/;"	m	class:BaseSerializer
+deserialize	ztpserver/serializers.py	/^    def deserialize(self, data):$/;"	m	class:JSONSerializer
+deserialize	ztpserver/serializers.py	/^    def deserialize(self, data):$/;"	m	class:TextSerializer
+deserialize	ztpserver/serializers.py	/^    def deserialize(self, data):$/;"	m	class:YAMLSerializer
+deserialize	ztpserver/serializers.py	/^    def deserialize(self, data, content_type=None):$/;"	m	class:Serializer
+disable	test/client/client_test_lib.py	/^import string                        #pylint: disable=W0402$/;"	i
+disable	test/server/server_test_lib.py	/^import string        #pylint: disable=W0402$/;"	i
+disable	test/server/test_topology_classes.py	/^from ztpserver.app import enable_handler_console    # pylint: disable=W0611$/;"	i
+disable	ztpserver/topology.py	/^import string # pylint: disable=W0402$/;"	i
+disable	ztpserver/validators.py	/^import string    #pylint: disable=W0402$/;"	i
+do_GET	test/client/client_test_lib.py	/^            def do_GET(req):$/;"	m	class:ZTPServer._run.ZTPSHandler
+do_POST	test/client/client_test_lib.py	/^            def do_POST(req):$/;"	m	class:EAPIServer._run.EAPIHandler
+do_POST	test/client/client_test_lib.py	/^            def do_POST(req):$/;"	m	class:ZTPServer._run.ZTPSHandler
+do_request	test/client/client_test_lib.py	/^            def do_request(cls, req):$/;"	m	class:ZTPServer._run.ZTPSHandler
+do_resources	ztpserver/controller.py	/^    def do_resources(self, response, *args, **kwargs):$/;"	m	class:NodesController
+do_substitution	ztpserver/controller.py	/^    def do_substitution(self, response, *args, **kwargs):$/;"	m	class:NodesController
+do_validation	ztpserver/controller.py	/^    def do_validation(self, response, *args, **kwargs):$/;"	m	class:NodesController
+download_url	setup.py	/^                  version,$/;"	v
+dump	ztpserver/app.py	/^from ztpserver.serializers import load, dump$/;"	i
+dump	ztpserver/serializers.py	/^def dump(data, file_path, content_type, node_id='N\/A', lock=False):$/;"	f
+dump_node	ztpserver/controller.py	/^    def dump_node(self, response, *args, **kwargs):$/;"	m	class:NodesController
+dumps	ztpserver/serializers.py	/^def dumps(data, content_type, node_id):$/;"	f
+dumps	ztpserver/wsgiapp.py	/^from ztpserver.serializers import dumps$/;"	i
+eapi_configured	test/client/client_test_lib.py	/^    def eapi_configured(self):$/;"	m	class:Bootstrap
+eapi_failure	test/client/client_test_lib.py	/^    def eapi_failure(self):$/;"	m	class:Bootstrap
+eapi_log	test/actions/test_install_image.py	/^from client_test_lib import eapi_log, remove_file, get_action$/;"	i
+eapi_log	test/actions/test_run_cli_commands.py	/^from client_test_lib import eapi_log, get_action, random_string$/;"	i
+eapi_log	test/client/client_test_lib.py	/^def eapi_log():$/;"	f
+eapi_node_information_collected	test/client/client_test_lib.py	/^    def eapi_node_information_collected(self):$/;"	m	class:Bootstrap
+eapis	test/client/client_test_lib.py	/^eapis = None    #pylint: disable=C0103$/;"	v
+edit	ztpserver/wsgiapp.py	/^    def edit(self, request, resource, **kwargs):$/;"	m	class:WSGIController
+enable_handler_console	test/server/server_test_lib.py	/^from ztpserver.app import enable_handler_console$/;"	i
+enable_handler_console	test/server/test_ndb.py	/^from ztpserver.app import enable_handler_console$/;"	i
+enable_handler_console	test/server/test_topology_classes.py	/^from ztpserver.app import enable_handler_console    # pylint: disable=W0611$/;"	i
+enable_handler_console	ztpserver/app.py	/^def enable_handler_console(level=None):$/;"	f
+enable_logging	test/server/server_test_lib.py	/^def enable_logging():$/;"	f
+enable_logging	test/server/test_controller.py	/^from server_test_lib import enable_logging, remove_all, random_string$/;"	i
+enable_logging	test/server/test_ndb.py	/^from server_test_lib import enable_logging, log, random_string$/;"	i
+enable_logging	test/server/test_repository.py	/^from server_test_lib import enable_logging, random_string$/;"	i
+enable_logging	test/server/test_topology.py	/^from server_test_lib import enable_logging, random_string$/;"	i
+enable_logging	test/server/test_topology_classes.py	/^from server_test_lib import random_string, enable_logging$/;"	i
+end_test	test/client/client_test_lib.py	/^    def end_test(self):$/;"	m	class:Bootstrap
+environ	ztpserver/config.py	/^    environ='ZTPS_BOOTSTRAP_FILENAME'$/;"	v
+environ	ztpserver/config.py	/^    environ='ZTPS_CONSOLE_LOGGING_FORMAT'$/;"	v
+environ	ztpserver/config.py	/^    environ='ZTPS_DEFAULT_DATAROOT'$/;"	v	class:Config
+environ	ztpserver/config.py	/^    environ='ZTPS_DEFAULT_LOGGING'$/;"	v
+environ	ztpserver/config.py	/^    environ='ZTPS_DEFAULT_SERVER'$/;"	v
+environ	ztpserver/config.py	/^    environ='ZTPS_NEIGHBORDB_FILENAME'$/;"	v
+erroneous_action	test/client/client_test_lib.py	/^def erroneous_action():$/;"	f
+erroneous_action	test/client/test_bootstrap.py	/^from client_test_lib import erroneous_action, missing_main_action$/;"	i
+error	ztpserver/validators.py	/^    def error(self, err, *args, **kwargs):$/;"	m	class:Validator
+exc	ztpserver/wsgiapp.py	/^import webob.exc$/;"	i
+exception_action	test/client/client_test_lib.py	/^def exception_action():$/;"	f
+exception_action	test/client/test_bootstrap.py	/^from client_test_lib import wrong_signature_action, exception_action$/;"	i
+exclude_patterns	docs/conf.py	/^exclude_patterns = ['_build', 'old', 'exts', 'cookbook\/_template.rst']$/;"	v
+exists	test/server/test_controller.py	/^        def exists(filepath):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_startup_config_w_validation_failure
+exists	ztpserver/repository.py	/^    def exists(self, file_path):$/;"	m	class:Repository
+expand	ztpserver/controller.py	/^    def expand(self, *args, **kwargs):$/;"	m	class:BaseController
+expand	ztpserver/repository.py	/^    def expand(self, file_path):$/;"	m	class:Repository
+expand_range	ztpserver/topology.py	/^from ztpserver.utils import expand_range, parse_interface, url_path_join$/;"	i
+expand_range	ztpserver/utils.py	/^def expand_range(interfaces):$/;"	f
+expand_range	ztpserver/validators.py	/^from ztpserver.utils import expand_range, parse_interface$/;"	i
+extensions	docs/conf.py	/^extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinxcontrib.httpdomain', 'sphinxcontrib.napoleon']$/;"	v
+fail_action	test/client/client_test_lib.py	/^def fail_action():$/;"	f
+fail_action	test/client/test_bootstrap.py	/^from client_test_lib import fail_action, print_action, random_string$/;"	i
+fail_flash_file_action	test/client/client_test_lib.py	/^def fail_flash_file_action(flash, filename):$/;"	f
+fail_flash_file_action	test/client/test_bootstrap_cleanup.py	/^from client_test_lib import fail_flash_file_action$/;"	i
+file_list	setup.py	/^file_list = [('bootstrap', '%s\/bootstrap' % install_path, $/;"	v
+file_log	test/actions/test_add_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+file_log	test/actions/test_copy_file.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+file_log	test/actions/test_install_cli_plugin.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+file_log	test/actions/test_install_extension.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+file_log	test/actions/test_replace_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+file_log	test/client/client_test_lib.py	/^def file_log(filename, ignore_string=None):$/;"	f
+file_log	test/client/test_bootstrap.py	/^from client_test_lib import file_log, remove_file$/;"	i
+file_path	setup.py	/^    file_path = '%s\/%s' % (dst, filename)$/;"	v
+finalize_response	ztpserver/controller.py	/^    def finalize_response(self, response, *args, **kwargs):$/;"	m	class:NodesController
+find_patterns	ztpserver/topology.py	/^    def find_patterns(self, node):$/;"	m	class:Neighbordb
+fsm	ztpserver/controller.py	/^    def fsm(self, state, **kwargs):$/;"	m	class:NodesController
+get_action	test/actions/test_add_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+get_action	test/actions/test_copy_file.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+get_action	test/actions/test_install_cli_plugin.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+get_action	test/actions/test_install_extension.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+get_action	test/actions/test_install_image.py	/^from client_test_lib import eapi_log, remove_file, get_action$/;"	i
+get_action	test/actions/test_replace_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+get_action	test/actions/test_run_bash_script.py	/^from client_test_lib import get_action, random_string$/;"	i
+get_action	test/actions/test_run_cli_commands.py	/^from client_test_lib import eapi_log, get_action, random_string$/;"	i
+get_action	test/actions/test_send_email.py	/^from client_test_lib import get_action, random_string$/;"	i
+get_action	test/client/client_test_lib.py	/^def get_action(action):$/;"	f
+get_attributes	ztpserver/controller.py	/^    def get_attributes(self, response, *args, **kwargs):$/;"	m	class:NodesController
+get_config	ztpserver/controller.py	/^    def get_config(self, request, resource, **kwargs):$/;"	m	class:NodesController
+get_data	test/server/test_serializers.py	/^def get_data():$/;"	f
+get_definition	ztpserver/controller.py	/^    def get_definition(self, response, *args, **kwargs):$/;"	m	class:NodesController
+get_file	test/server/test_controller.py	/^        def get_file(filepath):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_startup_config_w_validation_failure
+get_file	ztpserver/repository.py	/^    def get_file(self, file_path):$/;"	m	class:Repository
+get_first_token	ztpserver/utils.py	/^def get_first_token(sequence):$/;"	f
+get_patterns	test/server/server_test_lib.py	/^    def get_patterns(self):$/;"	m	class:NeighborDb
+get_patterns	ztpserver/topology.py	/^    def get_patterns(self):$/;"	m	class:Neighbordb
+get_startup_config	ztpserver/controller.py	/^    def get_startup_config(self, response, *args, **kwargs):$/;"	m	class:NodesController
+get_test_list	test/server/test_ndb.py	/^def get_test_list(filepath):$/;"	f
+get_url	test/server/test_wsgiapp.py	/^    def get_url(self, url, expected_status=httplib.OK, **kwargs):$/;"	m	class:TestWsgiApp
+glob	setup.py	/^from glob import glob$/;"	i
+group	ztpserver/config.py	/^    group='bootstrap',$/;"	v
+group	ztpserver/config.py	/^    group='neighbordb',$/;"	v
+group	ztpserver/config.py	/^    group='server',$/;"	v
+handlers	ztpserver/serializers.py	/^    def handlers(self):$/;"	m	class:Serializer
+hash	ztpserver/repository.py	/^    def hash(self):$/;"	m	class:FileObject
+hashlib	ztpserver/repository.py	/^import hashlib$/;"	i
+html_favicon	docs/conf.py	/^html_favicon = '_static\/favicon.ico'$/;"	v
+html_last_updated_fmt	docs/conf.py	/^html_last_updated_fmt = '%b %d, %Y'$/;"	v
+html_logo	docs/conf.py	/^html_logo = '_static\/arista_logo_11-trans-w.png'$/;"	v
+html_static_path	docs/conf.py	/^html_static_path = ['_static']$/;"	v
+html_theme	docs/conf.py	/^    html_theme = 'sphinx_rtd_theme'$/;"	v
+html_theme_path	docs/conf.py	/^    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]$/;"	v
+htmlhelp_basename	docs/conf.py	/^htmlhelp_basename = 'ZTPServerdoc'$/;"	v
+http_bad_request	ztpserver/controller.py	/^    def http_bad_request(self, *args, **kwargs):$/;"	m	class:BaseController
+http_internal_server_error	ztpserver/controller.py	/^    def http_internal_server_error(self, *args, **kwargs):$/;"	m	class:BaseController
+http_not_found	ztpserver/controller.py	/^    def http_not_found(self, *args, **kwargs):$/;"	m	class:BaseController
+httplib	test/server/test_wsgiapp.py	/^import httplib$/;"	i
+identifier	test/server/test_controller.py	/^    def identifier(cls, node):$/;"	m	class:NodesControllerUnitTests
+identifier	ztpserver/topology.py	/^    def identifier(node):$/;"	m	class:Neighbordb
+identifier	ztpserver/topology.py	/^    def identifier(self):$/;"	m	class:Node
+if	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+ignore_errors	setup.py	/^                          ignore_errors=True)$/;"	v
+ignore_errors	setup.py	/^                      ignore_errors=True)$/;"	v
+imp	test/client/client_test_lib.py	/^import imp$/;"	i
+imp	ztpserver/resources.py	/^import imp$/;"	i
+index	ztpserver/controller.py	/^    def index(self, request, **kwargs):$/;"	m	class:BootstrapController
+index	ztpserver/wsgiapp.py	/^    def index(self, request, **kwargs):$/;"	m	class:WSGIController
+inspect	ztpserver/validators.py	/^import inspect$/;"	i
+install	setup.py	/^def install():$/;"	f
+install_path	setup.py	/^    install_path = '.' +  install_path$/;"	v
+install_path	setup.py	/^install_path = config.INSTALL_PATH$/;"	v
+install_requirements	setup.py	/^install_requirements = None$/;"	v
+install_requirements	setup.py	/^install_requirements = [x.strip() for x in install_requirements$/;"	v
+install_requirements	setup.py	/^install_requirements = open('requirements.txt').read().split('\\n')$/;"	v
+install_requires	setup.py	/^    install_requires=install_requirements,$/;"	v
+invalid_definition_format	test/client/client_test_lib.py	/^    def invalid_definition_format(self):$/;"	m	class:Bootstrap
+invalid_definition_location_failure	test/client/client_test_lib.py	/^    def invalid_definition_location_failure(self):$/;"	m	class:Bootstrap
+is_global_pattern	ztpserver/topology.py	/^    def is_global_pattern(self, pattern):$/;"	m	class:Neighbordb
+is_node_pattern	ztpserver/topology.py	/^    def is_node_pattern(self, pattern):$/;"	m	class:Neighbordb
+is_positive_constraint	ztpserver/topology.py	/^    def is_positive_constraint(self):$/;"	m	class:InterfacePattern
+join_url	setup.py	/^def join_url(x, y):$/;"	f
+json	test/client/client_test_lib.py	/^import json$/;"	i
+json	test/server/server_test_lib.py	/^import json$/;"	i
+json	test/server/test_controller.py	/^import json$/;"	i
+json	ztpserver/serializers.py	/^import json$/;"	i
+latex_documents	docs/conf.py	/^latex_documents = [$/;"	v
+latex_elements	docs/conf.py	/^latex_elements = {$/;"	v
+latex_logo	docs/conf.py	/^latex_logo = '_static\/arista_logo_jpg-11.jpg'$/;"	v
+license	setup.py	/^    license='BSD-3',$/;"	v
+lite	utils/create_db.py	/^import sqlite3 as lite$/;"	i
+load	ztpserver/app.py	/^from ztpserver.serializers import load, dump$/;"	i
+load	ztpserver/serializers.py	/^def load(file_path, content_type, node_id='N\/A', lock=False):$/;"	f
+load	ztpserver/topology.py	/^from ztpserver.serializers import load, SerializerError$/;"	i
+load_config	ztpserver/app.py	/^def load_config(conf=None):$/;"	f
+load_file	test/server/test_ndb.py	/^from ztpserver.topology import load_neighbordb, load_file$/;"	i
+load_file	test/server/test_topology.py	/^from ztpserver.topology import create_node, load_file, load_neighbordb$/;"	i
+load_file	ztpserver/topology.py	/^def load_file(filename, content_type, node_id):$/;"	f
+load_neighbordb	test/server/test_ndb.py	/^from ztpserver.topology import load_neighbordb, load_file$/;"	i
+load_neighbordb	test/server/test_topology.py	/^from ztpserver.topology import create_node, load_file, load_neighbordb$/;"	i
+load_neighbordb	ztpserver/controller.py	/^from ztpserver.topology import load_neighbordb, load_resources$/;"	i
+load_neighbordb	ztpserver/topology.py	/^def load_neighbordb(node_id, contents=None):$/;"	f
+load_node	test/server/test_ndb.py	/^def load_node(node, content_type=CONTENT_TYPE_YAML):$/;"	f
+load_pattern	test/server/test_topology.py	/^from ztpserver.topology import load_pattern$/;"	i
+load_pattern	ztpserver/controller.py	/^from ztpserver.topology import create_node, load_pattern$/;"	i
+load_pattern	ztpserver/topology.py	/^def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):$/;"	f
+load_resources	ztpserver/controller.py	/^from ztpserver.topology import load_neighbordb, load_resources$/;"	i
+load_resources	ztpserver/topology.py	/^def load_resources(attributes, node, node_id):$/;"	f
+load_tests	test/server/test_ndb.py	/^def load_tests(loader, tests, pattern):      # pylint: disable=W0613$/;"	f
+loads	ztpserver/serializers.py	/^def loads(data, content_type, node_id):$/;"	f
+log	test/server/server_test_lib.py	/^log = logging.getLogger('ztpserver')$/;"	v
+log	test/server/test_ndb.py	/^from server_test_lib import enable_logging, log, random_string$/;"	i
+log	ztpserver/app.py	/^log = logging.getLogger('ztpserver')$/;"	v
+log	ztpserver/config.py	/^log = logging.getLogger(__name__)$/;"	v
+log	ztpserver/controller.py	/^log = logging.getLogger(__name__)    # pylint: disable=C0103$/;"	v
+log	ztpserver/repository.py	/^log = logging.getLogger(__name__)   #pylint: disable=C0103$/;"	v
+log	ztpserver/serializers.py	/^log = logging.getLogger(__name__)   #pylint: disable=C0103$/;"	v
+log	ztpserver/topology.py	/^log = logging.getLogger(__name__)$/;"	v
+log	ztpserver/utils.py	/^log = logging.getLogger(__name__)$/;"	v
+log	ztpserver/validators.py	/^log = logging.getLogger(__name__)   #pylint: disable=C0103$/;"	v
+log	ztpserver/wsgiapp.py	/^log = logging.getLogger(__name__)$/;"	v
+logging	test/server/server_test_lib.py	/^import logging$/;"	i
+logging	ztpserver/app.py	/^import logging$/;"	i
+logging	ztpserver/config.py	/^import logging$/;"	i
+logging	ztpserver/controller.py	/^import logging$/;"	i
+logging	ztpserver/repository.py	/^import logging$/;"	i
+logging	ztpserver/serializers.py	/^import logging$/;"	i
+logging	ztpserver/topology.py	/^import logging$/;"	i
+logging	ztpserver/utils.py	/^import logging$/;"	i
+logging	ztpserver/validators.py	/^import logging$/;"	i
+logging	ztpserver/wsgiapp.py	/^import logging$/;"	i
+logging_started	ztpserver/app.py	/^logging_started = False$/;"	v
+lookup	ztpserver/controller.py	/^        def lookup(name):$/;"	f	function:NodesController.do_substitution
+m_exists	test/server/test_controller.py	/^        def m_exists(arg):$/;"	f	function:NodesControllerUnitTests.test_node_exists_definition_exists
+m_exists	test/server/test_controller.py	/^        def m_exists(arg):$/;"	f	function:NodesControllerUnitTests.test_node_exists_startup_config_exists
+m_exists	test/server/test_controller.py	/^        def m_exists(arg):$/;"	f	function:NodesControllerUnitTests.test_node_exists_sysmac_folder_exists
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:DefinitionStartupConfigTests.test_get_definition_w_startuo_config
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_definition_w_attributes_no_substitution
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_definition_w_validation_failure
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_definition_w_validation_success
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_definition_wo_validation
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_startup_config_w_validation_success
+m_get_file	test/server/test_controller.py	/^        def m_get_file(arg):$/;"	f	function:NodesControllerGetFsmIntegrationTests.test_get_startup_config_wo_validation
+main	utils/refresh_ztps	/^def main():$/;"	f
+main	ztpserver/app.py	/^def main():$/;"	f
+make_server	ztpserver/app.py	/^from wsgiref.simple_server import make_server$/;"	i
+man_pages	docs/conf.py	/^man_pages = [$/;"	v
+master_doc	docs/conf.py	/^master_doc = 'index'$/;"	v
+match	ztpserver/topology.py	/^    def match(self, arg):$/;"	m	class:ExactFunction
+match	ztpserver/topology.py	/^    def match(self, arg):$/;"	m	class:ExcludesFunction
+match	ztpserver/topology.py	/^    def match(self, arg):$/;"	m	class:Function
+match	ztpserver/topology.py	/^    def match(self, arg):$/;"	m	class:IncludesFunction
+match	ztpserver/topology.py	/^    def match(self, arg):$/;"	m	class:RegexFunction
+match	ztpserver/topology.py	/^    def match(self, interface, neighbors):$/;"	m	class:InterfacePattern
+match_interface	ztpserver/topology.py	/^    def match_interface(self, interface):$/;"	m	class:InterfacePattern
+match_neighbor	ztpserver/topology.py	/^    def match_neighbor(self, interface, neighbor):$/;"	m	class:InterfacePattern
+match_node	ztpserver/topology.py	/^    def match_node(self, node):$/;"	m	class:Neighbordb
+match_node	ztpserver/topology.py	/^    def match_node(self, node):$/;"	m	class:Pattern
+match_remote_device	ztpserver/topology.py	/^    def match_remote_device(self, remote_device):$/;"	m	class:InterfacePattern
+match_remote_interface	ztpserver/topology.py	/^    def match_remote_interface(self, remote_interface):$/;"	m	class:InterfacePattern
+match_routes	test/server/test_controller.py	/^    def match_routes(self, url, valid, invalid):$/;"	m	class:RouterUnitTests
+max_value	ztpserver/config.py	/^    max_value=65534,$/;"	v
+metadata	ztpserver/controller.py	/^    def metadata(self, request, **kwargs):$/;"	m	class:MetaController
+mimetypes	ztpserver/repository.py	/^import mimetypes$/;"	i
+min_value	ztpserver/config.py	/^    min_value=1,$/;"	v
+missing_main_action	test/client/client_test_lib.py	/^def missing_main_action():$/;"	f
+missing_main_action	test/client/test_bootstrap.py	/^from client_test_lib import erroneous_action, missing_main_action$/;"	i
+missing_startup_config_failure	test/client/client_test_lib.py	/^    def missing_startup_config_failure(self):$/;"	m	class:Bootstrap
+mock_match	test/server/server_test_lib.py	/^def mock_match(node=None, definition=None,$/;"	f
+mock_match	test/server/test_controller.py	/^from server_test_lib import mock_match, ztp_headers, write_file$/;"	i
+name	setup.py	/^    name='ztpserver',$/;"	v
+name	ztpserver/config.py	/^    name='console_logging',$/;"	v
+name	ztpserver/config.py	/^    name='console_logging_format',$/;"	v
+name	ztpserver/config.py	/^    name='data_root',$/;"	v	class:Config
+name	ztpserver/config.py	/^    name='disable_topology_validation',$/;"	v
+name	ztpserver/config.py	/^    name='filename',$/;"	v
+name	ztpserver/config.py	/^    name='identifier',$/;"	v
+name	ztpserver/config.py	/^    name='interface',$/;"	v
+name	ztpserver/config.py	/^    name='logging',$/;"	v
+name	ztpserver/config.py	/^    name='port',$/;"	v
+name	ztpserver/config.py	/^    name='server_url',$/;"	v
+namedtuple	test/client/client_test_lib.py	/^from collections import namedtuple$/;"	i
+natural_keys	ztpserver/utils.py	/^def natural_keys(text):$/;"	f
+neighbordb_path	test/server/test_topology.py	/^from ztpserver.topology import neighbordb_path, replace_config_action$/;"	i
+neighbordb_path	ztpserver/app.py	/^from ztpserver.topology import FUNC_RE, neighbordb_path$/;"	i
+neighbordb_path	ztpserver/topology.py	/^def neighbordb_path():$/;"	f
+neighbordb_pattern	test/server/test_ndb.py	/^    def neighbordb_pattern(self):$/;"	m	class:NeighbordbTest
+neighbordb_topology	test/server/test_ndb.py	/^    def neighbordb_topology(self):$/;"	m	class:NeighbordbTest
+new	ztpserver/wsgiapp.py	/^    def new(self, request, **kwargs):$/;"	m	class:WSGIController
+node_exists	ztpserver/controller.py	/^    def node_exists(self, response, *args, **kwargs):$/;"	m	class:NodesController
+node_fail	test/server/test_ndb.py	/^    def node_fail(self):$/;"	m	class:NeighbordbTest
+node_information_collected	test/client/client_test_lib.py	/^    def node_information_collected(self):$/;"	m	class:Bootstrap
+node_not_found_failure	test/client/client_test_lib.py	/^    def node_not_found_failure(self):$/;"	m	class:Bootstrap
+node_pass	test/server/test_ndb.py	/^    def node_pass(self):$/;"	m	class:NeighbordbTest
+on_rtd	docs/conf.py	/^on_rtd = os.environ.get('READTHEDOCS', None) == 'True'$/;"	v
+os	docs/conf.py	/^import sys, os$/;"	i
+os	setup.py	/^import os$/;"	i
+os	test/actions/test_add_config.py	/^import os$/;"	i
+os	test/actions/test_add_config.py	/^import os.path$/;"	i
+os	test/actions/test_copy_file.py	/^import os$/;"	i
+os	test/actions/test_copy_file.py	/^import os.path$/;"	i
+os	test/actions/test_install_cli_plugin.py	/^import os$/;"	i
+os	test/actions/test_install_cli_plugin.py	/^import os.path$/;"	i
+os	test/actions/test_install_extension.py	/^import os$/;"	i
+os	test/actions/test_install_extension.py	/^import os.path$/;"	i
+os	test/actions/test_install_image.py	/^import os$/;"	i
+os	test/actions/test_install_image.py	/^import os.path$/;"	i
+os	test/actions/test_replace_config.py	/^import os$/;"	i
+os	test/actions/test_replace_config.py	/^import os.path$/;"	i
+os	test/actions/test_run_bash_script.py	/^import os$/;"	i
+os	test/actions/test_run_bash_script.py	/^import os.path$/;"	i
+os	test/actions/test_run_cli_commands.py	/^import os$/;"	i
+os	test/actions/test_run_cli_commands.py	/^import os.path$/;"	i
+os	test/client/client_test_lib.py	/^import os$/;"	i
+os	test/client/test_bootstrap.py	/^import os$/;"	i
+os	test/client/test_bootstrap.py	/^import os.path$/;"	i
+os	test/client/test_bootstrap_cleanup.py	/^import os$/;"	i
+os	test/client/test_bootstrap_cleanup.py	/^import os.path$/;"	i
+os	test/server/server_test_lib.py	/^import os$/;"	i
+os	test/server/test_config.py	/^import os$/;"	i
+os	test/server/test_ndb.py	/^import os$/;"	i
+os	test/server/test_serializers.py	/^import os$/;"	i
+os	utils/refresh_ztps	/^import os$/;"	i
+os	ztpserver/app.py	/^import os$/;"	i
+os	ztpserver/config.py	/^import os$/;"	i
+os	ztpserver/controller.py	/^import os$/;"	i
+os	ztpserver/repository.py	/^import os$/;"	i
+os	ztpserver/resources.py	/^import os$/;"	i
+os	ztpserver/serializers.py	/^import os$/;"	i
+os	ztpserver/topology.py	/^import os$/;"	i
+os	ztpserver/utils.py	/^import os$/;"	i
+p	docs/conf.py	/^p = re.compile('(\\d+!)?((\\d+)(.\\d+)*(.\\d+)*)(.?[a|b|rc]\\d*)?(.post\\d*)?(.dev\\d*)?', re.IGNORECASE)$/;"	v
+packages	setup.py	/^    packages=packages,$/;"	v
+packages	setup.py	/^packages = ['ztpserver']$/;"	v
+parse_interface	ztpserver/topology.py	/^    def parse_interface(self, neighbor):$/;"	m	class:Pattern
+parse_interface	ztpserver/topology.py	/^from ztpserver.utils import expand_range, parse_interface, url_path_join$/;"	i
+parse_interface	ztpserver/utils.py	/^def parse_interface(neighbor, node_id):$/;"	f
+parse_interface	ztpserver/validators.py	/^from ztpserver.utils import expand_range, parse_interface$/;"	i
+patch	test/server/test_app.py	/^from mock import patch$/;"	i
+patch	test/server/test_controller.py	/^from mock import MagicMock, Mock, patch$/;"	i
+patch	test/server/test_repository.py	/^from mock import patch$/;"	i
+patch	test/server/test_topology.py	/^from mock import patch, Mock$/;"	i
+path	setup.py	/^    path = '%s\/%s' % (install_path, folder)$/;"	v
+path	test/actions/test_add_config.py	/^import os.path$/;"	i
+path	test/actions/test_copy_file.py	/^import os.path$/;"	i
+path	test/actions/test_install_cli_plugin.py	/^import os.path$/;"	i
+path	test/actions/test_install_extension.py	/^import os.path$/;"	i
+path	test/actions/test_install_image.py	/^import os.path$/;"	i
+path	test/actions/test_replace_config.py	/^import os.path$/;"	i
+path	test/actions/test_run_bash_script.py	/^import os.path$/;"	i
+path	test/actions/test_run_cli_commands.py	/^import os.path$/;"	i
+path	test/client/test_bootstrap.py	/^import os.path$/;"	i
+path	test/client/test_bootstrap_cleanup.py	/^import os.path$/;"	i
+post_config	ztpserver/controller.py	/^    def post_config(self, response, *args, **kwargs):$/;"	m	class:NodesController
+post_node	ztpserver/controller.py	/^    def post_node(self, response, *args, **kwargs):$/;"	m	class:NodesController
+post_url	test/server/test_wsgiapp.py	/^    def post_url(self, url, expected_status=httplib.OK, **kwargs):$/;"	m	class:TestWsgiApp
+print_action	test/actions/test_install_image.py	/^from client_test_lib import print_action$/;"	i
+print_action	test/client/client_test_lib.py	/^def print_action(msg='TEST', use_attribute=False, create_copy=False):$/;"	f
+print_action	test/client/test_bootstrap.py	/^from client_test_lib import fail_action, print_action, random_string$/;"	i
+print_attributes_action	test/client/client_test_lib.py	/^def print_attributes_action(attributes):$/;"	f
+process_message	test/client/client_test_lib.py	/^            def process_message(*args, **kwargs):$/;"	m	class:SmtpServer._run.SMTPServer
+project	docs/conf.py	/^project = u'ZTPServer'$/;"	v
+put_config	ztpserver/controller.py	/^    def put_config(self, request, **kwargs):$/;"	m	class:NodesController
+put_url	test/server/test_wsgiapp.py	/^    def put_url(self, url, expected_status=httplib.OK, **kwargs):$/;"	m	class:TestWsgiApp
+pygments_style	docs/conf.py	/^pygments_style = 'sphinx'$/;"	v
+pylint	test/client/client_test_lib.py	/^import string                        #pylint: disable=W0402$/;"	i
+pylint	test/server/server_test_lib.py	/^import string        #pylint: disable=W0402$/;"	i
+pylint	test/server/test_topology_classes.py	/^from ztpserver.app import enable_handler_console    # pylint: disable=W0611$/;"	i
+pylint	ztpserver/topology.py	/^import string # pylint: disable=W0402$/;"	i
+pylint	ztpserver/validators.py	/^import string    #pylint: disable=W0402$/;"	i
+python_supported	ztpserver/app.py	/^def python_supported():$/;"	f
+raise_exception	test/actions/test_add_config.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_copy_file.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_install_cli_plugin.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_install_extension.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_install_image.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_replace_config.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_run_bash_script.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_run_cli_commands.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/actions/test_send_email.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/client/client_test_lib.py	/^def raise_exception(exception):$/;"	f
+raise_exception	test/client/test_bootstrap.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/client/test_bootstrap_cleanup.py	/^from client_test_lib import raise_exception$/;"	i
+raise_exception	test/client/test_xmpp_bootstrap.py	/^from client_test_lib import raise_exception$/;"	i
+random	test/actions/test_copy_file.py	/^import random$/;"	i
+random	test/client/client_test_lib.py	/^import random$/;"	i
+random	test/server/server_test_lib.py	/^import random$/;"	i
+random	test/server/test_controller.py	/^import random$/;"	i
+random	test/server/test_serializers.py	/^import random$/;"	i
+random_json	test/server/server_test_lib.py	/^def random_json(keys=None):$/;"	f
+random_permissions	test/actions/test_copy_file.py	/^def random_permissions():$/;"	f
+random_string	test/actions/test_add_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+random_string	test/actions/test_copy_file.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+random_string	test/actions/test_install_cli_plugin.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+random_string	test/actions/test_install_extension.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+random_string	test/actions/test_install_image.py	/^from client_test_lib import startup_config_action, random_string$/;"	i
+random_string	test/actions/test_replace_config.py	/^from client_test_lib import file_log, get_action, random_string$/;"	i
+random_string	test/actions/test_run_bash_script.py	/^from client_test_lib import get_action, random_string$/;"	i
+random_string	test/actions/test_run_cli_commands.py	/^from client_test_lib import eapi_log, get_action, random_string$/;"	i
+random_string	test/actions/test_send_email.py	/^from client_test_lib import get_action, random_string$/;"	i
+random_string	test/client/client_test_lib.py	/^def random_string():$/;"	f
+random_string	test/client/test_bootstrap.py	/^from client_test_lib import fail_action, print_action, random_string$/;"	i
+random_string	test/client/test_bootstrap_cleanup.py	/^from client_test_lib import random_string$/;"	i
+random_string	test/server/server_test_lib.py	/^def random_string():$/;"	f
+random_string	test/server/test_controller.py	/^from server_test_lib import enable_logging, remove_all, random_string$/;"	i
+random_string	test/server/test_ndb.py	/^from server_test_lib import enable_logging, log, random_string$/;"	i
+random_string	test/server/test_repository.py	/^from server_test_lib import enable_logging, random_string$/;"	i
+random_string	test/server/test_topology.py	/^from server_test_lib import enable_logging, random_string$/;"	i
+random_string	test/server/test_topology_classes.py	/^from server_test_lib import random_string, enable_logging$/;"	i
+re	docs/conf.py	/^import re$/;"	i
+re	test/client/client_test_lib.py	/^import re$/;"	i
+re	utils/refresh_ztps	/^import re$/;"	i
+re	ztpserver/app.py	/^import re$/;"	i
+re	ztpserver/topology.py	/^import re$/;"	i
+re	ztpserver/utils.py	/^import re$/;"	i
+re	ztpserver/validators.py	/^import re$/;"	i
+read	ztpserver/config.py	/^    def read(self, filename):$/;"	m	class:Config
+read	ztpserver/repository.py	/^    def read(self, content_type=None, node_id=None):$/;"	m	class:FileObject
+refresh	ztpserver/topology.py	/^    def refresh(self):$/;"	m	class:InterfacePattern
+refresh_ztps	utils/refresh_ztps	/^def refresh_ztps(home_folder, branch):$/;"	f
+release	docs/conf.py	/^release = open('..\/VERSION').read().split()[0].strip()$/;"	v
+remove_all	test/server/server_test_lib.py	/^def remove_all():$/;"	f
+remove_all	test/server/test_controller.py	/^from server_test_lib import enable_logging, remove_all, random_string$/;"	i
+remove_file	test/actions/test_copy_file.py	/^from client_test_lib import startup_config_action, remove_file$/;"	i
+remove_file	test/actions/test_install_extension.py	/^from client_test_lib import startup_config_action, remove_file$/;"	i
+remove_file	test/actions/test_install_image.py	/^from client_test_lib import eapi_log, remove_file, get_action$/;"	i
+remove_file	test/client/client_test_lib.py	/^def remove_file(filename):$/;"	f
+remove_file	test/client/test_bootstrap.py	/^from client_test_lib import file_log, remove_file$/;"	i
+replace_config_action	test/server/test_topology.py	/^from ztpserver.topology import neighbordb_path, replace_config_action$/;"	i
+replace_config_action	ztpserver/controller.py	/^from ztpserver.topology import replace_config_action$/;"	i
+replace_config_action	ztpserver/topology.py	/^def replace_config_action(resource, filename=None):$/;"	f
+repository	test/server/test_controller.py	/^import ztpserver.repository$/;"	i
+represent_odict	ztpserver/serializers.py	/^def represent_odict(dump_odict, tag, mapping, flow_style=None):$/;"	f
+request	test/server/test_wsgiapp.py	/^    def request(self, url, method='GET', **kwargs):$/;"	m	class:TestWsgiApp
+resource_plugins	ztpserver/app.py	/^from ztpserver.resources import resource_plugins$/;"	i
+resource_plugins	ztpserver/resources.py	/^def resource_plugins():$/;"	f
+response	ztpserver/wsgiapp.py	/^    def response(self, **kwargs):$/;"	m	class:WSGIController
+responses	test/client/client_test_lib.py	/^    responses = {}$/;"	v	class:ZTPServer
+route	ztpserver/wsgiapp.py	/^    def route(self, request):$/;"	m	class:WSGIRouter
+routes	test/server/test_wsgiapp.py	/^import routes$/;"	i
+routes	ztpserver/controller.py	/^import routes$/;"	i
+rows	utils/create_db.py	/^        rows = cur.fetchall()$/;"	v
+run_plugin	ztpserver/resources.py	/^def run_plugin(plugin, node_id, pool):$/;"	f
+run_plugin	ztpserver/topology.py	/^from ztpserver.resources import run_plugin$/;"	i
+run_server	ztpserver/app.py	/^def run_server(version, config_file, debug):$/;"	f
+run_validator	ztpserver/app.py	/^def run_validator(debug):$/;"	f
+runtime	ztpserver/config.py	/^runtime = Config()$/;"	v
+runtime	ztpserver/controller.py	/^from ztpserver.config import runtime$/;"	i
+runtime	ztpserver/resources.py	/^from ztpserver.config import runtime$/;"	i
+runtime	ztpserver/topology.py	/^from ztpserver.config import runtime$/;"	i
+runtime	ztpserver/validators.py	/^from ztpserver.config import runtime$/;"	i
+scripts	setup.py	/^    scripts=glob('bin\/*'),$/;"	v
+serialize	ztpserver/serializers.py	/^    def serialize(self, data):$/;"	f
+serialize	ztpserver/serializers.py	/^    def serialize(self, data):$/;"	m	class:BaseSerializer
+serialize	ztpserver/serializers.py	/^    def serialize(self, data):$/;"	m	class:TextSerializer
+serialize	ztpserver/serializers.py	/^    def serialize(self, data, content_type):$/;"	m	class:Serializer
+serialize	ztpserver/topology.py	/^    def serialize(self):$/;"	m	class:Node
+serialize	ztpserver/topology.py	/^    def serialize(self):$/;"	m	class:Pattern
+serializers	test/server/test_serializers.py	/^import ztpserver.serializers as serializers$/;"	i
+serializers	test/server/test_topology.py	/^import ztpserver.serializers$/;"	i
+serializers	ztpserver/repository.py	/^import ztpserver.serializers$/;"	i
+server_connection_failure	test/client/client_test_lib.py	/^    def server_connection_failure(self):$/;"	m	class:Bootstrap
+set	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+setUp	test/server/test_config.py	/^    def setUp(self):$/;"	m	class:TestConfig
+setUp	test/server/test_config.py	/^    def setUp(self):$/;"	m	class:TestGroup
+setUp	test/server/test_controller.py	/^    def setUp(self):$/;"	m	class:BootstrapUnitTests
+setUp	test/server/test_controller.py	/^    def setUp(self):$/;"	m	class:NodesControllerGetFsmIntegrationTests
+setUp	test/server/test_controller.py	/^    def setUp(self):$/;"	m	class:NodesControllerPostFsmIntegrationTests
+setUp	test/server/test_wsgiapp.py	/^    def setUp(self):$/;"	m	class:TestWsgiApp
+set_action_response	test/client/client_test_lib.py	/^    def set_action_response(self, action, output,$/;"	m	class:ZTPServer
+set_bogus_definition_response	test/client/client_test_lib.py	/^    def set_bogus_definition_response(self):$/;"	m	class:ZTPServer
+set_config_response	test/client/client_test_lib.py	/^    def set_config_response(self, logging=None, xmpp=None,$/;"	m	class:ZTPServer
+set_definition_response	test/client/client_test_lib.py	/^    def set_definition_response(self, node_id=SYSTEM_MAC,$/;"	m	class:ZTPServer
+set_file_response	test/client/client_test_lib.py	/^    def set_file_response(self, filename, output,$/;"	m	class:ZTPServer
+set_location	ztpserver/controller.py	/^    def set_location(self, response, *args, **kwargs):$/;"	m	class:NodesController
+set_node_check_response	test/client/client_test_lib.py	/^    def set_node_check_response(self, content_type='text\/html',$/;"	m	class:ZTPServer
+set_value	ztpserver/config.py	/^    def set_value(self, name, value, group=None):$/;"	m	class:Config
+setup	setup.py	/^    from distutils.core import setup$/;"	i
+setup	setup.py	/^    from setuptools import setup$/;"	i
+show	ztpserver/controller.py	/^    def show(self, request, resource, **kwargs):$/;"	m	class:ActionsController
+show	ztpserver/controller.py	/^    def show(self, request, resource, **kwargs):$/;"	m	class:FilesController
+show	ztpserver/controller.py	/^    def show(self, request, resource, *args, **kwargs):$/;"	m	class:NodesController
+show	ztpserver/wsgiapp.py	/^    def show(self, request, resource, **kwargs):$/;"	m	class:WSGIController
+show_authors	docs/conf.py	/^show_authors = True$/;"	v
+shutil	setup.py	/^import shutil$/;"	i
+shutil	test/actions/test_copy_file.py	/^import shutil$/;"	i
+shutil	test/actions/test_install_cli_plugin.py	/^import shutil$/;"	i
+shutil	test/actions/test_install_extension.py	/^import shutil$/;"	i
+shutil	test/client/client_test_lib.py	/^import shutil$/;"	i
+shutil	test/server/server_test_lib.py	/^import shutil$/;"	i
+size	ztpserver/repository.py	/^    def size(self):$/;"	m	class:FileObject
+smtp	test/client/client_test_lib.py	/^smtp = None    #pylint: disable=C0103$/;"	v
+smtpd	test/client/client_test_lib.py	/^import smtpd$/;"	i
+source_suffix	docs/conf.py	/^source_suffix = '.rst'$/;"	v
+sphinx_rtd_theme	docs/conf.py	/^    import sphinx_rtd_theme$/;"	i
+sql	utils/create_db.py	/^            sql = "INSERT INTO %s VALUES('%s%s%s',NULL)" % (table, base, str(x), subnet)$/;"	v
+sql	utils/create_db.py	/^        sql = "CREATE TABLE `%s`(key TEXT, node_id TEXT)" % table$/;"	v
+sql	utils/create_db.py	/^        sql = "DROP TABLE IF EXISTS `%s`" % table$/;"	v
+sql	utils/create_db.py	/^        sql = "SELECT * FROM `%s`" % table$/;"	v
+start	test/client/client_test_lib.py	/^    def start(self):$/;"	m	class:EAPIServer
+start	test/client/client_test_lib.py	/^    def start(self):$/;"	m	class:SmtpServer
+start	test/client/client_test_lib.py	/^    def start(self):$/;"	m	class:ZTPServer
+start_eapi_server	test/client/client_test_lib.py	/^def start_eapi_server():$/;"	f
+start_logging	ztpserver/app.py	/^def start_logging(debug):$/;"	f
+start_smtp_server	test/client/client_test_lib.py	/^def start_smtp_server():$/;"	f
+start_test	test/client/client_test_lib.py	/^    def start_test(self):$/;"	m	class:Bootstrap
+start_wsgiapp	ztpserver/app.py	/^def start_wsgiapp(config_file=None, debug=False):$/;"	f
+start_ztp_server	test/client/client_test_lib.py	/^def start_ztp_server():$/;"	f
+startup_config_action	test/actions/test_add_config.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/actions/test_copy_file.py	/^from client_test_lib import startup_config_action, remove_file$/;"	i
+startup_config_action	test/actions/test_install_cli_plugin.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/actions/test_install_extension.py	/^from client_test_lib import startup_config_action, remove_file$/;"	i
+startup_config_action	test/actions/test_install_image.py	/^from client_test_lib import startup_config_action, random_string$/;"	i
+startup_config_action	test/actions/test_run_bash_script.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/actions/test_run_cli_commands.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/actions/test_send_email.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/client/client_test_lib.py	/^def startup_config_action(lines=None):$/;"	f
+startup_config_action	test/client/test_bootstrap.py	/^from client_test_lib import startup_config_action$/;"	i
+startup_config_action	test/client/test_bootstrap_cleanup.py	/^from client_test_lib import startup_config_action$/;"	i
+string	test/client/client_test_lib.py	/^import string                        #pylint: disable=W0402$/;"	i
+string	test/server/server_test_lib.py	/^import string        #pylint: disable=W0402$/;"	i
+string	ztpserver/topology.py	/^import string # pylint: disable=W0402$/;"	i
+string	ztpserver/validators.py	/^import string    #pylint: disable=W0402$/;"	i
+subnet	utils/create_db.py	/^            subnet = ""$/;"	v
+subnet	utils/create_db.py	/^            subnet = "\/24"$/;"	v
+subnet	utils/create_db.py	/^            subnet = "\/32"$/;"	v
+subprocess	test/client/client_test_lib.py	/^import subprocess$/;"	i
+subprocess	ztpserver/controller.py	/^import subprocess$/;"	i
+success	test/client/client_test_lib.py	/^    def success(self):$/;"	m	class:Bootstrap
+sys	bin/ztps	/^import sys$/;"	i
+sys	docs/conf.py	/^import sys, os$/;"	i
+sys	setup.py	/^import sys$/;"	i
+sys	test/actions/test_add_config.py	/^import sys$/;"	i
+sys	test/actions/test_copy_file.py	/^import sys$/;"	i
+sys	test/actions/test_install_cli_plugin.py	/^import sys$/;"	i
+sys	test/actions/test_install_extension.py	/^import sys$/;"	i
+sys	test/actions/test_install_image.py	/^import sys$/;"	i
+sys	test/actions/test_replace_config.py	/^import sys$/;"	i
+sys	test/actions/test_run_bash_script.py	/^import sys$/;"	i
+sys	test/actions/test_run_cli_commands.py	/^import sys$/;"	i
+sys	test/actions/test_send_email.py	/^import sys$/;"	i
+sys	test/client/FastCli	/^import sys$/;"	i
+sys	utils/create_db.py	/^import sys$/;"	i
+sys	utils/refresh_ztps	/^import sys$/;"	i
+sys	ztpserver/app.py	/^import sys$/;"	i
+tearDown	test/server/test_config.py	/^    def tearDown(self):$/;"	m	class:TestConfig
+tearDown	test/server/test_config.py	/^    def tearDown(self):$/;"	m	class:TestGroup
+tearDown	test/server/test_controller.py	/^    def tearDown(self):$/;"	m	class:FilesControllerIntegrationTests
+tearDown	test/server/test_controller.py	/^    def tearDown(self):$/;"	m	class:NodesControllerUnitTests
+tempfile	test/server/test_config.py	/^import tempfile$/;"	i
+templates_path	docs/conf.py	/^templates_path = ['_templates']$/;"	v
+test	test/client/test_bootstrap.py	/^    def test(self):$/;"	m	class:EAPIErrorTest
+test	test/client/test_bootstrap.py	/^    def test(self):$/;"	m	class:FactoryDefaultTest
+test	test/client/test_bootstrap.py	/^    def test(self):$/;"	m	class:FileLogConfigTest
+test	test/client/test_bootstrap.py	/^    def test(self):$/;"	m	class:MissingStartupConfigTest
+test	test/client/test_bootstrap.py	/^    def test(self):$/;"	m	class:ServerNotRunningTest
+test_action_failure	test/client/test_bootstrap_cleanup.py	/^    def test_action_failure(self):$/;"	m	class:BootstrapCleanupTest
+test_action_failure_log	test/client/test_bootstrap.py	/^    def test_action_failure_log(self):$/;"	m	class:ActionFailureTest
+test_action_success_log	test/client/test_bootstrap.py	/^    def test_action_success_log(self):$/;"	m	class:BootstrapSuccessTest
+test_actions_collection	test/server/test_controller.py	/^    def test_actions_collection(self):$/;"	m	class:RouterUnitTests
+test_actions_resource	test/server/test_controller.py	/^    def test_actions_resource(self):$/;"	m	class:RouterUnitTests
+test_add_folder_failure	test/server/test_repository.py	/^    def test_add_folder_failure(self, m_makedirs):$/;"	m	class:RepositoryUnitTests
+test_add_folder_success	test/server/test_repository.py	/^    def test_add_folder_success(cls, _):$/;"	m	class:RepositoryUnitTests
+test_add_interface	test/server/test_topology_classes.py	/^    def test_add_interface(self):$/;"	m	class:TestPattern
+test_add_interface_failure	test/server/test_topology_classes.py	/^    def test_add_interface_failure(self):$/;"	m	class:PatternUnitTests
+test_add_interface_success	test/server/test_topology_classes.py	/^    def test_add_interface_success(cls):$/;"	m	class:PatternUnitTests
+test_add_neighbor	test/server/test_topology_classes.py	/^    def test_add_neighbor(self):$/;"	m	class:NodeUnitTests
+test_add_neighbor_existing_interface	test/server/test_topology_classes.py	/^    def test_add_neighbor_existing_interface(self):$/;"	m	class:NodeUnitTests
+test_add_neighbors_success	test/server/test_topology_classes.py	/^    def test_add_neighbors_success(self):$/;"	m	class:NodeUnitTests
+test_append	test/actions/test_add_config.py	/^    def test_append(self):$/;"	m	class:SuccessTest
+test_append_server	test/actions/test_copy_file.py	/^    def test_append_server(self):$/;"	m	class:SuccessSrcUrlReplacementTests
+test_application_defaults	test/server/test_app.py	/^    def test_application_defaults(self, m_repository, m_load):$/;"	m	class:TestApp
+test_attr_invalid	test/server/test_config.py	/^    def test_attr_invalid(self):$/;"	m	class:TestAttributes
+test_attr_valid	test/server/test_config.py	/^    def test_attr_valid(self):$/;"	m	class:TestAttributes
+test_attribute	test/client/test_bootstrap.py	/^    def test_attribute(self):$/;"	m	class:BootstrapSuccessTest
+test_attribute_copy	test/client/test_bootstrap.py	/^    def test_attribute_copy(self):$/;"	m	class:BootstrapSuccessTest
+test_bad_file_status	test/actions/test_replace_config.py	/^    def test_bad_file_status(self):$/;"	m	class:FailureTest
+test_bad_request_file_not_found	test/server/test_controller.py	/^    def test_bad_request_file_not_found(self, m_repository):$/;"	m	class:MetaControllerUnitTests
+test_bad_request_io_error	test/server/test_controller.py	/^    def test_bad_request_io_error(self, m_repository):$/;"	m	class:MetaControllerUnitTests
+test_bogus_definition_response	test/client/test_bootstrap.py	/^    def test_bogus_definition_response(self):$/;"	m	class:DefinitionErrorTest
+test_bogus_location	test/client/test_bootstrap.py	/^    def test_bogus_location(self):$/;"	m	class:CheckNodeErrorTest
+test_boolattr_defaults	test/server/test_config.py	/^    def test_boolattr_defaults(self):$/;"	m	class:TestAttributes
+test_boolattr_with_default	test/server/test_config.py	/^    def test_boolattr_with_default(self):$/;"	m	class:TestAttributes
+test_boolattr_with_group	test/server/test_config.py	/^    def test_boolattr_with_group(self):$/;"	m	class:TestAttributes
+test_bootstrap_collection	test/server/test_controller.py	/^    def test_bootstrap_collection(self):$/;"	m	class:RouterUnitTests
+test_bootstrap_config	test/server/test_controller.py	/^    def test_bootstrap_config(self):$/;"	m	class:RouterUnitTests
+test_bootstrap_resource	test/server/test_controller.py	/^    def test_bootstrap_resource(self):$/;"	m	class:RouterUnitTests
+test_call_boolean_false_values_valid	test/server/test_types.py	/^    def test_call_boolean_false_values_valid(self):$/;"	m	class:TestTypes
+test_call_boolean_invalid_values	test/server/test_types.py	/^    def test_call_boolean_invalid_values(self):$/;"	m	class:TestTypes
+test_call_boolean_true_values_valid	test/server/test_types.py	/^    def test_call_boolean_true_values_valid(self):$/;"	m	class:TestTypes
+test_call_integer_defaults_invalid	test/server/test_types.py	/^    def test_call_integer_defaults_invalid(self):$/;"	m	class:TestTypes
+test_call_integer_defaults_valid	test/server/test_types.py	/^    def test_call_integer_defaults_valid(self): #pylint: disable=R0201$/;"	m	class:TestTypes
+test_call_integer_max_value_invalid	test/server/test_types.py	/^    def test_call_integer_max_value_invalid(self):$/;"	m	class:TestTypes
+test_call_integer_max_value_valid	test/server/test_types.py	/^    def test_call_integer_max_value_valid(self):$/;"	m	class:TestTypes
+test_call_integer_min_value_invalid	test/server/test_types.py	/^    def test_call_integer_min_value_invalid(self):$/;"	m	class:TestTypes
+test_call_integer_min_value_valid	test/server/test_types.py	/^    def test_call_integer_min_value_valid(self):$/;"	m	class:TestTypes
+test_call_integer_range_invalid	test/server/test_types.py	/^    def test_call_integer_range_invalid(self):$/;"	m	class:TestTypes
+test_call_integer_range_valid	test/server/test_types.py	/^    def test_call_integer_range_valid(self):$/;"	m	class:TestTypes
+test_call_string_using_defaults_and_bool	test/server/test_types.py	/^    def test_call_string_using_defaults_and_bool(self):$/;"	m	class:TestTypes
+test_call_string_using_defaults_and_int	test/server/test_types.py	/^    def test_call_string_using_defaults_and_int(self):$/;"	m	class:TestTypes
+test_call_string_using_defaults_and_list	test/server/test_types.py	/^    def test_call_string_using_defaults_and_list(self):$/;"	m	class:TestTypes
+test_call_string_using_defaults_and_string	test/server/test_types.py	/^    def test_call_string_using_defaults_and_string(self):$/;"	m	class:TestTypes
+test_call_string_with_choices_invalid	test/server/test_types.py	/^    def test_call_string_with_choices_invalid(self):$/;"	m	class:TestTypes
+test_call_string_with_choices_valid	test/server/test_types.py	/^    def test_call_string_with_choices_valid(self):$/;"	m	class:TestTypes
+test_compile_exact_function	test/server/test_topology_classes.py	/^    def test_compile_exact_function(self):$/;"	m	class:TestInterfacePattern
+test_compile_excludes_function	test/server/test_topology_classes.py	/^    def test_compile_excludes_function(self):$/;"	m	class:TestInterfacePattern
+test_compile_includes_function	test/server/test_topology_classes.py	/^    def test_compile_includes_function(self):$/;"	m	class:TestInterfacePattern
+test_compile_no_function	test/server/test_topology_classes.py	/^    def test_compile_no_function(self):$/;"	m	class:TestInterfacePattern
+test_compile_regex_function	test/server/test_topology_classes.py	/^    def test_compile_regex_function(self):$/;"	m	class:TestInterfacePattern
+test_compile_unknown_function	test/server/test_topology_classes.py	/^    def test_compile_unknown_function(self):$/;"	m	class:TestInterfacePattern
+test_config	test/server/test_config.py	/^    def test_config(self):$/;"	m	class:TestConfig
+test_config_add_attribute_default_value	test/server/test_config.py	/^    def test_config_add_attribute_default_value(self):$/;"	m	class:TestConfig
+test_config_add_attribute_duplicate	test/server/test_config.py	/^    def test_config_add_attribute_duplicate(self):$/;"	m	class:TestConfig
+test_config_add_attribute_group_and_default_value	test/server/test_config.py	/^    def test_config_add_attribute_group_and_default_value(self):$/;"	m	class:TestConfig
+test_config_add_attribute_invalid	test/server/test_config.py	/^    def test_config_add_attribute_invalid(self):$/;"	m	class:TestConfig
+test_config_add_attribute_valid	test/server/test_config.py	/^    def test_config_add_attribute_valid(self):$/;"	m	class:TestConfig
+test_config_add_group	test/server/test_config.py	/^    def test_config_add_group(self):$/;"	m	class:TestConfig
+test_config_defaults	test/server/test_controller.py	/^    def test_config_defaults(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_config_failure	test/server/test_controller.py	/^    def test_config_failure(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_config_runtime	test/server/test_config.py	/^    def test_config_runtime(self):$/;"	m	class:TestConfig
+test_config_runtime_clear_value	test/server/test_config.py	/^    def test_config_runtime_clear_value(self):$/;"	m	class:TestConfig
+test_config_runtime_environ_env_notset	test/server/test_config.py	/^    def test_config_runtime_environ_env_notset(self):$/;"	m	class:TestConfig
+test_config_runtime_environ_env_notset_no_default	test/server/test_config.py	/^    def test_config_runtime_environ_env_notset_no_default(self):$/;"	m	class:TestConfig
+test_config_runtime_environ_env_set	test/server/test_config.py	/^    def test_config_runtime_environ_env_set(self):$/;"	m	class:TestConfig
+test_config_runtime_environ_env_set_no_default	test/server/test_config.py	/^    def test_config_runtime_environ_env_set_no_default(self):$/;"	m	class:TestConfig
+test_config_runtime_set_value	test/server/test_config.py	/^    def test_config_runtime_set_value(self):$/;"	m	class:TestConfig
+test_config_set_value_attribute	test/server/test_config.py	/^    def test_config_set_value_attribute(self):$/;"	m	class:TestConfig
+test_config_success	test/server/test_controller.py	/^    def test_config_success(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_content_type	test/client/test_bootstrap.py	/^    def test_content_type(self):$/;"	m	class:ActionFailureTest
+test_content_type	test/client/test_bootstrap.py	/^    def test_content_type(self):$/;"	m	class:CheckNodeErrorTest
+test_content_type	test/client/test_bootstrap.py	/^    def test_content_type(self):$/;"	m	class:ConfigRequestErrorTest
+test_content_type	test/client/test_bootstrap.py	/^    def test_content_type(self):$/;"	m	class:DefinitionErrorTest
+test_create	test/server/test_controller.py	/^    def test_create(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_create_boolean_defaults	test/server/test_types.py	/^    def test_create_boolean_defaults(self):$/;"	m	class:TestTypes
+test_create_file_failure	test/server/test_repository.py	/^    def test_create_file_failure(self, m_fileobj):$/;"	m	class:RepositoryUnitTests
+test_create_file_success	test/server/test_repository.py	/^    def test_create_file_success(self, _, m_fileobj):$/;"	m	class:RepositoryUnitTests
+test_create_file_with_contents_success	test/server/test_repository.py	/^    def test_create_file_with_contents_success(self, _,$/;"	m	class:RepositoryUnitTests
+test_create_integer_defaults	test/server/test_types.py	/^    def test_create_integer_defaults(self):$/;"	m	class:TestTypes
+test_create_integer_max_value	test/server/test_types.py	/^    def test_create_integer_max_value(self):$/;"	m	class:TestTypes
+test_create_integer_min_value	test/server/test_types.py	/^    def test_create_integer_min_value(self):$/;"	m	class:TestTypes
+test_create_integer_range	test/server/test_types.py	/^    def test_create_integer_range(self):$/;"	m	class:TestTypes
+test_create_interface_pattern	test/server/test_topology_classes.py	/^    def test_create_interface_pattern(self):$/;"	m	class:TestInterfacePattern
+test_create_list_defaults	test/server/test_types.py	/^    def test_create_list_defaults(self):$/;"	m	class:TestTypes
+test_create_missing_identifier	test/server/test_controller.py	/^    def test_create_missing_identifier(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_create_missing_identifier_systemmac	test/server/test_controller.py	/^    def test_create_missing_identifier_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_create_node_failure	test/server/test_topology_classes.py	/^    def test_create_node_failure(cls):$/;"	m	class:NodeUnitTests
+test_create_node_fixup_systemmac_colon	test/server/test_topology.py	/^    def test_create_node_fixup_systemmac_colon(self):$/;"	m	class:NeighbordbUnitTests
+test_create_node_fixup_systemmac_period	test/server/test_topology.py	/^    def test_create_node_fixup_systemmac_period(self):$/;"	m	class:NeighbordbUnitTests
+test_create_node_neighbors_remote_device_missing	test/server/test_topology_classes.py	/^    def test_create_node_neighbors_remote_device_missing(self):$/;"	m	class:NodeUnitTests
+test_create_node_neighbors_remote_interface_missing	test/server/test_topology_classes.py	/^    def test_create_node_neighbors_remote_interface_missing(self):$/;"	m	class:NodeUnitTests
+test_create_node_neighbors_valid	test/server/test_topology_classes.py	/^    def test_create_node_neighbors_valid(self):$/;"	m	class:NodeUnitTests
+test_create_node_success	test/server/test_topology_classes.py	/^    def test_create_node_success(self):$/;"	m	class:NodeUnitTests
+test_create_node_systemmac_only	test/server/test_topology_classes.py	/^    def test_create_node_systemmac_only(self):$/;"	m	class:NodeUnitTests
+test_create_pattern	test/server/test_topology_classes.py	/^    def test_create_pattern(self):$/;"	m	class:PatternUnitTests
+test_create_pattern_kwargs	test/server/test_topology_classes.py	/^    def test_create_pattern_kwargs(self):$/;"	m	class:PatternUnitTests
+test_create_pattern_with_defaults	test/server/test_topology_classes.py	/^    def test_create_pattern_with_defaults(self):$/;"	m	class:TestPattern
+test_create_pattern_with_kwargs	test/server/test_topology_classes.py	/^    def test_create_pattern_with_kwargs(self):$/;"	m	class:TestPattern
+test_create_string_choices	test/server/test_types.py	/^    def test_create_string_choices(self):$/;"	m	class:TestTypes
+test_create_string_choices_integers	test/server/test_types.py	/^    def test_create_string_choices_integers(self):$/;"	m	class:TestTypes
+test_create_string_defaults	test/server/test_types.py	/^    def test_create_string_defaults(self):$/;"	m	class:TestTypes
+test_create_systemmac	test/server/test_controller.py	/^    def test_create_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_definition_missing	test/client/test_bootstrap.py	/^    def test_definition_missing(self):$/;"	m	class:DefinitionErrorTest
+test_delete_file_failure	test/server/test_repository.py	/^    def test_delete_file_failure(self, m_remove):$/;"	m	class:RepositoryUnitTests
+test_delete_file_success	test/server/test_repository.py	/^    def test_delete_file_success(self, m_remove):$/;"	m	class:RepositoryUnitTests
+test_delete_url_collection	test/server/test_wsgiapp.py	/^    def test_delete_url_collection(self):$/;"	m	class:TestWsgiApp
+test_delete_url_missing	test/server/test_wsgiapp.py	/^    def test_delete_url_missing(self):$/;"	m	class:TestWsgiApp
+test_delete_url_resource	test/server/test_wsgiapp.py	/^    def test_delete_url_resource(self):$/;"	m	class:TestWsgiApp
+test_do_resources_success	test/server/test_controller.py	/^    def test_do_resources_success(self):$/;"	m	class:NodesControllerUnitTests
+test_do_substitution_success	test/server/test_controller.py	/^    def test_do_substitution_success(self):$/;"	m	class:NodesControllerUnitTests
+test_do_substitution_with_attributes	test/server/test_controller.py	/^    def test_do_substitution_with_attributes(self):$/;"	m	class:NodesControllerUnitTests
+test_do_substitution_without_actions	test/server/test_controller.py	/^    def test_do_substitution_without_actions(self):$/;"	m	class:NodesControllerUnitTests
+test_do_validation_disabled_success	test/server/test_controller.py	/^    def test_do_validation_disabled_success(self):$/;"	m	class:NodesControllerUnitTests
+test_do_validation_success	test/server/test_controller.py	/^    def test_do_validation_success(self, m_load_pattern):$/;"	m	class:NodesControllerUnitTests
+test_dump_node_success	test/server/test_controller.py	/^    def test_dump_node_success(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_dump_node_success_systemmac	test/server/test_controller.py	/^    def test_dump_node_success_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_dump_node_write_file_failure	test/server/test_controller.py	/^    def test_dump_node_write_file_failure(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_dump_node_write_file_failure_systemmac	test/server/test_controller.py	/^    def test_dump_node_write_file_failure_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_dump_success	test/server/test_serializers.py	/^    def test_dump_success(self):$/;"	m	class:SerializersUnitTest
+test_dumps_success	test/server/test_serializers.py	/^    def test_dumps_success(self):$/;"	m	class:SerializersUnitTest
+test_duplicate_actions	test/client/test_bootstrap.py	/^    def test_duplicate_actions(self):$/;"	m	class:BootstrapSuccessTest
+test_empty_logging	test/server/test_controller.py	/^    def test_empty_logging(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_empty_xmpp	test/server/test_controller.py	/^    def test_empty_xmpp(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_empty_xmpp_logging	test/server/test_controller.py	/^    def test_empty_xmpp_logging(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_erroneous_action_failed	test/client/test_bootstrap.py	/^    def test_erroneous_action_failed(self):$/;"	m	class:ActionFailureTest
+test_erroneous_msg_type	test/client/test_xmpp_bootstrap.py	/^    def test_erroneous_msg_type(self):$/;"	m	class:XmppConfigTest
+test_exactfunction_false	test/server/test_topology_classes.py	/^    def test_exactfunction_false(self):$/;"	m	class:FunctionsUnitTests
+test_exactfunction_true	test/server/test_topology_classes.py	/^    def test_exactfunction_true(self):$/;"	m	class:FunctionsUnitTests
+test_exception_action_failed	test/client/test_bootstrap.py	/^    def test_exception_action_failed(self):$/;"	m	class:ActionFailureTest
+test_excludesfunction_false	test/server/test_topology_classes.py	/^    def test_excludesfunction_false(self):$/;"	m	class:FunctionsUnitTests
+test_excludesfunction_true	test/server/test_topology_classes.py	/^    def test_excludesfunction_true(self):$/;"	m	class:FunctionsUnitTests
+test_exists_missing_file	test/server/test_repository.py	/^    def test_exists_missing_file(self, m_exists):$/;"	m	class:RepositoryUnitTests
+test_exists_success	test/server/test_repository.py	/^    def test_exists_success(self, _):$/;"	m	class:RepositoryUnitTests
+test_failure	test/actions/test_run_bash_script.py	/^    def test_failure(self):$/;"	m	class:SuccessTest
+test_failure	test/actions/test_run_cli_commands.py	/^    def test_failure(self):$/;"	m	class:SuccessTest
+test_files_collection	test/server/test_controller.py	/^    def test_files_collection(self):$/;"	m	class:RouterUnitTests
+test_files_resource	test/server/test_controller.py	/^    def test_files_resource(self):$/;"	m	class:RouterUnitTests
+test_full	test/client/test_xmpp_bootstrap.py	/^    def test_full(self):$/;"	m	class:XmppConfigTest
+test_get_action_missing	test/server/test_controller.py	/^    def test_get_action_missing(self, m_repository):$/;"	m	class:ActionsControllerIntegrationTests
+test_get_action_success	test/server/test_controller.py	/^    def test_get_action_success(self, m_repository):$/;"	m	class:ActionsControllerIntegrationTests
+test_get_attributes_missing	test/server/test_controller.py	/^    def test_get_attributes_missing(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_get_attributes_missing_systemmac	test/server/test_controller.py	/^    def test_get_attributes_missing_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_get_attributes_success	test/server/test_controller.py	/^    def test_get_attributes_success(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_get_bootstrap_config_defaults	test/server/test_controller.py	/^    def test_get_bootstrap_config_defaults(self):$/;"	m	class:BootstrapUnitTests
+test_get_bootstrap_config_success	test/server/test_controller.py	/^    def test_get_bootstrap_config_success(self):$/;"	m	class:BootstrapUnitTests
+test_get_bootstrap_inaccessible	test/server/test_controller.py	/^    def test_get_bootstrap_inaccessible(self):$/;"	m	class:BootstrapUnitTests
+test_get_bootstrap_misconfigured	test/server/test_controller.py	/^    def test_get_bootstrap_misconfigured(self, m_substitute):$/;"	m	class:BootstrapUnitTests
+test_get_bootstrap_missing	test/server/test_controller.py	/^    def test_get_bootstrap_missing(self):$/;"	m	class:BootstrapUnitTests
+test_get_bootstrap_success	test/server/test_controller.py	/^    def test_get_bootstrap_success(self, m_substitute):$/;"	m	class:BootstrapUnitTests
+test_get_definition_success	test/server/test_controller.py	/^    def test_get_definition_success(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_get_definition_w_attributes_no_substitution	test/server/test_controller.py	/^    def test_get_definition_w_attributes_no_substitution(self, m_load_pattern,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_definition_w_startuo_config	test/server/test_controller.py	/^    def test_get_definition_w_startuo_config(self, m_load_pattern,$/;"	m	class:DefinitionStartupConfigTests
+test_get_definition_w_validation_failure	test/server/test_controller.py	/^    def test_get_definition_w_validation_failure(self, m_load_pattern,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_definition_w_validation_success	test/server/test_controller.py	/^    def test_get_definition_w_validation_success(self, m_load_pattern,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_definition_wo_validation	test/server/test_controller.py	/^    def test_get_definition_wo_validation(self, m_repository):$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_file_failure	test/server/test_repository.py	/^    def test_get_file_failure(self, m_fileobj, m_exists):$/;"	m	class:RepositoryUnitTests
+test_get_file_success	test/server/test_controller.py	/^    def test_get_file_success(self, m_repository):$/;"	m	class:FilesControllerIntegrationTests
+test_get_file_success	test/server/test_repository.py	/^    def test_get_file_success(self, m_fileobj, _):$/;"	m	class:RepositoryUnitTests
+test_get_fsm_missing_node	test/server/test_controller.py	/^    def test_get_fsm_missing_node(self, m_repository):$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_missing_file	test/server/test_controller.py	/^    def test_get_missing_file(self, m_repository):$/;"	m	class:FilesControllerIntegrationTests
+test_get_startup_config_success	test/server/test_controller.py	/^    def test_get_startup_config_success(self, m_replace_config_action):$/;"	m	class:NodesControllerUnitTests
+test_get_startup_config_success_no_definition	test/server/test_controller.py	/^    def test_get_startup_config_success_no_definition(self,$/;"	m	class:NodesControllerUnitTests
+test_get_startup_config_w_validation_failure	test/server/test_controller.py	/^    def test_get_startup_config_w_validation_failure(self, m_load_pattern,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_startup_config_w_validation_success	test/server/test_controller.py	/^    def test_get_startup_config_w_validation_success(self,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_startup_config_wo_validation	test/server/test_controller.py	/^    def test_get_startup_config_wo_validation(self, m_load_pattern,$/;"	m	class:NodesControllerGetFsmIntegrationTests
+test_get_url_collection	test/server/test_wsgiapp.py	/^    def test_get_url_collection(self):$/;"	m	class:TestWsgiApp
+test_get_url_missing	test/server/test_wsgiapp.py	/^    def test_get_url_missing(self):$/;"	m	class:TestWsgiApp
+test_get_url_resource	test/server/test_wsgiapp.py	/^    def test_get_url_resource(self):$/;"	m	class:TestWsgiApp
+test_group	test/server/test_config.py	/^    def test_group(self):$/;"	m	class:TestGroup
+test_group_add_attribute	test/server/test_config.py	/^    def test_group_add_attribute(self):$/;"	m	class:TestGroup
+test_group_get_attr	test/server/test_config.py	/^    def test_group_get_attr(self):$/;"	m	class:TestGroup
+test_includesfunction_false	test/server/test_topology_classes.py	/^    def test_includesfunction_false(self):$/;"	m	class:FunctionsUnitTests
+test_includesfunction_true	test/server/test_topology_classes.py	/^    def test_includesfunction_true(self):$/;"	m	class:FunctionsUnitTests
+test_index_bootstrap_inaccessible_failure	test/server/test_controller.py	/^    def test_index_bootstrap_inaccessible_failure(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_index_bootstrap_not_found_failure	test/server/test_controller.py	/^    def test_index_bootstrap_not_found_failure(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_index_success	test/server/test_controller.py	/^    def test_index_success(self, m_substitute, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_intattr_defaults	test/server/test_config.py	/^    def test_intattr_defaults(self):$/;"	m	class:TestAttributes
+test_intattr_with_default	test/server/test_config.py	/^    def test_intattr_with_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_group	test/server/test_config.py	/^    def test_intattr_with_group(self):$/;"	m	class:TestAttributes
+test_intattr_with_max_invalid_default	test/server/test_config.py	/^    def test_intattr_with_max_invalid_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_max_valid_default	test/server/test_config.py	/^    def test_intattr_with_max_valid_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_max_value	test/server/test_config.py	/^    def test_intattr_with_max_value(self):$/;"	m	class:TestAttributes
+test_intattr_with_min_and_max_value	test/server/test_config.py	/^    def test_intattr_with_min_and_max_value(self):$/;"	m	class:TestAttributes
+test_intattr_with_min_invalid_default	test/server/test_config.py	/^    def test_intattr_with_min_invalid_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_min_valid_default	test/server/test_config.py	/^    def test_intattr_with_min_valid_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_min_value	test/server/test_config.py	/^    def test_intattr_with_min_value(self):$/;"	m	class:TestAttributes
+test_intattr_with_range_invalid_default	test/server/test_config.py	/^    def test_intattr_with_range_invalid_default(self):$/;"	m	class:TestAttributes
+test_intattr_with_range_valid_default	test/server/test_config.py	/^    def test_intattr_with_range_valid_default(self):$/;"	m	class:TestAttributes
+test_invalid_substitution_mode	test/actions/test_add_config.py	/^    def test_invalid_substitution_mode(self):$/;"	m	class:FailureTest
+test_keep_backup	test/actions/test_copy_file.py	/^    def test_keep_backup(self):$/;"	m	class:SuccessNonPersistentTest
+test_keep_backup	test/actions/test_copy_file.py	/^    def test_keep_backup(self):$/;"	m	class:SuccessPersistentTest
+test_keep_original	test/actions/test_copy_file.py	/^    def test_keep_original(self):$/;"	m	class:SuccessNonPersistentTest
+test_keep_original	test/actions/test_copy_file.py	/^    def test_keep_original(self):$/;"	m	class:SuccessPersistentTest
+test_load_config_file	test/server/test_config.py	/^    def test_load_config_file(self):$/;"	m	class:TestConfig
+test_load_file	test/server/test_topology.py	/^    def test_load_file(self, m_load):$/;"	m	class:NeighbordbUnitTests
+test_load_file_failure	test/server/test_topology.py	/^    def test_load_file_failure(self, m_load, _):$/;"	m	class:NeighbordbUnitTests
+test_load_neighbordb	test/server/test_topology.py	/^    def test_load_neighbordb(self, _, m_load):$/;"	m	class:NeighbordbUnitTests
+test_load_neighbordb_no_variables	test/server/test_topology.py	/^    def test_load_neighbordb_no_variables(self, m_load):$/;"	m	class:NeighbordbUnitTests
+test_load_pattern_minimal	test/server/test_topology.py	/^    def test_load_pattern_minimal(self):$/;"	m	class:NeighbordbUnitTests
+test_load_pattern_with_interfaces	test/server/test_topology.py	/^    def test_load_pattern_with_interfaces(self):$/;"	m	class:NeighbordbUnitTests
+test_load_success	test/server/test_serializers.py	/^    def test_load_success(self):$/;"	m	class:SerializersUnitTest
+test_loads_success	test/server/test_serializers.py	/^    def test_loads_success(self):$/;"	m	class:SerializersUnitTest
+test_match_failure	test/server/test_topology_classes.py	/^    def test_match_failure(self):$/;"	m	class:TestInterfacePattern
+test_match_success	test/server/test_topology_classes.py	/^    def test_match_success(self):$/;"	m	class:TestInterfacePattern
+test_meta_action	test/server/test_controller.py	/^    def test_meta_action(self):$/;"	m	class:RouterUnitTests
+test_meta_files	test/server/test_controller.py	/^    def test_meta_files(self):$/;"	m	class:RouterUnitTests
+test_meta_files_long	test/server/test_controller.py	/^    def test_meta_files_long(self):$/;"	m	class:RouterUnitTests
+test_missing_dst_url	test/actions/test_copy_file.py	/^    def test_missing_dst_url(self):$/;"	m	class:FailureTest
+test_missing_main_action_failed	test/client/test_bootstrap.py	/^    def test_missing_main_action_failed(self):$/;"	m	class:ActionFailureTest
+test_missing_receivers	test/actions/test_send_email.py	/^    def test_missing_receivers(self):$/;"	m	class:FailureTest
+test_missing_required_attributes	test/server/test_controller.py	/^    def test_missing_required_attributes(self, m_repository):$/;"	m	class:NodesControllerPostFsmIntegrationTests
+test_missing_sender	test/actions/test_send_email.py	/^    def test_missing_sender(self):$/;"	m	class:FailureTest
+test_missing_smarthost	test/actions/test_send_email.py	/^    def test_missing_smarthost(self):$/;"	m	class:FailureTest
+test_missing_src_url	test/actions/test_copy_file.py	/^    def test_missing_src_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_add_config.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_install_cli_plugin.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_install_extension.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_install_image.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_replace_config.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_run_bash_script.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_url	test/actions/test_run_cli_commands.py	/^    def test_missing_url(self):$/;"	m	class:FailureTest
+test_missing_version	test/actions/test_install_image.py	/^    def test_missing_version(self):$/;"	m	class:FailureTest
+test_msg_type_debug	test/client/test_xmpp_bootstrap.py	/^    def test_msg_type_debug(self):$/;"	m	class:XmppConfigTest
+test_msg_type_info	test/client/test_xmpp_bootstrap.py	/^    def test_msg_type_info(self):$/;"	m	class:XmppConfigTest
+test_multi_lines	test/actions/test_add_config.py	/^    def test_multi_lines(self):$/;"	m	class:SuccessTest
+test_multiple_actions	test/client/test_bootstrap.py	/^    def test_multiple_actions(self):$/;"	m	class:BootstrapSuccessTest
+test_neighbordb_path	test/server/test_topology.py	/^    def test_neighbordb_path(self):$/;"	m	class:NeighbordbUnitTests
+test_no_config	test/server/test_controller.py	/^    def test_no_config(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_no_logging	test/server/test_controller.py	/^    def test_no_logging(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_no_op	test/actions/test_install_image.py	/^    def test_no_op(self):$/;"	m	class:SuccessTest
+test_no_xmpp	test/server/test_controller.py	/^    def test_no_xmpp(self, m_repository):$/;"	m	class:BootstrapConfigUnitTests
+test_node_exists	test/server/test_controller.py	/^    def test_node_exists(self, m_repository):$/;"	m	class:NodesControllerPostFsmIntegrationTests
+test_node_exists	test/server/test_controller.py	/^    def test_node_exists(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_definition_exists	test/server/test_controller.py	/^    def test_node_exists_definition_exists(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_definition_exists_systemmac	test/server/test_controller.py	/^    def test_node_exists_definition_exists_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_failure	test/server/test_controller.py	/^    def test_node_exists_failure(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_failure_systemmac	test/server/test_controller.py	/^    def test_node_exists_failure_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_startup_config_exists	test/server/test_controller.py	/^    def test_node_exists_startup_config_exists(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_startup_config_exists_systemmac	test/server/test_controller.py	/^    def test_node_exists_startup_config_exists_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_sysmac_folder_exists	test/server/test_controller.py	/^    def test_node_exists_sysmac_folder_exists(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_sysmac_folder_exists_systemmac	test/server/test_controller.py	/^    def test_node_exists_sysmac_folder_exists_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_exists_systemmac	test/server/test_controller.py	/^    def test_node_exists_systemmac(self, m_repository):$/;"	m	class:NodesControllerUnitTests
+test_node_not_found	test/client/test_bootstrap.py	/^    def test_node_not_found(self):$/;"	m	class:CheckNodeErrorTest
+test_nodes_collection	test/server/test_controller.py	/^    def test_nodes_collection(self):$/;"	m	class:RouterUnitTests
+test_nodes_resource	test/server/test_controller.py	/^    def test_nodes_resource(self):$/;"	m	class:RouterUnitTests
+test_nodes_resource_get_config	test/server/test_controller.py	/^    def test_nodes_resource_get_config(self):$/;"	m	class:RouterUnitTests
+test_partial	test/client/test_xmpp_bootstrap.py	/^    def test_partial(self):$/;"	m	class:XmppConfigTest
+test_post_config	test/server/test_controller.py	/^    def test_post_config(self, m_repository):$/;"	m	class:NodesControllerPostFsmIntegrationTests
+test_post_config_failure	test/server/test_controller.py	/^    def test_post_config_failure(self):$/;"	m	class:NodesControllerUnitTests
+test_post_config_key_error_failure	test/server/test_controller.py	/^    def test_post_config_key_error_failure(self):$/;"	m	class:NodesControllerUnitTests
+test_post_config_key_error_failure_systemmac	test/server/test_controller.py	/^    def test_post_config_key_error_failure_systemmac(self):$/;"	m	class:NodesControllerUnitTests
+test_post_config_success	test/server/test_controller.py	/^    def test_post_config_success(self):$/;"	m	class:NodesControllerUnitTests
+test_post_config_success_systemmac	test/server/test_controller.py	/^    def test_post_config_success_systemmac(self):$/;"	m	class:NodesControllerUnitTests
+test_post_node_failure_no_matches	test/server/test_controller.py	/^    def test_post_node_failure_no_matches(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_node_failure_no_matches_systemac	test/server/test_controller.py	/^    def test_post_node_failure_no_matches_systemac(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_node_no_definition_in_pattern	test/server/test_controller.py	/^    def test_post_node_no_definition_in_pattern(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_node_no_definition_in_pattern_systemmac	test/server/test_controller.py	/^    def test_post_node_no_definition_in_pattern_systemmac(self,$/;"	m	class:NodesControllerUnitTests
+test_post_node_success	test/server/test_controller.py	/^    def test_post_node_success(self, m_load_neighbordb, m_repository):$/;"	m	class:NodesControllerPostFsmIntegrationTests
+test_post_node_success_multiple_matches	test/server/test_controller.py	/^    def test_post_node_success_multiple_matches(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_node_success_multiple_matches_systemmac	test/server/test_controller.py	/^    def test_post_node_success_multiple_matches_systemmac(self,$/;"	m	class:NodesControllerUnitTests
+test_post_node_success_single_match	test/server/test_controller.py	/^    def test_post_node_success_single_match(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_node_success_single_match_systemmac	test/server/test_controller.py	/^    def test_post_node_success_single_match_systemmac(self, m_load_neighbordb):$/;"	m	class:NodesControllerUnitTests
+test_post_url_collection	test/server/test_wsgiapp.py	/^    def test_post_url_collection(self):$/;"	m	class:TestWsgiApp
+test_post_url_missing	test/server/test_wsgiapp.py	/^    def test_post_url_missing(self):$/;"	m	class:TestWsgiApp
+test_post_url_resource	test/server/test_wsgiapp.py	/^    def test_post_url_resource(self):$/;"	m	class:TestWsgiApp
+test_put_config_success	test/server/test_controller.py	/^    def test_put_config_success(self, m_is_file):$/;"	m	class:NodesControllerUnitTests
+test_put_url_collection	test/server/test_wsgiapp.py	/^    def test_put_url_collection(self):$/;"	m	class:TestWsgiApp
+test_put_url_missing	test/server/test_wsgiapp.py	/^    def test_put_url_missing(self):$/;"	m	class:TestWsgiApp
+test_put_url_resource	test/server/test_wsgiapp.py	/^    def test_put_url_resource(self):$/;"	m	class:TestWsgiApp
+test_read_failure	test/server/test_repository.py	/^    def test_read_failure(self, m_load):$/;"	m	class:FileObjectUnitTests
+test_read_success	test/server/test_repository.py	/^    def test_read_success(self, m_load):$/;"	m	class:FileObjectUnitTests
+test_regexfunction_false	test/server/test_topology_classes.py	/^    def test_regexfunction_false(self):$/;"	m	class:FunctionsUnitTests
+test_regexfunction_true	test/server/test_topology_classes.py	/^    def test_regexfunction_true(self):$/;"	m	class:FunctionsUnitTests
+test_replace	test/actions/test_copy_file.py	/^    def test_replace(self):$/;"	m	class:SuccessNonPersistentTest
+test_replace	test/actions/test_copy_file.py	/^    def test_replace(self):$/;"	m	class:SuccessPersistentTest
+test_replace_config_action	test/server/test_topology.py	/^    def test_replace_config_action(self):$/;"	m	class:NeighbordbUnitTests
+test_return_code_action_failed	test/client/test_bootstrap.py	/^    def test_return_code_action_failed(self):$/;"	m	class:ActionFailureTest
+test_serialize_success	test/server/test_topology_classes.py	/^    def test_serialize_success(self):$/;"	m	class:NodeUnitTests
+test_set_location_failure	test/server/test_controller.py	/^    def test_set_location_failure(self):$/;"	m	class:NodesControllerUnitTests
+test_set_location_success	test/server/test_controller.py	/^    def test_set_location_success(self):$/;"	m	class:NodesControllerUnitTests
+test_status	test/client/test_bootstrap.py	/^    def test_status(self):$/;"	m	class:ActionFailureTest
+test_status	test/client/test_bootstrap.py	/^    def test_status(self):$/;"	m	class:CheckNodeErrorTest
+test_status	test/client/test_bootstrap.py	/^    def test_status(self):$/;"	m	class:ConfigRequestErrorTest
+test_status	test/client/test_bootstrap.py	/^    def test_status(self):$/;"	m	class:DefinitionErrorTest
+test_status_content_type	test/client/test_bootstrap.py	/^    def test_status_content_type(self):$/;"	m	class:ActionFailureTest
+test_status_content_type	test/client/test_bootstrap.py	/^    def test_status_content_type(self):$/;"	m	class:CheckNodeErrorTest
+test_status_content_type	test/client/test_bootstrap.py	/^    def test_status_content_type(self):$/;"	m	class:ConfigRequestErrorTest
+test_status_content_type	test/client/test_bootstrap.py	/^    def test_status_content_type(self):$/;"	m	class:DefinitionErrorTest
+test_strattr_defaults	test/server/test_config.py	/^    def test_strattr_defaults(self):$/;"	m	class:TestAttributes
+test_strattr_with_choices	test/server/test_config.py	/^    def test_strattr_with_choices(self):$/;"	m	class:TestAttributes
+test_strattr_with_choices_default_group	test/server/test_config.py	/^    def test_strattr_with_choices_default_group(self):$/;"	m	class:TestAttributes
+test_strattr_with_choices_default_invalid	test/server/test_config.py	/^    def test_strattr_with_choices_default_invalid(self):$/;"	m	class:TestAttributes
+test_strattr_with_choices_default_valid	test/server/test_config.py	/^    def test_strattr_with_choices_default_valid(self):$/;"	m	class:TestAttributes
+test_strattr_with_default	test/server/test_config.py	/^    def test_strattr_with_default(self):$/;"	m	class:TestAttributes
+test_strattr_with_group	test/server/test_config.py	/^    def test_strattr_with_group(self):$/;"	m	class:TestAttributes
+test_stress	test/server/test_serializers.py	/^    def test_stress(cls):$/;"	m	class:SerializersUnitTest
+test_success	test/actions/test_add_config.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_copy_file.py	/^    def test_success(self):$/;"	m	class:SuccessNonPersistentTest
+test_success	test/actions/test_copy_file.py	/^    def test_success(self):$/;"	m	class:SuccessPersistentTest
+test_success	test/actions/test_copy_file.py	/^    def test_success(self):$/;"	m	class:SuccessSrcUrlReplacementTests
+test_success	test/actions/test_install_cli_plugin.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_install_extension.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_install_image.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_replace_config.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_run_bash_script.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_run_cli_commands.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/actions/test_send_email.py	/^    def test_success(self):$/;"	m	class:SuccessTest
+test_success	test/client/test_bootstrap.py	/^    def test_success(self):$/;"	m	class:BootstrapSuccessTest
+test_success	test/client/test_bootstrap_cleanup.py	/^    def test_success(self):$/;"	m	class:BootstrapCleanupTest
+test_success	test/server/test_controller.py	/^    def test_success(self, m_repository):$/;"	m	class:MetaControllerUnitTests
+test_success_url	test/actions/test_add_config.py	/^    def test_success_url(self):$/;"	m	class:SuccessTest
+test_topology_check	test/client/test_bootstrap.py	/^    def test_topology_check(self):$/;"	m	class:DefinitionErrorTest
+test_url_failure	test/actions/test_add_config.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_copy_file.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_install_cli_plugin.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_install_extension.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_install_image.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_replace_config.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_run_bash_script.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_failure	test/actions/test_run_cli_commands.py	/^    def test_url_failure(self):$/;"	m	class:FailureTest
+test_url_success	test/actions/test_install_extension.py	/^    def test_url_success(self):$/;"	m	class:SuccessTest
+test_url_success	test/actions/test_replace_config.py	/^    def test_url_success(self):$/;"	m	class:SuccessTest
+test_variable_missing_failure	test/actions/test_add_config.py	/^    def test_variable_missing_failure(self):$/;"	m	class:FailureTest
+test_variable_missing_failure	test/actions/test_run_bash_script.py	/^    def test_variable_missing_failure(self):$/;"	m	class:FailureTest
+test_variable_missing_failure	test/actions/test_run_cli_commands.py	/^    def test_variable_missing_failure(self):$/;"	m	class:FailureTest
+test_variables	test/actions/test_run_bash_script.py	/^    def test_variables(self):$/;"	m	class:SuccessTest
+test_variables	test/actions/test_run_cli_commands.py	/^    def test_variables(self):$/;"	m	class:SuccessTest
+test_variables_failure	test/actions/test_add_config.py	/^    def test_variables_failure(self):$/;"	m	class:FailureTest
+test_variables_failure	test/actions/test_run_bash_script.py	/^    def test_variables_failure(self):$/;"	m	class:FailureTest
+test_variables_failure	test/actions/test_run_cli_commands.py	/^    def test_variables_failure(self):$/;"	m	class:FailureTest
+test_variables_loose	test/actions/test_add_config.py	/^    def test_variables_loose(self):$/;"	m	class:SuccessTest
+test_variables_strict	test/actions/test_add_config.py	/^    def test_variables_strict(self):$/;"	m	class:SuccessTest
+test_write_failure	test/server/test_repository.py	/^    def test_write_failure(self, m_dump):$/;"	m	class:FileObjectUnitTests
+test_write_success	test/server/test_repository.py	/^    def test_write_success(cls, _):$/;"	m	class:FileObjectUnitTests
+test_wrong_overwrite_value	test/actions/test_copy_file.py	/^    def test_wrong_overwrite_value(self):$/;"	m	class:FailureTest
+test_wrong_sig_action_failed	test/client/test_bootstrap.py	/^    def test_wrong_sig_action_failed(self):$/;"	m	class:ActionFailureTest
+test_ztps_path_success	test/actions/test_install_cli_plugin.py	/^    def test_ztps_path_success(self):$/;"	m	class:SuccessTest
+texinfo_documents	docs/conf.py	/^texinfo_documents = [$/;"	v
+the	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+theme	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+thread	test/client/client_test_lib.py	/^import thread$/;"	i
+threading	ztpserver/serializers.py	/^import threading$/;"	i
+time	test/client/client_test_lib.py	/^import time$/;"	i
+today_fmt	docs/conf.py	/^today_fmt = '%B %d, %Y'$/;"	v
+toplogy_check_failure	test/client/client_test_lib.py	/^    def toplogy_check_failure(self):$/;"	m	class:Bootstrap
+topology	test/server/test_topology.py	/^import ztpserver.topology$/;"	i
+traceback	test/server/test_ndb.py	/^import traceback$/;"	i
+types	test/server/test_types.py	/^import ztpserver.types$/;"	i
+types	ztpserver/config.py	/^import ztpserver.types$/;"	i
+unexpected_response_failure	test/client/client_test_lib.py	/^    def unexpected_response_failure(self):$/;"	m	class:Bootstrap
+unittest	test/actions/test_add_config.py	/^import unittest$/;"	i
+unittest	test/actions/test_copy_file.py	/^import unittest$/;"	i
+unittest	test/actions/test_install_cli_plugin.py	/^import unittest$/;"	i
+unittest	test/actions/test_install_extension.py	/^import unittest$/;"	i
+unittest	test/actions/test_install_image.py	/^import unittest$/;"	i
+unittest	test/actions/test_replace_config.py	/^import unittest$/;"	i
+unittest	test/actions/test_run_bash_script.py	/^import unittest$/;"	i
+unittest	test/actions/test_run_cli_commands.py	/^import unittest$/;"	i
+unittest	test/actions/test_send_email.py	/^import unittest$/;"	i
+unittest	test/client/client_test_lib.py	/^import unittest$/;"	i
+unittest	test/client/test_bootstrap.py	/^import unittest$/;"	i
+unittest	test/client/test_bootstrap_cleanup.py	/^import unittest$/;"	i
+unittest	test/client/test_xmpp_bootstrap.py	/^import unittest$/;"	i
+unittest	test/server/test_app.py	/^import unittest$/;"	i
+unittest	test/server/test_config.py	/^import unittest$/;"	i
+unittest	test/server/test_controller.py	/^import unittest$/;"	i
+unittest	test/server/test_ndb.py	/^import unittest$/;"	i
+unittest	test/server/test_repository.py	/^import unittest$/;"	i
+unittest	test/server/test_serializers.py	/^import unittest$/;"	i
+unittest	test/server/test_topology.py	/^import unittest$/;"	i
+unittest	test/server/test_topology_classes.py	/^import unittest$/;"	i
+unittest	test/server/test_types.py	/^import unittest$/;"	i
+unittest	test/server/test_wsgiapp.py	/^import unittest$/;"	i
+update	ztpserver/wsgiapp.py	/^    def update(self, request, resource, **kwargs):$/;"	m	class:WSGIController
+url	setup.py	/^    url='https:\/\/github.com\/arista-eosplus\/ztpserver',$/;"	v
+url_path_join	ztpserver/topology.py	/^from ztpserver.utils import expand_range, parse_interface, url_path_join$/;"	i
+url_path_join	ztpserver/utils.py	/^def url_path_join(*parts):$/;"	f
+urlsplit	ztpserver/utils.py	/^from urlparse import urlsplit, urlunsplit$/;"	i
+urlunsplit	ztpserver/utils.py	/^from urlparse import urlsplit, urlunsplit$/;"	i
+validate	ztpserver/validators.py	/^    def validate(self, data=None):$/;"	m	class:Validator
+validate_attributes	ztpserver/validators.py	/^    def validate_attributes(self):$/;"	m	class:PatternValidator
+validate_definition	ztpserver/validators.py	/^    def validate_definition(self):$/;"	m	class:PatternValidator
+validate_definitions	ztpserver/app.py	/^def validate_definitions():$/;"	f
+validate_interface_pattern	ztpserver/validators.py	/^    def validate_interface_pattern(self):$/;"	m	class:InterfacePatternValidator
+validate_interfaces	ztpserver/validators.py	/^    def validate_interfaces(self):$/;"	m	class:PatternValidator
+validate_name	ztpserver/validators.py	/^    def validate_name(self):$/;"	m	class:PatternValidator
+validate_neighbordb	ztpserver/app.py	/^def validate_neighbordb():$/;"	f
+validate_neighbordb	ztpserver/topology.py	/^from ztpserver.validators import validate_neighbordb, validate_pattern$/;"	i
+validate_neighbordb	ztpserver/validators.py	/^def validate_neighbordb(contents, node_id):$/;"	f
+validate_node	ztpserver/validators.py	/^    def validate_node(self):$/;"	m	class:PatternValidator
+validate_nodes	ztpserver/app.py	/^def validate_nodes():$/;"	f
+validate_pattern	ztpserver/topology.py	/^from ztpserver.validators import validate_neighbordb, validate_pattern$/;"	i
+validate_pattern	ztpserver/validators.py	/^def validate_pattern(contents, node_id):$/;"	f
+validate_patterns	ztpserver/validators.py	/^    def validate_patterns(self):$/;"	m	class:NeighbordbValidator
+validate_resources	ztpserver/app.py	/^def validate_resources(raiseException=False):$/;"	f
+validate_variables	ztpserver/validators.py	/^    def validate_variables(self):$/;"	m	class:NeighbordbValidator
+validate_variables	ztpserver/validators.py	/^    def validate_variables(self):$/;"	m	class:PatternValidator
+variable_substitution	ztpserver/topology.py	/^    def variable_substitution(self):$/;"	m	class:Pattern
+vers	docs/conf.py	/^vers =  p.search(release)$/;"	v
+version	docs/conf.py	/^version = vers.group(2)$/;"	v
+version	setup.py	/^    version=version,$/;"	v
+version	setup.py	/^version = None$/;"	v
+version	setup.py	/^version = open('VERSION').read().split()[0].strip()$/;"	v
+we	docs/conf.py	/^if not on_rtd:  # only import and set the theme if we're building docs locally$/;"	i
+webob	test/server/test_wsgiapp.py	/^import webob$/;"	i
+webob	ztpserver/wsgiapp.py	/^import webob$/;"	i
+webob	ztpserver/wsgiapp.py	/^import webob.dec$/;"	i
+webob	ztpserver/wsgiapp.py	/^import webob.exc$/;"	i
+write	ztpserver/repository.py	/^    def write(self, contents, content_type=None):$/;"	m	class:FileObject
+write_file	test/server/server_test_lib.py	/^def write_file(contents, filename=None, mode='w'):$/;"	f
+write_file	test/server/test_controller.py	/^from server_test_lib import mock_match, ztp_headers, write_file$/;"	i
+wrong_signature_action	test/client/client_test_lib.py	/^def wrong_signature_action():$/;"	f
+wrong_signature_action	test/client/test_bootstrap.py	/^from client_test_lib import wrong_signature_action, exception_action$/;"	i
+xmpp_sanity_test	test/client/test_xmpp_bootstrap.py	/^    def xmpp_sanity_test(self, xmpp):$/;"	m	class:XmppConfigTest
+yaml	test/server/server_test_lib.py	/^import yaml$/;"	i
+yaml	test/server/test_ndb.py	/^import yaml$/;"	i
+yaml	test/server/test_topology.py	/^import yaml$/;"	i
+yaml	ztpserver/serializers.py	/^import yaml$/;"	i
+ztp_headers	test/server/server_test_lib.py	/^def ztp_headers():$/;"	f
+ztp_headers	test/server/test_controller.py	/^from server_test_lib import mock_match, ztp_headers, write_file$/;"	i
+ztps	test/client/client_test_lib.py	/^ztps = None    #pylint: disable=C0103$/;"	v
+ztpserver	bin/ztps	/^import ztpserver.app$/;"	i
+ztpserver	test/server/test_app.py	/^import ztpserver.app$/;"	i
+ztpserver	test/server/test_config.py	/^import ztpserver.config$/;"	i
+ztpserver	test/server/test_controller.py	/^import ztpserver.config$/;"	i
+ztpserver	test/server/test_controller.py	/^import ztpserver.constants as constants$/;"	i
+ztpserver	test/server/test_controller.py	/^import ztpserver.controller$/;"	i
+ztpserver	test/server/test_controller.py	/^import ztpserver.repository$/;"	i
+ztpserver	test/server/test_serializers.py	/^import ztpserver.serializers as serializers$/;"	i
+ztpserver	test/server/test_topology.py	/^import ztpserver.serializers$/;"	i
+ztpserver	test/server/test_topology.py	/^import ztpserver.topology$/;"	i
+ztpserver	test/server/test_types.py	/^import ztpserver.types$/;"	i
+ztpserver	ztpserver/config.py	/^import ztpserver.types$/;"	i
+ztpserver	ztpserver/repository.py	/^import ztpserver.serializers$/;"	i
