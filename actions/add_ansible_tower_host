@@ -26,9 +26,6 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#pylint: disable=W0703,W0402,E1103
-
 import requests
 import json
 
@@ -63,6 +60,7 @@ def main(attributes):
               username: ansible
               passwd: eosadmin
               inventory: 1
+              group: 10
               hostname: allocate('hostnames')
               description: 'My awesome tor'
               contact_addr: allocate('mgmt_ip_pool')
@@ -75,6 +73,7 @@ def main(attributes):
     username = attributes.get('username')
     passwd = attributes.get('passwd')
     inventory = attributes.get('inventory')
+    group = attributes.get('group')
     enabled = attributes.get('enabled', True)
     description = attributes.get('description')
     hostname = attributes.get('hostname')
@@ -99,18 +98,36 @@ def main(attributes):
                         'HTTP status code %s' %
                         (username, auth_url, auth_response.status_code))
 
-    hosts_url = '%s/hosts/' % url
+    variables = dict(
+        host_addr=contact_addr.split('/')[0],
+        serialnumber=node.details()['serialnumber'],
+        systemmac=node.details()['systemmac'],
+        model=node.details()['model']
+    )
 
-    data = dict()
-    data['name'] = hostname if hostname else contact_addr
-    data['description'] = description
-    data['inventory'] = inventory
-    data['enabled'] = enabled
-    data['variables'] = get_node_variables(node)
+    if group:
+        hosts_url = '%s/groups/%s/hosts/' % (url, group)
 
-    headers = {'Authorization': 'token %s' % token}
+        data = dict()
+        data['name'] = hostname if hostname else contact_addr
+        data['description'] = description
+        data['inventory'] = inventory
+        data['enabled'] = enabled
+        data['variables'] = json.dumps(variables)
 
-    #print headers
-    #response = requests.get(URL, headers=headers)
-    response = requests.post(hosts_url, headers=headers, data=data)
-    print response.status_code
+        headers = {'Authorization': 'token %s' % token}
+        response = requests.post(hosts_url, headers=headers, data=data)
+        print response.status_code
+    else:
+        hosts_url = '%s/hosts/' % url
+
+        data = dict()
+        data['name'] = hostname if hostname else contact_addr
+        data['description'] = description
+        data['inventory'] = inventory
+        data['enabled'] = enabled
+        data['variables'] = json.dumps(variables)
+
+        headers = {'Authorization': 'token %s' % token}
+        response = requests.post(hosts_url, headers=headers, data=data)
+        print response.status_code
