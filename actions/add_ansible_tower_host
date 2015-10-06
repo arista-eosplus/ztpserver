@@ -31,15 +31,11 @@
 
 import requests
 import json
-import yaml
 
 
 def get_node_variables(node):
 
-    node_info = node.details()
-    data = json.loads(node_info)
-    yml = yaml.safe_dump(data)
-    return yml
+    return = node.details()
 
 
 def main(attributes):
@@ -65,7 +61,7 @@ def main(attributes):
             attributes:
               tower_url: 'https://tower/api/v1/'
               username: ansible
-              password: eosadmin
+              passwd: eosadmin
               inventory: 1
               hostname: allocate('hostnames')
               description: 'My awesome tor'
