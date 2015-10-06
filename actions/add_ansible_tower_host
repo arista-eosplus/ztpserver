@@ -35,7 +35,7 @@ import json
 
 def get_node_variables(node):
 
-    return = node.details()
+    return node.details()
 
 
 def main(attributes):
