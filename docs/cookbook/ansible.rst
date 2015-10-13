@@ -34,7 +34,9 @@ Solution
           with eAPI, locally.
 
 
-**Step 1**  Store the Ansible Control Host SSH key on the ZTPServer (or make it available via URL).
+**Step 1**  Gather Ansible Control Host SSH Key
+
+Store the Ansible Control Host SSH key on the ZTPServer (or make it available via URL).
 When the ``configure_ansible_client`` action runs it will create a bash user on the
 switch and put this key in ~/.ssh/authorized_keys.
 
