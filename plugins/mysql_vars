@@ -50,15 +50,14 @@ def fetch_tor(node, node_id):
     '''
 
     # Connect to mysql server
-    user = os.environ.get('MYSQL_USER', '')
-    db = os.environ.get('MYSQL_DB', '')
-    host = os.environ.get('MYSQL_HOST', '')
-    socket = os.environ.get('MYSQL_SOCKET', '')
-    log.debug('%s: Connecting to mysql %s:%s:%s:%s' % \
-               (node_id, host, user, db, socket))
+    user = os.environ.get('MYSQL_USER', 'root')
+    db = os.environ.get('MYSQL_DB', 'db')
+    host = os.environ.get('MYSQL_HOST', 'localhost')
+    log.debug('%s: Connecting to mysql %s:%s:%s' % \
+               (node_id, host, user, db))
 
     assert db and host and user, 'Params to connect to mysql server missing'
-    con = MySQLdb.connect(db=db, host=host, user=user, unix_socket=socket)
+    con = MySQLdb.connect(db=db, host=host, user=user)
     cur = con.cursor()
 
     # Build a dict of neighbors based on node's LLDP neighbors.
@@ -71,7 +70,8 @@ def fetch_tor(node, node_id):
     neighbors = {}
     for intf, nlist in node.neighbors.items():
         ndevice = nlist[ 0 ]
-        neighbors[ intf ] = dict(device=ndevice.device, port=ndevice.interface)
+        device = ndevice.device.split('.')[ 0 ]
+        neighbors[ intf ] = dict(device=device, port=ndevice.interface)
 
     # Serialize the neighbors and get the md5 hash
     neighborsStr = json.dumps(neighbors, sort_keys=True)
@@ -93,11 +93,11 @@ def fetch_tor(node, node_id):
 
 def assign_url(tor):
     if tor[ 'type' ] == 'systest':
-        return 'file/templates/dm1-tor-systest.template'
+        return 'files/templates/dm1-tor-systest.template'
     elif tor[ 'type' ] == 'software':
-        return 'file/templates/dm1-tor-software.template'
+        return 'files/templates/dm1-tor-software.template'
     elif tor[ 'type' ] == 'server':
-        return 'file/templates/dm1-tor-server.template'
+        return 'files/templates/dm1-tor-server.template'
     else:
         raise Exception('Unknown TOR type %s' % tor[ 'type' ])
 
