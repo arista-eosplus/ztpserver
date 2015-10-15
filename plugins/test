@@ -44,5 +44,5 @@ Definition example:
             ipaddress: test('demo')
 '''
 
-def main(node_id, pool):
+def main(node_id, pool, node):
     return '%s:%s' % (node_id, pool)

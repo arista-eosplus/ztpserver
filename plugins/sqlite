@@ -151,7 +151,7 @@ def assign_resource(node_id, table):
                 return match[0]
 
 
-def main(node_id, table):
+def main(node_id, table, node):
     try:
         key = assign_resource(node_id, table)
         log.debug('%s: assigned resource from \'%s\': %s' % 
