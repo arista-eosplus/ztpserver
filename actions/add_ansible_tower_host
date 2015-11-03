@@ -99,7 +99,7 @@ def main(attributes):
                         (username, auth_url, auth_response.status_code))
 
     variables = dict(
-        host_addr=contact_addr.split('/')[0],
+        eos_eapi_host=contact_addr.split('/')[0],
         serialnumber=node.details()['serialnumber'],
         systemmac=node.details()['systemmac'],
         model=node.details()['model']
