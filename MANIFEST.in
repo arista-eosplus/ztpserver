@@ -2,6 +2,7 @@ include README.md INSTALL.md VERSION
 include requirements.txt
 recursive-include docs *
 recursive-include actions *
+recursive-include plugins *
 recursive-include client *
 recursive-include conf *
 include Makefile
