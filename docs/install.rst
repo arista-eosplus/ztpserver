@@ -226,7 +226,17 @@ Add a network (in this case 192.168.100.0/24) for servicing DHCP requests for ZT
       option routers 192.168.100.1;
       option domain-name-servers <ipaddr>;
       option domain-name "<org>";
-      option bootfile-name "http://<ztp_hostname_or_ip>:<port>/bootstrap";
+
+      # Only return the bootfile-name to Arista devices
+      class "Arista" {
+        match if substring(option vendor-class-identifier, 0, 6) = "Arista";
+        # Interesting bits:
+        # Relay agent IP address
+        # Option-82: Agent Information
+        #     Suboption 1: Circuit ID
+        #       Ex: 45:74:68:65:72:6e:65:74:31 ==> Ethernet1
+        option bootfile-name "http://<ztp_hostname_or_ip>:<port>/bootstrap";
+      }
     }
 
 Enable and start the dhcpd service
