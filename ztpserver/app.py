@@ -214,7 +214,7 @@ def validate_definitions():
             resources_path = os.path.join(data_root, 
                                           'resources')
             resource_files = [x.split('/')[-1] 
-                              for x in resources_path]
+                              for x in os.listdir(resources_path)]
             missing_resources = [x for (y, x) in resources 
                                  if x not in resource_files and
                                  y == 'allocate']
