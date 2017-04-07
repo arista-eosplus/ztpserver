@@ -105,11 +105,12 @@ def load_config(conf=None):
 
 def start_wsgiapp(config_file=None, debug=False):
     ''' Provides the entry point into the application for wsgi compliant
-    servers.   Accepts a single keyword argument ``conf``.   The ``conf``
-    keyword argument specifies the path the server configuration file.  The
-    default value is /etc/ztpserver/ztpserver.conf.
+    servers.   Accepts an optional argument ``config_file``.   The
+    ``config_file`` keyword argument specifies the path the server
+    configuration file.  The default value is /etc/ztpserver/ztpserver.conf.
 
-    :param conf: string path pointing to configuration file
+    :param config_file: string path pointing to configuration file
+    :param debug: boolean set debug level logging? (Default: False)
     :return: a wsgi application object
 
     '''
