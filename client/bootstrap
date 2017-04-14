@@ -32,7 +32,7 @@
 #    Written by:
 #       EOS+, Arista Networks
 
-#pylint: disable=W0703
+# pylint: disable=W0703
 
 import argparse
 import datetime
@@ -58,7 +58,7 @@ import urlparse
 
 from collections import namedtuple
 from logging.handlers import SysLogHandler
-from string import Template              #pylint: disable=W0402
+from string import Template              # pylint: disable=W0402
 from subprocess import PIPE
 from urlparse import urlsplit, urlunsplit
 
@@ -102,12 +102,12 @@ HTTP_TIMEOUT = 30
 FLASH_FILES = []
 RESTORE_FACTORY_FLASH = True
 
-#pylint: disable=C0103
+# pylint: disable=C0103
 syslog_manager = None
 xmpp_client = None
-#pylint: enable=C0103
+# pylint: enable=C0103
 
-#---------------------------------XMPP------------------------
+# --------------------------------XMPP------------------------
 # Uncomment this section in order to enable XMPP debug logging
 # logging.basicConfig(level=logging.DEBUG,
 #                     format='%(levelname)-8s %(message)s')
@@ -117,17 +117,18 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
                'sleekxmpp.basexmpp']:
     xmpp_log = logging.getLogger(logger)
     xmpp_log.addHandler(logging.NullHandler())
-#---------------------------------XMPP------------------------
+# --------------------------------XMPP------------------------
 
-#---------------------------------SYSLOG----------------------
+# --------------------------------SYSLOG----------------------
 # Comment out this section in order to enable syslog debug
 # logging
 logging.raiseExceptions = False
-#---------------------------------XMPP------------------------
+# --------------------------------XMPP------------------------
+
 
 # ------------------Utilities---------------------------------
 def _exit(code):
-    #pylint: disable=W0702
+    # pylint: disable=W0702
 
     # Wait for XMPP messages to drain
     time.sleep(3)
@@ -192,14 +193,17 @@ def _exit(code):
     sys.stdout.flush()
     sys.stderr.flush()
 
-    #pylint: disable=W0212
+    # pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
     os._exit(code)
 
 SYSTEM_ID = None
 XMPP_MSG_TYPE = None
+
+
 def log_xmpp():
     return XMPP_MSG_TYPE == 'debug'
+
 
 def log(msg, error=False, xmpp=None):
     if xmpp is None:
@@ -230,6 +234,7 @@ def log(msg, error=False, xmpp=None):
         else:
             syslog_manager.log.info(syslog_msg)
 
+
 def url_path_join(*parts):
     """Normalize URL parts and join them with a slash."""
     # pylint: disable=W0142
@@ -242,9 +247,11 @@ def url_path_join(*parts):
     fragment = get_first_token(fragments)
     return urlunsplit((scheme, netloc, path, query, fragment))
 
-#pylint: disable=C0103
+# pylint: disable=C0103
 _ntuple_diskusage = namedtuple('usage', 'total used free')
-#pylint: enable=C0103
+# pylint: enable=C0103
+
+
 def flash_usage():
     stats = os.statvfs(FLASH)
     free = stats.f_bavail * stats.f_frsize
@@ -252,8 +259,9 @@ def flash_usage():
     used = (stats.f_blocks - stats.f_bfree) * stats.f_frsize
     return _ntuple_diskusage(total, used, free)
 
+
 def flash_snapshot():
-    #pylint: disable=W0603
+    # pylint: disable=W0603
     global FLASH_FILES
     FLASH_FILES = all_files_and_dirs(FLASH)
 
@@ -280,8 +288,10 @@ def flash_snapshot():
 
         shutil.move(BOOT_EXTENSIONS_FOLDER, TEMP)
 
+
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
+
 
 def all_files_and_dirs(path):
     result = []
@@ -295,7 +305,7 @@ def all_files_and_dirs(path):
 
 # ------------------4.12.x support----------------------------
 def download_file(url, path):
-    if not urlparse.urlsplit(url).scheme:      #pylint: disable=E1103
+    if not urlparse.urlsplit(url).scheme:      # pylint: disable=E1103
         url = url_path_join(SERVER, url)
 
     log('Retrieving URL: %s' % url)
@@ -305,7 +315,7 @@ def download_file(url, path):
     output_file.write(url.read())
     output_file.close()
 
-#pylint: disable=C0103
+# pylint: disable=C0103
 REQUESTS = 'requests-2.3.0'
 REQUESTS_URL = url_path_join(SERVER, '/files/lib/', REQUESTS+'.tar.gz')
 try:
@@ -323,15 +333,17 @@ except ImportError:
         log('%s returned %s' % (cmd, res), error=True)
         _exit(1)
     import requests
-#pylint: enable=C0103
+# pylint: enable=C0103
 # ------------------4.12.x support----------------------------
 
 
 class ZtpError(Exception):
     pass
 
+
 class ZtpActionError(ZtpError):
     pass
+
 
 class ZtpUnexpectedServerResponseError(ZtpError):
     pass
@@ -361,7 +373,7 @@ class Attributes(object):
 
 
 class Node(object):
-     #pylint: disable=R0201
+    # pylint: disable=R0201
 
     '''Node object which can be used by actions via:
            attributes.get('NODE')
@@ -390,7 +402,7 @@ class Node(object):
                 '(platform/EOS version might not support this feature)' %
                 err)
 
-        global SYSTEM_ID                    #pylint: disable=W0603
+        global SYSTEM_ID                    # pylint: disable=W0603
         SYSTEM_ID = \
             self.api_enable_cmds(['show version'])[0]['serialNumber']
 
@@ -399,7 +411,7 @@ class Node(object):
         bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
         proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         (out, err) = proc.communicate()
-        return (proc.returncode, out, err)      #pylint: disable=E1101
+        return (proc.returncode, out, err)      # pylint: disable=E1101
 
     @classmethod
     def _cli_config_cmds(cls, cmds):
@@ -411,9 +423,9 @@ class Node(object):
         url = 'unix:/var/run/command-api.sock'
         _, out, _ = cls._cli_enable_cmd('show version | include image')
         version = out.split(': ')[1]
-        (major,minor,patch) = version.split('.')
+        (major, minor, patch) = version.split('.')
         patch = int(list(filter(str.isdigit, patch))[0])
-        if int(major) <= 4 and int(minor) <=14 and patch <= 5:
+        if int(major) <= 4 and int(minor) <= 14 and patch <= 5:
             COMMAND_API_PROTOCOL = 'http'
             create_user = 'username %s secret %s privilege 15' % (
                           COMMAND_API_USERNAME,
@@ -447,8 +459,9 @@ class Node(object):
         if (self.system()['model'] != 'vEOS' and
             len(self.system()['version'].split('.')) > 2 and
             int(self.system()['version'].split('.')[1]) < 12):
-            self.api_config_cmds(['control-plane',
-                                  'no service-policy input copp-system-policy'])
+            self.api_config_cmds([
+                'control-plane',
+                'no service-policy input copp-system-policy'])
 
     def _has_rc_eos(self):
         return os.path.isfile(RC_EOS)
@@ -476,7 +489,7 @@ class Node(object):
             proc = subprocess.Popen(bash_cmd, stdin=PIPE,
                                     stdout=PIPE, stderr=PIPE,
                                     shell=True)
-            code = proc.returncode         #pylint: disable=E1101
+            code = proc.returncode         # pylint: disable=E1101
             (out, err) = proc.communicate()
             if code or err:
                 return (bash_cmd, code, out, err)
@@ -710,7 +723,6 @@ class Node(object):
         '''
         self.server_.get_resource(url, path)
 
-
     def create_user(self, user, group, passwd, root='/persist/local/',
                     ssh_keys=None):
 
@@ -768,7 +780,7 @@ class Node(object):
                                     stderr=PIPE, shell=True)
 
             (_, err) = proc.communicate()
-            return_code = proc.wait()       #pylint: disable=E1101
+            return_code = proc.wait()       # pylint: disable=E1101
 
             if return_code or err:
                 if return_code in (4, 9):
@@ -807,7 +819,6 @@ class Node(object):
         self.append_rc_eos_lines([add_cmd])
 
         return
-
 
     @classmethod
     def server_address(cls):
@@ -863,14 +874,14 @@ class SyslogManager(object):
             match = re.match('^file:(.+)',
                              entry['destination'])
             if match:
-                self._add_file_handler(match.groups()[ 0 ],
+                self._add_file_handler(match.groups()[0],
                                        entry['level'])
             else:
                 match = re.match('^(.+):(.+)',
                                  entry['destination'])
                 if match:
-                    self._add_remote_syslog_handler(match.groups()[ 0 ],
-                                                    int(match.groups()[ 1 ]),
+                    self._add_remote_syslog_handler(match.groups()[0],
+                                                    int(match.groups()[1]),
                                                     entry['level'])
                 else:
                     self._add_remote_syslog_handler(entry['destination'],
@@ -888,16 +899,16 @@ class Server(object):
                       payload=None, files=None):
         if headers is None:
             headers = {}
-        # Disable gzip, deflate so we can safely determine if space is available
+        # Disable gzip, deflate so we can safely determine available space
         headers[u'Accept-Encoding'] = None
         if files is None:
             files = []
 
         request_files = []
         for entry in files:
-            request_files[entry] = open(entry,'rb')
+            request_files[entry] = open(entry, 'rb')
 
-        if not urlparse.urlsplit(path).scheme:   #pylint: disable=E1103
+        if not urlparse.urlsplit(path).scheme:   # pylint: disable=E1103
             full_url = url_path_join(SERVER, path)
         else:
             full_url = path
@@ -964,8 +975,8 @@ class Server(object):
                 potential_used_space -= size
 
             if (size > free_space):
-                raise ZtpError('not enough memory on flash for saving %s to %s '
-                               '(free: %s bytes, required: %s bytes)' %
+                raise ZtpError('not enough memory on flash for saving %s to %s'
+                               ' (free: %s bytes, required: %s bytes)' %
                                (url, path, free_space, size))
             elif (potential_used_space > 0.9 * usage.total):
                 percent = (size + usage.used) * 100.0 / usage.total
@@ -1076,7 +1087,7 @@ class Server(object):
         return filename
 
     def get_metadata(self, url):
-        if urlparse.urlsplit(url).scheme:   #pylint: disable=E1103
+        if urlparse.urlsplit(url).scheme:   # pylint: disable=E1103
             regex = re.compile(SERVER, re.IGNORECASE)
             if regex.match(url):
                 url = re.sub(regex, '', url)
@@ -1113,7 +1124,7 @@ class Server(object):
         return (status, content, result)
 
     def get_resource(self, url, path):
-        if not urlparse.urlsplit(url).scheme:     #pylint: disable=E1103
+        if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
         status, content, response = self._get_request(url)
@@ -1143,7 +1154,7 @@ class Server(object):
 
 
 class XmppClient(sleekxmpp.ClientXMPP):
-    #pylint: disable=W0613, R0904, R0201, R0924
+    # pylint: disable=W0613, R0904, R0201, R0924
 
     def __init__(self, user, domain, password, rooms,
                  nick, xmpp_server, xmpp_port):
@@ -1159,7 +1170,7 @@ class XmppClient(sleekxmpp.ClientXMPP):
                 self.xmpp_jid, xmpp=False)
             return
 
-        self.xmpp_nick =  nick
+        self.xmpp_nick = nick
         self.xmpp_rooms = rooms
 
         self.xmpp_rooms = []
@@ -1178,7 +1189,7 @@ class XmppClient(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0030')
 
         log('XmppClient connecting to server...', xmpp=False)
-        if xmpp_server != None:
+        if xmpp_server is not None:
             self.connect((xmpp_server, xmpp_port), reattempt=False)
         else:
             self.connect(reattempt=False)
@@ -1219,16 +1230,16 @@ class XmppClient(sleekxmpp.ClientXMPP):
                               mbody=message,
                               mtype='groupchat')
 
+
 def apply_config(config, node):
-    global xmpp_client                      #pylint: disable=W0603
+    global xmpp_client                      # pylint: disable=W0603
 
     log('Applying server config')
-
 
     # XMPP not configured yet
     xmpp_config = config.get('xmpp', {})
 
-    global XMPP_MSG_TYPE                        #pylint: disable=W0603
+    global XMPP_MSG_TYPE                        # pylint: disable=W0603
     XMPP_MSG_TYPE = xmpp_config.get('msg_type', 'debug')
     if XMPP_MSG_TYPE not in ['debug', 'info']:
         log('XMPP configuration failed because of unexpected \'msg_type\': '
@@ -1302,15 +1313,16 @@ def execute_action(server, action_details, special_attr):
         if 'onsuccess' in action_details:
             log('Action %s: %s' % (action, action_details['onsuccess']),
                 xmpp=True)
-    except Exception as err:                  #pylint: disable=W0703
+    except Exception as err:                  # pylint: disable=W0703
         if 'onfailure' in action_details:
             log('Action %s: %s' % (action, action_details['onfailure']),
                 xmpp=True)
-        raise ZtpActionError('executing action failed (%s): %s' % (action, err))
+        raise ZtpActionError('executing action failed (%s): %s' % (action,
+                                                                   err))
 
 
 def main():
-    #pylint: disable=W0603,R0912,R0915
+    # pylint: disable=W0603,R0912,R0915
     global syslog_manager, RESTORE_FACTORY_FLASH
 
     usage = 'bootstrap [options]'
