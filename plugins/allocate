@@ -106,7 +106,7 @@ def lookup(node_id, data):
 
     return key
 
-def main(node_id, pool):
+def main(node_id, pool, node):
     try:
         file_path = os.path.join(runtime.default.data_root, 
                                  'resources')

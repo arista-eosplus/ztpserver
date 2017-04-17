@@ -199,7 +199,7 @@ Be sure your host firewall allows incoming connections to ZTPServer.  The standa
   * Open TCP/<port> through firewalld
     ``bash-3.2$ firewall-cmd --zone=public --add-port=<port>/tcp [--permanent]``
   * Stop firewalld
-    ``bash-3.2$ systemctl status firewalld``
+    ``bash-3.2$ systemctl stop firewalld``
   * Disable firewalld
     ``bash-3.2$ systemctl disable firewalld``
 
