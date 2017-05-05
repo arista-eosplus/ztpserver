@@ -88,6 +88,8 @@ class SuccessTest(unittest.TestCase):
             print 'Error: %s' % bootstrap.error
             raise_exception(assertion)
         finally:
+            remove_file(image_file)
+            bootstrap.end_test()
 
     def test_no_downgrade(self):
         bootstrap = Bootstrap(ztps_default_config=True)
