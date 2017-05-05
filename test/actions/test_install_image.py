@@ -111,8 +111,8 @@ class SuccessTest(unittest.TestCase):
         image_file = '%s/EOS-%s.swi' % (bootstrap.flash, version2)
         try:
             self.failUnless(bootstrap.success())
-            self.failUnless(eapi_log()[-1] == 
-                            'install_image: nothing to do: downgrade disabled')
+            self.failUnless('install_image: nothing to do: downgrade disabled'
+                            in bootstrap.output)
         except AssertionError as assertion:
             print 'Output: %s' % bootstrap.output
             print 'Error: %s' % bootstrap.error
