@@ -88,7 +88,6 @@ class SuccessTest(unittest.TestCase):
             print 'Error: %s' % bootstrap.error
             raise_exception(assertion)
         finally:
-            remove_file(image_file)
             bootstrap.end_test()
 
     def test_no_downgrade(self):
@@ -107,7 +106,6 @@ class SuccessTest(unittest.TestCase):
                                            get_action('install_image'))
         bootstrap.ztps.set_action_response('startup_config_action',
                                            startup_config_action())
-        bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
         image_file = '%s/EOS-%s.swi' % (bootstrap.flash, version2)
