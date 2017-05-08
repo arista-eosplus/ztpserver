@@ -90,6 +90,37 @@ class SuccessTest(unittest.TestCase):
         finally:
             bootstrap.end_test()
 
+    def test_no_downgrade(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        version1 = '4.18.1F'
+        version2 = '4.17.2F'
+        bootstrap.eapi.version = version1
+        bootstrap.ztps.set_definition_response(
+            actions=[{'action' : 'test_action',
+                      'attributes': {
+                        'downgrade' : False,
+                        'url' : random_string(),
+                        'version' : version2}},
+                     {'action' :'startup_config_action'}])
+        bootstrap.ztps.set_action_response('test_action',
+                                           get_action('install_image'))
+        bootstrap.ztps.set_action_response('startup_config_action',
+                                           startup_config_action())
+        bootstrap.start_test()
+
+        image_file = '%s/EOS-%s.swi' % (bootstrap.flash, version2)
+        try:
+            self.failUnless(bootstrap.success())
+            self.failUnless('install_image: nothing to do: downgrade disabled'
+                            in bootstrap.output)
+        except AssertionError as assertion:
+            print 'Output: %s' % bootstrap.output
+            print 'Error: %s' % bootstrap.error
+            raise_exception(assertion)
+        finally:
+            remove_file(image_file)
+            bootstrap.end_test()
+
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         version = random_string()
