@@ -379,6 +379,71 @@ script.
 
 
 
+
+Install a Specific EOS Image without downgrading newer systems
+--------------------------------------------------------------
+
+Objective
+^^^^^^^^^
+
+I want a specific (v)EOS version to be automatically installed when I provision
+my node but I don't want systems with newer EOS versions to be downgraded
+
+.. note:: This assumes that you've already downloaded the desired (v)EOS image
+          from `Arista <https://www.arista.com/en/support/software-download>`_.
+
+Solution
+^^^^^^^^
+
+Let's create a place on the ZTPServer to host some SWIs:
+
+.. code-block:: console
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create an images directory
+  admin@ztpserver:~# mkdir -p files/images
+
+  # SCP your SWI into the images directory, name it whatever you like
+  admin@ztpserver:~# scp admin@otherhost:/tmp/vEOS.swi files/images/vEOS_4.14.5F.swi
+
+Now let's create a definition that performs the ``install_image`` action:
+
+.. code-block:: console
+
+  # Go to your data_root - by default it's /usr/share/ztpserver
+  admin@ztpserver:~# cd /usr/share/ztpserver
+
+  # Create a definition file
+  admin@ztpserver:~# vi definitions/tor-definition
+
+Add the following lines to your definition, changing values where needed.  Specifically note the ``downgrade: false`` attribute.
+
+.. code-block:: yaml
+
+  ---
+  name: static node definition
+  actions:
+    -
+      action: install_image
+      attributes:
+        downgrade: false
+        url: files/images/vEOS_4.17.1F.swi
+        version: 4.17.1F
+      name: "Install 4.17.1F"
+
+.. note:: The definition uses YAML syntax
+
+Explanation
+^^^^^^^^^^^
+
+The difference between this recipe and the one, above, is setting the ``downgrade`` attribute to ``false``.  When downgrades are disabled, an image will only be copied if the running image is older than the image in the ZTP configuration.
+
+.. end of Install a specific EOS image
+
+
+
 Install an Extension
 --------------------
 

@@ -1,0 +1,135 @@
+# Copyright (c) 2015, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+import logging
+import os
+import MySQLdb
+import json, hashlib
+
+log = logging.getLogger('ztpserver')   #pylint: disable=C0103
+
+def fetch_tor(node, node_id):
+    '''
+    Query mysql database using the node's neighbors and return the tor record.
+    The key for the tor loopkup is the md5 hash of the json serialized
+    neighbors.
+
+    Returns: tor dict:
+         { 'neighbors' : dict( <neighbors),
+           'type' : <tor-type>,
+           'hostName' : <hostname>,
+           ...
+         }
+    '''
+
+    # Connect to mysql server
+    user = os.environ.get('MYSQL_USER', 'root')
+    db = os.environ.get('MYSQL_DB', 'db')
+    host = os.environ.get('MYSQL_HOST', 'localhost')
+    log.debug('%s: Connecting to mysql %s:%s:%s' % \
+               (node_id, host, user, db))
+
+    assert db and host and user, 'Params to connect to mysql server missing'
+    con = MySQLdb.connect(db=db, host=host, user=user)
+    cur = con.cursor()
+
+    # Build a dict of neighbors based on node's LLDP neighbors.
+    # 
+    # Format:
+    #    { <interface> : { 'device': <neighbor-device>, 'port': <neighbor-port> }
+    #      ...
+    #    }
+
+    neighbors = {}
+    for intf, nlist in node.neighbors.items():
+        ndevice = nlist[ 0 ]
+        device = ndevice.device.split('.')[ 0 ]
+        neighbors[ intf ] = dict(device=device, port=ndevice.interface)
+
+    # Serialize the neighbors and get the md5 hash
+    neighborsStr = json.dumps(neighbors, sort_keys=True)
+    hash = hashlib.md5(neighborsStr).hexdigest()
+    log.debug('%s: hash: %s' % (node_id, hash))
+
+    # Lookup tor by hash
+    stmt = ('select hostName, torData, type from tor where hash=%s')
+    where = (hash,)
+    cur.execute(stmt, where)
+    hostName, torData , torType = cur.fetchone()
+    tor = json.loads(torData)
+    tor[ 'type' ] = torType
+
+    # Check for hash collision
+    if tor['neighbors'] != neighbors:
+        raise Exception('%s: hash collision for TOR %s' % (node_id, hostName))
+    return tor
+
+def assign_url(tor):
+    if tor[ 'type' ] == 'systest':
+        return 'files/templates/dm1-tor-systest.template'
+    elif tor[ 'type' ] == 'software':
+        return 'files/templates/dm1-tor-software.template'
+    elif tor[ 'type' ] == 'server':
+        return 'files/templates/dm1-tor-server.template'
+    else:
+        raise Exception('Unknown TOR type %s' % tor[ 'type' ])
+
+def assign_var(tor):
+    # The tor 'type' and 'neighbors' are just for internal usage. They are not
+    # variables required by the template.
+    tor.pop('type')
+    tor.pop('neighbors')
+    return tor
+
+def main(node_id, pool, node):
+    '''
+    Return the resource requested for the pool type.
+
+    node_id - Node identifier, usually the serial number
+    pool - Type of resource requested, its either url or variable.
+    node - Copy of the Node object
+    '''
+    try:
+        # Get a copy of the tor record stored in mysql, based on the node's
+        # neighbors.
+        tor = fetch_tor(node, node_id)
+
+        if pool == 'url':
+            return assign_url(tor)
+        elif pool == 'variables':
+            return assign_var(tor)
+        else:
+            assert False, 'Unknown pool %s' % pool
+    except Exception as exc:
+        msg = '%s: failed to allocate resource from \'%s\'' % \
+            (node_id, pool)
+        log.error(msg)
+        log.error(exc.message)
+        raise Exception('%s : %s' % (msg, exc.message))

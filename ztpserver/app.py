@@ -105,11 +105,12 @@ def load_config(conf=None):
 
 def start_wsgiapp(config_file=None, debug=False):
     ''' Provides the entry point into the application for wsgi compliant
-    servers.   Accepts a single keyword argument ``conf``.   The ``conf``
-    keyword argument specifies the path the server configuration file.  The
-    default value is /etc/ztpserver/ztpserver.conf.
+    servers.   Accepts an optional argument ``config_file``.   The
+    ``config_file`` keyword argument specifies the path the server
+    configuration file.  The default value is /etc/ztpserver/ztpserver.conf.
 
-    :param conf: string path pointing to configuration file
+    :param config_file: string path pointing to configuration file
+    :param debug: boolean set debug level logging? (Default: False)
     :return: a wsgi application object
 
     '''
@@ -214,7 +215,7 @@ def validate_definitions():
             resources_path = os.path.join(data_root, 
                                           'resources')
             resource_files = [x.split('/')[-1] 
-                              for x in resources_path]
+                              for x in os.listdir(resources_path)]
             missing_resources = [x for (y, x) in resources 
                                  if x not in resource_files and
                                  y == 'allocate']

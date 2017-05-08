@@ -51,6 +51,11 @@ def install():
 def join_url(x, y):
     return '/' + '/'.join([z for z in x.split('/') + y.split('/') if z])
 
+def ensure_dir(f):
+    d = os.path.dirname(f)
+    if not os.path.exists(d):
+        os.makedirs(d)
+
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
 
@@ -64,6 +69,7 @@ if install() and os.environ.get('READTHEDOCS'):
     print 'Customizing install for ReadTheDocs.org build servers...'
     conf_path = '.' + conf_path
     install_path = '.' +  install_path
+    os.environ['ZTPS_INSTALL_ROOT'] = '.'
     from subprocess import call
     call(['docs/setup_rtd_files.sh'])
     packages.append('client')
@@ -75,7 +81,7 @@ version = None
 
 install_requirements = open('requirements.txt').read().split('\n')
 install_requirements = [x.strip() for x in install_requirements
-                        if x.strip() and 
+                        if x.strip() and
                         'dev only' not in x]
 version = open('VERSION').read().split()[0].strip()
 
@@ -89,8 +95,8 @@ for folder in ['nodes', 'definitions', 'files', 'resources',
             os.remove(path)
         data_files += [(path, [])]
 
-for (filename, dst, src) in [('neighbordb', 
-                              install_path, 
+for (filename, dst, src) in [('neighbordb',
+                              install_path,
                               'conf/neighbordb'),
                              ('bootstrap.conf',
                               '%s/bootstrap' % install_path,
@@ -104,7 +110,7 @@ for (filename, dst, src) in [('neighbordb',
     file_path = '%s/%s' % (dst, filename)
     if install() and os.path.exists(file_path):
         if os.path.isdir(file_path):
-            shutil.rmtree(file_path, 
+            shutil.rmtree(file_path,
                           ignore_errors=True)
         else:
             # do this manually
@@ -115,7 +121,7 @@ for (filename, dst, src) in [('neighbordb',
 
 # bootstrap file, libraries, VERSION, plugins and actions are
 # always overwritten
-file_list = [('bootstrap', '%s/bootstrap' % install_path, 
+file_list = [('bootstrap', '%s/bootstrap' % install_path,
               'client/bootstrap')]
 for filename in glob('actions/*'):
     file_list += [(filename.split('/')[-1],
@@ -133,7 +139,7 @@ for (filename, dst, src) in file_list:
     file_path = '%s/%s' % (dst, filename)
     if install() and os.path.exists(file_path) and \
             os.path.isdir(file_path):
-        shutil.rmtree(file_path, 
+        shutil.rmtree(file_path,
                       ignore_errors=True)
     data_files += [(dst, glob(src))]
 
@@ -157,6 +163,8 @@ setup(
 if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
-        shutil.copy('VERSION', join_url(custom_path, config.VERSION_FILE_PATH))
-    else:   
-        shutil.copy('VERSION', config.VERSION_FILE_PATH)
+        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)[1:]
+    else:
+        version_file =  config.VERSION_FILE_PATH
+    ensure_dir(version_file)
+    shutil.copy('VERSION', version_file)
