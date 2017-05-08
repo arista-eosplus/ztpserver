@@ -62,9 +62,9 @@ test_neighbordb: clean
 
 test_client: clean
 ifeq ($(TESTNAME),discover)
-	$(PYTHON)  -m unittest discover test/client -v
+	EAPI_TEST=1 $(PYTHON)  -m unittest discover test/client -v
 else
-	$(PYTHON)  test/client/$(TESTNAME) -v
+	EAPI_TEST=1 $(PYTHON)  test/client/$(TESTNAME) -v
 endif
 
 test_actions: clean

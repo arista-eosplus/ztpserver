@@ -420,12 +420,8 @@ class Node(object):
     @classmethod
     def _enable_api(cls):
         create_user = ''
-        url = 'unix:/var/run/command-api.sock'
-        _, out, _ = cls._cli_enable_cmd('show version | include image')
-        version = out.split(': ')[1]
-        (major, minor, patch) = version.split('.')
-        patch = int(list(filter(str.isdigit, patch))[0])
-        if int(major) <= 4 and int(minor) <= 14 and patch <= 5:
+        # Don't use unix sockets in CI environment
+        if os.environ.get('EAPI_TEST') is not None:
             COMMAND_API_PROTOCOL = 'http'
             create_user = 'username %s secret %s privilege 15' % (
                           COMMAND_API_USERNAME,
@@ -435,7 +431,22 @@ class Node(object):
                                                  COMMAND_API_PASSWORD,
                                                  COMMAND_API_SERVER)
         else:
-            COMMAND_API_PROTOCOL = 'unix-socket'
+            url = 'unix:/var/run/command-api.sock'
+            _, out, _ = cls._cli_enable_cmd('show version | include image')
+            version = out.split(': ')[1]
+            (major, minor, patch) = version.split('.')
+            patch = int(list(filter(str.isdigit, patch))[0])
+            if (int(major) <= 4 and int(minor) <= 14 and patch <= 5):
+                COMMAND_API_PROTOCOL = 'http'
+                create_user = 'username %s secret %s privilege 15' % (
+                              COMMAND_API_USERNAME,
+                              COMMAND_API_PASSWORD)
+                url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
+                                                     COMMAND_API_USERNAME,
+                                                     COMMAND_API_PASSWORD,
+                                                     COMMAND_API_SERVER)
+            else:
+                COMMAND_API_PROTOCOL = 'unix-socket'
 
         cls._cli_config_cmds([create_user,
                               'management api http-commands',
