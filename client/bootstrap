@@ -875,6 +875,8 @@ class Server(object):
                       payload=None, files=None):
         if headers is None:
             headers = {}
+        # Disable gzip, deflate so we can safely determine if space is available
+        headers[u'Accept-Encoding'] = None
         if files is None:
             files = []
 

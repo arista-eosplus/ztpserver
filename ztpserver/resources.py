@@ -44,13 +44,13 @@ def resource_plugins():
         break
     return plugins
 
-def run_plugin(plugin, node_id, pool):
+def run_plugin(plugin, node_id, pool, node):
 
     filename = os.path.join(runtime.default.data_root, 
                             'plugins',
                             plugin)
     try:
         module = imp.load_source(plugin, filename)
-        return module.main(node_id, pool)
+        return module.main(node_id, pool, node)
     except Exception as exc:
         raise Exception('failed to run plugin: %s' % exc)

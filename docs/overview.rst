@@ -42,7 +42,7 @@ The basic flow is as follows:
     * check for startup-config, if absent, enter ZTP mode
     * send DHCP requests on all connected interfaces
     * if a DHCP response is received with Option 67 defined (bootfile-name), retrieve that file
-    * if that file is a startup-config, then save it to stuartup-config and reboot
+    * if that file is a startup-config, then save it to startup-config and reboot
     * if that file is an executable, then execute it.  Common actions executed this way include upgrading the EOS image, downloading extension packages, and dynamically building a startup-config file.   (**ZTPServer's bootstrap script is launched this way**)
     * reboot with the new configuration
 

@@ -36,6 +36,7 @@ nosetests.xml
 
 # OSX crud
 .DS_STORE
+.DS_Store
 
 # Sphinx crud
 _build
@@ -49,3 +50,6 @@ _templates
 *.spec
 rpm/rpmbuild
 rpm/rpms
+
+# virtualenv
+venv

@@ -177,7 +177,8 @@ def load_resources(attributes, node, node_id):
                     plugin = match.group('function')
                     _value.append(run_plugin(plugin, 
                                              node_id, 
-                                             match.group('arg')))
+                                             match.group('arg')),
+                                             node)
                 else:
                     _value.append(item)
             value = _value
@@ -187,7 +188,8 @@ def load_resources(attributes, node, node_id):
                 plugin = match.group('function')
                 value = run_plugin(plugin, 
                                    node_id, 
-                                   match.group('arg'))
+                                   match.group('arg'),
+                                   node)
         _attributes[key] = value
     log.debug('%s: resources: %s' % (node_id, _attributes))
     return _attributes

@@ -1,8 +1,20 @@
 include README.md INSTALL.md VERSION
 include requirements.txt
+include Makefile
+include LICENSE
+include .pylintrc
+include *.md
 recursive-include docs *
+prune docs/_build
+prune docs/.DS_Store
 recursive-include actions *
 recursive-include plugins *
 recursive-include client *
 recursive-include conf *
-include Makefile
+recursive-include rpm *.spec
+recursive-include rpm Makefile
+recursive-include test *.md
+recursive-include test *.py
+recursive-include test *.yml
+include test/client/*
+recursive-include utils *

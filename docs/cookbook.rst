@@ -17,4 +17,6 @@ ZTPServer Cookbook
    cookbook/actions
    cookbook/resourcePools
    cookbook/advanced
+   cookbook/puppet
+   cookbook/ansible
    cookbook/ztpsVMonEOS
