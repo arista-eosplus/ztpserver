@@ -662,30 +662,32 @@ New custom actions to-be referenced from definitions can be added to
 ``[data_root]/actions/``. These will be loaded on-demand and do not require
 a restart of the ZTPServer. See ``[data_root]/actions`` for examples.
 
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| Action                    | Description                                               | Required Attributes                    |
-+===========================+===========================================================+========================================+
-| :mod:`add_config`         | Adds a block of configuration to the final startup-config | url                                    |
-|                           | file                                                      |                                        |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`copy_file`          | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`install_cli_plugin` | Installs a new EOS CLI plugin and configures rc.eos       | url                                    |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`install_extension`  | Installs a new EOS extension                              | extension\_url, autoload, force        |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`install_image`      | Validates and installs a specific version of EOS          | url, version                           |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`replace_config`     | Sends an entire startup-config to the node (overrides     | url                                    |
-|                           | (overrides add\_config)                                   |                                        |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`send_email`         | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
-|                           | through a relay host. Can include file attachments        | body, attachments, commands            |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`run_bash_script`    | Run bash script during bootstrap.                         | url                                    |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
-| :mod:`run_cli_commands`   | Run CLI commands during bootstrap.                        | url                                    |
-+---------------------------+-----------------------------------------------------------+----------------------------------------+
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| Action                          | Description                                               | Required Attributes                    |
++=================================+===========================================================+========================================+
+| :mod:`add_config`               | Adds a block of configuration to the final startup-config | url                                    |
+|                                 | file                                                      |                                        |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`configure_ansible_client` | Create user and configure keys for Ansible deployment     | user, passwd, group, root, key         |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`copy_file`                | Copies a file from the server to the destination node     | src\_url, dst\_url, overwrite, mode    |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_cli_plugin`       | Installs a new EOS CLI plugin and configures rc.eos       | url                                    |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_extension`        | Installs a new EOS extension                              | extension\_url, autoload, force        |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`install_image`            | Validates and installs a specific version of EOS          | url, version, downgrade                |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`replace_config`           | Sends an entire startup-config to the node (overrides     | url                                    |
+|                                 | (overrides add\_config)                                   |                                        |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`run_bash_script`          | Run bash script during bootstrap.                         | url                                    |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`run_cli_commands`         | Run CLI commands during bootstrap.                        | url                                    |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
+| :mod:`send_email`               | Sends an email to a set of recipients routed              | smarthost, sender, receivers, subject, |
+|                                 | through a relay host. Can include file attachments        | body, attachments, commands            |
++---------------------------------+-----------------------------------------------------------+----------------------------------------+
 
 Additional details on each action are available in the :doc:`actions` module docs.
 
