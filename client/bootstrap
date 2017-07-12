@@ -434,7 +434,7 @@ class Node(object):
             url = 'unix:/var/run/command-api.sock'
             _, out, _ = cls._cli_enable_cmd('show version | include image')
             version = out.split(': ')[1]
-            (major, minor, patch) = version.split('.')
+            (major, minor, patch) = version.split('.')[0:3]
             patch = int(list(filter(str.isdigit, patch))[0])
             if (int(major) <= 4 and int(minor) <= 14 and patch <= 5):
                 COMMAND_API_PROTOCOL = 'http'
