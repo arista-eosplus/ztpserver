@@ -478,8 +478,14 @@ class Node(object):
         return os.path.isfile(RC_EOS)
 
     def _append_lines(self, filename, lines):
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            fileexists = True
+        else:
+            fileexists = False
+
         with open(filename, 'a') as output:
-            output.write('\n')
+            if fileexists:
+                output.write('\n')
             output.write('\n'.join(lines))
 
     @classmethod
