@@ -48,11 +48,13 @@ def natural_keys(text):
 ETHERNET_RE = re.compile(r'^(e(t(h(ernet)?)?)?)(\d+)(\/(\d+)){0,2}$')
 MANAGEMENT_RE = re.compile(r'^(m(a(nagement)?)?)(\d+)(\/(\d+)){0,2}$')
 INTERFACE_NO_RE = re.compile(r'^(\d+)(\/(\d+)){0,2}$')
+
+
 def expand_range(interfaces):
     ''' Returns a naturally sorted list of items expanded from interfaces. '''
 
     # pylint: disable=R0914,R0912
-    
+
     items = set()
     prefix = None
     for group in [x.strip() for x in interfaces.split(',')]:
@@ -62,16 +64,16 @@ def expand_range(interfaces):
             match = ETHERNET_RE.match(interface)
             if match:
                 intf_no = interface[len(match.groups()[0]):]
-                
+
                 for token in intf_no.split('/'):
                     if int(token) < 1:
                         log.warning('Unable to expand '
                                     'interface range: %s '
-                                    '(invalid interface number)' % 
+                                    '(invalid interface number)' %
                                     group)
                         raise TypeError('Unable to expand '
                                         'interface range: %s '
-                                        '(invalid interface number)' % 
+                                        '(invalid interface number)' %
                                         group)
 
                 prefix = 'Ethernet'
@@ -85,11 +87,11 @@ def expand_range(interfaces):
                         if int(token) < 1:
                             log.warning('Unable to expand '
                                         'interface range: %s '
-                                        '(invalid interface number)' % 
+                                        '(invalid interface number)' %
                                         group)
                             raise TypeError('Unable to expand '
                                             'interface range: %s '
-                                            '(invalid interface number)' % 
+                                            '(invalid interface number)' %
                                             group)
 
                     prefix = 'Management'
@@ -102,28 +104,28 @@ def expand_range(interfaces):
                             if int(token) < 1:
                                 log.warning('Unable to expand '
                                             'interface range: %s '
-                                            '(invalid interface number)' % 
+                                            '(invalid interface number)' %
                                             group)
                                 raise TypeError('Unable to expand '
                                                 'interface range: %s '
-                                                '(invalid interface number)' % 
+                                                '(invalid interface number)' %
                                                 group)
 
                         items.add('%s%s' % (prefix, interface))
                     else:
-                        
+
                         log.warning('Unable to expand interface range: %s '
                                     '(invalid interface)' % group)
                         raise TypeError('Unable to expand interface range: %s '
                                         '(invalid interface)' % group)
         elif len(ranges) == 2:
             [start, end] = [x.lower() for x in ranges]
-            
+
             items_len = len(items)
             for regex, intf_type in [(ETHERNET_RE, 'Ethernet'),
                                      (MANAGEMENT_RE, 'Management'),
                                      (INTERFACE_NO_RE, prefix)]:
-                match_start =  regex.match(start)
+                match_start = regex.match(start)
                 if match_start:
                     if regex != INTERFACE_NO_RE:
                         start_intf_tokens = \
@@ -166,34 +168,34 @@ def expand_range(interfaces):
                     if start_index >= end_index:
                         log.warning('Unable to expand '
                                     'interface range: %s '
-                                    '(non-increasing range)' % 
+                                    '(non-increasing range)' %
                                     group)
                         raise TypeError('Unable to expand '
                                         'interface range: %s '
-                                        '(non-increasing range)' % 
+                                        '(non-increasing range)' %
                                         group)
 
                     if start_index < 1 or end_index < 1:
                         log.warning('Unable to expand '
                                     'interface range: %s '
-                                    '(invalid interface number)' % 
+                                    '(invalid interface number)' %
                                     group)
                         raise TypeError('Unable to expand '
                                         'interface range: %s '
-                                        '(invalid interface number)' % 
+                                        '(invalid interface number)' %
                                         group)
-                    
-                    for index in range(start_index, 
-                                       end_index):
+
+                    for index in range(start_index,
+                                       end_index + 1):
                         prefix = intf_type
-                        items.add('%s%s' % 
+                        items.add('%s%s' %
                                   (intf_type,
-                                   '/'.join(start_intf_tokens[:-1] + 
+                                   '/'.join(start_intf_tokens[:-1] +
                                             [str(index)])))
             if items_len == len(items):
-                log.warning('Unable to expand interface range: %s ' % 
+                log.warning('Unable to expand interface range: %s ' %
                             group)
-                raise TypeError('Unable to expand interface range: %s ' % 
+                raise TypeError('Unable to expand interface range: %s ' %
                                 group)
         else:
             log.warning('Unable to expand interface range: %s '
@@ -203,6 +205,7 @@ def expand_range(interfaces):
 
     log.debug('%s expanded to: %s' % (interfaces, items))
     return items
+
 
 def parse_interface(neighbor, node_id):
     try:
@@ -225,26 +228,27 @@ def parse_interface(neighbor, node_id):
 
         remote_device = str(remote_device).strip()
         if len(remote_device.split()) != 1:
-            log.error('%s: interface parse error: invalid peer device %s' % 
+            log.error('%s: interface parse error: invalid peer device %s' %
                       (node_id, remote_device))
             raise Exception('%s: interface parse error: invalid peer '
                             'device %s' % (node_id, remote_device))
-        
+
         remote_interface = str(remote_interface).strip()
         if len(remote_interface.split()) != 1:
             log.error('%s: interface parse error: invalid '
                       'peer interface %s' %
                       (node_id, remote_interface))
             raise Exception('%s: interface parse error: invalid peer '
-                            'interface %s' % 
+                            'interface %s' %
                             (node_id, remote_interface))
 
         return (remote_device, remote_interface)
     except KeyError as err:
-        log.error('%s: interface parse error: missing attribute (%s)' % 
+        log.error('%s: interface parse error: missing attribute (%s)' %
                   (node_id, str(err)))
         raise Exception('%s: interface parse error: missing '
                         'attribute (%s)' % (node_id, str(err)))
+
 
 def url_path_join(*parts):
     """Normalize url parts and join them with a slash."""
@@ -258,8 +262,10 @@ def url_path_join(*parts):
     fragment = get_first_token(fragments)
     return urlunsplit((scheme, netloc, path, query, fragment))
 
+
 def get_first_token(sequence):
     return next((x for x in sequence if x), '')
+
 
 def all_files(path):
     result = []
