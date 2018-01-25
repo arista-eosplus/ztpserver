@@ -550,17 +550,7 @@ Local interface name - supported values:
    -  Ethernet1-2,4,6,8-9
    -  Ethernet4,6,8-9
    -  Ethernet10-20
-   -  Ethernet1/3-2/4 *
-   -  Ethernet3-$ *
-   -  Ethernet1/10-$ *
-
--  **All Interfaces on a Module**
-
-   -  Ethernet1/$ *
-
-.. note::
-
-    \* Planned for future releases.
+   -  Ethernet1/3-1/32
 
 system\_name:neighbor\_port\_name
 '''''''''''''''''''''''''''''''''
