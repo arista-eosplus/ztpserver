@@ -4,6 +4,7 @@
 # Makefile for ztpserver
 #
 # useful targets:
+#   make docker_dev -- builds a docker container from source
 #   make sdist -- builds a source distribution
 #   make srpm -- builds a source rpm, input to mock
 #   make rpm -- builds a binary distribution
@@ -24,6 +25,11 @@
 NAME = "ztpserver"
 PYTHON = python
 TESTNAME = discover
+DOCKER_USER := 'aristanetworks'
+VERSION  := $$(cat VERSION)
+HASH     := $$(git log -1 --pretty=%h)
+IMG      := ${DOCKER_USER}/${NAME}:${VERSION}-${HASH}
+LATEST   := ${DOCKER_USER}/${NAME}:latest
 
 ########################################################
 
@@ -91,3 +97,7 @@ install:
 
 sdist: clean ztpserver.spec
 	$(PYTHON) setup.py sdist 
+
+docker_dev:
+	@docker build -t ${IMG} .
+	@docker tag ${IMG} ${LATEST}
