@@ -21,9 +21,9 @@ VOLUME ["/usr/share/ztpserver", "/etc/ztpserver"]
 
 # RUN groupadd -r ztpsadmin && useradd --no-log-init -r -g ztpsadmin ztpsadmin
 
-# EXPOSE TCP/8080 TCP/80
+EXPOSE 8080/TCP
 
-WORKDIR /usr/share/ztpserver
+# WORKDIR /usr/share/ztpserver
 # CMD [ "python", "./myscript.py" ]
 # CMD sh
 
