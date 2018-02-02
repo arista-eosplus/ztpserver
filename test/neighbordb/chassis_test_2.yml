@@ -1,0 +1,55 @@
+debug: true
+tests:
+  - topology
+  - pattern
+
+valid_patterns:
+  globals:
+      - TK5-SPINE1
+      - TK5-SPINE2
+
+nodes:
+  pass:
+    - name: node_1111
+      match: TK5-SPINE2
+#  fail:
+#    - name: spine1
+
+neighbordb:
+
+  patterns:
+    - name: TK5-SPINE1
+      definition: spine1
+      interfaces:
+        - any: regex('TK5-WAN-CA0\d-A7504R-DIST\d'):regex('Ethernet[34]/\d+/1')
+    - name: TK5-SPINE2
+      definition: spine2
+      interfaces:
+        - any: regex('TK5-WAN-CA0\d-A7504R-DIST\d'):regex('Ethernet[56]/\d+/1')
+
+node_1111:
+  model: DCS-7060CX-32S-R
+  neighbors:
+    Ethernet29/1:
+    - {device: localhost, port: Ethernet29/1}
+    Ethernet29/2:
+    - {device: localhost, port: Ethernet29/2}
+    Ethernet29/3:
+    - {device: localhost, port: Ethernet29/3}
+    Ethernet29/4:
+    - {device: localhost, port: Ethernet29/4}
+    Ethernet30/1:
+    - {device: localhost, port: Ethernet30/1}
+    Ethernet30/2:
+    - {device: localhost, port: Ethernet30/2}
+    Ethernet30/3:
+    - {device: localhost, port: Ethernet30/3}
+    Ethernet30/4:
+    - {device: localhost, port: Ethernet30/4}
+    Ethernet31/1:
+    - {device: TK5-WAN-CA03-A7504R-DIST1, port: Ethernet5/33/1}
+    Ethernet32/1:
+    - {device: TK5-WAN-CA04-A7504R-DIST2, port: Ethernet5/33/1}
+  serialnumber: SSJ12345678
+  systemmac: 28:99:3a:11:11:11
+  version: 4.18.1.1F
