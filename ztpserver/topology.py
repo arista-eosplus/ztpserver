@@ -84,14 +84,14 @@ def load_file(filename, content_type, node_id):
 def load_neighbordb(node_id, contents=None):
     try:
         if not contents:
-            log.info('%s: loading neighbordb file: %s' % 
+            log.info('%s: loading neighbordb file: %s' %
                      (node_id, neighbordb_path()))
             contents = load_file(neighbordb_path(), CONTENT_TYPE_YAML,
                                  node_id)
 
         # neighbordb is empty
         if not contents:
-            log.info('%s: unable to load neighbordb - file is missing/empty' % 
+            log.info('%s: unable to load neighbordb - file is missing/empty' %
                      node_id)
             contents = dict()
 
@@ -112,9 +112,9 @@ def load_neighbordb(node_id, contents=None):
     except SerializerError as err:
         # pylint: disable=E1101
         tokens = err.message.split('Error:')
-        log.error('%s: failed to load neighbordb: %s' % 
-                  (node_id, 
-                   'Error:'.join(tokens[1:]) 
+        log.error('%s: failed to load neighbordb: %s' %
+                  (node_id,
+                   'Error:'.join(tokens[1:])
                    if len(tokens) > 1
                    else err.message))
         return None
@@ -145,7 +145,7 @@ def load_pattern(pattern, content_type=CONTENT_TYPE_YAML, node_id=None):
         pattern['node_id'] = node_id
         return Pattern(**pattern)
     except TypeError as exc:
-        log.error('%s: failed to load pattern \'%s\' (%s)' % 
+        log.error('%s: failed to load pattern \'%s\' (%s)' %
                   (node_id, pattern, exc))
 
 def create_node(nodeattrs):
@@ -162,7 +162,7 @@ def create_node(nodeattrs):
         log.error('Failed to create node - missing attribute: %s' % err)
 
 def load_resources(attributes, node, node_id):
-    log.debug('%s: computing resources (attr=%s)' % 
+    log.debug('%s: computing resources (attr=%s)' %
               (node_id, attributes))
 
     _attributes = dict()
@@ -175,8 +175,8 @@ def load_resources(attributes, node, node_id):
                 match = FUNC_RE.match(item)
                 if match:
                     plugin = match.group('function')
-                    _value.append(run_plugin(plugin, 
-                                             node_id, 
+                    _value.append(run_plugin(plugin,
+                                             node_id,
                                              match.group('arg')),
                                              node)
                 else:
@@ -186,8 +186,8 @@ def load_resources(attributes, node, node_id):
             match = FUNC_RE.match(str(value))
             if match:
                 plugin = match.group('function')
-                value = run_plugin(plugin, 
-                                   node_id, 
+                value = run_plugin(plugin,
+                                   node_id,
                                    match.group('arg'),
                                    node)
         _attributes[key] = value
@@ -291,21 +291,21 @@ class Node(object):
     def add_neighbor(self, interface, peers):
         try:
             if self.neighbors.get(interface):
-                raise NodeError('%s: interface \'%s\' already added to node' % 
+                raise NodeError('%s: interface \'%s\' already added to node' %
                                 (self.identifier(), interface))
 
             _neighbors = list()
             for peer in peers:
                 log.debug('%s: creating neighbor %s:%s for interface %s' %
-                          ( self.identifier(), peer['device'], 
+                          ( self.identifier(), peer['device'],
                             peer['port'], interface))
                 _neighbors.append(Neighbor(peer['device'],
                                            peer['port']))
             self.neighbors[interface] = _neighbors
         except KeyError as err:
-            log.error('%s: failed to neighbor because of missing key (%s)' % 
+            log.error('%s: failed to neighbor because of missing key (%s)' %
                       (self.identifier(), str(err)))
-            raise NodeError('%s: failed to neighbor because of KeyError (%s)' % 
+            raise NodeError('%s: failed to neighbor because of KeyError (%s)' %
                       (self.identifier(), str(err)))
 
     def add_neighbors(self, neighbors):
@@ -338,7 +338,7 @@ class Neighbordb(object):
 
     def __init__(self, node_id):
         self.node_id = node_id
-        
+
         self.variables = dict()
         self.patterns = {'globals': list(), 'nodes': dict()}
 
@@ -350,12 +350,12 @@ class Neighbordb(object):
 
     def add_variable(self, key, value, overwrite=False):
         if key in self.RESERVED_VARIABLES:
-            log.error('%s: failed to add variable: %s (reserved keyword)' % 
+            log.error('%s: failed to add variable: %s (reserved keyword)' %
                       (self.node_id, key))
             raise NeighbordbError('%s: failed to add variable: %s '
                                 '(reserved keyword)' % (self.node_id, key))
         elif key in self.variables and not overwrite:
-            log.error('%s: failed to add variable: %s (duplicate)' % 
+            log.error('%s: failed to add variable: %s (duplicate)' %
                       (self.node_id, key))
             raise NeighbordbError('%s: failed to add variable %s '
                                 '(duplicate)' % (self.node_id, key))
@@ -367,7 +367,7 @@ class Neighbordb(object):
             log.error('%s: failed to add variables: missing attribute '
                       '\'items\' (%s)' % (self.node_id, variables))
             raise NeighbordbError('%s: failed to add variables: '
-                                  'missing attribute \'items\' (%s)' % 
+                                  'missing attribute \'items\' (%s)' %
                                   (self.node_id, variables))
 
         for key, value in variables.items():
@@ -379,7 +379,7 @@ class Neighbordb(object):
             kwargs['node_id'] = self.node_id
             kwargs['name'] = name
 
-            kwargs['config_handler'] = kwargs.get('config-handler', 
+            kwargs['config_handler'] = kwargs.get('config-handler',
                                                   None)
             if 'config-handler' in kwargs:
                 del kwargs['config-handler']
@@ -388,21 +388,21 @@ class Neighbordb(object):
 
             for key in set(self.variables).difference(kwargs['variables']):
                 kwargs['variables'][key] = self.variables[key]
-                
+
             pattern = Pattern(**kwargs)
 
-            log.debug('%s: pattern \'%r\' parsed successfully' % 
+            log.debug('%s: pattern \'%r\' parsed successfully' %
                       (self.node_id, pattern))
 
             # Add pattern to neighbordb
             if 'node' in kwargs:
-                if pattern.node not in self.patterns['nodes']: 
+                if pattern.node not in self.patterns['nodes']:
                     self.patterns['nodes'][pattern.node] = pattern
                 else:
                     log.warning('%s: pattern \'%r\' ignored because '
                                 'another node-specific pattern is '
                                 'configured earlier in neighbordb'
-                                '\'%r\'' % 
+                                '\'%r\'' %
                                 (self.node_id, pattern,
                                  self.patterns['nodes'][pattern.node]))
             else:
@@ -411,12 +411,12 @@ class Neighbordb(object):
             log.error('%s: failed to add pattern \'%s\' because of '
                       'missing key (%s)' % (self.node_id, name, str(err)))
             raise NeighbordbError('%s: failed to pattern \'%s\' because of '
-                                'missing key (%s)' % 
+                                'missing key (%s)' %
                                   (self.node_id, name, str(err)))
         except PatternError:
-            log.error('%s: failed to add pattern \'%s\'' % 
+            log.error('%s: failed to add pattern \'%s\'' %
                       (self.node_id, name))
-            raise NeighbordbError('%s: failed to add pattern \'%s\'' % 
+            raise NeighbordbError('%s: failed to add pattern \'%s\'' %
                                   (self.node_id, name))
 
     def add_patterns(self, patterns):
@@ -424,7 +424,7 @@ class Neighbordb(object):
             for pattern in patterns:
                 self.add_pattern(**pattern)
         except TypeError as err:
-            log.error('%s: failed to add patterns %s: %s' % 
+            log.error('%s: failed to add patterns %s: %s' %
                       (self.node_id, patterns, str(err)))
             raise NeighbordbError('%s: failed to add patterns %s: %s' %
                                   (self.node_id, patterns, str(err)))
@@ -444,10 +444,10 @@ class Neighbordb(object):
     def identifier(node):
         identifier = runtime.default.identifier
         return node[identifier]
-        
+
     def find_patterns(self, node):
         identifier = node.identifier()
-        log.debug('%s: searching for eligible patterns' % 
+        log.debug('%s: searching for eligible patterns' %
                   identifier)
 
         result = []
@@ -455,7 +455,7 @@ class Neighbordb(object):
         pattern = self.patterns['nodes'].get(identifier, None)
         if pattern:
             log.debug('%s: node-specific pattern eligible in neighbordb: %s' %
-                      (identifier, 
+                      (identifier,
                        pattern.name))
             result += [pattern]
 
@@ -473,21 +473,21 @@ class Neighbordb(object):
         identifier = node.identifier()
         result = list()
         for pattern in self.find_patterns(node):
-            log.debug('%s: attempting to match pattern %s' % 
+            log.debug('%s: attempting to match pattern %s' %
                       (identifier, pattern.name))
             if pattern.match_node(node):
-                log.debug('%s: pattern %s matched' % 
+                log.debug('%s: pattern %s matched' %
                           (identifier, pattern.name))
                 result.append(pattern)
             else:
-                log.debug('%s: pattern %s match failed' % 
+                log.debug('%s: pattern %s match failed' %
                           (identifier, pattern.name))
         return result
 
 
 class Pattern(object):
 
-    def __init__(self, name=None, definition=None, 
+    def __init__(self, name=None, definition=None,
                  config_handler=None, interfaces=None,
                  node=None, variables=None, node_id=None):
 
@@ -526,7 +526,7 @@ class Pattern(object):
             log.debug('%s: pattern \'%s\' variable substitution failed: %s' %
                       (self.node_id, self.name, str(exc)))
             raise PatternError('%s: pattern \'%s\' variable substitution '
-                               'failed: %s' % 
+                               'failed: %s' %
                                (self.node_id, self.name, str(exc)))
 
     def serialize(self):
@@ -567,13 +567,13 @@ class Pattern(object):
 
                 patterns = list()
                 if intf in ['none', 'any']:
-                    patterns.append(InterfacePattern(intf, remote_device, 
-                                                     remote_interface, 
+                    patterns.append(InterfacePattern(intf, remote_device,
+                                                     remote_interface,
                                                      self.node_id))
                 else:
                     intfs = expand_range(intf)
                     for item in intfs:
-                        pattern = InterfacePattern(item, remote_device, 
+                        pattern = InterfacePattern(item, remote_device,
                                                    remote_interface,
                                                    self.node_id)
                         patterns.append(pattern)
@@ -599,11 +599,11 @@ class Pattern(object):
 
     def match_node(self, node):
 
-        log.debug('%s: pattern \'%s\' - attempting to match node (%r)' % 
+        log.debug('%s: pattern \'%s\' - attempting to match node (%r)' %
                   (self.node_id, self.name, str(node)))
 
         # No need to match system ID - that it already taken care of
-        # while selecting the set of nodes which are eligible for a 
+        # while selecting the set of nodes which are eligible for a
         # match.
 
         patterns = list()
@@ -619,33 +619,33 @@ class Pattern(object):
             match = False
             for index, pattern in enumerate(patterns):
                 log.debug('%s: pattern \'%s\' - checking interface pattern '
-                          'for %s: %s' % 
+                          'for %s: %s' %
                           (self.node_id, self.name, interface, pattern))
                 result = pattern.match(interface, neighbors)
 
                 # True, False, None
                 if result is True:
                     log.debug('%s: pattern \'%s\' - interface pattern match '
-                              'for %s: %s' % 
+                              'for %s: %s' %
                               (self.node_id, self.name, interface, pattern))
                     del patterns[index]
                     match = True
                     break
                 elif result is False:
                     log.debug('%s: pattern \'%s\' - interface pattern match '
-                              'failure for %s: %s' % 
+                              'failure for %s: %s' %
                               (self.node_id, self.name, interface, pattern))
                     return False
 
             if not match:
                 log.debug('%s: pattern \'%s\' - interface %s did not match '
-                          'any interface patterns' % 
+                          'any interface patterns' %
                           (self.node_id, self.name, interface))
 
         for pattern in patterns:
             if pattern.is_positive_constraint():
                 log.debug('%s: pattern \'%s\' - interface pattern %s did '
-                          'not match any interface' % 
+                          'not match any interface' %
                           (self.node_id, self.name, pattern))
                 return False
         return True
@@ -675,7 +675,7 @@ class InterfacePattern(object):
         self.remote_device = remote_device
         self.remote_interface = remote_interface
         self.node_id = node_id
-        
+
         self.remote_device_re = self.compile(remote_device)
         self.remote_interface_re = self.compile(remote_interface)
 
@@ -702,7 +702,7 @@ class InterfacePattern(object):
             else:
                 return ExactFunction(value)
         except KeyError as exc:
-            log.error('%s: compile error: unknown function \'%s\' (%s)' % 
+            log.error('%s: compile error: unknown function \'%s\' (%s)' %
                       (self.node_id, function, str(exc)))
             raise InterfacePatternError
 
@@ -719,9 +719,9 @@ class InterfacePattern(object):
     def match_neighbor(self, interface, neighbor):
         # pylint: disable=R0911,R0912
         log.debug('%s: attempting to match %s(%s) against '
-                  'interface pattern %r' % 
+                  'interface pattern %r' %
                   (self.node_id, interface, neighbor, self))
-        
+
         if self.interface == 'any':
             if self.remote_device == 'any':
                 if self.remote_interface == 'any':
@@ -747,7 +747,7 @@ class InterfacePattern(object):
                         return True
                 elif self.remote_interface == 'none':
                     if self.match_remote_device(neighbor.device):
-                        return False 
+                        return False
                 else:
                     if(self.match_remote_device(neighbor.device) and
                        self.match_remote_interface(neighbor.interface)):
@@ -819,7 +819,7 @@ class InterfacePattern(object):
                     if(self.match_interface(interface) and
                        self.match_remote_device(neighbor.device) and
                        self.match_remote_interface(neighbor.interface)):
-                        return True 
+                        return True
         return None
 
 
@@ -840,10 +840,10 @@ class InterfacePattern(object):
             return self.remote_device_re.match(remote_device)
 
     def match_remote_interface(self, remote_interface):
-        if self.interface == 'any':
-            return True 
-        elif self.interface is None:
-            return False 
+        if self.remote_interface == 'any':
+            return True
+        elif self.remote_interface is None:
+            return False
         else:
             return self.remote_interface_re.match(remote_interface)
 

@@ -354,6 +354,22 @@ might work.
 -  Interface50 matches if it is connected to any device that doesn't
    have 'spine' in the name and is connected on port Ethernet50
 
+Example #5
+''''''''''
+
+.. code-block:: yaml
+
+    ---
+    - name: Connected to Spine 2
+      definition: spine2
+      variables:
+        any_spine: includes('spine')
+      interfaces:
+        - any: $any_spine:regex('Ethernet[45]/\d+\1')
+
+In this case, the pattern matches if `any` local interface is connected to a
+device with `spine` in the hostname and to the 4th or 5th slot in the chassis.
+
 
 More examples
 `````````````
