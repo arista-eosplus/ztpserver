@@ -98,6 +98,6 @@ install:
 sdist: clean ztpserver.spec
 	$(PYTHON) setup.py sdist 
 
-docker_dev:
+docker_dev: sdist
 	@docker build -t ${IMG} .
 	@docker tag ${IMG} ${LATEST}

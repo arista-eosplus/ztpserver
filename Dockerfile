@@ -9,13 +9,11 @@ LABEL maintainer="eosplus-dev@arista.com"
 
 WORKDIR /src/ztpserver
 
-# ADD myscript.py /
-# RUN pip install ztpserver
-
-COPY . .
+# COPY . .
 # COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-RUN python setup.py install
+# RUN pip install --no-cache-dir -r requirements.txt
+COPY dist/ztpserver-*.tar.gz ./
+RUN pip install --no-cache-dir  ztpserver-*.tar.gz
 
 VOLUME ["/usr/share/ztpserver", "/etc/ztpserver"]
 
