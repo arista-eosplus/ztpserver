@@ -268,7 +268,6 @@ Example #3
         - not_spine: excludes('spine')
         - any_spine: regex('spine\d+')
         - any_pod: includes('pod')
-        - any_pod_spine: any_spine and any_pod*
       interfaces:
         - Ethernet1: $any_spine:Ethernet1/$
         - Ethernet2: $pod1-spine2:any
@@ -280,8 +279,6 @@ Example #3
         - Ethernet50:
             device: excludes('spine')
             port: Ethernet50
-
-**Note:** \* In a future release.
 
 This example pattern could apply to any node that matches the interface
 map. In includes the use of variables for cleaner implementation and

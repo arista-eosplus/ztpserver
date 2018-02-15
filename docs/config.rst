@@ -430,16 +430,23 @@ Example .node file:
 
 .. code-block:: json
 
-    {"neighbors": {"Management1": [{"device": "ztps.ztps-test.com",
-                                    "port": "0050.569b.9ba5"}
-                                  ],
-                   "Ethernet2": [{"device": "veos-dc1-pod1-spine1",
-                                    "port": "0050.569a.9321"}
+    {"neighbors": {"Management1": [{"device": "mgmt-server",
+                                    "port": "0050.569b.ad8d"},
+                                   {"device": "veos-leaf3.ztps-test.com",
+                                    "port": "Management1"},
+                                   {"device": "veos-spine2.ztps-test.com",
+                                    "port": "Management1"}
+                                   ],
+                   "Ethernet1": [{"device": "veos-leaf3.ztps-test.com",
+                                  "port": "Ethernet1"}
+                                ],
+                   "Ethernet3": [{"device": "veos-spine2.ztps-test.com",
+                                  "port": "Ethernet3"}
                                 ]
                   },
      "model": "vEOS",
-     "version": "4.13.7M",
-     "systemmac": "005056b863ac"
+     "version": "4.15.1F",
+     "systemmac": "005056600663"
     }
 
 .. _dynamic_provisioning:
@@ -550,17 +557,7 @@ Local interface name - supported values:
    -  Ethernet1-2,4,6,8-9
    -  Ethernet4,6,8-9
    -  Ethernet10-20
-   -  Ethernet1/3-2/4 *
-   -  Ethernet3-$ *
-   -  Ethernet1/10-$ *
-
--  **All Interfaces on a Module**
-
-   -  Ethernet1/$ *
-
-.. note::
-
-    \* Planned for future releases.
+   -  Ethernet1/3-1/32
 
 system\_name:neighbor\_port\_name
 '''''''''''''''''''''''''''''''''
