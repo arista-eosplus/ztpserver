@@ -1,0 +1,12 @@
+*.md
+!README.md
+docs
+test
+venv
+*.egg-info
+.git
+.gitignore
+.travis.yml
+.DS_Store
+rpm
+ztpserver.spec-e
