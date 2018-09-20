@@ -1,0 +1,26 @@
+#!/usr/bin/env groovy
+
+/**
+ * Declarative Jenkinsfile
+ */
+ pipeline {
+    agent none
+    stages {
+        stage('Clone') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Docker') {
+            agent {
+                docker {
+                    image 'python:2.7.15'
+                    label 'ui-systest'
+                }
+            }
+            steps {
+                sh 'ls && python --version'
+            }
+        }
+    }
+}
