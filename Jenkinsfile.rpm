@@ -1,0 +1,30 @@
+#!/usr/bin/env groovy
+
+/**
+ * Declarative Jenkinsfile
+ */
+ pipeline {
+    agent {
+        dockerfile {
+            dir 'rpm'
+            label 'ui-systest'
+        }
+    }
+    stages {
+        stage('Clone Repo') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build RPM') {
+            steps {
+                withEnv(["HOME=${env.WORKSPACE}"]) {
+                    sh """
+                    make clean
+                    make srpm || exit 1
+                    """
+                }
+            }
+        }
+    }
+}
