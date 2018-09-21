@@ -48,7 +48,7 @@ clean:
 
 ../ztpserver.spec: ../VERSION
 	@cp $(RPMSPEC) ../$(PACKAGE).spec
-	@sed -i -e 's/^Version:.*/Version: $(VERSION)/g' ../$(PACKAGE).spec
+	@sed -i -e 's/^Version:.*/Version: $(SPECVERSION)/g' ../$(PACKAGE).spec
 	@sed -i -e 's/^Release:.*/Release: $(RPMRELEASE)%{?dist}/g' ../$(PACKAGE).spec
 
 rpm:
