@@ -8,6 +8,7 @@
         dockerfile {
             dir 'rpm'
             label 'ui-systest'
+            args "-u root"
         }
     }
     stages {
@@ -20,8 +21,13 @@
             steps {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
-                    make clean
+                    if [ ! -d "./rpmbuild/results/epel-7-x86_64" ]; then
+                        mkdir -p ./rpmbuild/results/epel-7-x86_64
+                    else
+                        rm -f ./rpmbuild/results/epel-7-x86_64/*
+                    fi
                     make srpm || exit 1
+                    mock -r epel-7-x86_64 --verbose --rebuild ./rpm/rpms/ztpserver-*src.rpm --resultdir=./rpmbuild/results/epel-7-x86_64
                     """
                 }
             }
