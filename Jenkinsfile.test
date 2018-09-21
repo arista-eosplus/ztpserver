@@ -4,25 +4,35 @@
  * Declarative Jenkinsfile
  */
  pipeline {
-    agent { label 'ui-systest' }
+    agent {
+        docker {
+            image 'python:2.7.15'
+            label 'ui-systest'
+            args  '-v /dev/log:/dev/log'
+        }
+    }
     stages {
-        stage('Clone') {
+        stage('Clone Repo') {
             steps {
                 checkout scm
             }
         }
-        stage('Docker') {
-            agent {
-                docker {
-                    image 'python:2.7.15'
-                    label 'ui-systest'
-                    args  '-v /dev/log:/dev/log'
-                }
-            }
+        stage('Install Dependencies') {
             steps {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh 'pip install --user ztpserver'
-                    sh 'make tests'
+                    sh 'pip install virtualenv'
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                withEnv(["HOME=${env.WORKSPACE}"]) {
+                    sh """
+                    virtualenv pyenv
+                   . pyenv/bin/activate
+                    pip install -r requirements.txt
+                    make tests
+                    """
                 }
             }
         }
