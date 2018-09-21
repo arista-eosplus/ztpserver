@@ -16,13 +16,15 @@
                 docker {
                     image 'python:2.7.15'
                     label 'ui-systest'
-                    args  '-v /dev/log:/dev/log'
                 }
             }
             steps {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh 'pip install --user ztpserver'
-                    sh 'make tests'
+                    sh 'make clean'
+                }
+                withEnv(["HOME=${env.WORKSPACE}/docs"]) {
+                    sh 'pip install --user -r requirements.txt'
+                    sh 'make docs'
                 }
             }
         }
