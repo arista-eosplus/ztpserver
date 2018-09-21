@@ -20,11 +20,15 @@
             }
             steps {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh 'make clean'
-                }
-                withEnv(["HOME=${env.WORKSPACE}/docs"]) {
-                    sh 'pip install --user -r requirements.txt'
-                    sh 'make docs'
+                    sh """
+                    make clean
+                    pip install virtualenv
+                    virtualenv pyenv
+                   . pyenv/bin/activate
+                    cd docs
+                    pip install -r requirements.txt
+                    make html
+                    """
                 }
             }
         }
