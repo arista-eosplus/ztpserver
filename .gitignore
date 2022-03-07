@@ -1,4 +1,5 @@
 .idea
+ztpserver.spec-e
 *.py[cod]
 
 # C extensions
