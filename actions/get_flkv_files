@@ -28,12 +28,10 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # pylint: disable=W0703,E1103
-
 BACKUP_SUFFIX = '.backup'
 PERSISTENT_DIR = '/mnt/flash/.ztp-files'
 PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
                       '/persist/local/', '/persist/sys/']
-
 import os
 import shutil
 
@@ -78,10 +76,17 @@ def main(attributes):
 
     try:
         tars = '/tmp/flkv_tars'
-        flkv_state_path = 'files/flkv-state/' + src_url
-        node.retrieve_url(flkv_state_path + '/tars', tars)
+        flkv_state_path = 'files/flkv-state/' + src_url + '/'
+        node.retrieve_url(flkv_state_path + 'tars', tars)
+
         with open(tars, 'r') as openfile:
-            filepaths = openfile.readlines()
+            filepaths = openfile.read().splitlines()
+            try:
+                os.makedirs(dst_url)
+            except OSError:
+                # folder exists
+                pass
+
             for filepath in filepaths:
                 filename = os.path.basename(filepath)
                 savepath = '{}/{}'.format(dst_url, filename)
