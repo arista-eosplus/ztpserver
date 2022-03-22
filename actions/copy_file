@@ -108,6 +108,13 @@ def main(attributes):
     if not overwrite:
         overwrite = 'replace'
 
+    if dst_url == '/persist/sys/flos/':
+        try:
+            os.makedirs(dst_url)
+        except OSError:
+            # folder exists
+            pass
+
     if url_persistent(dst_url):
         dst_path = os.path.join(dst_url, name)
 
@@ -143,41 +150,5 @@ def main(attributes):
             raise Exception('Unable to retrieve file from URL (%s)' % 
                             exc)
     else:
-        dst_path = os.path.join(PERSISTENT_DIR, name)
-
-        lines = []
-        if overwrite == 'if-missing':
-            lines = lines + ['[ ! -f %s ] && '
-                             'sudo cp %s %s'  % (dst_url, dst_path,
-                                                 dst_url)]
-        elif overwrite == 'backup':
-            lines = lines + ['[ -f %s ] && '
-                             'sudo mv %s %s%s' % (dst_url, dst_url,
-                                                  dst_url, BACKUP_SUFFIX)]
-            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
-        elif overwrite == 'replace':
-            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
-        else:
-            raise Exception('Erroneous \'overwrite\' value')
-
-        if mode:
-            lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
-
-        try:
-            os.makedirs(PERSISTENT_DIR)
-        except OSError:
-            # file exists
-            pass
-
-        try:
-            file_path = '%s/%s' % (PERSISTENT_DIR, name)
-            node.retrieve_url(src_url, file_path)
-            node.log_msg('copy_file: saving %s '
-                         'to %s' % (src_url, file_path))
-        except Exception as exc:
-            raise Exception('Unable to retrieve file from URL (%s)' % 
-                            exc)
-
-        node.log_msg('copy_file: adding rc.eos lines: \n%s$' %
-                     '\n'.join(lines))
-        node.append_rc_eos_lines(lines)
+        pass
+        # pass, we dont do non persistent
