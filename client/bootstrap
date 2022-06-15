@@ -724,7 +724,7 @@ class Node(object):
         If 'path' is somewhere on flash and 'url' points back to
         SERVER, then the client will request the metadata for
         the resource from the server (in order to check whether there
-        is enogh disk space available). If 'url' points to a different
+        is enough disk space available). If 'url' points to a different
         server, then the 'content-length' header will be used for the
         disk space checks.
 
@@ -913,7 +913,7 @@ class Server(object):
 
     @classmethod
     def _http_request(cls, path=None, method='get', headers=None,
-                      payload=None, files=None):
+                      payload=None, files=None, local_file=None):
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
@@ -945,6 +945,15 @@ class Server(object):
                                          headers=headers,
                                          files=request_files,
                                          timeout=HTTP_TIMEOUT)
+            elif method == 'stream':
+                log('STREAM %s - %s' % full_url, local_file)
+                if not local_file:
+                    raise Exception('Cant STREAM EOS image file without file name and path')
+                with requests.get(full_url, stream=True) as r:
+                    r.raise_for_status()
+                    with open(local_file, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            f.write(chunk)
             else:
                 log('Unknown method %s' % method,
                     error=True)
@@ -953,11 +962,14 @@ class Server(object):
 
         return response
 
-    def _get_request(self, url):
+    def _get_request(self, url, stream=False, local_file=None):
         # resource or action
         headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request(url,
-                                    headers=headers)
+        if stream:
+            result = self._http_request(url, method='stream', headers=headers,
+                                        local_file=local_file)
+        else:
+            result = self._http_request(url, method='get', headers=headers)
         log('Server response to GET request: status=%s' % result.status_code)
 
         return (result.status_code,
@@ -1144,7 +1156,11 @@ class Server(object):
         if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
-        status, content, response = self._get_request(url)
+        if FLASH in path:
+            status, content, response = self._get_request(url, stream=True,
+                                                          local_file=path)
+        else:
+            status, content, response = self._get_request(url)
 
         if url.startswith(SERVER):
             if not ((status == HTTP_STATUS_OK and
