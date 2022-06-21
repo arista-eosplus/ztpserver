@@ -859,6 +859,7 @@ class SyslogManager(object):
         self._add_syslog_handler()
 
     def _add_handler(self, handler, level=None):
+        log('ADD HANDLER - %s' % handler, xmpp=False)
         if level is None:
             level = 'DEBUG'
 
@@ -871,6 +872,7 @@ class SyslogManager(object):
 
         handler.setFormatter(self.formatter)
         self.log.addHandler(handler)
+        log('DONE ADDING HANDLER')
 
     def _add_syslog_handler(self):
         log('SyslogManager: adding localhost handler')
@@ -887,6 +889,8 @@ class SyslogManager(object):
         self._add_handler(SysLogHandler(address=(host, port)), level)
 
     def add_handlers(self, handler_config):
+        log('SYSLOG ADDING HANDLERS', xmpp=False)
+        log("%s" % handler_config, xmpp=False)
         for entry in handler_config:
             match = re.match('^file:(.+)',
                              entry['destination'])
@@ -914,6 +918,10 @@ class Server(object):
     @classmethod
     def _http_request(cls, path=None, method='get', headers=None,
                       payload=None, files=None, local_file=None):
+        log('HTTP REQUEST')
+        log('PATH - %s' % path)
+        log('METHOD - %s' % method)
+        log('LOCAL FILE - %s' % local_file)
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
@@ -926,10 +934,14 @@ class Server(object):
             request_files[entry] = open(entry, 'rb')
 
         if not urlparse.urlsplit(path).scheme:   # pylint: disable=E1103
+            log('URL SPLIT')
+            log(SERVER)
+            log(path)
             full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
+        log('PRE TRY - %s' % full_url)
         try:
             if method == 'get':
                 log('GET %s' % full_url)
@@ -963,6 +975,10 @@ class Server(object):
         return response
 
     def _get_request(self, url, stream=False, local_file=None):
+        log('GET REQUEST')
+        log(url)
+        log(stream)
+        log(local_file)
         # resource or action
         headers = {'content-type': CONTENT_TYPE_HTML}
         if stream:
@@ -1028,6 +1044,7 @@ class Server(object):
         os.chmod(path, 0777)
 
     def get_config(self):
+        log('GET CONFIG')
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
@@ -1035,7 +1052,9 @@ class Server(object):
         log('Server response to GET config: contents=%s' % result.json())
 
         status = result.status_code
+        log(status)
         content = result.headers['content-type'].split(';')[0]
+        log(content)
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
@@ -1098,6 +1117,7 @@ class Server(object):
         return (status, content, result)
 
     def get_action(self, action):
+        log('GET ACTION')
         status, content, action_response = \
             self._get_request('actions/%s' % action)
 
@@ -1116,6 +1136,7 @@ class Server(object):
         return filename
 
     def get_metadata(self, url):
+        log('GET METADATA')
         if urlparse.urlsplit(url).scheme:   # pylint: disable=E1103
             regex = re.compile(SERVER, re.IGNORECASE)
             if regex.match(url):
@@ -1153,6 +1174,9 @@ class Server(object):
         return (status, content, result)
 
     def get_resource(self, url, path):
+        log('GET RESOURCE')
+        log(url)
+        log(path)
         if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
@@ -1297,6 +1321,7 @@ def apply_config(config, node):
                                          nick,
                                          xmpp_config.get('server', None),
                                          xmpp_config.get('port', 5222))
+                log('Done Configuring XMPP', xmpp=False)
             else:
                 # XMPP not configured yet
                 log('XMPP configuration failed because server response '
@@ -1309,6 +1334,7 @@ def apply_config(config, node):
     if log_config:
         log('Configuring syslog')
         syslog_manager.add_handlers(log_config)
+        log('DONE CONFIGURING SYSLOG')
     else:
         log('No XMPP configuration received from server')
 
