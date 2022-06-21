@@ -923,11 +923,11 @@ class Server(object):
     @classmethod
     def _http_request(cls, path=None, method='get', headers=None,
                       payload=None, files=None, local_file=None):
-        log('HTTP REQUEST')
-        log('PATH - %s' % path)
-        log('HEADERS - %s' % headers)
-        log('METHOD - %s' % method)
-        log('LOCAL FILE - %s' % local_file)
+        log('HTTP REQUEST', xmpp=False)
+        log('PATH - %s' % path, xmpp=False)
+        log('HEADERS - %s' % headers, xmpp=False)
+        log('METHOD - %s' % method, xmpp=False)
+        log('LOCAL FILE - %s' % local_file, xmpp=False)
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
@@ -940,12 +940,13 @@ class Server(object):
             request_files[entry] = open(entry, 'rb')
 
         if not urlparse.urlsplit(path).scheme:   # pylint: disable=E1103
-            log('URL SPLIT - %s - %s' % (SERVER, path))
+            log('URL SPLIT - %s - %s' % (SERVER, path), xmpp=False)
             full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
-        log('PRE TRY - %s' % full_url)
+        log('PRE TRY - %s' % full_url, xmpp=False)
+        response = None
         try:
             if method == 'get':
                 log('GET %s' % full_url)
@@ -975,7 +976,7 @@ class Server(object):
                     error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpError('server connection error')
-
+        log('RESPONSE' % response, xmpp=False)
         return response
 
     def _get_request(self, url, stream=False, local_file=None):
@@ -1048,7 +1049,7 @@ class Server(object):
         os.chmod(path, 0777)
 
     def get_config(self):
-        log('GET CONFIG')
+        log('GET CONFIG', xmpp=False)
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
