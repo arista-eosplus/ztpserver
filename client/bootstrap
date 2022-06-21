@@ -237,7 +237,6 @@ def log(msg, error=False, xmpp=None):
 
 def url_path_join(*parts):
     log('URL PATH JOIN')
-    log('PARTS - %s' % parts)
     """Normalize URL parts and join them with a slash."""
     # pylint: disable=W0142
     schemes, netlocs, paths, queries, fragments = \
