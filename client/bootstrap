@@ -1392,6 +1392,7 @@ def main():
     syslog_manager = SyslogManager()
     server = Server()
 
+    print 'A'
     # Retrieve and apply logging/XMPP configuration from server
     # XMPP not configured yet
     log('Retrieving config from server', xmpp=False)
@@ -1400,6 +1401,7 @@ def main():
     # Creating node
     node = Node(server)
 
+    print 'B'
     # XMPP not configured yet
     log('Config retrieved from server', xmpp=False)
     apply_config(config.json(), node)
@@ -1440,11 +1442,11 @@ def main():
 
 if __name__ == '__main__':
     try:
+        print 'START MAIN'
         main()
     except ZtpError as exception:
-        log('''Bootstrap process failed:
-   %s''' % str(exception),
-            error=True)
+        errStr = 'Bootstrap process failed: %s' % str(exception)
+        log(errStr, error=True)
         _exit(1)
     except KeyboardInterrupt:
         log('Bootstrap process keyboard-interrupted',
@@ -1453,7 +1455,8 @@ if __name__ == '__main__':
         log(traceback.format_exc())
         _exit(1)
     except Exception, exception:
-        errStr = 'Bootstrap process failed because of unknown exception: %s' % exception
+        errStr = 'Bootstrap process failed because' \
+                 ' of unknown exception: %s' % exception
         log(errStr, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
