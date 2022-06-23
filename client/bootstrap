@@ -246,7 +246,6 @@ def url_path_join(*parts):
     query = get_first_token(queries)
     fragment = get_first_token(fragments)
     us = urlunsplit((scheme, netloc, path, query, fragment))
-    log('UNSPLIT - %s' % us)
     return us
 
 # pylint: disable=C0103
@@ -740,7 +739,9 @@ class Node(object):
         Returns:
             string: startup-config path
         '''
+        log('RURLS')
         self.server_.get_resource(url, path)
+        log('RURLE')
 
     def create_user(self, user, group, passwd, root='/persist/local/',
                     ssh_keys=None):
@@ -919,10 +920,6 @@ class Server(object):
     @classmethod
     def _http_request(cls, path=None, method='get', headers=None,
                       payload=None, files=None, local_file=None):
-        log('HTTP REQUEST PATH - %s' % path, xmpp=False)
-        log('HEADERS - %s' % headers, xmpp=False)
-        log('METHOD - %s' % method, xmpp=False)
-        log('LOCAL FILE - %s' % local_file, xmpp=False)
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
@@ -935,13 +932,10 @@ class Server(object):
             request_files[entry] = open(entry, 'rb')
 
         if not urlparse.urlsplit(path).scheme:   # pylint: disable=E1103
-            log('URL SPLIT - %s - %s' % (SERVER, path), xmpp=False)
             full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
-        log('PRE TRY - %s' % full_url, xmpp=False)
-        response = None
         try:
             if method == 'get':
                 log('GET %s' % full_url)
@@ -958,24 +952,23 @@ class Server(object):
                                          files=request_files,
                                          timeout=HTTP_TIMEOUT)
             elif method == 'stream':
-                log('STREAM %s - %s' % full_url, local_file)
+                log('STREAM %s - %s' % (full_url, local_file))
                 if not local_file:
                     raise Exception('Cant STREAM EOS image file without file name and path')
-                with requests.get(full_url, stream=True) as r:
-                    r.raise_for_status()
+                with requests.get(full_url, stream=True) as response:
+                    response.raise_for_status()
                     with open(local_file, 'wb') as f:
-                        for chunk in r.iter_content(chunk_size=8192):
+                        for chunk in response.iter_content(chunk_size=8192):
                             f.write(chunk)
             else:
+                response = None
                 log('Unknown method %s' % method,
                     error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpError('server connection error')
-        log('RESPONSE' % response, xmpp=False)
         return response
 
     def _get_request(self, url, stream=False, local_file=None):
-        log('GET REQUEST - %s - %s - %s' % (url, stream, local_file))
         # resource or action
         headers = {'content-type': CONTENT_TYPE_HTML}
         if stream:
@@ -1027,21 +1020,21 @@ class Server(object):
 
         log('Writing %s...' % path)
 
-        # Save contents to file
-        try:
-            with open(path, 'wb') as result:
-                for chunk in contents.iter_content(chunk_size=1024):
-                    if chunk:
-                        result.write(chunk)
-                result.close()
-        except IOError as err:
-            raise ZtpError('unable to write %s: %s' % (path, err))
+        if not path.startswith(FLASH):
+            # Save contents to file
+            try:
+                with open(path, 'wb') as result:
+                    for chunk in contents.iter_content(chunk_size=1024):
+                        if chunk:
+                            result.write(chunk)
+                    result.close()
+            except IOError as err:
+                raise ZtpError('unable to write %s: %s' % (path, err))
 
         # Set permissions
         os.chmod(path, 0777)
 
     def get_config(self):
-        log('GET CONFIG', xmpp=False)
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request('bootstrap/config',
                                     headers=headers)
@@ -1049,13 +1042,11 @@ class Server(object):
         log('Server response to GET config: contents=%s' % result.json())
 
         status = result.status_code
-        log('GET CONFIG STATUS - %s' % status)
         content = result.headers['content-type'].split(';')[0]
-        log('GET CONFIG CONTENT - %s' % content)
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
 
         return (status, content, result)
@@ -1114,7 +1105,6 @@ class Server(object):
         return (status, content, result)
 
     def get_action(self, action):
-        log('GET ACTION')
         status, content, action_response = \
             self._get_request('actions/%s' % action)
 
@@ -1133,7 +1123,6 @@ class Server(object):
         return filename
 
     def get_metadata(self, url):
-        log('GET METADATA')
         if urlparse.urlsplit(url).scheme:   # pylint: disable=E1103
             regex = re.compile(SERVER, re.IGNORECASE)
             if regex.match(url):
@@ -1146,7 +1135,8 @@ class Server(object):
         headers = {'content-type': CONTENT_TYPE_HTML}
         result = self._http_request(url,
                                     headers=headers)
-        log('Server response to GET meta: contents=%s' % result.json())
+        log('Server response to GET meta: contents=%s - status=%s' % (result.json(),
+                                                                      result.status_code))
 
         status = result.status_code
         content = result.headers['content-type'].split(';')[0]
@@ -1171,7 +1161,6 @@ class Server(object):
         return (status, content, result)
 
     def get_resource(self, url, path):
-        log('GET RESOURCE - %s - %s' % (url, path))
         if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
@@ -1316,7 +1305,6 @@ def apply_config(config, node):
                                          nick,
                                          xmpp_config.get('server', None),
                                          xmpp_config.get('port', 5222))
-                log('Done Configuring XMPP', xmpp=False)
             else:
                 # XMPP not configured yet
                 log('XMPP configuration failed because server response '
@@ -1329,7 +1317,6 @@ def apply_config(config, node):
     if log_config:
         log('Configuring syslog')
         syslog_manager.add_handlers(log_config)
-        log('DONE CONFIGURING SYSLOG')
     else:
         log('No XMPP configuration received from server')
 
@@ -1392,7 +1379,6 @@ def main():
     syslog_manager = SyslogManager()
     server = Server()
 
-    print 'A'
     # Retrieve and apply logging/XMPP configuration from server
     # XMPP not configured yet
     log('Retrieving config from server', xmpp=False)
@@ -1401,7 +1387,6 @@ def main():
     # Creating node
     node = Node(server)
 
-    print 'B'
     # XMPP not configured yet
     log('Config retrieved from server', xmpp=False)
     apply_config(config.json(), node)
@@ -1442,7 +1427,6 @@ def main():
 
 if __name__ == '__main__':
     try:
-        print 'START MAIN'
         main()
     except ZtpError as exception:
         errStr = 'Bootstrap process failed: %s' % str(exception)
