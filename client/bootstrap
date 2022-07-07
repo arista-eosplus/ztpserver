@@ -947,14 +947,23 @@ class Server(object):
                                          timeout=HTTP_TIMEOUT)
             elif method == 'stream':
                 log('STREAM %s - %s' % (full_url, local_file))
-                if not local_file:
-                    raise Exception(
-                        'Cant STREAM EOS image file without file name and path')
-                with requests.get(full_url, stream=True) as response:
-                    response.raise_for_status()
-                    with open(local_file, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
+                # Don't use streaming request in CI environment
+                if os.environ.get('EAPI_TEST') is not None:
+                    log('NOT STREAM FOR CI %s - %s' % (full_url, local_file))
+                    response = requests.get(full_url,
+                                            data=json.dumps(payload),
+                                            headers=headers,
+                                            files=request_files,
+                                            timeout=HTTP_TIMEOUT)
+                else:
+                    if not local_file:
+                        raise Exception('Cant STREAM EOS image file without'
+                                        ' file name and path')
+                    with requests.get(full_url, stream=True) as response:
+                        response.raise_for_status()
+                        with open(local_file, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
             else:
                 response = None
                 log('Unknown method %s' % method, error=True)
@@ -1014,9 +1023,14 @@ class Server(object):
                     'saving %s to %s' % (percent, url, path))
 
             log('File streamed earlier. No need to write content.')
-        else:
-            log('Writing %s...' % path)
 
+        write_response_contents = False
+        if os.environ.get('EAPI_TEST') is not None:
+            log('File not streamed earlier in CI environment. Need to write content')
+            write_response_contents = True
+
+        if not path.startswith(FLASH) or write_response_contents:
+            log('Writing %s...' % path)
             # Save contents to file
             try:
                 with open(path, 'wb') as result:
