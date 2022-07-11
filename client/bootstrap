@@ -957,8 +957,8 @@ class Server(object):
                                             timeout=HTTP_TIMEOUT)
                 else:
                     if not local_file:
-                        raise Exception('Cant STREAM EOS image file without'
-                                        ' file name and path')
+                        raise ZtpError('Cant STREAM EOS image file without'
+                                       ' file name and path')
                     with requests.get(full_url, stream=True) as response:
                         response.raise_for_status()
                         with open(local_file, 'wb') as f:
