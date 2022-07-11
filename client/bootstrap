@@ -930,6 +930,7 @@ class Server(object):
         else:
             full_url = path
 
+        response = None
         try:
             if method == 'get':
                 log('GET %s' % full_url)
@@ -965,7 +966,6 @@ class Server(object):
                             for chunk in response.iter_content(chunk_size=8192):
                                 f.write(chunk)
             else:
-                response = None
                 log('Unknown method %s' % method, error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpError('server connection error')
