@@ -387,7 +387,7 @@ class Bootstrap(object):
                self.return_code
 
     def unexpected_response_failure(self):
-        return 'unexpected reponse from server' in self.output and \
+        return 'unexpected response from server' in self.output and \
                self.return_code
 
     def node_not_found_failure(self):
