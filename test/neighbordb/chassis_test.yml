@@ -1,0 +1,60 @@
+debug: true
+tests:
+  - topology
+  - pattern
+
+valid_patterns:
+  globals:
+      - TK5-SPINE1
+      - TK5-SPINE2
+
+nodes:
+  pass:
+    - name: node_2b3c
+      match: TK5-SPINE1
+    - name: node_2b3d
+      match: TK5-SPINE2
+#  fail:
+#    - name: spine1
+
+node_2b3c:
+  systemmac: 00:1c:73:1a:2b:3c
+  serialnumber:  JJ73112131
+  neighbors:
+    Ethernet32/1:
+        #- device: localhost
+      - device: TK5-WAN-CA09-A7504R-DIST1
+        port: Ethernet3/33/1
+    Ethernet33/1:
+      - device: TK5-WAN-CA09-A7504R-DIST2
+        port: Ethernet3/33/1
+    Ethernet5/35/1:
+      - device: localhost
+        port: Ethernet3
+
+node_2b3d:
+  systemmac: 00:1c:73:1a:2b:3d
+  serialnumber:  JJ73122232
+  neighbors:
+    Ethernet32/1:
+      - device: TK5-WAN-CA09-A7504R-DIST1
+        port: Ethernet5/34/1
+    Ethernet33/1:
+      - device: TK5-WAN-CA09-A7504R-DIST2
+        port: Ethernet5/34/1
+    Ethernet5/35/1:
+      - device: localhost
+        port: Ethernet3
+
+neighbordb:
+
+  patterns:
+    - name: TK5-SPINE1
+      definition: spine1
+      interfaces:
+        - any: regex('TK5-WAN-CA0\d-A7504R-DIST\d'):regex('Ethernet[34]/\d+/1')
+    - name: TK5-SPINE2
+      definition: spine2
+      interfaces:
+        - any: regex('TK5-WAN-CA0\d-A7504R-DIST\d'):regex('Ethernet[56]/\d+/1')
+

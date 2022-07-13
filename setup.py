@@ -49,7 +49,8 @@ def install():
         return False
 
 def join_url(x, y):
-    return '/' + '/'.join([z for z in x.split('/') + y.split('/') if z])
+    start = '' if x == '.' else '/'
+    return start + '/'.join([z for z in x.split('/') + y.split('/') if z])
 
 def ensure_dir(f):
     d = os.path.dirname(f)
@@ -163,7 +164,7 @@ setup(
 if install():
     custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
     if custom_path:
-        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)[1:]
+        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)
     else:
         version_file =  config.VERSION_FILE_PATH
     ensure_dir(version_file)

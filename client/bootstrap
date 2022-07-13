@@ -434,7 +434,7 @@ class Node(object):
             url = 'unix:/var/run/command-api.sock'
             _, out, _ = cls._cli_enable_cmd('show version | include image')
             version = out.split(': ')[1]
-            (major, minor, patch) = version.split('.')
+            (major, minor, patch) = version.split('.')[0:3]
             patch = int(list(filter(str.isdigit, patch))[0])
             if (int(major) <= 4 and int(minor) <= 14 and patch <= 5):
                 COMMAND_API_PROTOCOL = 'http'
@@ -478,8 +478,14 @@ class Node(object):
         return os.path.isfile(RC_EOS)
 
     def _append_lines(self, filename, lines):
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            fileexists = True
+        else:
+            fileexists = False
+
         with open(filename, 'a') as output:
-            output.write('\n')
+            if fileexists:
+                output.write('\n')
             output.write('\n'.join(lines))
 
     @classmethod
@@ -718,7 +724,7 @@ class Node(object):
         If 'path' is somewhere on flash and 'url' points back to
         SERVER, then the client will request the metadata for
         the resource from the server (in order to check whether there
-        is enogh disk space available). If 'url' points to a different
+        is enough disk space available). If 'url' points to a different
         server, then the 'content-length' header will be used for the
         disk space checks.
 
@@ -907,7 +913,7 @@ class Server(object):
 
     @classmethod
     def _http_request(cls, path=None, method='get', headers=None,
-                      payload=None, files=None):
+                      payload=None, files=None, local_file=None):
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
@@ -924,6 +930,7 @@ class Server(object):
         else:
             full_url = path
 
+        response = None
         try:
             if method == 'get':
                 log('GET %s' % full_url)
@@ -939,19 +946,40 @@ class Server(object):
                                          headers=headers,
                                          files=request_files,
                                          timeout=HTTP_TIMEOUT)
+            elif method == 'stream':
+                log('STREAM %s - %s' % (full_url, local_file))
+                # Don't use streaming request in CI environment
+                if os.environ.get('EAPI_TEST') is not None:
+                    log('NOT STREAM FOR CI %s - %s' % (full_url, local_file))
+                    response = requests.get(full_url,
+                                            data=json.dumps(payload),
+                                            headers=headers,
+                                            files=request_files,
+                                            timeout=HTTP_TIMEOUT)
+                else:
+                    if not local_file:
+                        raise ZtpError('Cant STREAM EOS image file without'
+                                       ' file name and path')
+                    with requests.get(full_url, stream=True) as response:
+                        response.raise_for_status()
+                        with open(local_file, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
             else:
-                log('Unknown method %s' % method,
-                    error=True)
+                log('Unknown method %s' % method, error=True)
         except requests.exceptions.ConnectionError:
             raise ZtpError('server connection error')
 
         return response
 
-    def _get_request(self, url):
+    def _get_request(self, url, stream=False, local_file=None):
         # resource or action
         headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request(url,
-                                    headers=headers)
+        if stream:
+            result = self._http_request(url, method='stream', headers=headers,
+                                        local_file=local_file)
+        else:
+            result = self._http_request(url, headers=headers)
         log('Server response to GET request: status=%s' % result.status_code)
 
         return (result.status_code,
@@ -994,17 +1022,24 @@ class Server(object):
                 log('WARNING: flash disk usage will exceeed %s%% after '
                     'saving %s to %s' % (percent, url, path))
 
-        log('Writing %s...' % path)
+            log('File streamed earlier. No need to write content.')
 
-        # Save contents to file
-        try:
-            with open(path, 'wb') as result:
-                for chunk in contents.iter_content(chunk_size=1024):
-                    if chunk:
-                        result.write(chunk)
-                result.close()
-        except IOError as err:
-            raise ZtpError('unable to write %s: %s' % (path, err))
+        write_response_contents = False
+        if os.environ.get('EAPI_TEST') is not None:
+            log('File not streamed earlier in CI environment. Need to write content')
+            write_response_contents = True
+
+        if not path.startswith(FLASH) or write_response_contents:
+            log('Writing %s...' % path)
+            # Save contents to file
+            try:
+                with open(path, 'wb') as result:
+                    for chunk in contents.iter_content(chunk_size=1024):
+                        if chunk:
+                            result.write(chunk)
+                    result.close()
+            except IOError as err:
+                raise ZtpError('unable to write %s: %s' % (path, err))
 
         # Set permissions
         os.chmod(path, 0777)
@@ -1021,7 +1056,7 @@ class Server(object):
         if(status != HTTP_STATUS_OK or
            content != CONTENT_TYPE_JSON):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
 
         return (status, content, result)
@@ -1045,7 +1080,7 @@ class Server(object):
                           HTTP_STATUS_CONFLICT] or
            content != CONTENT_TYPE_HTML):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
             raise ZtpError('node not found on server (status=%s)' % status)
@@ -1071,7 +1106,7 @@ class Server(object):
                 (status == HTTP_STATUS_BAD_REQUEST and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_BAD_REQUEST:
             raise ZtpError('server-side topology check failed (status=%s)' %
@@ -1088,7 +1123,7 @@ class Server(object):
                 (status == HTTP_STATUS_NOT_FOUND and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
             raise ZtpError('action not found on server (status=%s)' % status)
@@ -1122,7 +1157,7 @@ class Server(object):
                 (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
                  content == CONTENT_TYPE_HTML)):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected reponse from server (status=%s; content-type=%s)' %
+                'unexpected response from server (status=%s; content-type=%s)' %
                 (status, content))
         elif status == HTTP_STATUS_NOT_FOUND:
             raise ZtpError('metadata not found on server (status=%s)' %
@@ -1138,7 +1173,11 @@ class Server(object):
         if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
-        status, content, response = self._get_request(url)
+        if path.startswith(FLASH):
+            status, content, response = self._get_request(url, stream=True,
+                                                          local_file=path)
+        else:
+            status, content, response = self._get_request(url)
 
         if url.startswith(SERVER):
             if not ((status == HTTP_STATUS_OK and
@@ -1146,14 +1185,14 @@ class Server(object):
                     (status == HTTP_STATUS_NOT_FOUND and
                      content == CONTENT_TYPE_HTML)):
                 raise ZtpUnexpectedServerResponseError(
-                    'unexpected reponse from server for %s '
+                    'unexpected response from server for %s '
                     '(status=%s; content-type=%s)' %
                     (url, status, content))
         else:
             if not (status == HTTP_STATUS_OK or
                     status == HTTP_STATUS_NOT_FOUND):
                 raise ZtpUnexpectedServerResponseError(
-                    'unexpected reponse from server for %s '
+                    'unexpected response from server for %s '
                     '(status=%s; content-type=%s)' %
                     (url, status, content))
 
@@ -1399,20 +1438,17 @@ if __name__ == '__main__':
     try:
         main()
     except ZtpError as exception:
-        log('''Bootstrap process failed:
-   %s''' % str(exception),
-            error=True)
+        log('Bootstrap process failed: %s' % str(exception), error=True)
         _exit(1)
     except KeyboardInterrupt:
-        log('Bootstrap process keyboard-interrupted',
-            error=True)
+        log('Bootstrap process keyboard-interrupted', error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
     except Exception, exception:
-        log('''Bootstrap process failed because of unknown exception:
-   %s''' %
-            exception, error=True)
+        errStr = 'Bootstrap process failed because of unknown' \
+                 ' exception: %s' % exception
+        log(errStr, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
