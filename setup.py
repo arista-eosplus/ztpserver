@@ -30,6 +30,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
 import os
 import shutil
 import sys
@@ -42,20 +43,38 @@ try:
 except ImportError:
     from distutils.core import setup
 
+
 def install():
     if "install" in sys.argv:
         return True
     else:
         return False
 
+
 def join_url(x, y):
     start = '' if x == '.' else '/'
     return start + '/'.join([z for z in x.split('/') + y.split('/') if z])
+
 
 def ensure_dir(f):
     d = os.path.dirname(f)
     if not os.path.exists(d):
         os.makedirs(d)
+
+
+def get_long_description():
+    ''' Get the long description from README.md if it exists.
+        Null string is returned if README.md is non-existent
+    '''
+    long_description = ''
+    here = os.path.abspath(os.path.dirname(__file__))
+    try:
+        with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as file_hdl:
+            long_description = file_hdl.read()
+    except IOError:
+        pass
+    return long_description
+
 
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
@@ -147,12 +166,14 @@ for (filename, dst, src) in file_list:
 setup(
     name='ztpserver',
     version=version,
-    description = 'ZTP Server for EOS',
+    description='ZTP Server for EOS',
+    long_description=get_long_description(),
+    long_description_content_type='text/markdown',
     author='Arista Networks',
     author_email='eosplus-dev@arista.com',
     url='https://github.com/arista-eosplus/ztpserver',
-    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v%s' % \
-                  version,
+    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v%s'
+                 % version,
     license='BSD-3',
     install_requires=install_requirements,
     packages=packages,
