@@ -32,7 +32,7 @@
 BACKUP_SUFFIX = '.backup'
 PERSISTENT_DIR = '/mnt/flash/.ztp-files'
 PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
-                      '/persist/local/', '/persyst/sys/']
+                      '/persist/local/', '/persist/sys/']
 
 import os
 import shutil
