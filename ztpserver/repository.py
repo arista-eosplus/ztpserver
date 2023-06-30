@@ -31,7 +31,7 @@
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 #
-'''
+"""
     MODULE:
         ztpserver.respository
 
@@ -47,7 +47,7 @@
     :copyright: Copyright (c) 2015, Arista Networks
     :license: BSD, see LICENSE for more details
 
-'''
+"""
 
 import hashlib
 import logging
@@ -55,43 +55,39 @@ import mimetypes
 import os
 
 import ztpserver.serializers
-
 from ztpserver.serializers import SerializerError
 
-log = logging.getLogger(__name__)   #pylint: disable=C0103
-
+log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
 def create_repository(path):
     if not os.path.exists(path):
-        raise RepositoryError('%s not found' % path)
+        raise RepositoryError(f"{path} not found")
     return Repository(path)
 
 
 class RepositoryError(Exception):
-    ''' Base exception class for :py:class:`Repository` '''
-    pass
+    """Base exception class for :py:class:`Repository`"""
+
 
 class FileObjectError(Exception):
-    ''' Base exception class for :py:class:`FileObject` '''
-    pass
+    """Base exception class for :py:class:`FileObject`"""
+
 
 class FileObjectNotFound(RepositoryError):
-    ''' Raised when a requested file is not found in the repository.  This
+    """Raised when a requested file is not found in the repository.  This
     exception is a subclass of :py:class:`RespositoryError`
-    '''
-    pass
+    """
 
 
-
-class FileObject(object):
-    ''' The :py:class:`FileObject` represents a single file entity in the
+class FileObject:
+    """The :py:class:`FileObject` represents a single file entity in the
     repository.   The instance provides convienent methods to read and write
     contents to the file using a specified serialization
-    '''
+    """
 
     def __init__(self, name, path=None, **kwargs):
-        ''' The initialize method for :py:class:`FileObject`
+        """The initialize method for :py:class:`FileObject`
 
         :param name: the name of the file
         :type name: str
@@ -101,20 +97,22 @@ class FileObject(object):
         :type content_type: str
         :returns: object
 
-        '''
+        """
         self.name = name
         if path is not None:
             self.name = os.path.join(path, name)
 
         self.type, self.encoding = mimetypes.guess_type(self.name)
-        self.content_type = kwargs.get('content_type')
+        self.content_type = kwargs.get("content_type")
 
     def __repr__(self):
-        return 'FileObject(name=%s, type=%s, encoding=%s, content_type=%s)' % \
-               (self.name, self.type, self.encoding, self.content_type)
+        return (
+            "FileObject(name={self.name}, type={self.type}, encoding={self.encoding}, "
+            "content_type={self.content_type})"
+        )
 
     def read(self, content_type=None, node_id=None):
-        ''' Reads the contents from the file system
+        """Reads the contents from the file system
 
         :param content_type: defines the content_type of the file used to
                              deserialize the object
@@ -127,16 +125,15 @@ class FileObject(object):
         content_type argument is not specified, the read method will read
         the file as text. If any errors occur, a FileObjectError is raised.
 
-        '''
+        """
         try:
             self.content_type = content_type
-            return ztpserver.serializers.load(self.name, content_type,
-                                              node_id)
+            return ztpserver.serializers.load(self.name, content_type, node_id)
         except SerializerError as err:
-            raise FileObjectError(err.message)
+            raise FileObjectError(str(err)) from err
 
     def write(self, contents, content_type=None):
-        ''' Writes the contents to the file
+        """Writes the contents to the file
 
         :param contents: specifies the contents to be written to the file
         :type contents: str
@@ -153,51 +150,53 @@ class FileObject(object):
         previously existed for the FileObj instance.  If any errors are
         encountered during the write operation, a FileObjectError is raised
 
-        '''
+        """
         try:
             ztpserver.serializers.dump(contents, self.name, content_type)
             self.content_type = content_type
         except SerializerError as err:
-            raise FileObjectError(err.message)
+            raise FileObjectError(str(err)) from err
 
     def size(self):
-        ''' Returns the size of the object in bytes.
+        """Returns the size of the object in bytes.
 
         :raises: IOError
-        '''
+        """
         return os.path.getsize(self.name)
 
     def hash(self):
-        ''' Returns the SHA1 hash of the object.
+        """Returns the SHA1 hash of the object.
 
         :raises: IOError
-        '''
+        """
 
         sha1 = hashlib.sha1()
-        sha1.update(open(self.name).read())       #pylint: disable=E1101
+        with open(self.name, encoding="utf8") as fd:
+            sha1.update(fd.read().encode("utf8"))  # pylint: disable=E1101
         return sha1.hexdigest()
 
-class Repository(object):
-    ''' The Respository class represents a repository of :py:class:`FileObject`
+
+class Repository:
+    """The Respository class represents a repository of :py:class:`FileObject`
     instances.  It is an abstract wrapper providing the ability to interact
     with persistently stored files.
-    '''
+    """
 
     def __init__(self, path):
-        ''' The initialize method for :py:class:`Repository`
+        """The initialize method for :py:class:`Repository`
 
         :param path: the base path of the repository
         :type path: str
         :returns: object
 
-        '''
+        """
         self.path = path
 
     def __repr__(self):
-        return "Repository(path=%s)" % self.path
+        return f"Repository(path={self.path})"
 
     def expand(self, file_path):
-        ''' Expands a file_path to the full path to a file object
+        """Expands a file_path to the full path to a file object
 
         :param file_path: the file path to expand
         :type file_path: str
@@ -206,35 +205,33 @@ class Repository(object):
         This method is used to transform a relative file path into an
         absolute file path for identifying a file object resource
 
-        '''
-        if file_path == '/':
+        """
+        if file_path == "/":
             file_path = self.path
         elif not str(file_path).startswith(self.path):
-            file_path = file_path[1:] if file_path[0] == '/' else file_path
+            file_path = file_path[1:] if file_path[0] == "/" else file_path
             file_path = os.path.join(self.path, file_path)
         return file_path
 
     def add_folder(self, folder_path):
-        ''' Add a new folder to the repository
+        """Add a new folder to the repository
 
         :param folder_path: the full path of the folder to add
         :type folder_path: str
         :returns: str -- the full path to the new folder
         :raises: RespositoryError
 
-        '''
+        """
         try:
             folder_path = self.expand(folder_path)
-            os.makedirs(folder_path, 0774)
+            os.makedirs(folder_path, 0o774)
             return folder_path
         except OSError as err:
-            log.error('Failed to add folder %s (%s)' %
-                      (folder_path, err))
-            raise RepositoryError('Failed to add folder %s (%s)' %
-                                  (folder_path, err))
+            log.error("Failed to add folder %s (%s)", folder_path, err)
+            raise RepositoryError(f"Failed to add folder {folder_path} ({err})") from err
 
     def add_file(self, file_path, contents=None, content_type=None):
-        ''' Adds a new :py:class:`FileObject` to the repository
+        """Adds a new :py:class:`FileObject` to the repository
 
         :param file_path: the full path of the file to add
         :type file_path: str
@@ -252,7 +249,7 @@ class Repository(object):
         the contents written to the file.  The content_type argument provides
         the serialization to be used when saving the file.
 
-        '''
+        """
         file_path = self.expand(file_path)
         obj = FileObject(file_path)
         if contents:
@@ -260,18 +257,18 @@ class Repository(object):
         return obj
 
     def exists(self, file_path):
-        ''' Returns boolean if the file_path exists in the repository
+        """Returns boolean if the file_path exists in the repository
 
         :param file_path: the file_path to check for existence
         :type file_path: str
         :returns: boolean -- True if it exists otherwise False
 
-        '''
+        """
         file_path = self.expand(file_path)
         return os.path.exists(file_path)
 
     def get_file(self, file_path):
-        ''' Returns an intance of :py:class:`FileObject` if it exists
+        """Returns an intance of :py:class:`FileObject` if it exists
 
         :param file_path: the file path of the instance to return
         :type file_path: str
@@ -281,26 +278,24 @@ class Repository(object):
         This method will retrieve a file object instance if it exists in the
         repository.  If the file does not exist then an error is raised
 
-        '''
+        """
         file_path = self.expand(file_path)
         if not self.exists(file_path):
-            raise FileObjectNotFound('file not found (%s)' % file_path)
+            raise FileObjectNotFound(f"file not found ({file_path})")
         return FileObject(file_path)
 
     def delete_file(self, file_path):
-        ''' Deletes an existing file in the respository
+        """Deletes an existing file in the respository
 
         :param file_path: the file path of the instance to delete
         :type file_path: str
         :returns: None
         :raises: RepositoryError
 
-        '''
+        """
         try:
             file_path = self.expand(file_path)
             os.remove(file_path)
-        except (OSError, IOError) as err:
-            log.error('Failed to delete file %s (%s)' %
-                      (file_path, err))
-            raise RepositoryError('Failed to delete file %s (%s)' %
-                                  (file_path, err))
+        except OSError as err:
+            log.error("Failed to delete file %s (%s)", file_path, err)
+            raise RepositoryError(f"Failed to delete file {file_path} ({err})") from err

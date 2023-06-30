@@ -7,7 +7,7 @@ Client - Server API
 .. Verify sync with ztpserver.controller.py using the following:
    (PYTHONPATH=.; python)
    my_map = controller.Router()
-   print my_map.map
+   print(my_map.map)
 
 .. contents:: :local:
 

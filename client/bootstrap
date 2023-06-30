@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -35,52 +35,53 @@
 # pylint: disable=W0703
 
 import argparse
+import crypt
 import datetime
-import imp
+import grp
+import importlib.machinery
+import importlib.util
 import json
-import jsonrpclib
 import logging
 import os
 import os.path
+import pwd
 import re
-import sleekxmpp
 import shutil
-import socket
 import subprocess
 import sys
 import time
-import pwd
-import grp
-import crypt
 import traceback
-import urllib2
-import urlparse
-
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections import namedtuple
 from logging.handlers import SysLogHandler
-from string import Template              # pylint: disable=W0402
+from string import Template  # pylint: disable=W0402
 from subprocess import PIPE
-from urlparse import urlsplit, urlunsplit
+from urllib.parse import urlsplit, urlunsplit
+
+import jsonrpclib
+import sleekxmpp
 
 # Server will replace this value with the correct IP address/hostname
 # before responding to the bootstrap request.
-SERVER = '$SERVER'
+SERVER = "$SERVER"
 
-LOGGING_FACILITY = 'ztpbootstrap'
-SYSLOG = '/dev/log'
+LOGGING_FACILITY = "ztpbootstrap"
+SYSLOG = "/dev/log"
 DEFAULT_SYSLOG_PORT = 514
 
-CONTENT_TYPE_PYTHON = 'text/x-python'
-CONTENT_TYPE_HTML = 'text/html'
-CONTENT_TYPE_OTHER = 'text/plain'
-CONTENT_TYPE_JSON = 'application/json'
+CONTENT_TYPE_PYTHON = "text/x-python"
+CONTENT_TYPE_HTML = "text/html"
+CONTENT_TYPE_OTHER = "text/plain"
+CONTENT_TYPE_JSON = "application/json"
 
-TEMP = '/tmp'
+TEMP = "/tmp"
 
-COMMAND_API_SERVER = 'localhost'
-COMMAND_API_USERNAME = 'ztps'
-COMMAND_API_PASSWORD = 'ztps-password'
-COMMAND_API_PROTOCOL = 'unix-socket'
+COMMAND_API_SERVER = "localhost"
+COMMAND_API_USERNAME = "ztps"
+COMMAND_API_PASSWORD = "ztps-password"
+COMMAND_API_PROTOCOL = "unix-socket"
 
 HTTP_STATUS_OK = 200
 HTTP_STATUS_CREATED = 201
@@ -89,13 +90,13 @@ HTTP_STATUS_NOT_FOUND = 404
 HTTP_STATUS_CONFLICT = 409
 HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
 
-FLASH = '/mnt/flash'
+FLASH = "/mnt/flash"
 
-STARTUP_CONFIG = '%s/startup-config' % FLASH
-RC_EOS = '%s/rc.eos' % FLASH
+STARTUP_CONFIG = f"{FLASH}/startup-config"
+RC_EOS = f"{FLASH}/rc.eos"
 
-BOOT_EXTENSIONS = '%s/boot-extensions' % FLASH
-BOOT_EXTENSIONS_FOLDER = '%s/.extensions' % FLASH
+BOOT_EXTENSIONS = f"{FLASH}/boot-extensions"
+BOOT_EXTENSIONS_FOLDER = f"{FLASH}/.extensions"
 
 HTTP_TIMEOUT = 30
 
@@ -113,8 +114,7 @@ xmpp_client = None
 #                     format='%(levelname)-8s %(message)s')
 
 # You will also have to comment out the following lines:
-for logger in ['sleekxmpp.xmlstream.xmlstream',
-               'sleekxmpp.basexmpp']:
+for logger in ["sleekxmpp.xmlstream.xmlstream", "sleekxmpp.basexmpp"]:
     xmpp_log = logging.getLogger(logger)
     xmpp_log.addHandler(logging.NullHandler())
 # --------------------------------XMPP------------------------
@@ -123,6 +123,8 @@ for logger in ['sleekxmpp.xmlstream.xmlstream',
 # Comment out this section in order to enable syslog debug
 # logging
 logging.raiseExceptions = False
+
+
 # --------------------------------XMPP------------------------
 
 
@@ -141,46 +143,39 @@ def _exit(code):
 
     if not RESTORE_FACTORY_FLASH:
         for path in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
-            filename = path.split('/')[-1]
+            filename = os.path.basename(path)
             if os.path.isfile(path):
-                dst = '%s.ztp' % path
-                log('Saving %s as %s...' % (filename, dst))
+                dst = f"{path}.ztp"
+                log(f"Saving {filename} as {dst}...")
 
                 if os.path.isfile(dst):
                     os.remove(dst)
 
                 shutil.move(path, dst)
 
-            backup_path = url_path_join('/', TEMP,
-                                        os.path.basename(filename))
+            backup_path = url_path_join("/", TEMP, os.path.basename(filename))
 
             if os.path.isfile(backup_path):
-                log('Recovering %s...' % path)
+                log(f"Recovering {path}...")
                 shutil.move(backup_path, path)
 
         if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
-            dst = '%s.ztp' % BOOT_EXTENSIONS_FOLDER
-            log('Saving %s as %s...' %
-                (BOOT_EXTENSIONS_FOLDER.split('/')[-1],
-                 dst))
+            dst = f"{BOOT_EXTENSIONS_FOLDER}.ztp"
+            log(f"Saving {BOOT_EXTENSIONS_FOLDER.split('/', maxsplit=1)[-1]} as {dst}...")
 
             if os.path.isdir(dst):
                 shutil.rmtree(dst)
 
-            shutil.move(BOOT_EXTENSIONS_FOLDER,
-                        '%s.ztp' % BOOT_EXTENSIONS_FOLDER)
+            shutil.move(BOOT_EXTENSIONS_FOLDER, f"{BOOT_EXTENSIONS_FOLDER}.ztp")
 
-        backup_path = url_path_join(
-            '/', TEMP,
-            os.path.basename(BOOT_EXTENSIONS_FOLDER))
+        backup_path = url_path_join("/", TEMP, os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(backup_path):
-            log('Recovering %s...' % BOOT_EXTENSIONS_FOLDER)
+            log(f"Recovering {BOOT_EXTENSIONS_FOLDER}...")
             shutil.move(backup_path, BOOT_EXTENSIONS_FOLDER)
     else:
         if code:
-            for path in [x for x in all_files_and_dirs(FLASH)
-                         if x not in FLASH_FILES]:
-                log('Deleting %s...' % path)
+            for path in [x for x in all_files_and_dirs(FLASH) if x not in FLASH_FILES]:
+                log(f"Deleting {path}...")
                 if os.path.isdir(path):
                     shutil.rmtree(path)
                 else:
@@ -195,38 +190,38 @@ def _exit(code):
 
     # pylint: disable=W0212
     # Need to close background sleekxmpp threads as well
-    os._exit(code)
+    sys.exit(code)
+
 
 SYSTEM_ID = None
 XMPP_MSG_TYPE = None
 
 
 def log_xmpp():
-    return XMPP_MSG_TYPE == 'debug'
+    return XMPP_MSG_TYPE == "debug"
 
 
 def log(msg, error=False, xmpp=None):
     if xmpp is None:
         xmpp = log_xmpp()
 
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    xmpp_msg = '%s: %s - %s%s' % (SYSTEM_ID if SYSTEM_ID else 'N/A',
-                                  timestamp,
-                                  'ERROR: ' if error else '',
-                                  msg)
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    xmpp_msg = (
+        f"{SYSTEM_ID if SYSTEM_ID else 'N/A'}:" f" {timestamp} - {'ERROR: ' if error else ''}{msg}"
+    )
 
     if xmpp and xmpp_client and xmpp_client.connected:
         xmpp_client.message(xmpp_msg)
 
     if SYSTEM_ID:
-        syslog_msg = '%s: %s' % (SYSTEM_ID, msg)
+        syslog_msg = f"{SYSTEM_ID}: {msg}"
     else:
         syslog_msg = msg
 
     if error:
-        print 'ERROR: %s' % syslog_msg
+        print(f"ERROR: {syslog_msg}")
     else:
-        print syslog_msg
+        print(syslog_msg)
 
     if syslog_manager:
         if error:
@@ -237,18 +232,19 @@ def log(msg, error=False, xmpp=None):
 
 def url_path_join(*parts):
     """Normalize URL parts and join them with a slash."""
-    # pylint: disable=W0142
-    schemes, netlocs, paths, queries, fragments = \
-        zip(*(urlsplit(part) for part in parts))
+    schemes, netlocs, paths, queries, fragments = list(zip(*(urlsplit(part) for part in parts)))
     scheme = get_first_token(schemes)
     netloc = get_first_token(netlocs)
-    path = '/'.join(x.strip('/') for x in paths if x)
+    path = "/".join(x.strip("/") for x in paths if x)
     query = get_first_token(queries)
     fragment = get_first_token(fragments)
     return urlunsplit((scheme, netloc, path, query, fragment))
 
+
 # pylint: disable=C0103
-_ntuple_diskusage = namedtuple('usage', 'total used free')
+_ntuple_diskusage = namedtuple("usage", "total used free")
+
+
 # pylint: enable=C0103
 
 
@@ -267,22 +263,20 @@ def flash_snapshot():
 
     for filename in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
         if os.path.isfile(filename):
-            log('Backing up %s...' % filename)
+            log(f"Backing up {filename}...")
 
             # Delete old folder in tmp
-            dst = url_path_join('/', TEMP,
-                                os.path.basename(filename))
+            dst = url_path_join("/", TEMP, os.path.basename(filename))
             if os.path.isfile(dst):
                 os.remove(dst)
 
             shutil.move(filename, TEMP)
 
     if os.path.isdir(BOOT_EXTENSIONS_FOLDER):
-        log('Backing up %s...' % BOOT_EXTENSIONS_FOLDER)
+        log(f"Backing up {BOOT_EXTENSIONS_FOLDER}...")
 
         # Delete old folder in /tmp
-        dst = url_path_join('/', TEMP,
-                            os.path.basename(BOOT_EXTENSIONS_FOLDER))
+        dst = url_path_join("/", TEMP, os.path.basename(BOOT_EXTENSIONS_FOLDER))
         if os.path.isdir(dst):
             shutil.rmtree(dst)
 
@@ -290,7 +284,7 @@ def flash_snapshot():
 
 
 def get_first_token(sequence):
-    return next((x for x in sequence if x), '')
+    return next((x for x in sequence if x), "")
 
 
 def all_files_and_dirs(path):
@@ -300,39 +294,45 @@ def all_files_and_dirs(path):
         result += [os.path.join(top, f) for f in files]
 
     return result
+
+
 # ------------------Utilities---------------------------------
 
 
 # ------------------4.12.x support----------------------------
 def download_file(url, path):
-    if not urlparse.urlsplit(url).scheme:      # pylint: disable=E1103
+    if not urllib.parse.urlsplit(url).scheme:  # pylint: disable=E1103
         url = url_path_join(SERVER, url)
 
-    log('Retrieving URL: %s' % url)
+    log(f"Retrieving URL: {url}")
 
-    url = urllib2.urlopen(url, timeout=HTTP_TIMEOUT)
-    output_file = open(path, 'wb')
-    output_file.write(url.read())
-    output_file.close()
+    with urllib.request.urlopen(url, timeout=HTTP_TIMEOUT) as url_fd, open(
+        path, "wb", encoding="utf8"
+    ) as output_file:
+        output_file.write(url_fd.read())
+
 
 # pylint: disable=C0103
-REQUESTS = 'requests-2.3.0'
-REQUESTS_URL = url_path_join(SERVER, '/files/lib/', REQUESTS+'.tar.gz')
+REQUESTS = "requests-2.3.0"
+REQUESTS_URL = url_path_join(SERVER, "/files/lib/", REQUESTS + ".tar.gz")
 try:
     import requests
 except ImportError:
-    requests_url = '%s/%s.tar.gz' % (TEMP, REQUESTS)
+    requests_url = f"{TEMP}/{REQUESTS}.tar.gz"
     download_file(REQUESTS_URL, requests_url)
-    cmd = 'sudo tar -xzvf %s -C /tmp;' \
-          'cd %s/%s;' \
-          'sudo python setup.py build;' \
-          'sudo python setup.py install' % \
-          (requests_url, TEMP, REQUESTS)
+    cmd = (
+        f"sudo tar -xzvf {requests_url} -C /tmp;"
+        f"cd {TEMP}/{REQUESTS};"
+        "sudo python setup.py build;"
+        "sudo python setup.py install"
+    )
     res = os.system(cmd)
     if res:
-        log('%s returned %s' % (cmd, res), error=True)
+        log(f"{cmd} returned {res}", error=True)
         _exit(1)
     import requests
+
+
 # pylint: enable=C0103
 # ------------------4.12.x support----------------------------
 
@@ -349,8 +349,7 @@ class ZtpUnexpectedServerResponseError(ZtpError):
     pass
 
 
-class Attributes(object):
-
+class Attributes:
     def __init__(self, local_attr=None, special_attr=None):
         self.local_attr = local_attr if local_attr else []
         self.special_attr = special_attr if special_attr else []
@@ -358,13 +357,13 @@ class Attributes(object):
     def get(self, attr, default=None):
         if attr in self.local_attr:
             return self.local_attr[attr]
-        elif attr in self.special_attr:
+        if attr in self.special_attr:
             return self.special_attr[attr]
-        else:
-            return default
+
+        return default
 
     def copy(self):
-        attrs = dict()
+        attrs = {}
         if self.special_attr:
             attrs = self.special_attr.copy()
         if self.local_attr:
@@ -372,125 +371,124 @@ class Attributes(object):
         return attrs
 
 
-class Node(object):
-    # pylint: disable=R0201
-
-    '''Node object which can be used by actions via:
+class Node:
+    """Node object which can be used by actions via:
            attributes.get('NODE')
 
     Attributes:
       client (jsonrpclib.Server): jsonrpclib connect to Command API engine
-    '''
+    """
 
     def __init__(self, server):
         self.server_ = server
 
         url = Node._enable_api()
+        print(url)
 
         self.client = jsonrpclib.Server(url)
 
         try:
             self.api_enable_cmds([])
-        except socket.error:
-            raise ZtpError('unable to enable eAPI')
+        except OSError as exc:
+            raise ZtpError("unable to enable eAPI") from exc
 
         # Workaround for BUG89374
         try:
             self._disable_copp()
         except jsonrpclib.jsonrpc.ProtocolError as err:
-            log('WARNING: unable to disable COPP: %s '
-                '(platform/EOS version might not support this feature)' %
-                err)
+            log(
+                f"WARNING: unable to disable COPP: {err} "
+                "(platform/EOS version might not support this feature)"
+            )
 
-        global SYSTEM_ID                    # pylint: disable=W0603
-        SYSTEM_ID = \
-            self.api_enable_cmds(['show version'])[0]['serialNumber']
+        global SYSTEM_ID  # pylint: disable=W0603
+        SYSTEM_ID = self.api_enable_cmds(["show version"])[0]["serialNumber"]
 
     @classmethod
     def _cli_enable_cmd(cls, cli_cmd):
-        bash_cmd = ['FastCli', '-p', '15', '-A', '-c', cli_cmd]
-        proc = subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        (out, err) = proc.communicate()
-        return (proc.returncode, out, err)      # pylint: disable=E1101
+        bash_cmd = ["FastCli", "-p", "15", "-A", "-c", cli_cmd]
+        with subprocess.Popen(bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True) as proc:
+            (out, err) = proc.communicate()
+            return_code = proc.returncode
+        return return_code, out, err
 
     @classmethod
     def _cli_config_cmds(cls, cmds):
-        cls._cli_enable_cmd('\n'.join(['configure'] + cmds))
+        cls._cli_enable_cmd("\n".join(["configure"] + cmds))
 
     @classmethod
     def _enable_api(cls):
-        create_user = ''
+        create_user = ""
+        api_protocol = COMMAND_API_PROTOCOL
         # Don't use unix sockets in CI environment
-        if os.environ.get('EAPI_TEST') is not None:
-            COMMAND_API_PROTOCOL = 'http'
-            create_user = 'username %s secret %s privilege 15' % (
-                          COMMAND_API_USERNAME,
-                          COMMAND_API_PASSWORD)
-            url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
-                                                 COMMAND_API_USERNAME,
-                                                 COMMAND_API_PASSWORD,
-                                                 COMMAND_API_SERVER)
+        if os.environ.get("EAPI_TEST") is not None:
+            api_protocol = "http"
+            create_user = (
+                f"username {COMMAND_API_USERNAME} secret " f"{COMMAND_API_PASSWORD} privilege 15"
+            )
+            url = (
+                f"{api_protocol}://{COMMAND_API_USERNAME}:"
+                f"{COMMAND_API_PASSWORD}@{COMMAND_API_SERVER}/command-api"
+            )
         else:
-            url = 'unix:/var/run/command-api.sock'
-            _, out, _ = cls._cli_enable_cmd('show version | include image')
-            version = out.split(': ')[1]
-            (major, minor, patch) = version.split('.')[0:3]
+            url = "unix:/var/run/command-api.sock"
+            _, out, _ = cls._cli_enable_cmd("show version | include image")
+            version = out.split(": ")[1]
+            (major, minor, patch) = version.split(".")[0:3]
             patch = int(list(filter(str.isdigit, patch))[0])
-            if (int(major) <= 4 and int(minor) <= 14 and patch <= 5):
-                COMMAND_API_PROTOCOL = 'http'
-                create_user = 'username %s secret %s privilege 15' % (
-                              COMMAND_API_USERNAME,
-                              COMMAND_API_PASSWORD)
-                url = '%s://%s:%s@%s/command-api' % (COMMAND_API_PROTOCOL,
-                                                     COMMAND_API_USERNAME,
-                                                     COMMAND_API_PASSWORD,
-                                                     COMMAND_API_SERVER)
-            else:
-                COMMAND_API_PROTOCOL = 'unix-socket'
+            if int(major) <= 4 and int(minor) <= 14 and patch <= 5:
+                api_protocol = "http"
+                create_user = (
+                    f"username {COMMAND_API_USERNAME} secret "
+                    f"{COMMAND_API_PASSWORD} privilege 15"
+                )
+                url = (
+                    f"{api_protocol}://{COMMAND_API_USERNAME}:"
+                    f"{COMMAND_API_PASSWORD}@{COMMAND_API_SERVER}/command-api"
+                )
 
-        cls._cli_config_cmds([create_user,
-                              'management api http-commands',
-                              'no protocol https',
-                              'protocol %s' % COMMAND_API_PROTOCOL,
-                              'no shutdown'])
+        cls._cli_config_cmds(
+            [
+                create_user,
+                "management api http-commands",
+                "no protocol https",
+                f"protocol {api_protocol}",
+                "no shutdown",
+            ]
+        )
 
-        _, out, _ = cls._cli_enable_cmd('show management api http-commands |'
-                                        ' grep running')
+        _, out, _ = cls._cli_enable_cmd("show management api http-commands | grep running")
         retries = 3
         while not out and retries:
-            log('Waiting for CommandAPI to be enabled...')
+            log("Waiting for CommandAPI to be enabled...")
             time.sleep(1)
             retries = retries - 1
-            _, out, _ = cls._cli_enable_cmd(
-                'show management api http-commands | grep running')
+            _, out, _ = cls._cli_enable_cmd("show management api http-commands | grep running")
         return url
 
     def _disable_copp(self):
         # COPP does not apply to vEOS or EOS-4.11.x and earlier
-        if (self.system()['model'] != 'vEOS' and
-            len(self.system()['version'].split('.')) > 2 and
-            int(self.system()['version'].split('.')[1]) < 12):
-            self.api_config_cmds([
-                'control-plane',
-                'no service-policy input copp-system-policy'])
+        if (
+            self.system()["model"] != "vEOS"
+            and len(self.system()["version"].split(".")) > 2
+            and int(self.system()["version"].split(".")[1]) < 12
+        ):
+            self.api_config_cmds(["control-plane", "no service-policy input copp-system-policy"])
 
     def _has_rc_eos(self):
         return os.path.isfile(RC_EOS)
 
     def _append_lines(self, filename, lines):
-        if os.path.exists(filename) and os.path.getsize(filename) > 0:
-            fileexists = True
-        else:
-            fileexists = False
+        file_exists = bool(os.path.exists(filename) and os.path.getsize(filename) > 0)
 
-        with open(filename, 'a') as output:
-            if fileexists:
-                output.write('\n')
-            output.write('\n'.join(lines))
+        with open(filename, "a", encoding="utf8") as output:
+            if file_exists:
+                output.write("\n")
+            output.write("\n".join(lines))
 
     @classmethod
     def bash_cmds(cls, cmds):
-        '''Executes bash commands in order - stops on first failure.
+        """Executes bash commands in order - stops on first failure.
 
         Args:
             cmds: list of bash commands
@@ -500,24 +498,24 @@ class Node(object):
             code: exit code for first failing command (None otherwise)
             out:  stdout for first failing command (None otherwise)
             err:  stderr for first failing command (None otherwise)
-        '''
+        """
 
         for bash_cmd in cmds:
-            proc = subprocess.Popen(bash_cmd, stdin=PIPE,
-                                    stdout=PIPE, stderr=PIPE,
-                                    shell=True)
-            code = proc.returncode         # pylint: disable=E1101
-            (out, err) = proc.communicate()
+            with subprocess.Popen(
+                bash_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True
+            ) as proc:
+                code = proc.returncode
+                (out, err) = proc.communicate()
             if code or err:
-                return (bash_cmd, code, out, err)
-            else:
-                print out
+                return bash_cmd, code, out, err
 
-        return (None, None, None, None)
+            print(out)
+
+        return None, None, None, None
 
     @classmethod
     def substitute(cls, template, substitutions, strict=True):
-        '''Perform variable substitution on a config template.
+        """Perform variable substitution on a config template.
 
         Args:
             template (string): EOS configuration template
@@ -528,19 +526,20 @@ class Node(object):
 
         Returns:
             string: template string with variable substitution
-        '''
+        """
         try:
             if strict:
                 return Template(template).substitute(substitutions)
-            else:
-                return Template(template).safe_substitute(substitutions)
+
+            return Template(template).safe_substitute(substitutions)
         except KeyError as exc:
-            raise Exception('Unable to perform variable substitution - '
-                            '\'%s\' missing from list of substitutions' %
-                            exc.message)
+            raise RuntimeError(
+                f"Unable to perform variable substitution - {exc} "
+                "missing from list of substitutions"
+            ) from exc
 
     def api_enable_cmds(self, cmds, text_format=False):
-        '''Run CLI commands via Command API, starting from enable mode.
+        """Run CLI commands via Command API, starting from enable mode.
 
         Commands are ran in order.
 
@@ -552,27 +551,27 @@ class Node(object):
         Returns:
             list: List of Command API results corresponding to the
                   input commands.
-        '''
-        req_format = 'text' if text_format else 'json'
+        """
+        req_format = "text" if text_format else "json"
 
         result = None
         try:
-            result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+            result = self.client.runCmds(1, ["enable"] + cmds, req_format)
         except Exception as exc:
             # EOS-4.14.5+: persistent connection might be have been closed
             # on timeout - should recover on first retry
-            if exc.args[0] == 32:      # Broken PIPE
-                result = self.client.runCmds(1, ['enable'] + cmds, req_format)
+            if exc.args[0] == 32:  # Broken PIPE
+                result = self.client.runCmds(1, ["enable"] + cmds, req_format)
             else:
                 raise exc
 
         if text_format:
-            return [x.values()[0] for x in result if x.values()][1:]
-        else:
-            return result[1:]
+            return [list(x.values())[0] for x in result if list(x.values())][1:]
+
+        return result[1:]
 
     def api_config_cmds(self, cmds):
-        '''Run CLI commands via Command API, starting from config mode.
+        """Run CLI commands via Command API, starting from config mode.
 
         Commands are ran in order.
 
@@ -582,11 +581,11 @@ class Node(object):
         Returns:
             list: List of Command API results corresponding to the
                   input commands.
-        '''
-        return self.api_enable_cmds(['configure'] + cmds)[1:]
+        """
+        return self.api_enable_cmds(["configure"] + cmds)[1:]
 
     def system(self):
-        '''Get system information.
+        """Get system information.
 
         Returns:
             dict: System information
@@ -598,20 +597,20 @@ class Node(object):
                  'systemmac':    <SYSTEM_MAC>,
                  'serialnumber': <SERIAL_NUMBER>}
 
-        '''
+        """
 
         result = {}
-        info = self.api_enable_cmds(['show version'])[0]
+        info = self.api_enable_cmds(["show version"])[0]
 
-        result['model'] = info['modelName']
-        result['version'] = info['version']
-        result['systemmac'] = info['systemMacAddress']
-        result['serialnumber'] = info['serialNumber']
+        result["model"] = info["modelName"]
+        result["version"] = info["version"]
+        result["systemmac"] = info["systemMacAddress"]
+        result["serialnumber"] = info["serialNumber"]
 
         return result
 
     def neighbors(self):
-        '''Get neighbors.
+        """Get neighbors.
 
         Returns:
             dict: LLDP neighbor
@@ -623,23 +622,23 @@ class Node(object):
                    'port': <REMOTE_PORT>}, ...],
                 ...}}
 
-        '''
+        """
 
         result = {}
-        info = self.api_enable_cmds(['show lldp neighbors'])[0]
-        result['neighbors'] = {}
-        for entry in info['lldpNeighbors']:
+        info = self.api_enable_cmds(["show lldp neighbors"])[0]
+        result["neighbors"] = {}
+        for entry in info["lldpNeighbors"]:
             neighbor = {}
-            neighbor['device'] = entry['neighborDevice']
-            neighbor['port'] = entry['neighborPort']
-            if entry['port'] in result['neighbors']:
-                result['neighbors'][entry['port']] += [neighbor]
+            neighbor["device"] = entry["neighborDevice"]
+            neighbor["port"] = entry["neighborPort"]
+            if entry["port"] in result["neighbors"]:
+                result["neighbors"][entry["port"]] += [neighbor]
             else:
-                result['neighbors'][entry['port']] = [neighbor]
+                result["neighbors"][entry["port"]] = [neighbor]
         return result
 
     def details(self):
-        '''Get details.
+        """Get details.
 
         Returns:
             dict: System details
@@ -653,73 +652,73 @@ class Node(object):
                  'neighbors':    <NEIGHBORS>        # see neighbors()
                 }
 
-        '''
+        """
 
-        return dict(self.system().items() +
-                    self.neighbors().items())
+        return dict(list(self.system().items()) + list(self.neighbors().items()))
 
     def has_startup_config(self):
-        '''Check whether startup-config is configured or not.
+        """Check whether startup-config is configured or not.
 
         Returns:
             bool: True is startup-config is configured; false otherwise.
-        '''
-        return os.path.isfile(STARTUP_CONFIG) and \
-               open(STARTUP_CONFIG).read().strip()
+        """
+        return (
+            os.path.isfile(STARTUP_CONFIG) and open(STARTUP_CONFIG, encoding="utf8").read().strip()
+        )
 
     def append_startup_config_lines(self, lines):
-        '''Add lines to startup-config.
+        """Add lines to startup-config.
 
         Args:
             lines (list): List of CLI commands
-        '''
+        """
         self._append_lines(STARTUP_CONFIG, lines)
 
     def append_rc_eos_lines(self, lines):
-        '''Add lines to rc.eos.
+        """Add lines to rc.eos.
 
         Args:
             lines (list): List of bash commands
-        '''
+        """
         if not self._has_rc_eos():
-            lines = ['#!/bin/bash'] + lines
+            lines = ["#!/bin/bash"] + lines
         self._append_lines(RC_EOS, lines)
 
     def log_msg(self, msg, error=False):
-        '''Log message via configured syslog/XMPP.
+        """Log message via configured syslog/XMPP.
 
         Args:
             msg (string): Message
             error (bool, optional): True if msg is an error; false otherwise.
-        '''
+        """
         log(msg, error)
 
     def rc_eos(self):
-        '''Get rc.eos path.
+        """Get rc.eos path.
 
         Returns:
             string: rc.eos path
-        '''
+        """
         return RC_EOS
 
     def flash(self):
-        '''Get flash path.
+        """Get flash path.
 
         Returns:
             string: flash path
-        '''
+        """
         return FLASH
 
     def startup_config(self):
-        '''Get startup-config path.
+        """Get startup-config path.
 
         Returns:
             string: startup-config path
-        '''
+        """
         return STARTUP_CONFIG
 
     def retrieve_url(self, url, path):
-        '''Download resource from server.
+        """Download resource from server.
 
         If 'path' is somewhere on flash and 'url' points back to
         SERVER, then the client will request the metadata for
@@ -737,13 +736,11 @@ class Node(object):
 
         Returns:
             string: startup-config path
-        '''
+        """
         self.server_.get_resource(url, path)
 
-    def create_user(self, user, group, passwd, root='/persist/local/',
-                    ssh_keys=None):
-
-        '''Create a local user on the bootstrapped node. If 'ssh_keys' are
+    def create_user(self, user, group, passwd, root="/persist/local/", ssh_keys=None):
+        """Create a local user on the bootstrapped node. If 'ssh_keys' are
         provided, they will be copied to $HOME/.ssh/authorized_keys. Also,
         rc.eos will be modified to add this user on every boot. If the user
         provided already exists, the function will continue and install the
@@ -768,47 +765,44 @@ class Node(object):
 
         Returns:
             bool: True if user created; False if otherwise
-        '''
+        """
         if not user:
-            raise ZtpError('A user must be provided for create_user()')
+            raise ZtpError("A user must be provided for create_user()")
 
         if not group:
-            raise ZtpError('A group must be provided for create_user()')
+            raise ZtpError("A group must be provided for create_user()")
 
         if not passwd:
-            raise ZtpError('A passwd must be provided for create_user()')
+            raise ZtpError("A passwd must be provided for create_user()")
 
         if not root:
-            root = '/persist/local/'
+            root = "/persist/local/"
 
         home = os.path.join(root, user)
-        ssh_path = os.path.join(home, '.ssh')
-        auth_path = os.path.join(ssh_path, 'authorized_keys')
+        ssh_path = os.path.join(home, ".ssh")
+        auth_path = os.path.join(ssh_path, "authorized_keys")
 
         # Encrypt password
         enc_passwd = crypt.crypt(passwd, "22")
 
-        add_cmd = 'sudo useradd -p %s -d %s -G %s %s' % (enc_passwd, home,
-                                                         group, user)
+        add_cmd = f"sudo useradd -p {enc_passwd} -d {home} -G {group} {user}"
 
         # Create user
         try:
-            proc = subprocess.Popen(add_cmd, stdin=PIPE, stdout=PIPE,
-                                    stderr=PIPE, shell=True)
-
-            (_, err) = proc.communicate()
-            return_code = proc.wait()       # pylint: disable=E1101
+            with subprocess.Popen(
+                add_cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True
+            ) as proc:
+                (_, err) = proc.communicate()
+                return_code = proc.wait()
 
             if return_code or err:
                 if return_code in (4, 9):
-                    self.log_msg('User already exists - continuing. (%s:%s)'
-                                 % (return_code, err))
+                    self.log_msg(f"User already exists - continuing. ({return_code}:{err})")
                 else:
-                    raise ZtpError('Failed to add user.(%s:%s)'
-                                   % (return_code, err))
+                    raise ZtpError(f"Failed to add user.({return_code}:{err})")
 
         except Exception as exc:
-            raise ZtpError(exc)
+            raise ZtpError(exc) from exc
 
         # Get User ID and Group ID for chown
         uid = pwd.getpwnam(user).pw_uid
@@ -816,193 +810,190 @@ class Node(object):
 
         # Write keys if provided
         if ssh_keys:
-
             if not os.path.exists(home):
-                os.mkdir(ssh_path, 0700)
+                os.mkdir(ssh_path, 0o700)
 
             if not os.path.exists(ssh_path):
-                os.mkdir(ssh_path, 0700)
+                os.mkdir(ssh_path, 0o700)
             else:
-                os.chmod(ssh_path, 0700)
+                os.chmod(ssh_path, 0o700)
 
             os.chown(ssh_path, uid, gid)
 
-            auth_keys = open(auth_path, 'ab+')
-            auth_keys.write(ssh_keys)
-            auth_keys.close()
+            with open(auth_path, "ab+", encoding="utf8") as auth_keys:
+                auth_keys.write(ssh_keys)
             os.chown(auth_path, uid, gid)
-            os.chmod(auth_path, 0600)
+            os.chmod(auth_path, 0o600)
 
         self.append_rc_eos_lines([add_cmd])
 
-        return
-
     @classmethod
     def server_address(cls):
-        '''Get ZTP Server URL.
+        """Get ZTP Server URL.
 
         Returns:
             string: ZTP Server URL.
-        '''
+        """
         return SERVER
 
 
-class SyslogManager(object):
-
+class SyslogManager:
     def __init__(self):
-        self.log = logging.getLogger('ztpbootstrap')
+        self.log = logging.getLogger("ztpbootstrap")
         self.log.setLevel(logging.DEBUG)
-        self.formatter = logging.Formatter('ZTPS - %(levelname)s: '
-                                           '%(message)s')
+        self.formatter = logging.Formatter("ZTPS - %(levelname)s: %(message)s")
 
         # syslog to localhost enabled by default
         self._add_syslog_handler()
 
     def _add_handler(self, handler, level=None):
         if level is None:
-            level = 'DEBUG'
+            level = "DEBUG"
 
         try:
             handler.setLevel(logging.getLevelName(level))
         except ValueError:
-            log('SyslogManager: unknown logging level (%s) - using '
-                'log.DEFAULT instead' % level, error=True)
+            log(
+                f"SyslogManager: unknown logging level ({level}) - using log.DEFAULT instead",
+                error=True,
+            )
             handler.setLevel(logging.DEBUG)
 
         handler.setFormatter(self.formatter)
         self.log.addHandler(handler)
 
     def _add_syslog_handler(self):
-        log('SyslogManager: adding localhost handler')
+        log("SyslogManager: adding localhost handler")
         self._add_handler(SysLogHandler(address=SYSLOG))
 
     def _add_file_handler(self, filename, level=None):
-        log('SyslogManager: adding file handler (%s - level:%s)' %
-            (filename, level))
+        log(f"SyslogManager: adding file handler ({filename} - level:{level})")
         self._add_handler(logging.FileHandler(filename), level)
 
     def _add_remote_syslog_handler(self, host, port, level=None):
-        log('SyslogManager: adding remote handler (%s:%s - level:%s)' %
-            (host, port, level))
+        log(f"SyslogManager: adding remote handler ({host}:{port} - level:{level})")
         self._add_handler(SysLogHandler(address=(host, port)), level)
 
     def add_handlers(self, handler_config):
         for entry in handler_config:
-            match = re.match('^file:(.+)',
-                             entry['destination'])
+            match = re.match("^file:(.+)", entry["destination"])
             if match:
-                self._add_file_handler(match.groups()[0],
-                                       entry['level'])
+                self._add_file_handler(match.groups()[0], entry["level"])
             else:
-                match = re.match('^(.+):(.+)',
-                                 entry['destination'])
+                match = re.match("^(.+):(.+)", entry["destination"])
                 if match:
-                    self._add_remote_syslog_handler(match.groups()[0],
-                                                    int(match.groups()[1]),
-                                                    entry['level'])
+                    self._add_remote_syslog_handler(
+                        match.groups()[0], int(match.groups()[1]), entry["level"]
+                    )
                 else:
-                    self._add_remote_syslog_handler(entry['destination'],
-                                                    DEFAULT_SYSLOG_PORT,
-                                                    entry['level'])
+                    self._add_remote_syslog_handler(
+                        entry["destination"], DEFAULT_SYSLOG_PORT, entry["level"]
+                    )
 
 
-class Server(object):
-
+class Server:
     def __init__(self):
         pass
 
     @classmethod
-    def _http_request(cls, path=None, method='get', headers=None,
-                      payload=None, files=None, local_file=None):
+    def _http_request(
+        cls, path=None, method="get", headers=None, payload=None, files=None, local_file=None
+    ):
         if headers is None:
             headers = {}
         # Disable gzip, deflate so we can safely determine available space
-        headers[u'Accept-Encoding'] = None
+        headers["Accept-Encoding"] = None
         if files is None:
             files = []
 
         request_files = []
         for entry in files:
-            request_files[entry] = open(entry, 'rb')
+            request_files[entry] = open(entry, "rb")  # pylint: disable=R1732
 
-        if not urlparse.urlsplit(path).scheme:   # pylint: disable=E1103
+        if not urllib.parse.urlsplit(path).scheme:  # pylint: disable=E1103
             full_url = url_path_join(SERVER, path)
         else:
             full_url = path
 
         response = None
         try:
-            if method == 'get':
-                log('GET %s' % full_url)
-                response = requests.get(full_url,
-                                        data=json.dumps(payload),
-                                        headers=headers,
-                                        files=request_files,
-                                        timeout=HTTP_TIMEOUT)
-            elif method == 'post':
-                log('POST %s' % full_url)
-                response = requests.post(full_url,
-                                         data=json.dumps(payload),
-                                         headers=headers,
-                                         files=request_files,
-                                         timeout=HTTP_TIMEOUT)
-            elif method == 'stream':
-                log('STREAM %s - %s' % (full_url, local_file))
+            if method == "get":
+                log(f"GET {full_url}")
+                response = requests.get(
+                    full_url,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    files=request_files,
+                    timeout=HTTP_TIMEOUT,
+                )
+            elif method == "post":
+                log(f"POST {full_url}")
+                response = requests.post(
+                    full_url,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    files=request_files,
+                    timeout=HTTP_TIMEOUT,
+                )
+            elif method == "stream":
+                log(f"STREAM {full_url} - {local_file}")
                 # Don't use streaming request in CI environment
-                if os.environ.get('EAPI_TEST') is not None:
-                    log('NOT STREAM FOR CI %s - %s' % (full_url, local_file))
-                    response = requests.get(full_url,
-                                            data=json.dumps(payload),
-                                            headers=headers,
-                                            files=request_files,
-                                            timeout=HTTP_TIMEOUT)
+                if os.environ.get("EAPI_TEST") is not None:
+                    log(f"NOT STREAM FOR CI {full_url} - {local_file}")
+                    response = requests.get(
+                        full_url,
+                        data=json.dumps(payload),
+                        headers=headers,
+                        files=request_files,
+                        timeout=HTTP_TIMEOUT,
+                    )
                 else:
                     if not local_file:
-                        raise ZtpError('Cant STREAM EOS image file without'
-                                       ' file name and path')
-                    with requests.get(full_url, stream=True) as response:
+                        raise ZtpError("Cant STREAM EOS image file without file name and path")
+                    with requests.get(full_url, stream=True, timeout=HTTP_TIMEOUT) as response:
                         response.raise_for_status()
-                        with open(local_file, 'wb') as f:
+                        with open(local_file, "wb") as fd:
                             for chunk in response.iter_content(chunk_size=8192):
-                                f.write(chunk)
+                                fd.write(chunk)
             else:
-                log('Unknown method %s' % method, error=True)
-        except requests.exceptions.ConnectionError:
-            raise ZtpError('server connection error')
+                log(f"Unknown method {method}", error=True)
+        except requests.exceptions.ConnectionError as exc:
+            raise ZtpError("server connection error") from exc
 
         return response
 
     def _get_request(self, url, stream=False, local_file=None):
         # resource or action
-        headers = {'content-type': CONTENT_TYPE_HTML}
+        headers = {"content-type": CONTENT_TYPE_HTML}
         if stream:
-            result = self._http_request(url, method='stream', headers=headers,
-                                        local_file=local_file)
+            result = self._http_request(
+                url, method="stream", headers=headers, local_file=local_file
+            )
         else:
             result = self._http_request(url, headers=headers)
-        log('Server response to GET request: status=%s' % result.status_code)
+        log(f"Server response to GET request: status={result.status_code}")
 
-        return (result.status_code,
-                result.headers['content-type'].split(';')[0],
-                result)
+        return (result.status_code, result.headers["content-type"].split(";")[0], result)
 
     def _save_file_contents(self, contents, path, url=None):
         if path.startswith(FLASH):
             if not url:
-                raise ZtpError('attempting to save file to %s, but cannot'
-                               'retrieve content metadata' % path)
+                raise ZtpError(
+                    f"attempting to save file to {path}, but cannotretrieve content metadata"
+                )
 
             size = 0
-            if 'content-length' in contents.headers:
-                size = int(contents.headers['content-length'])
+            if "content-length" in contents.headers:
+                size = int(contents.headers["content-length"])
 
             if url.startswith(SERVER):
                 _, _, metadata = self.get_metadata(url)
                 metadata = metadata.json()
-                if size and metadata['size'] != size:
-                    raise ZtpError('"content-length" for %s does not match '
-                                   'metadata: %s != %s' %
-                                   (url, metadata['size'], size))
+                if size and metadata["size"] != size:
+                    raise ZtpError(
+                        f'"content-length" for {url} does not match metadata: '
+                        f'{metadata["size"]} != {size}'
+                    )
 
             usage = flash_usage()
 
@@ -1013,211 +1004,193 @@ class Server(object):
                 free_space += size
                 potential_used_space -= size
 
-            if (size > free_space):
-                raise ZtpError('not enough memory on flash for saving %s to %s'
-                               ' (free: %s bytes, required: %s bytes)' %
-                               (url, path, free_space, size))
-            elif (potential_used_space > 0.9 * usage.total):
+            if size > free_space:
+                raise ZtpError(
+                    f"not enough memory on flash for saving {url} to "
+                    f"{path} (free: {free_space} bytes, required: {size} bytes)"
+                )
+            if potential_used_space > 0.9 * usage.total:
                 percent = (size + usage.used) * 100.0 / usage.total
-                log('WARNING: flash disk usage will exceeed %s%% after '
-                    'saving %s to %s' % (percent, url, path))
+                log(
+                    f"WARNING: flash disk usage will exceeed "
+                    f"{percent}% after saving {url} to {path}"
+                )
 
-            log('File streamed earlier. No need to write content.')
+            log("File streamed earlier. No need to write content.")
 
         write_response_contents = False
-        if os.environ.get('EAPI_TEST') is not None:
-            log('File not streamed earlier in CI environment. Need to write content')
+        if os.environ.get("EAPI_TEST") is not None:
+            log("File not streamed earlier in CI environment. Need to write content")
             write_response_contents = True
 
         if not path.startswith(FLASH) or write_response_contents:
-            log('Writing %s...' % path)
+            log(f"Writing {path}...")
             # Save contents to file
             try:
-                with open(path, 'wb') as result:
+                with open(path, "wb") as result:
                     for chunk in contents.iter_content(chunk_size=1024):
                         if chunk:
                             result.write(chunk)
                     result.close()
-            except IOError as err:
-                raise ZtpError('unable to write %s: %s' % (path, err))
+            except OSError as err:
+                raise ZtpError(f"unable to write {path}: {err}") from err
 
         # Set permissions
-        os.chmod(path, 0777)
+        os.chmod(path, 0o777)
 
     def get_config(self):
-        headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request('bootstrap/config',
-                                    headers=headers)
+        headers = {"content-type": CONTENT_TYPE_HTML}
+        result = self._http_request("bootstrap/config", headers=headers)
 
-        log('Server response to GET config: contents=%s' % result.json())
+        log(f"Server response to GET config: contents={result.json()}")
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0]
-        if(status != HTTP_STATUS_OK or
-           content != CONTENT_TYPE_JSON):
+        content = result.headers["content-type"].split(";")[0]
+        if status != HTTP_STATUS_OK or content != CONTENT_TYPE_JSON:
             raise ZtpUnexpectedServerResponseError(
-                'unexpected response from server (status=%s; content-type=%s)' %
-                (status, content))
+                f"unexpected response from server (status={status}; content-type={content})"
+            )
 
         return (status, content, result)
 
     def post_nodes(self, node):
-        headers = {'content-type': CONTENT_TYPE_JSON}
-        result = self._http_request('nodes',
-                                    method='post',
-                                    headers=headers,
-                                    payload=node)
-        location = result.headers['location'] \
-            if 'location' in result.headers \
-            else None
-        log('Server response to POST nodes: status=%s, location=%s' %
-            (result.status_code, location))
+        headers = {"content-type": CONTENT_TYPE_JSON}
+        result = self._http_request("nodes", method="post", headers=headers, payload=node)
+        location = result.headers["location"] if "location" in result.headers else None
+        log(f"Server response to POST nodes: status={result.status_code}, location={location}")
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0]
-        if(status not in [HTTP_STATUS_CREATED,
-                          HTTP_STATUS_BAD_REQUEST,
-                          HTTP_STATUS_CONFLICT] or
-           content != CONTENT_TYPE_HTML):
+        content = result.headers["content-type"].split(";")[0]
+        if (
+            status not in [HTTP_STATUS_CREATED, HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CONFLICT]
+            or content != CONTENT_TYPE_HTML
+        ):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected response from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('node not found on server (status=%s)' % status)
+                f"unexpected response from server (status={status}; content-type={content})"
+            )
+        if status == HTTP_STATUS_BAD_REQUEST:
+            raise ZtpError(f"node not found on server (status={status})")
 
-        return (status, content, location)
+        return status, content, location
 
     def get_definition(self, location):
-        headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request(location,
-                                    headers=headers)
+        headers = {"content-type": CONTENT_TYPE_HTML}
+        result = self._http_request(location, headers=headers)
 
         if result.status_code == HTTP_STATUS_OK:
-            log('Server response to GET definition: status=%s, contents=%s' %
-                (result.status_code, result.json()))
+            log(
+                f"Server response to GET definition: "
+                f"status={result.status_code}, contents={result.json()}"
+            )
         else:
-            log('Server response to GET definition: status=%s' %
-                result.status_code)
+            log(f"Server response to GET definition: status={result.status_code}")
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0]
-        if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_JSON) or
-                (status == HTTP_STATUS_BAD_REQUEST and
-                 content == CONTENT_TYPE_HTML)):
+        content = result.headers["content-type"].split(";")[0]
+        if not (
+            (status == HTTP_STATUS_OK and content == CONTENT_TYPE_JSON)
+            or (status == HTTP_STATUS_BAD_REQUEST and content == CONTENT_TYPE_HTML)
+        ):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected response from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_BAD_REQUEST:
-            raise ZtpError('server-side topology check failed (status=%s)' %
-                           status)
+                f"unexpected response from server (status={status}; content-type={content})"
+            )
+        if status == HTTP_STATUS_BAD_REQUEST:
+            raise ZtpError(f"server-side topology check failed (status={status})")
 
-        return (status, content, result)
+        return status, content, result
 
     def get_action(self, action):
-        status, content, action_response = \
-            self._get_request('actions/%s' % action)
+        status, content, action_response = self._get_request(f"actions/{action}")
 
-        if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_PYTHON) or
-                (status == HTTP_STATUS_NOT_FOUND and
-                 content == CONTENT_TYPE_HTML)):
+        if not (
+            (status == HTTP_STATUS_OK and content == CONTENT_TYPE_PYTHON)
+            or (status == HTTP_STATUS_NOT_FOUND and content == CONTENT_TYPE_HTML)
+        ):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected response from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('action not found on server (status=%s)' % status)
+                f"unexpected response from server (status={status}; content-type={content})"
+            )
+        if status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError(f"action not found on server (status={status})")
 
         filename = os.path.join(TEMP, action)
         self._save_file_contents(action_response, filename)
         return filename
 
     def get_metadata(self, url):
-        if urlparse.urlsplit(url).scheme:   # pylint: disable=E1103
+        if urllib.parse.urlsplit(url).scheme:  # pylint: disable=E1103
             regex = re.compile(SERVER, re.IGNORECASE)
             if regex.match(url):
-                url = re.sub(regex, '', url)
-                url = url_path_join(SERVER, '/meta', url)
+                url = re.sub(regex, "", url)
+                url = url_path_join(SERVER, "/meta", url)
         else:
-            aux = [x for x in url.split('/') if x]
-            url = '/'.join(['meta'] + aux)
+            aux = [x for x in url.split("/") if x]
+            url = "/".join(["meta"] + aux)
 
-        headers = {'content-type': CONTENT_TYPE_HTML}
-        result = self._http_request(url,
-                                    headers=headers)
-        log('Server response to GET meta: contents=%s' % result.json())
+        headers = {"content-type": CONTENT_TYPE_HTML}
+        result = self._http_request(url, headers=headers)
+        log(f"Server response to GET meta: contents={result.json()}")
 
         status = result.status_code
-        content = result.headers['content-type'].split(';')[0]
+        content = result.headers["content-type"].split(";")[0]
 
-        if not ((status == HTTP_STATUS_OK and
-                 content == CONTENT_TYPE_JSON) or
-                (status == HTTP_STATUS_NOT_FOUND and
-                 content == CONTENT_TYPE_HTML) or
-                (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and
-                 content == CONTENT_TYPE_HTML)):
+        if not (
+            (status == HTTP_STATUS_OK and content == CONTENT_TYPE_JSON)
+            or (status == HTTP_STATUS_NOT_FOUND and content == CONTENT_TYPE_HTML)
+            or (status == HTTP_STATUS_INTERNAL_SERVER_ERROR and content == CONTENT_TYPE_HTML)
+        ):
             raise ZtpUnexpectedServerResponseError(
-                'unexpected response from server (status=%s; content-type=%s)' %
-                (status, content))
-        elif status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('metadata not found on server (status=%s)' %
-                           status)
-        elif status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
-            raise ZtpError(
-                'unable to retrieve metadata from server (status=%s)' %
-                status)
+                f"unexpected response from server (status={status}; content-type={content})"
+            )
+        if status == HTTP_STATUS_NOT_FOUND:
+            raise ZtpError(f"metadata not found on server (status={status})")
+        if status == HTTP_STATUS_INTERNAL_SERVER_ERROR:
+            raise ZtpError(f"unable to retrieve metadata from server (status={status})")
 
         return (status, content, result)
 
     def get_resource(self, url, path):
-        if not urlparse.urlsplit(url).scheme:     # pylint: disable=E1103
+        if not urllib.parse.urlsplit(url).scheme:  # pylint: disable=E1103
             url = url_path_join(SERVER, url)
 
         if path.startswith(FLASH):
-            status, content, response = self._get_request(url, stream=True,
-                                                          local_file=path)
+            status, content, response = self._get_request(url, stream=True, local_file=path)
         else:
             status, content, response = self._get_request(url)
 
         if url.startswith(SERVER):
-            if not ((status == HTTP_STATUS_OK and
-                     content == CONTENT_TYPE_OTHER) or
-                    (status == HTTP_STATUS_NOT_FOUND and
-                     content == CONTENT_TYPE_HTML)):
+            if not (
+                (status == HTTP_STATUS_OK and content == CONTENT_TYPE_OTHER)
+                or (status == HTTP_STATUS_NOT_FOUND and content == CONTENT_TYPE_HTML)
+            ):
                 raise ZtpUnexpectedServerResponseError(
-                    'unexpected response from server for %s '
-                    '(status=%s; content-type=%s)' %
-                    (url, status, content))
+                    f"unexpected response from server for {url} "
+                    f"(status={status}; content-type={content})"
+                )
         else:
-            if not (status == HTTP_STATUS_OK or
-                    status == HTTP_STATUS_NOT_FOUND):
+            if status not in [HTTP_STATUS_OK, HTTP_STATUS_NOT_FOUND]:
                 raise ZtpUnexpectedServerResponseError(
-                    'unexpected response from server for %s '
-                    '(status=%s; content-type=%s)' %
-                    (url, status, content))
+                    f"unexpected response from server for {url} "
+                    f"(status={status}; content-type={content})"
+                )
 
         if status == HTTP_STATUS_NOT_FOUND:
-            raise ZtpError('resource %s not found on server (status=%s)' %
-                           (url, status))
+            raise ZtpError(f"resource {url} not found on server (status={status})")
 
         self._save_file_contents(response, path, url)
 
 
 class XmppClient(sleekxmpp.ClientXMPP):
-    # pylint: disable=W0613, R0904, R0201, R0924
-
-    def __init__(self, user, domain, password, rooms,
-                 nick, xmpp_server, xmpp_port):
-
-        self.xmpp_jid = '%s@%s' % (user, domain)
+    def __init__(self, user, domain, password, rooms, nick, xmpp_server, xmpp_port):
+        self.xmpp_jid = f"{user}@{domain}"
         self.connected = False
 
         try:
-            sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid,
-                                          password)
+            sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid, password)
         except sleekxmpp.jid.InvalidJID:
-            log('Unable to connect XMPP client because of invalid jid: %s' %
-                self.xmpp_jid, xmpp=False)
+            log(
+                f"Unable to connect XMPP client because of invalid jid: {self.xmpp_jid}",
+                xmpp=False,
+            )
             return
 
         self.xmpp_nick = nick
@@ -1225,20 +1198,20 @@ class XmppClient(sleekxmpp.ClientXMPP):
 
         self.xmpp_rooms = []
         for room in rooms:
-            self.xmpp_rooms.append('%s@conference.%s' % (room, domain))
+            self.xmpp_rooms.append(f"{room}@conference.{domain}")
 
-        self.add_event_handler('session_start', self._session_connected)
-        self.add_event_handler('connect', self._session_connected)
-        self.add_event_handler('disconnected', self._session_disconnected)
+        self.add_event_handler("session_start", self._session_connected)
+        self.add_event_handler("connect", self._session_connected)
+        self.add_event_handler("disconnected", self._session_disconnected)
 
         # Multi-User Chat
-        self.register_plugin('xep_0045')
+        self.register_plugin("xep_0045")
         # XMPP Ping
-        self.register_plugin('xep_0199')
+        self.register_plugin("xep_0199")
         # Service Discovery
-        self.register_plugin('xep_0030')
+        self.register_plugin("xep_0030")
 
-        log('XmppClient connecting to server...', xmpp=False)
+        log("XmppClient connecting to server...", xmpp=False)
         if xmpp_server is not None:
             self.connect((xmpp_server, xmpp_port), reattempt=False)
         else:
@@ -1252,9 +1225,8 @@ class XmppClient(sleekxmpp.ClientXMPP):
             time.sleep(1)
             retries -= 1
 
-    def _session_connected(self, event):
-        log('XmppClient: Session connected (%s)' % self.xmpp_jid,
-            xmpp=False)
+    def _session_connected(self, _):
+        log(f"XmppClient: Session connected ({self.xmpp_jid})", xmpp=False)
         self.send_presence()
         self.get_roster()
 
@@ -1262,124 +1234,126 @@ class XmppClient(sleekxmpp.ClientXMPP):
 
         # Joining rooms
         for room in self.xmpp_rooms:
-            self.plugin['xep_0045'].joinMUC(room,
-                                            self.xmpp_nick,
-                                            wait=True)
-            log('XmppClient: Joined room %s as %s' %
-                (room, self.xmpp_nick),
-                xmpp=False)
+            self.plugin["xep_0045"].joinMUC(room, self.xmpp_nick, wait=True)
+            log(f"XmppClient: Joined room {room} as {self.xmpp_nick}", xmpp=False)
 
-    def _session_disconnected(self, event):
-        log('XmppClient: Session disconnected (%s)' % self.xmpp_jid,
-            xmpp=False)
+    def _session_disconnected(self, _):
+        log(f"XmppClient: Session disconnected ({self.xmpp_jid})", xmpp=False)
         self.connected = False
 
     def message(self, message):
         for room in self.xmpp_rooms:
-            self.send_message(mto=room,
-                              mbody=message,
-                              mtype='groupchat')
+            self.send_message(mto=room, mbody=message, mtype="groupchat")
 
 
 def apply_config(config, node):
-    global xmpp_client                      # pylint: disable=W0603
+    global xmpp_client  # pylint: disable=W0603
 
-    log('Applying server config')
+    log("Applying server config")
 
     # XMPP not configured yet
-    xmpp_config = config.get('xmpp', {})
+    xmpp_config = config.get("xmpp", {})
 
-    global XMPP_MSG_TYPE                        # pylint: disable=W0603
-    XMPP_MSG_TYPE = xmpp_config.get('msg_type', 'debug')
-    if XMPP_MSG_TYPE not in ['debug', 'info']:
-        log('XMPP configuration failed because of unexpected \'msg_type\': '
-            '%s not in [\'debug\', \'info\']' % XMPP_MSG_TYPE, error=True,
-            xmpp=False)
+    global XMPP_MSG_TYPE  # pylint: disable=W0603
+    XMPP_MSG_TYPE = xmpp_config.get("msg_type", "debug")
+    if XMPP_MSG_TYPE not in ["debug", "info"]:
+        log(
+            "XMPP configuration failed because of unexpected 'msg_type': "
+            f"{XMPP_MSG_TYPE} not in ['debug', 'info']",
+            error=True,
+            xmpp=False,
+        )
     else:
         if xmpp_config:
-            log('Configuring XMPP', xmpp=False)
-            if ('username' in xmpp_config and
-                'domain' in xmpp_config and
-                'password' in xmpp_config and
-                'rooms' in xmpp_config and
-                xmpp_config['rooms']):
-                nick = node.system()['serialnumber']
+            log("Configuring XMPP", xmpp=False)
+            if (
+                "username" in xmpp_config
+                and "domain" in xmpp_config
+                and "password" in xmpp_config
+                and "rooms" in xmpp_config
+                and xmpp_config["rooms"]
+            ):
+                nick = node.system()["serialnumber"]
                 if not nick:
                     # vEOS might not have a serial number configured
-                    nick = node.system()['systemmac']
-                xmpp_client = XmppClient(xmpp_config['username'],
-                                         xmpp_config['domain'],
-                                         xmpp_config['password'],
-                                         xmpp_config['rooms'],
-                                         nick,
-                                         xmpp_config.get('server', None),
-                                         xmpp_config.get('port', 5222))
+                    nick = node.system()["systemmac"]
+                xmpp_client = XmppClient(
+                    xmpp_config["username"],
+                    xmpp_config["domain"],
+                    xmpp_config["password"],
+                    xmpp_config["rooms"],
+                    nick,
+                    xmpp_config.get("server", None),
+                    xmpp_config.get("port", 5222),
+                )
             else:
                 # XMPP not configured yet
-                log('XMPP configuration failed because server response '
-                    'is missing config details',
-                    error=True, xmpp=False)
+                log(
+                    "XMPP configuration failed because server response "
+                    "is missing config details",
+                    error=True,
+                    xmpp=False,
+                )
         else:
-            log('No XMPP configuration received from server', xmpp=False)
+            log("No XMPP configuration received from server", xmpp=False)
 
-    log_config = config.get('logging', [])
+    log_config = config.get("logging", [])
     if log_config:
-        log('Configuring syslog')
+        log("Configuring syslog")
         syslog_manager.add_handlers(log_config)
     else:
-        log('No XMPP configuration received from server')
+        log("No XMPP configuration received from server")
 
 
 def execute_action(server, action_details, special_attr):
-    action = action_details['action']
+    action = action_details["action"]
 
-    description = ''
-    if 'description'in action_details:
-        description = '(%s)' % action_details['description']
+    description = ""
+    if "description" in action_details:
+        description = f"({action_details['description']})"
 
-    if action not in sys.modules:
-        log('Downloading action %s%s' % (action, description))
-        filename = server.get_action(action)
-
-    log('Executing action %s' % action)
-    if 'onstart' in action_details:
-        log('Action %s: %s' % (action, action_details['onstart']),
-            xmpp=True)
+    log(f"Executing action {action}")
+    if "onstart" in action_details:
+        log(f"Action {action}: {action_details['onstart']}", xmpp=True)
 
     try:
-        if action in sys.modules:
-            module = sys.modules[action]
-        else:
-            module = imp.load_source(action, filename)
+        if action not in sys.modules:
+            log(f"Downloading action {action}{description}")
+            filename = server.get_action(action)
 
-        local_attr = action_details['attributes'] \
-                     if 'attributes' in action_details \
-                     else []
-        try:
-            module.main(Attributes(local_attr, special_attr))
-        except Exception as exc:
-            raise ZtpActionError(exc)
-        log('Action executed succesfully (%s)' % action)
-        if 'onsuccess' in action_details:
-            log('Action %s: %s' % (action, action_details['onsuccess']),
-                xmpp=True)
-    except Exception as err:                  # pylint: disable=W0703
-        if 'onfailure' in action_details:
-            log('Action %s: %s' % (action, action_details['onfailure']),
-                xmpp=True)
-        raise ZtpActionError('executing action failed (%s): %s' % (action,
-                                                                   err))
+            loader = importlib.machinery.SourceFileLoader(action, filename)
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[action] = module
+            spec.loader.exec_module(module)
+
+        module = sys.modules[action]
+
+        local_attr = action_details["attributes"] if "attributes" in action_details else []
+
+        module.main(Attributes(local_attr, special_attr))
+
+        log(f"Action executed succesfully ({action})")
+        if "onsuccess" in action_details:
+            log(f"Action {action}: {action_details['onsuccess']}", xmpp=True)
+    except Exception as err:  # pylint: disable=W0703
+        if "onfailure" in action_details:
+            log(f"Action {action}: {action_details['onfailure']}", xmpp=True)
+        raise ZtpActionError(f"executing action failed ({action}): {err}") from err
 
 
 def main():
     # pylint: disable=W0603,R0912,R0915
     global syslog_manager, RESTORE_FACTORY_FLASH
 
-    usage = 'bootstrap [options]'
+    usage = "bootstrap [options]"
     parser = argparse.ArgumentParser(usage=usage)
-    parser.add_argument('--no-flash-factory-restore', '-n',
-                        action='store_true',
-                        help='Do NOT restore flash config to factory default')
+    parser.add_argument(
+        "--no-flash-factory-restore",
+        "-n",
+        action="store_true",
+        help="Do NOT restore flash config to factory default",
+    )
     args = parser.parse_args()
     RESTORE_FACTORY_FLASH = not args.no_flash_factory_restore
 
@@ -1390,19 +1364,19 @@ def main():
 
     # Retrieve and apply logging/XMPP configuration from server
     # XMPP not configured yet
-    log('Retrieving config from server', xmpp=False)
+    log("Retrieving config from server", xmpp=False)
     _, _, config = server.get_config()
 
     # Creating node
     node = Node(server)
 
     # XMPP not configured yet
-    log('Config retrieved from server', xmpp=False)
+    log("Config retrieved from server", xmpp=False)
     apply_config(config.json(), node)
 
     # Checking node on server
     # XMPP not configured yet
-    log('Collecting node information', xmpp=False)
+    log("Collecting node information", xmpp=False)
     _, _, location = server.post_nodes(node.details())
 
     # Get definition
@@ -1411,43 +1385,41 @@ def main():
     # Execute actions
     definition = definition.json()
 
-    if 'actions' not in definition:
-        raise ZtpError('\'actions\' section missing from definition')
+    if "actions" not in definition:
+        raise ZtpError("'actions' section missing from definition")
 
-    definition_name = definition.get('name', '')
-    log('Applying definition %s' % definition_name)
+    definition_name = definition.get("name", "")
+    log(f"Applying definition {definition_name}")
 
-    special_attr = {}
-    special_attr['NODE'] = node
-    for details in definition['actions']:
+    special_attr = {"NODE": node}
+    for details in definition["actions"]:
         execute_action(server, details, special_attr)
 
-    log('Definition %s applied successfully' % definition_name)
+    log(f"Definition {definition_name} applied successfully")
 
     # Check for startup-config
     if not node.has_startup_config():
-        raise ZtpError('startup configuration is missing at the end of the '
-                       'bootstrap process')
+        raise ZtpError("startup configuration is missing at the end of the bootstrap process")
 
-    log('ZTP bootstrap completed successfully!')
+    log("ZTP bootstrap completed successfully!")
 
     _exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except ZtpError as exception:
-        log('Bootstrap process failed: %s' % str(exception), error=True)
+        log(f"Bootstrap process failed: {str(exception)}", error=True)
+        log(traceback.format_exc())
         _exit(1)
     except KeyboardInterrupt:
-        log('Bootstrap process keyboard-interrupted', error=True)
+        log("Bootstrap process keyboard-interrupted", error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())
         _exit(1)
-    except Exception, exception:
-        errStr = 'Bootstrap process failed because of unknown' \
-                 ' exception: %s' % exception
+    except Exception as exception:
+        errStr = f"Bootstrap process failed because of unknown exception: {exception}"
         log(errStr, error=True)
         log(sys.exc_info()[0])
         log(traceback.format_exc())

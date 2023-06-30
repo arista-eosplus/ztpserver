@@ -29,7 +29,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-'''
+"""
 Simply returns a string made of the node ID and the name of 
 the resource pool.
 
@@ -42,7 +42,8 @@ Definition example:
           url: files/templates/demo.templates
           variables:
             ipaddress: test('demo')
-'''
+"""
 
-def main(node_id, pool, node):
-    return '%s:%s' % (node_id, pool)
+
+def main(node_id, pool, _):
+    return f"{node_id}:{pool}"

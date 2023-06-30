@@ -30,23 +30,22 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0613,C0103,R0201,W0622,W0614
+# pylint: disable=W0613,W0622,W0614
 #
 import logging
 
 import webob
 import webob.dec
 import webob.exc
-
 from routes.middleware import RoutesMiddleware
 
-from ztpserver.serializers import dumps
 from ztpserver.constants import CONTENT_TYPE_HTML, HTTP_STATUS_OK
+from ztpserver.serializers import dumps
 
 log = logging.getLogger(__name__)
 
-class WSGIController(object):
 
+class WSGIController:
     def index(self, request, **kwargs):
         return webob.exc.HTTPNoContent()
 
@@ -73,13 +72,13 @@ class WSGIController(object):
 
     @webob.dec.wsgify
     def __call__(self, request):
-        action = request.urlvars['action']
+        action = request.urlvars["action"]
 
         try:
-            method = getattr(self, action)    #pylint: disable=R0921
+            method = getattr(self, action)
             result = method(request, **request.urlvars)
         except Exception as exc:
-            log.error('Unrecoverable error detected: %s' % exc.message)
+            log.error("Unrecoverable error detected: %s", exc)
             raise webob.exc.HTTPInternalServerError()
 
         if result is None:
@@ -87,24 +86,25 @@ class WSGIController(object):
 
         elif isinstance(result, dict):
             # serialize body based on response content type
-            if 'body' in result:
-                content_type = result.get('content_type')
-                result['body'] = dumps(result['body'], content_type,
-                                       'general')
+            if "body" in result:
+                content_type = result.get("content_type")
+                result["body"] = dumps(result["body"], content_type, "general")
 
-            result.setdefault('status', HTTP_STATUS_OK)
-            result.setdefault('content_type', CONTENT_TYPE_HTML)
+            result.setdefault("status", HTTP_STATUS_OK)
+            result.setdefault("content_type", CONTENT_TYPE_HTML)
+            result.setdefault("charset", "UTF-8")
 
-            result = self.response(**result)   #pylint: disable=W0142
+            result = self.response(**result)
 
-        elif not isinstance(result, webob.Response) and \
-             not isinstance(result, webob.static.FileApp):
+        elif not isinstance(result, webob.Response) and not isinstance(
+            result, webob.static.FileApp
+        ):
             result = webob.exc.HTTPInternalServerError()
 
         return result
 
-class WSGIRouter(object):
 
+class WSGIRouter:
     def __init__(self, mapper):
         self.map = mapper
         self.router = RoutesMiddleware(self.route, self.map)
@@ -115,12 +115,11 @@ class WSGIRouter(object):
 
     @webob.dec.wsgify
     def route(self, request):
-        ''' Routes the incoming request to the appropriate controller '''
+        """Routes the incoming request to the appropriate controller"""
 
-        if 'controller' not in request.urlvars:
-            log.debug('WSGIRouter: missing controller (request=%s)' % 
-                      request)
-            return webob.exc.HTTPNotFound()            
+        if "controller" not in request.urlvars:
+            log.debug("WSGIRouter: missing controller (request=%s)", request)
+            return webob.exc.HTTPNotFound()
 
-        controller = request.urlvars['controller']
+        controller = request.urlvars["controller"]
         return controller()

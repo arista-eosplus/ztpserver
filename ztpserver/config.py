@@ -30,29 +30,29 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-#pylint: disable=C0103
 
-import collections
+import collections.abc
+import configparser
 import logging
 import os
-import ConfigParser
 
 import ztpserver.types
 
-CONF_PATH = '/etc/ztpserver'
+CONF_PATH = "/etc/ztpserver"
 
-VERSION_FILE = '.VERSION'
-VERSION_FILE_PATH = '%s/%s' % (CONF_PATH, VERSION_FILE)
+VERSION_FILE = ".VERSION"
+VERSION_FILE_PATH = f"{CONF_PATH}/{VERSION_FILE}"
 
-GLOBAL_CONF_FILE = 'ztpserver.conf'
-GLOBAL_CONF_FILE_PATH = '%s/%s' % (CONF_PATH, GLOBAL_CONF_FILE)
+GLOBAL_CONF_FILE = "ztpserver.conf"
+GLOBAL_CONF_FILE_PATH = f"{CONF_PATH}/{GLOBAL_CONF_FILE}"
 
-INSTALL_PATH = '/usr/share/ztpserver'
+INSTALL_PATH = "/usr/share/ztpserver"
 
 log = logging.getLogger(__name__)
 
-class Attr(object):
-    """ Base Attribute class for deriving all attributes for a Config object
+
+class Attr:
+    """Base Attribute class for deriving all attributes for a Config object
 
     :param name: required argument specifies attribute name
     :param type: optional keyword argument specifies attribute type.  the
@@ -65,12 +65,11 @@ class Attr(object):
     """
 
     def __init__(self, name, **kwargs):
-
         self.name = name
-        self.type = kwargs.get('type') or ztpserver.types.String()
-        self.group = kwargs.get('group') or 'default'
-        self.default = kwargs.get('default')
-        self.environ = kwargs.get('environ')
+        self.type = kwargs.get("type") or ztpserver.types.String()
+        self.group = kwargs.get("group") or "default"
+        self.default = kwargs.get("default")
+        self.environ = kwargs.get("environ")
 
         if self.environ is not None and self.environ in os.environ:
             self.default = self.type(os.environ.get(self.environ))
@@ -78,12 +77,11 @@ class Attr(object):
             self.default = self.type(self.default)
 
     def __repr__(self):
-        return 'Attr(name=%s, group=%s, default=%s)' % \
-            (self.name, self.group, self.default)
+        return f"Attr(name={self.name}, group={self.group}, default={self.default})"
 
 
 class StrAttr(Attr):
-    """ String attribute class derived from Attr
+    """String attribute class derived from Attr
 
     :param choices: optional keyword argument specifies valid choices
     """
@@ -91,11 +89,11 @@ class StrAttr(Attr):
     def __init__(self, name, choices=None, **kwargs):
         self.choices = choices
         attrtype = ztpserver.types.String(choices=choices)
-        super(StrAttr, self).__init__(name, type=attrtype, **kwargs)
+        super().__init__(name, type=attrtype, **kwargs)
 
 
 class IntAttr(Attr):
-    """ Integer attribute class derived from Attr
+    """Integer attribute class derived from Attr
 
     :param min_value: specifies the min value.  the default is None
     :param max_value: specifies the max value.  the default is None
@@ -105,33 +103,32 @@ class IntAttr(Attr):
     def __init__(self, name, min_value=None, max_value=None, **kwargs):
         self.min_value = min_value
         self.max_value = max_value
-        attrtype = ztpserver.types.Integer(min_value=min_value, 
-                                           max_value=max_value)
-        super(IntAttr, self).__init__(name, type=attrtype, **kwargs)
+        attrtype = ztpserver.types.Integer(min_value=min_value, max_value=max_value)
+        super().__init__(name, type=attrtype, **kwargs)
 
 
 class BoolAttr(Attr):
-    """ Boolean attribute class derived from Attr """
+    """Boolean attribute class derived from Attr"""
 
     def __init__(self, name, **kwargs):
         attrtype = ztpserver.types.Boolean()
-        super(BoolAttr, self).__init__(name, type=attrtype, **kwargs)
+        super().__init__(name, type=attrtype, **kwargs)
 
 
 class ListAttr(Attr):
-    """ List attribute class derived from Attr
+    """List attribute class derived from Attr
 
     :param delimiter: specifies the delimiter character to split the string on
 
     """
 
-    def __init__(self, name, delimiter=',', **kwargs):
+    def __init__(self, name, delimiter=",", **kwargs):
         attrtype = ztpserver.types.List(delimiter=delimiter)
-        super(ListAttr, self).__init__(name, type=attrtype, **kwargs)
+        super().__init__(name, type=attrtype, **kwargs)
 
 
-class Group(collections.Mapping):
-    """ The Group class provides a logical grouping of attributes in a
+class Group(collections.abc.Mapping):
+    """The Group class provides a logical grouping of attributes in a
     Config object.   Group names must be unique for each Config instance
     and cannot be assigned values.
 
@@ -157,10 +154,10 @@ class Group(collections.Mapping):
     def __len__(self):
         return len(self._keys())
 
-    def __delitem__(self):
+    def __delitem__(self, index):
         pass
 
-    def __setitem__(self):
+    def __setitem__(self, index, value):
         pass
 
     def _keys(self):
@@ -170,12 +167,12 @@ class Group(collections.Mapping):
         self.config.add_attribute(item, self.name)
 
 
-class Config(collections.Mapping):
-    """ The Config class represents the configuration for collection.  """
+class Config(collections.abc.Mapping):
+    """The Config class represents the configuration for collection."""
 
     def __init__(self):
-        self.attributes = dict()
-        self.groups = list()
+        self.attributes = {}
+        self.groups = []
 
     def __getattr__(self, name):
         return self.__get_attribute__(name)
@@ -190,12 +187,12 @@ class Config(collections.Mapping):
         return len(self.attributes)
 
     def __repr__(self):
-        return 'Config'
+        return "Config"
 
-    def __delitem__(self):
+    def __delitem__(self, index):
         pass
 
-    def __setitem__(self):
+    def __setitem__(self, index, value):
         pass
 
     def __get_attribute__(self, name, group=None):
@@ -204,16 +201,15 @@ class Config(collections.Mapping):
 
         key = (group, name)
         if key not in self.attributes:
-            raise AttributeError('Missing attribute: %s' % str(key))
+            raise AttributeError(f"Missing attribute: {str(key)}")
 
         item = self.attributes.get(key)
-        return item.get('value')
+        return item.get("value")
 
     def add_attribute(self, item, group=None):
+        obj = {"_metadata": item}
 
-        obj = dict(_metadata=item)
-
-        if group is None and hasattr(item, 'group'):
+        if group is None and hasattr(item, "group"):
             group = item.group
 
         key = (group, item.name)
@@ -222,11 +218,11 @@ class Config(collections.Mapping):
             self.add_group(group)
 
         if key in self.attributes:
-            raise AttributeError('Duplicate attribute: %s' % str(key))
+            raise AttributeError(f"Duplicate attribute: {str(key)}")
 
         self.attributes[key] = obj
         if item.default is not None:
-            obj['value'] = self._transform(obj, item.default)
+            obj["value"] = self._transform(obj, item.default)
 
     def add_group(self, group):
         if isinstance(group, Group):
@@ -236,120 +232,103 @@ class Config(collections.Mapping):
             self.groups.append(group)
 
     def _transform(self, item, value):
-        # pylint: disable=R0201
-        return item['_metadata'].type(value)
+        return item["_metadata"].type(value)
 
     def set_value(self, name, value, group=None):
         if not group and name in self.groups:
-            raise AttributeError('Failed to set value (name=%s, group=%s): '
-                                 'cannot set a value for a group' %
-                                 (name, group))
+            raise AttributeError(
+                f"Failed to set value (name={name}, group={group}): cannot set a value for a group"
+            )
 
         item = self.attributes.get((group, name))
         if item is None:
-            raise AttributeError('Failed to set value (name=%s, group=%s): '
-                                 'missing item' %
-                                 (name, group))
-        item['value'] = self._transform(item, value)
+            raise AttributeError(f"Failed to set value (name={name}, group={group}): missing item")
+        item["value"] = self._transform(item, value)
 
     def clear_value(self, name, group=None):
-        """ clears the attributes value and resets it to default """
+        """clears the attributes value and resets it to default"""
 
         if not group and name in self.groups:
-            raise AttributeError('Failed to clear value (name=%s, group=%s): '
-                                 'cannot clear values for a group' %
-                                 (name, group))
+            raise AttributeError(
+                f"Failed to clear value (name={name}, group={group}): cannot clear values for a "
+                "group"
+            )
 
         item = self.attributes.get((group, name))
 
-        if item['_metadata'].default is None:   # pylint: disable=W0104
-            item['value'] = None
+        if item["_metadata"].default is None:  # pylint: disable=W0104
+            item["value"] = None
         else:
-            item['value'] = self._transform(item, item['_metadata'].default)
+            item["value"] = self._transform(item, item["_metadata"].default)
 
     def read(self, filename):
-        cp = ConfigParser.RawConfigParser() #pylint: disable=C0103
+        cp = configparser.RawConfigParser()  # pylint: disable=C0103
         cp.read(filename)
         for section in cp.sections():
             for key, value in cp.items(section):
                 try:
                     self.set_value(key, value, section)
                 except AttributeError as err:
-                    log.warning('Error detected while reading %s: %s' %
-                                (filename, err))
+                    log.warning("Error detected while reading %s: %s", filename, err)
                     continue
+
 
 runtime = Config()
 
 # Group: default
-runtime.add_attribute(StrAttr(
-    name='data_root',
-    default=INSTALL_PATH,
-    environ='ZTPS_DEFAULT_DATAROOT'
-))
+runtime.add_attribute(
+    StrAttr(name="data_root", default=INSTALL_PATH, environ="ZTPS_DEFAULT_DATAROOT")
+)
 
-runtime.add_attribute(StrAttr(
-    name='identifier',
-    choices=['systemmac', 'serialnumber'],
-    default='serialnumber'
-))
+runtime.add_attribute(
+    StrAttr(name="identifier", choices=["systemmac", "serialnumber"], default="serialnumber")
+)
 
-runtime.add_attribute(StrAttr(
-    name='server_url',
-    default='http://ztpserver:8080',
-    environ='ZTPS_DEFAULT_SERVER'
-))
+runtime.add_attribute(
+    StrAttr(
+        name="server_url",
+        default="http://ztpserver:8080",
+        environ="ZTPS_DEFAULT_SERVER",
+    )
+)
 
-runtime.add_attribute(BoolAttr(
-    name='logging',
-    default=True,
-    environ='ZTPS_DEFAULT_LOGGING'
-))
+runtime.add_attribute(BoolAttr(name="logging", default=True, environ="ZTPS_DEFAULT_LOGGING"))
 
-runtime.add_attribute(BoolAttr(
-    name='console_logging',
-    default=True
-))
+runtime.add_attribute(BoolAttr(name="console_logging", default=True))
 
-runtime.add_attribute(StrAttr(
-    name='console_logging_format',
-    default='%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s',
-    environ='ZTPS_CONSOLE_LOGGING_FORMAT'
-))
+runtime.add_attribute(
+    StrAttr(
+        name="console_logging_format",
+        default="%(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s",
+        environ="ZTPS_CONSOLE_LOGGING_FORMAT",
+    )
+)
 
-runtime.add_attribute(BoolAttr(
-    name='disable_topology_validation',
-    default=False
-))
+runtime.add_attribute(BoolAttr(name="disable_topology_validation", default=False))
 
 # Group: server
-runtime.add_attribute(StrAttr(
-    name='interface',
-    group='server',
-    default='0.0.0.0'
-))
+runtime.add_attribute(StrAttr(name="interface", group="server", default="0.0.0.0"))
 
-runtime.add_attribute(IntAttr(
-    name='port',
-    group='server',
-    min_value=1,
-    max_value=65534,
-    default=8080
-))
-
+runtime.add_attribute(
+    IntAttr(name="port", group="server", min_value=1, max_value=65534, default=8080)
+)
 
 # Group: bootstrap
-runtime.add_attribute(StrAttr(
-    name='filename',
-    group='bootstrap',
-    default='bootstrap',
-    environ='ZTPS_BOOTSTRAP_FILENAME'
-))
+runtime.add_attribute(
+    StrAttr(
+        name="filename",
+        group="bootstrap",
+        default="bootstrap",
+        environ="ZTPS_BOOTSTRAP_FILENAME",
+    )
+)
 
 # Group: neighbordb
-runtime.add_attribute(StrAttr(
-    name='filename',
-    group='neighbordb',
-    default='neighbordb',
-    environ='ZTPS_NEIGHBORDB_FILENAME'
-))
+runtime.add_attribute(
+    StrAttr(
+        name="filename",
+        group="neighbordb",
+        default="neighbordb",
+        environ="ZTPS_NEIGHBORDB_FILENAME",
+    )
+)

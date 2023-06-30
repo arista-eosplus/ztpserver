@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,16 +27,15 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,E1103
-
-EXTENSIONS_DIR = '/mnt/flash/.extensions'
-BOOT_EXTENSIONS = '/mnt/flash/boot-extensions'
-
 import ast
 import os
 
+EXTENSIONS_DIR = "/mnt/flash/.extensions"
+BOOT_EXTENSIONS = "/mnt/flash/boot-extensions"
+
+
 def main(attributes):
-    '''Installs extension.
+    """Installs extension.
 
     If 'force' is
     set, then the dependency checks are overridden.
@@ -61,40 +60,32 @@ def main(attributes):
               url: files/telemetry-1.0-1.rpm
             name: "Install Telemetry"
 
-    '''
+    """
 
-    node = attributes.get('NODE')
-    url = attributes.get('url')
+    node = attributes.get("NODE")
+    url = attributes.get("url")
 
     if not url:
-        raise Exception('Missing attribute(\'url\')')
+        raise RuntimeError("Missing attribute('url')")
 
-    force = ast.literal_eval(
-        str(attributes.get('force')))
+    force = ast.literal_eval(str(attributes.get("force")))
 
+    os.makedirs(EXTENSIONS_DIR, exist_ok=True)
+
+    name = url.split("/")[-1]
     try:
-        os.makedirs(EXTENSIONS_DIR)
-    except OSError:
-        # file exists
-        pass
-
-    name = url.split('/')[ -1 ]
-    try:
-        node.retrieve_url(url, '%s/%s' % (EXTENSIONS_DIR, name))
+        node.retrieve_url(url, f"{EXTENSIONS_DIR}/{name}")
     except Exception as exc:
-        raise Exception('Unable to retrieve extension from URL (%s)' %
-                        exc)
+        raise RuntimeError("Unable to retrieve extension from URL") from exc
 
     line = name
     if force:
-        line = line + ' force'
+        line = line + " force"
 
     lines = []
-    try:
-        lines = [x.strip() for x in open(BOOT_EXTENSIONS).readlines()
-                 if x.strip()]
-    except IOError:
-        # file Missing
-        pass
+    if os.access(BOOT_EXTENSIONS, os.R_OK):
+        with open(BOOT_EXTENSIONS, encoding="utf8") as boot_ext_fd:
+            lines = [x.strip() for x in boot_ext_fd.readlines() if x.strip()]
 
-    open(BOOT_EXTENSIONS, 'w').write('\n'.join(lines + [line]))
+    with open(BOOT_EXTENSIONS, "w", encoding="utf8") as boot_ext_fd:
+        boot_ext_fd.write("\n".join(lines + [line]))
