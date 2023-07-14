@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,80 +27,75 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904,F0401,W0232,E1101
-
 import os
 import os.path
 import unittest
-import sys
+from test.client.client_test_lib import (
+    STATUS_NOT_FOUND,
+    ActionFailureTest,
+    Bootstrap,
+    file_log,
+    get_action,
+    raise_exception,
+    random_string,
+)
 
-sys.path.append('test/client')
-
-from client_test_lib import STATUS_NOT_FOUND
-from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import file_log, get_action, random_string
-from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
-
     def test_missing_url(self):
-        self.basic_test('replace_config',
-                        'Missing attribute(\'url\')')
+        self.basic_test("replace_config", "Missing attribute('url')")
 
     def test_url_failure(self):
-        self.basic_test('replace_config',
-                        'Unable to retrieve config from URL',
-                        attributes={'url' : random_string()})
+        self.basic_test(
+            "replace_config",
+            "Unable to retrieve config from URL",
+            attributes={"url": random_string()},
+        )
 
     def test_bad_file_status(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
+        url = f"http://{bootstrap.server}/{config}"
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action',
-                      'attributes': {'url' : url}}])
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('replace_config'))
+            actions=[{"action": "test_action", "attributes": {"url": url}}]
+        )
+        bootstrap.ztps.set_action_response("test_action", get_action("replace_config"))
         contents = random_string()
-        bootstrap.ztps.set_file_response(config, contents,
-                                         status=STATUS_NOT_FOUND)
+        bootstrap.ztps.set_file_response(config, contents, status=STATUS_NOT_FOUND)
         bootstrap.start_test()
 
         try:
-            self.failUnless(bootstrap.action_failure())
-            msg = [x for x in bootstrap.output.split('\n') if x][-1]
-            self.failUnless('Unable to retrieve config from URL' in msg)
+            self.assertTrue(bootstrap.action_failure())
+            msg = [x for x in bootstrap.output.split("\n") if x][-1]
+            self.assertTrue("Unable to retrieve config from URL" in msg)
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print(f"Output: {bootstrap.output}")
+            print(f"Error: {bootstrap.error}")
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
 
 class SuccessTest(unittest.TestCase):
-
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
         url = config
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action',
-                      'attributes': {'url' : url}}])
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('replace_config'))
+            actions=[{"action": "test_action", "attributes": {"url": url}}]
+        )
+        bootstrap.ztps.set_action_response("test_action", get_action("replace_config"))
         contents = random_string()
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(bootstrap.startup_config))
-            self.failUnless(contents.split() == 
-                            file_log(bootstrap.startup_config))
-            self.failUnless(bootstrap.success())
+            self.assertTrue(os.path.isfile(bootstrap.startup_config))
+            self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print(f"Output: {bootstrap.output}")
+            print(f"Error: {bootstrap.error}")
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -108,28 +103,26 @@ class SuccessTest(unittest.TestCase):
     def test_url_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, config)
+        url = f"http://{bootstrap.server}/{config}"
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'test_action',
-                      'attributes': {'url' : url}}])
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('replace_config'))
+            actions=[{"action": "test_action", "attributes": {"url": url}}]
+        )
+        bootstrap.ztps.set_action_response("test_action", get_action("replace_config"))
         contents = random_string()
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(bootstrap.startup_config))
-            self.failUnless(contents.split() == 
-                            file_log(bootstrap.startup_config))
-            self.failUnless(bootstrap.success())
+            self.assertTrue(os.path.isfile(bootstrap.startup_config))
+            self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print(f"Output: {bootstrap.output}")
+            print(f"Error: {bootstrap.error}")
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

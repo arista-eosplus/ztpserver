@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,16 +27,13 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904,F0401
+# pylint: disable=R0904,F0401
 
 import unittest
-
-from client_test_lib import Bootstrap
-from client_test_lib import raise_exception
+from test.client.client_test_lib import Bootstrap, raise_exception
 
 
 class XmppConfigTest(unittest.TestCase):
-
     @classmethod
     def bootstrap(cls, xmpp):
         bootstrap = Bootstrap()
@@ -50,73 +47,93 @@ class XmppConfigTest(unittest.TestCase):
         bootstrap = self.bootstrap(xmpp)
 
         try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.missing_startup_config_failure())
-            self.failIf(bootstrap.error)
-            self.failIf('XmppClient' not in bootstrap.output)
+            self.assertTrue(bootstrap.eapi_node_information_collected())
+            self.assertTrue(bootstrap.missing_startup_config_failure())
+            self.assertFalse(bootstrap.error)
+            self.assertFalse("XmppClient" not in bootstrap.output)
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print(f"Output: {bootstrap.output}")
+            print(f"Error: {bootstrap.error}")
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
     def test_full(self):
-        self.xmpp_sanity_test({'server' : 'test-server',
-                               'port' : 112233,
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain',
-                               'rooms' : ['test-room-1', 'test-room-2']})
+        self.xmpp_sanity_test(
+            {
+                "server": "test-server",
+                "port": 112233,
+                "username": "test-username",
+                "password": "test-password",
+                "domain": "test-domain",
+                "rooms": ["test-room-1", "test-room-2"],
+            }
+        )
 
     def test_msg_type_debug(self):
-        self.xmpp_sanity_test({'server' : 'test-server',
-                               'port' : 112233,
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain',
-                               'rooms' : ['test-room-1', 'test-room-2'],
-                               'msg_type' : 'debug'})
+        self.xmpp_sanity_test(
+            {
+                "server": "test-server",
+                "port": 112233,
+                "username": "test-username",
+                "password": "test-password",
+                "domain": "test-domain",
+                "rooms": ["test-room-1", "test-room-2"],
+                "msg_type": "debug",
+            }
+        )
 
     def test_msg_type_info(self):
-        self.xmpp_sanity_test({'server' : 'test-server',
-                               'port' : 112233,
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain',
-                               'rooms' : ['test-room-1', 'test-room-2'],
-                               'msg_type' : 'debug'})
+        self.xmpp_sanity_test(
+            {
+                "server": "test-server",
+                "port": 112233,
+                "username": "test-username",
+                "password": "test-password",
+                "domain": "test-domain",
+                "rooms": ["test-room-1", "test-room-2"],
+                "msg_type": "debug",
+            }
+        )
 
     def test_partial(self):
-        self.xmpp_sanity_test({'rooms' : ['test-room-1'],
-                               'username' : 'test-username',
-                               'password' : 'test-password',
-                               'domain' :   'test-domain'})
+        self.xmpp_sanity_test(
+            {
+                "rooms": ["test-room-1"],
+                "username": "test-username",
+                "password": "test-password",
+                "domain": "test-domain",
+            }
+        )
 
     def test_erroneous_msg_type(self):
-        bootstrap = self.bootstrap({'server' : 'test-server',
-                                    'port' : 112233,
-                                    'username' : 'test-username',
-                                    'password' : 'test-password',
-                                    'domain' :   'test-domain',
-                                    'rooms' : ['test-room-1', 'test-room-2'],
-                                    'msg_type' : 'bogus'})
+        bootstrap = self.bootstrap(
+            {
+                "server": "test-server",
+                "port": 112233,
+                "username": "test-username",
+                "password": "test-password",
+                "domain": "test-domain",
+                "rooms": ["test-room-1", "test-room-2"],
+                "msg_type": "bogus",
+            }
+        )
 
         try:
-            self.failUnless(bootstrap.eapi_node_information_collected())
-            self.failUnless(bootstrap.missing_startup_config_failure())
-            self.failIf(bootstrap.error)
-            self.failIf('XMPP configuration failed because of '
-                        'unexpected \'msg_type\''
-                        not in bootstrap.output)
+            self.assertTrue(bootstrap.eapi_node_information_collected())
+            self.assertTrue(bootstrap.missing_startup_config_failure())
+            self.assertFalse(bootstrap.error)
+            self.assertFalse(
+                "XMPP configuration failed because of "
+                "unexpected 'msg_type'" not in bootstrap.output
+            )
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print(f"Output: {bootstrap.output}")
+            print(f"Error: {bootstrap.error}")
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

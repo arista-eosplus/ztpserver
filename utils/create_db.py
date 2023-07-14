@@ -9,7 +9,7 @@ con = lite.connect('/usr/share/ztpserver/db/resources.db')
 with con:
 
     for table in ['mgmt_subnet', 'tor_hostnames', 'ip_vlan100', 'ip_loopback']:
-        print "Working on: ",table
+        print("Working on: ", table)
         cur = con.cursor()
         sql = "DROP TABLE IF EXISTS `%s`" % table
         cur.execute(sql)
@@ -33,8 +33,8 @@ with con:
             cur.execute(sql)
 
         sql = "SELECT * FROM `%s`" % table
-        print sql
+        print(sql)
         cur.execute(sql)
         rows = cur.fetchall()
         for row in rows:
-            print row
+            print(row)

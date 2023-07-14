@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python3
 
 # This script can be used in order to automatically refresh the
 # installation of ZTP Server to the latest code on GitHub.  This can
@@ -13,16 +13,18 @@ import os
 import re
 import sys
 
-BACKUP_FOLDER = '/tmp/ztps_backup'
-BACKUP_CONFIG_FOLDER = '/tmp/ztps_backup/home'
-GLOBAL_CONFIG_FILE = '/etc/ztpserver/ztpserver.conf'
+BACKUP_FOLDER = "/tmp/ztps_backup"
+BACKUP_CONFIG_FOLDER = "/tmp/ztps_backup/home"
+GLOBAL_CONFIG_FILE = "/etc/ztpserver/ztpserver.conf"
 
-GIT_REPO_FOLDER = '/tmp/ztps'
+GIT_REPO_FOLDER = "/tmp/ztps"
+
 
 def create_folder(path):
-    os.system('sudo rm -fr \'%s\'' % path)
-    os.system('sudo mkdir %s' % path)
-    os.system('sudo chmod 777 %s' % path)
+    os.system(f"sudo rm -fr '{path}'")
+    os.system(f"sudo mkdir {path}")
+    os.system(f"sudo chmod 777 {path}")
+
 
 def all_files(path):
     result = []
@@ -32,91 +34,96 @@ def all_files(path):
 
     return result
 
-def refresh_ztps(home_folder, branch):
 
+def refresh_ztps(home_folder, branch):
     # Backup configuration files
     create_folder(BACKUP_FOLDER)
     create_folder(BACKUP_CONFIG_FOLDER)
 
-    os.system('sudo cp %s %s' % 
-              (GLOBAL_CONFIG_FILE,
-               '%s/ztpserver.conf' % BACKUP_FOLDER))
-    os.system('sudo cp -r %s/* %s' % 
-              (home_folder, BACKUP_CONFIG_FOLDER))
+    os.system(f"sudo cp {GLOBAL_CONFIG_FILE} {'%s/ztpserver.conf' % BACKUP_FOLDER}")
+    os.system(f"sudo cp -r {home_folder}/* {BACKUP_CONFIG_FOLDER}")
 
     # Uninstall
-    paths = all_files('/usr/lib')
-    paths += all_files('/usr/local')
-    for path in [p for p in paths if re.match('.*ztpserver.*', p)]:
-        os.system('sudo rm -rf %s' % path)
+    paths = all_files("/usr/lib")
+    paths += all_files("/usr/local")
+    for path in [p for p in paths if re.match(".*ztpserver.*", p)]:
+        os.system(f"sudo rm -rf {path}")
 
     # Clone repository
-    os.system('sudo rm -rf \'%s\'' % GIT_REPO_FOLDER)
-    result = os.system('''
-        sudo git clone https://github.com/arista-eosplus/ztpserver %s;
-        cd %s;
-        sudo git checkout %s;
+    os.system(f"sudo rm -rf '{GIT_REPO_FOLDER}'")
+    result = os.system(
+        f"""
+        sudo git clone https://github.com/arista-eosplus/ztpserver {GIT_REPO_FOLDER};
+        cd {GIT_REPO_FOLDER};
+        sudo git checkout {branch};
         sudo git pull;
 
         sudo python setup.py build;
         sudo python setup.py install
-        ''' % (GIT_REPO_FOLDER, GIT_REPO_FOLDER, branch))
+        """
+    )
     if result != 0:
-        sys.exit('ERROR: failed to re-install ZTP Server (branch %s)' % branch)
+        sys.exit(f"ERROR: failed to re-install ZTP Server (branch {branch})")
 
     # Reconfigure
-    os.system('sudo cp %s %s' % 
-              ('%s/ztpserver.conf' % BACKUP_FOLDER,
-               GLOBAL_CONFIG_FILE))
+    os.system(f"sudo cp {'%s/ztpserver.conf' % BACKUP_FOLDER} {GLOBAL_CONFIG_FILE}")
 
-    os.system('sudo cp %s %s' % 
-              ('%s/bootstrap/bootstrap.conf' % BACKUP_CONFIG_FOLDER,
-               '%s/bootstrap/bootstrap.conf' % home_folder))
-    os.system('sudo cp %s %s' % 
-              ('%s/neighbordb' % BACKUP_CONFIG_FOLDER,
-               '%s/neighbordb' % home_folder))
+    os.system(
+        f"sudo cp {BACKUP_CONFIG_FOLDER}/bootstrap/bootstrap.conf {home_folder}/bootstrap/bootstrap.conf"
+    )
+    os.system(f"sudo cp {BACKUP_CONFIG_FOLDER}/neighbordb' {home_folder}/neighbordb")
 
-    files_1 = [y for y in [x.replace(home_folder + '/', '')
-                           for x in all_files(home_folder)] if y]
-    files_2 = [y for y in [x.replace(BACKUP_CONFIG_FOLDER + '/', '')
-                           for x in all_files(BACKUP_CONFIG_FOLDER)] if y]
+    files_1 = [y for y in [x.replace(home_folder + "/", "") for x in all_files(home_folder)] if y]
+    files_2 = [
+        y
+        for y in [
+            x.replace(BACKUP_CONFIG_FOLDER + "/", "") for x in all_files(BACKUP_CONFIG_FOLDER)
+        ]
+        if y
+    ]
 
     for file_path in [x for x in files_2 if x not in files_1]:
         try:
-            os.system('sudo cp %s %s' % 
-                      ('%s/%s' % (BACKUP_CONFIG_FOLDER, file_path),
-                       '%s/%s' % (home_folder, file_path)))
-        except IOError: 
+            os.system(f"sudo cp {BACKUP_CONFIG_FOLDER}/{file_path} {home_folder}/{file_path}")
+        except IOError:
             # directory
-            create_folder('%s/%f' % (home_folder, file_path))
+            create_folder(f"{home_folder}/{file_path:f}")
 
     # Set permissions
-    os.system('sudo chmod 777 %s -R' % home_folder)
-    os.system('sudo chmod 777 %s -R' % GLOBAL_CONFIG_FILE)
+    os.system(f"sudo chmod 777 {home_folder} -R")
+    os.system(f"sudo chmod 777 {GLOBAL_CONFIG_FILE} -R")
 
     # Clean up
-    os.system('sudo rm -fr \'%s\'' % BACKUP_FOLDER)
-    os.system('sudo rm -fr \'%s\'' % GIT_REPO_FOLDER)
-    print '\nDone!'
+    os.system(f"sudo rm -fr '{BACKUP_FOLDER}'")
+    os.system(f"sudo rm -fr '{GIT_REPO_FOLDER}'")
+    print("\nDone!")
+
 
 def main():
-    parser = argparse.ArgumentParser(prog='refresh_ztps')
-    parser.add_argument('-b', '--branch',
-                        metavar='BRANCH',
-                        nargs='?',
-                        default='master',
-                        help='ZTP Server branch to be used for the refresh',
-                        action='store')
-    parser.add_argument('-f', '--home-folder',
-                        metavar='HOME_FOLDER',
-                        nargs='?',
-                        default='/usr/share/ztpserver',
-                        help='ZTP Server home folder',
-                        action='store')
+    parser = argparse.ArgumentParser(prog="refresh_ztps")
+    parser.add_argument(
+        "-b",
+        "--branch",
+        metavar="BRANCH",
+        nargs="?",
+        default="master",
+        help="ZTP Server branch to be used for the refresh",
+        action="store",
+    )
+    parser.add_argument(
+        "-f",
+        "--home-folder",
+        metavar="HOME_FOLDER",
+        nargs="?",
+        default="/usr/share/ztpserver",
+        help="ZTP Server home folder",
+        action="store",
+    )
     args = parser.parse_args()
     refresh_ztps(args.home_folder, args.branch)
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:

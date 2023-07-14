@@ -328,7 +328,7 @@ Solution
 
 .. code-block:: python
 
-  #!/usr/bin/env python
+  #!/usr/bin/env python3
 
   import jsonrpclib
   import os

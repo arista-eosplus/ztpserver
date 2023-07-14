@@ -34,8 +34,8 @@ import io
 import os
 import shutil
 import sys
-
 from glob import glob
+
 from ztpserver import config
 
 try:
@@ -45,15 +45,12 @@ except ImportError:
 
 
 def install():
-    if "install" in sys.argv:
-        return True
-    else:
-        return False
+    return bool("install" in sys.argv)
 
 
 def join_url(x, y):
-    start = '' if x == '.' else '/'
-    return start + '/'.join([z for z in x.split('/') + y.split('/') if z])
+    start = "" if x == "." else "/"
+    return start + "/".join([z for z in x.split("/") + y.split("/") if z])
 
 
 def ensure_dir(f):
@@ -63,13 +60,13 @@ def ensure_dir(f):
 
 
 def get_long_description():
-    ''' Get the long description from README.md if it exists.
-        Null string is returned if README.md is non-existent
-    '''
-    long_description = ''
+    """Get the long description from README.md if it exists.
+    Null string is returned if README.md is non-existent
+    """
+    long_description = ""
     here = os.path.abspath(os.path.dirname(__file__))
     try:
-        with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as file_hdl:
+        with io.open(os.path.join(here, "README.md"), encoding="utf-8") as file_hdl:
             long_description = file_hdl.read()
     except IOError:
         pass
@@ -79,114 +76,94 @@ def get_long_description():
 conf_path = config.CONF_PATH
 install_path = config.INSTALL_PATH
 
-if install() and os.environ.get('ZTPS_INSTALL_PREFIX'):
-    print "Customizing install for VirtualEnv install with RPM"
-    conf_path = join_url(os.environ.get('ZTPS_INSTALL_PREFIX'), config.CONF_PATH)
-    install_path = join_url(os.environ.get('ZTPS_INSTALL_PREFIX'), config.INSTALL_PATH)
+if install() and os.environ.get("ZTPS_INSTALL_PREFIX"):
+    print("Customizing install for VirtualEnv install with RPM")
+    conf_path = join_url(os.environ.get("ZTPS_INSTALL_PREFIX"), config.CONF_PATH)
+    install_path = join_url(os.environ.get("ZTPS_INSTALL_PREFIX"), config.INSTALL_PATH)
 
-packages = ['ztpserver']
-if install() and os.environ.get('READTHEDOCS'):
-    print 'Customizing install for ReadTheDocs.org build servers...'
-    conf_path = '.' + conf_path
-    install_path = '.' +  install_path
-    os.environ['ZTPS_INSTALL_ROOT'] = '.'
+packages = ["ztpserver"]
+if install() and os.environ.get("READTHEDOCS"):
+    print("Customizing install for ReadTheDocs.org build servers...")
+    conf_path = "." + conf_path
+    install_path = "." + install_path
+    os.environ["ZTPS_INSTALL_ROOT"] = "."
     from subprocess import call
-    call(['docs/setup_rtd_files.sh'])
-    packages.append('client')
-    packages.append('actions')
-    packages.append('plugins')
 
-install_requirements = None
-version = None
+    call(["docs/setup_rtd_files.sh"])
+    packages.append("client")
+    packages.append("actions")
+    packages.append("plugins")
 
-install_requirements = open('requirements.txt').read().split('\n')
-install_requirements = [x.strip() for x in install_requirements
-                        if x.strip() and
-                        'dev only' not in x]
-version = open('VERSION').read().split()[0].strip()
+install_requirements = open("requirements.txt").read().split("\n")
+install_requirements = [
+    x.strip() for x in install_requirements if x.strip() and "dev only" not in x
+]
+version = open("VERSION").read().split()[0].strip()
 
 data_files = []
 # configuration folders are not cleared on upgrade/downgrade
-for folder in ['nodes', 'definitions', 'files', 'resources',
-               'bootstrap', 'config-handlers']:
-    path = '%s/%s' % (install_path, folder)
+for folder in ["nodes", "definitions", "files", "resources", "bootstrap", "config-handlers"]:
+    path = f"{install_path}/{folder}"
     if install() and not os.path.isdir(path):
         if os.path.exists(path):
             os.remove(path)
         data_files += [(path, [])]
 
-for (filename, dst, src) in [('neighbordb',
-                              install_path,
-                              'conf/neighbordb'),
-                             ('bootstrap.conf',
-                              '%s/bootstrap' % install_path,
-                              'conf/bootstrap.conf'),
-                             ('ztpserver.conf',
-                              conf_path,
-                              'conf/ztpserver.conf'),
-                             ('ztpserver.wsgi',
-                              conf_path,
-                              'conf/ztpserver.wsgi')]:
-    file_path = '%s/%s' % (dst, filename)
+for filename, dst, src in [
+    ("neighbordb", install_path, "conf/neighbordb"),
+    ("bootstrap.conf", f"{install_path}/bootstrap", "conf/bootstrap.conf"),
+    ("ztpserver.conf", conf_path, "conf/ztpserver.conf"),
+    ("ztpserver.wsgi", conf_path, "conf/ztpserver.wsgi"),
+]:
+    file_path = f"{dst}/{filename}"
     if install() and os.path.exists(file_path):
         if os.path.isdir(file_path):
-            shutil.rmtree(file_path,
-                          ignore_errors=True)
+            shutil.rmtree(file_path, ignore_errors=True)
         else:
             # do this manually
-            shutil.copy(src, file_path + '.new')
+            shutil.copy(src, file_path + ".new")
             continue
 
     data_files += [(dst, glob(src))]
 
 # bootstrap file, libraries, VERSION, plugins and actions are
 # always overwritten
-file_list = [('bootstrap', '%s/bootstrap' % install_path,
-              'client/bootstrap')]
-for filename in glob('actions/*'):
-    file_list += [(filename.split('/')[-1],
-                   '%s/actions' % install_path,
-                   filename)]
-for filename in glob('plugins/*'):
-    file_list += [(filename.split('/')[-1],
-                   '%s/plugins' % install_path,
-                   filename)]
-for filename in glob('client/lib/*'):
-    file_list += [(filename.split('/')[-1],
-                   '%s/files/lib' % install_path,
-                   filename)]
-for (filename, dst, src) in file_list:
-    file_path = '%s/%s' % (dst, filename)
-    if install() and os.path.exists(file_path) and \
-            os.path.isdir(file_path):
-        shutil.rmtree(file_path,
-                      ignore_errors=True)
+file_list = [("bootstrap", f"{install_path}/bootstrap", "client/bootstrap")]
+for filename in glob("actions/*"):
+    file_list += [(filename.split("/")[-1], f"{install_path}/actions", filename)]
+for filename in glob("plugins/*"):
+    file_list += [(filename.split("/")[-1], f"{install_path}/plugins", filename)]
+for filename in glob("client/lib/*"):
+    file_list += [(filename.split("/")[-1], f"{install_path}/files/lib", filename)]
+for filename, dst, src in file_list:
+    file_path = f"{dst}/{filename}"
+    if install() and os.path.exists(file_path) and os.path.isdir(file_path):
+        shutil.rmtree(file_path, ignore_errors=True)
     data_files += [(dst, glob(src))]
 
 setup(
-    name='ztpserver',
+    name="ztpserver",
     version=version,
-    description='ZTP Server for EOS',
+    description="ZTP Server for EOS",
     long_description=get_long_description(),
-    long_description_content_type='text/markdown',
-    author='Arista Networks',
-    author_email='eosplus-dev@arista.com',
-    url='https://github.com/arista-eosplus/ztpserver',
-    download_url='https://github.com/arista-eosplus/ztpserver/tarball/v%s'
-                 % version,
-    license='BSD-3',
+    long_description_content_type="text/markdown",
+    author="Arista Networks",
+    author_email="eosplus-dev@arista.com",
+    url="https://github.com/arista-eosplus/ztpserver",
+    download_url=f"https://github.com/arista-eosplus/ztpserver/tarball/v{version}",
+    license="BSD-3",
     install_requires=install_requirements,
     packages=packages,
-    scripts=glob('bin/*'),
-    data_files=data_files
+    scripts=glob("bin/*"),
+    data_files=data_files,
 )
 
 # hidden version file
 if install():
-    custom_path = os.environ.get('ZTPS_INSTALL_ROOT')
+    custom_path = os.environ.get("ZTPS_INSTALL_ROOT")
     if custom_path:
-        version_file =  join_url(custom_path, config.VERSION_FILE_PATH)
+        version_file = join_url(custom_path, config.VERSION_FILE_PATH)
     else:
-        version_file =  config.VERSION_FILE_PATH
+        version_file = config.VERSION_FILE_PATH
     ensure_dir(version_file)
-    shutil.copy('VERSION', version_file)
+    shutil.copy("VERSION", version_file)
