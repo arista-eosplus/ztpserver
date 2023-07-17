@@ -5,3 +5,4 @@ requests
 sleekxmpp    # dev only
 mock         # dev only
 jsonrpclib   # dev only
+aiosmtpd     # dev only

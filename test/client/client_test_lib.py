@@ -28,13 +28,11 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import _thread
-import asyncore  # pylint: disable=W4901
 import json
 import os
 import random
 import re
 import shutil
-import smtpd  # pylint: disable=W4901
 import string
 import subprocess
 import time
@@ -57,9 +55,6 @@ ZTPS_PORT = 12345
 
 EAPI_SERVER = "127.0.0.1"
 EAPI_PORT = 1080
-
-SMTP_SERVER = "127.0.0.1"
-SMTP_PORT = 2525
 
 BOOTSTRAP_FILE = "client/bootstrap"
 
@@ -97,17 +92,6 @@ def start_ztp_server():
     else:
         ztps.cleanup()
     return ztps
-
-
-smtp = None  # pylint: disable=C0103
-
-
-def start_smtp_server():
-    global smtp  # pylint: disable=W0603
-    if not smtp:
-        smtp = SmtpServer()
-        smtp.start()
-    return smtp
 
 
 eapis = None  # pylint: disable=C0103
@@ -300,7 +284,6 @@ class Bootstrap:
 
         self.eapi = start_eapi_server()
         self.ztps = start_ztp_server()
-        self.smtp = start_smtp_server()
 
         self.flash = f"/tmp/ztps-flash-{os.getpid()}"
         self.temp = f"/tmp/ztps-tmp-{os.getpid()}"
@@ -639,33 +622,6 @@ class ZTPServer:
         finally:
             httpd.server_close()
             print(time.asctime(), f"ZTPS: Server stops - {ZTPS_SERVER}:{ZTPS_PORT}")
-
-
-class SmtpServer:
-    # pylint: disable=E0211
-
-    def start(self):
-        _thread.start_new_thread(self._run, ())
-
-    @classmethod
-    def _run(cls):
-        class SMTPServer(smtpd.SMTPServer):
-            def __init__(self, *args, **kwargs):
-                print("SMTP: Running smtp server on port 2525")
-                super().__init__(*args, **kwargs)
-
-            def process_message(self, *args, **kwargs):
-                pass
-
-        smtp_server = SMTPServer(localaddr=(SMTP_SERVER, SMTP_PORT), remoteaddr=None)
-        print(time.asctime(), f"SMTP: Server starts - {SMTP_SERVER}:{SMTP_PORT}")
-        try:
-            asyncore.loop()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            smtp_server.close()
-            print(time.asctime(), f"SMTPS: Server stops - {SMTP_SERVER}:{SMTP_PORT}")
 
 
 class ActionFailureTest(unittest.TestCase):

@@ -36,6 +36,7 @@ from test.client.client_test_lib import (
     random_string,
     startup_config_action,
 )
+from test.client.smtp_server import SmtpServer
 
 
 class FailureTest(ActionFailureTest):
@@ -56,10 +57,15 @@ class FailureTest(ActionFailureTest):
 
 
 class SuccessTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.smtp_server = SmtpServer()
+        self.smtp_server.start()
+
+    def tearDown(self) -> None:
+        self.smtp_server.stop()
+
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
-
-        smarthost = f"{str(bootstrap.server).split(':', maxsplit=1)[0]}:2525"
 
         bootstrap.ztps.set_definition_response(
             actions=[
@@ -67,7 +73,7 @@ class SuccessTest(unittest.TestCase):
                 {
                     "action": "test_action",
                     "attributes": {
-                        "smarthost": smarthost,
+                        "smarthost": f"{self.smtp_server.hostname}:{self.smtp_server.port}",
                         "sender": "ztps@localhost",
                         "receivers": ["ztps@localhost"],
                     },
