@@ -77,7 +77,7 @@ def enable_handler_console(level=None):
 
 def python_supported():
     """Returns True if the current version of the python runtime is valid"""
-    return sys.version_info >= (3, 8)
+    return sys.version_info >= (3, 7)
 
 
 logging_started = False  # pylint: disable=C0103
