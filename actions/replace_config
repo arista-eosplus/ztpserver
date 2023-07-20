@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,10 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
+
+from six import raise_from
 
 
 def main(attributes):
@@ -58,4 +62,4 @@ def main(attributes):
     try:
         node.retrieve_url(url, node.startup_config())
     except Exception as exc:
-        raise RuntimeError("Unable to retrieve config from URL") from exc
+        raise_from(RuntimeError("Unable to retrieve config from URL"), exc)

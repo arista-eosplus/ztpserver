@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -66,8 +68,10 @@ class FailureTest(ActionFailureTest):
         contents = random_string() + " $missing_var"
         self.basic_test(
             "add_config",
-            "Unable to perform variable substitution - "
-            "'missing_var' missing from list of substitutions",
+            (
+                "Unable to perform variable substitution - 'missing_var' missing from list of "
+                "substitutions"
+            ),
             attributes={"url": url, "substitution_mode": "strict", "variables": {}},
             file_responses={url: contents},
         )
@@ -98,8 +102,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -107,7 +111,7 @@ class SuccessTest(unittest.TestCase):
     def test_success_url(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = f"http://{bootstrap.server}/{config}"
+        url = "http://{}/{}".format(bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{"action": "test_action", "attributes": {"url": url}}]
         )
@@ -121,8 +125,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -130,7 +134,7 @@ class SuccessTest(unittest.TestCase):
     def test_append(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = f"http://{bootstrap.server}/{config}"
+        url = "http://{}/{}".format(bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -154,8 +158,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(startup_config_text in log)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -163,7 +167,7 @@ class SuccessTest(unittest.TestCase):
     def test_multi_lines(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = f"http://{bootstrap.server}/{config}"
+        url = "http://{}/{}".format(bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -197,8 +201,8 @@ class SuccessTest(unittest.TestCase):
                 self.assertTrue(line in log)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -231,8 +235,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue([expected_contents] == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -261,8 +265,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue([expected_contents] == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

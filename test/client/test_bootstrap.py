@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,8 +27,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=R0904,F0401
+# pylint: disable=C0209
 
+import io
 import os
 import os.path
 import unittest
@@ -47,6 +48,10 @@ from test.client.client_test_lib import (
     wrong_signature_action,
 )
 
+from six import ensure_text
+
+# pylint: disable=R0904,F0401
+
 
 class ServerNotRunningTest(unittest.TestCase):
     def test(self):
@@ -57,8 +62,8 @@ class ServerNotRunningTest(unittest.TestCase):
             self.assertTrue(bootstrap.server_connection_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -74,8 +79,8 @@ class ConfigRequestErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -89,8 +94,8 @@ class ConfigRequestErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -104,8 +109,8 @@ class ConfigRequestErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -122,8 +127,8 @@ class EAPIErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.eapi_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -141,8 +146,8 @@ class CheckNodeErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -158,8 +163,8 @@ class CheckNodeErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -175,8 +180,8 @@ class CheckNodeErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -192,8 +197,8 @@ class CheckNodeErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.node_not_found_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -210,8 +215,8 @@ class CheckNodeErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.server_connection_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -229,8 +234,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.server_connection_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -248,8 +253,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -266,8 +271,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -284,8 +289,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -302,8 +307,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.invalid_definition_format())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -320,8 +325,8 @@ class DefinitionErrorTest(unittest.TestCase):
             self.assertTrue(bootstrap.toplogy_check_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -340,8 +345,8 @@ class MissingStartupConfigTest(unittest.TestCase):
             self.assertTrue(bootstrap.missing_startup_config_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -351,15 +356,15 @@ class FactoryDefaultTest(unittest.TestCase):
     def test(self):
         bootstrap = Bootstrap()
 
-        with open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
-            fd.write(random_string())
-        with open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
-            fd.write(random_string())
+        with io.open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
+        with io.open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
         os.makedirs(bootstrap.boot_extensions_folder)
-        with open(
-            f"{bootstrap.boot_extensions_folder}/{random_string()}", "w", encoding="utf8"
+        with io.open(
+            os.path.join(bootstrap.boot_extensions_folder, random_string()), "w", encoding="utf8"
         ) as fd:
-            fd.write(random_string())
+            fd.write(ensure_text(random_string()))
 
         bootstrap.ztps.set_config_response()
         bootstrap.ztps.set_node_check_response()
@@ -375,8 +380,8 @@ class FactoryDefaultTest(unittest.TestCase):
 
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -385,15 +390,15 @@ class FactoryDefaultTest(unittest.TestCase):
 class FileLogConfigTest(unittest.TestCase):
     def test(self):
         filenames = {
-            "DEBUG": f"/tmp/ztps-log-{os.getpid()}-debug",
-            "ERROR": f"/tmp/ztps-log-{os.getpid()}-error",
-            "INFO": f"/tmp/ztps-log-{os.getpid()}-info",
-            "bogus": f"/tmp/ztps-log-{os.getpid()}-bogus",
+            "DEBUG": "/tmp/ztps-log-{}-debug".format(os.getpid()),
+            "ERROR": "/tmp/ztps-log-{}-error".format(os.getpid()),
+            "INFO": "/tmp/ztps-log-{}-info".format(os.getpid()),
+            "bogus": "/tmp/ztps-log-{}-bogus".format(os.getpid()),
         }
 
         logging = []
         for level, filename in filenames.items():
-            logging += ({"destination": f"file:{filename}", "level": level},)
+            logging += ({"destination": "file:{}".format(filename), "level": level},)
 
         for filename in filenames.values():
             self.assertFalse(os.path.isfile(filename))
@@ -428,8 +433,8 @@ class FileLogConfigTest(unittest.TestCase):
                 remove_file(filename)
                 self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -449,8 +454,8 @@ class ActionFailureTest(unittest.TestCase):
             self.assertTrue(bootstrap.action_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -483,8 +488,8 @@ class ActionFailureTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -502,8 +507,8 @@ class ActionFailureTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -523,19 +528,19 @@ class ActionFailureTest(unittest.TestCase):
             self.assertTrue(bootstrap.unexpected_response_failure())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
     def test_action_failure_log(self):
-        log = f"/tmp/ztps-log-{os.getpid()}-debug"
+        log = "/tmp/ztps-log-{}-debug".format(os.getpid())
 
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response(
             logging=[
-                {"destination": f"file:{log}", "level": "DEBUG"},
+                {"destination": "file:{}".format(log), "level": "DEBUG"},
             ]
         )
         bootstrap.ztps.set_node_check_response()
@@ -557,16 +562,16 @@ class ActionFailureTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            self.assertTrue(bootstrap.eapi_node_information_collected())
-            self.assertTrue(bootstrap.action_failure())
+            self.assertTrue(bootstrap.eapi_node_information_collected(), "0")
+            self.assertTrue(bootstrap.action_failure(), "1")
             self.assertFalse(bootstrap.error)
             log = "".join(file_log(log))
-            self.assertTrue(f"test_action: {text_onstart}" in log)
-            self.assertTrue(f"test_action: {text_onsuccess}" not in log)
-            self.assertTrue(f"test_action: {text_onfailure}" in log)
+            self.assertTrue("test_action: {}".format(text_onstart) in log, "2")
+            self.assertTrue("test_action: {}".format(text_onsuccess) not in log, "3")
+            self.assertTrue("test_action: {}".format(text_onfailure) in log, "4")
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -586,8 +591,8 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(bootstrap.success())
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -618,8 +623,8 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(text_2 in bootstrap.output)
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -649,8 +654,8 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(bootstrap.output.count(text) == 2)
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -678,8 +683,8 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(text in bootstrap.output)
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -705,19 +710,19 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(text in bootstrap.output)
             self.assertFalse(bootstrap.error)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
     def test_action_success_log(self):
-        log = f"/tmp/ztps-log-{os.getpid()}-debug"
+        log = "/tmp/ztps-log-{}-debug".format(os.getpid())
 
         bootstrap = Bootstrap()
         bootstrap.ztps.set_config_response(
             logging=[
-                {"destination": f"file:{log}", "level": "DEBUG"},
+                {"destination": "file:{}".format(log), "level": "DEBUG"},
             ]
         )
         bootstrap.ztps.set_node_check_response()
@@ -743,12 +748,12 @@ class BootstrapSuccessTest(unittest.TestCase):
             self.assertTrue(bootstrap.success())
             self.assertFalse(bootstrap.error)
             log = "".join(file_log(log))
-            self.assertTrue(f"startup_config_action: {text_onstart}" in log)
-            self.assertTrue(f"startup_config_action: {text_onsuccess}" in log)
-            self.assertTrue(f"startup_config_action: {text_onfailure}" not in log)
+            self.assertTrue("startup_config_action: {}".format(text_onstart) in log)
+            self.assertTrue("startup_config_action: {}".format(text_onsuccess) in log)
+            self.assertTrue("startup_config_action: {}".format(text_onfailure) not in log)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

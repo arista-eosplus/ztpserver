@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -81,8 +83,8 @@ class SuccessTest(unittest.TestCase):
         try:
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -105,13 +107,13 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
         bootstrap.start_test()
 
-        image_file = f"{bootstrap.flash}/EOS-{version2}.swi"
+        image_file = "{}/EOS-{}.swi".format(bootstrap.flash, version2)
         try:
             self.assertTrue(bootstrap.success())
             self.assertTrue("install_image: nothing to do: downgrade disabled" in bootstrap.output)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(image_file)
@@ -121,7 +123,7 @@ class SuccessTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
         version = random_string()
         image = random_string()
-        url = f"http://{bootstrap.server}/{image}"
+        url = "http://{}/{}".format(bootstrap.server, image)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "test_action", "attributes": {"url": url, "version": version}},
@@ -135,14 +137,14 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_file_response(image, print_action())
         bootstrap.start_test()
 
-        image_file = f"{bootstrap.flash}/EOS-{version}.swi"
+        image_file = "{}/EOS-{}.swi".format(bootstrap.flash, version)
         try:
             self.assertTrue(os.path.isfile(image_file))
             self.assertTrue(bootstrap.success())
-            self.assertTrue(eapi_log()[-1] == f"install source flash:EOS-{version}.swi")
+            self.assertTrue(eapi_log()[-1] == "install source flash:EOS-{}.swi".format(version))
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(image_file)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,7 +27,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=C0209
 
+import io
 import os
 import os.path
 import random
@@ -45,9 +47,13 @@ from test.client.client_test_lib import (
     startup_config_action,
 )
 
+import six
+
 
 def random_permissions():
-    return f"7{random.choice([1, 2, 3, 4, 5, 6, 7])}{random.choice([1, 2, 3, 4, 5, 6, 7])}"
+    return "7{}{}".format(
+        random.choice([1, 2, 3, 4, 5, 6, 7]), random.choice([1, 2, 3, 4, 5, 6, 7])
+    )
 
 
 class FailureTest(ActionFailureTest):
@@ -87,9 +93,9 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
-        ztps_server = f"http://{bootstrap.server}"
-        url = f"http://{bootstrap.server}/{source}"
+        destination = "/tmp/{}".format(random_string())
+        ztps_server = "http://{}".format(bootstrap.server)
+        url = "http://{}/{}".format(bootstrap.server, source)
 
         bootstrap.ztps.set_definition_response(
             actions=[
@@ -111,7 +117,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
@@ -120,7 +126,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
 
         try:
             self.assertTrue(os.path.isfile(destination_path))
@@ -128,8 +134,8 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -140,8 +146,8 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
-        ztps_server = f"http://{bootstrap.server}"
+        destination = "/tmp/{}".format(random_string())
+        ztps_server = "http://{}".format(bootstrap.server)
 
         bootstrap.ztps.set_definition_response(
             actions=[
@@ -163,7 +169,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
@@ -172,7 +178,7 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
 
         try:
             self.assertTrue(os.path.isfile(destination_path))
@@ -180,8 +186,8 @@ class SuccessSrcUrlReplacementTests(unittest.TestCase):
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -194,9 +200,9 @@ class SuccessPersistentTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
+        destination = "/tmp/{}".format(random_string())
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -210,7 +216,7 @@ class SuccessPersistentTest(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
@@ -219,7 +225,7 @@ class SuccessPersistentTest(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
 
         try:
             self.assertTrue(os.path.isfile(destination_path))
@@ -227,8 +233,8 @@ class SuccessPersistentTest(unittest.TestCase):
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -239,9 +245,9 @@ class SuccessPersistentTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
+        destination = "/tmp/{}".format(random_string())
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         attributes = {"src_url": url, "dst_url": destination}
 
         # 'replace' is the default
@@ -264,14 +270,14 @@ class SuccessPersistentTest(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
         contents = random_string()
         bootstrap.ztps.set_file_response(source, contents)
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
         bootstrap.start_test()
 
         try:
@@ -282,8 +288,8 @@ class SuccessPersistentTest(unittest.TestCase):
                 self.assertTrue(mode == oct(os.stat(destination_path)[ST_MODE])[-3:])
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -294,9 +300,9 @@ class SuccessPersistentTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
+        destination = "/tmp/{}".format(random_string())
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -317,18 +323,18 @@ class SuccessPersistentTest(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
         contents = random_string()
         bootstrap.ztps.set_file_response(source, contents)
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
         existing_contents = random_string()
         os.makedirs(destination)
-        with open(destination_path, "w", encoding="utf8") as file_descriptor:
-            file_descriptor.write(existing_contents)
+        with io.open(destination_path, "w", encoding="utf8") as file_descriptor:
+            file_descriptor.write(six.ensure_text(existing_contents))
 
         bootstrap.start_test()
 
@@ -339,8 +345,8 @@ class SuccessPersistentTest(unittest.TestCase):
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -351,9 +357,9 @@ class SuccessPersistentTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         source = random_string()
-        destination = f"/tmp/{random_string()}"
+        destination = "/tmp/{}".format(random_string())
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -370,22 +376,22 @@ class SuccessPersistentTest(unittest.TestCase):
 
         # Make the destinaton persistent
         action = action.replace(
-            "PERSISTENT_STORAGE = [", f"PERSISTENT_STORAGE = ['{destination}', "
+            "PERSISTENT_STORAGE = [", "PERSISTENT_STORAGE = ['{}', ".format(destination)
         )
         bootstrap.ztps.set_action_response("test_action", action)
 
         contents = random_string()
         bootstrap.ztps.set_file_response(source, contents)
 
-        destination_path = f"{destination}/{source}"
+        destination_path = "{}/{}".format(destination, source)
         backup_contents = random_string()
         os.makedirs(destination)
-        with open(destination_path, "w", encoding="utf8") as file_descriptor:
-            file_descriptor.write(backup_contents)
+        with io.open(destination_path, "w", encoding="utf8") as file_descriptor:
+            file_descriptor.write(six.ensure_text(backup_contents))
 
         bootstrap.start_test()
 
-        backup_path = f"{destination_path}.backup"
+        backup_path = "{}.backup".format(destination_path)
         try:
             self.assertTrue(os.path.isfile(destination_path))
             self.assertTrue([contents] == file_log(destination_path))
@@ -396,8 +402,8 @@ class SuccessPersistentTest(unittest.TestCase):
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -413,7 +419,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
         source = random_string()
         destination = random_string()
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -433,7 +439,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{persistent_dir}/{source}"
+        destination_path = "{}/{}".format(persistent_dir, source)
 
         try:
             self.assertTrue(os.path.isfile(destination_path))
@@ -442,11 +448,11 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(bootstrap.rc_eos))
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
-            self.assertTrue(f"sudo cp {destination_path} {destination}" in log)
+            self.assertTrue("sudo cp {} {}".format(destination_path, destination) in log)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -458,7 +464,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
         source = random_string()
         destination = random_string()
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         attributes = {"src_url": url, "dst_url": destination}
 
         # 'replace' is the default
@@ -485,7 +491,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
         contents = random_string()
         bootstrap.ztps.set_file_response(source, contents)
 
-        destination_path = f"{persistent_dir}/{source}"
+        destination_path = "{}/{}".format(persistent_dir, source)
         bootstrap.start_test()
 
         try:
@@ -495,13 +501,13 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(bootstrap.rc_eos))
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
-            self.assertTrue(f"sudo cp {destination_path} {destination}" in log)
+            self.assertTrue("sudo cp {} {}".format(destination_path, destination) in log)
             if mode:
-                self.assertTrue(f"sudo chmod {mode} {destination}" in log)
+                self.assertTrue("sudo chmod {} {}".format(mode, destination) in log)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -513,7 +519,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
         source = random_string()
         destination = random_string()
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -540,7 +546,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{persistent_dir}/{source}"
+        destination_path = "{}/{}".format(persistent_dir, source)
         try:
             self.assertTrue(os.path.isfile(destination_path))
             self.assertTrue([contents] == file_log(destination_path))
@@ -549,12 +555,15 @@ class SuccessNonPersistentTest(unittest.TestCase):
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
             self.assertTrue(
-                f"[ ! -f {destination} ] && sudo cp {destination_path} {destination}" in log
+                "[ ! -f {destination} ] && sudo cp {} {destination}".format(
+                    destination_path, destination=destination
+                )
+                in log
             )
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)
@@ -566,7 +575,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
         source = random_string()
         destination = random_string()
 
-        url = f"http://{bootstrap.server}/{source}"
+        url = "http://{}/{}".format(bootstrap.server, source)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -589,7 +598,7 @@ class SuccessNonPersistentTest(unittest.TestCase):
 
         bootstrap.start_test()
 
-        destination_path = f"{persistent_dir}/{source}"
+        destination_path = "{}/{}".format(persistent_dir, source)
         try:
             self.assertTrue(os.path.isfile(destination_path))
             self.assertTrue([contents] == file_log(destination_path))
@@ -597,14 +606,17 @@ class SuccessNonPersistentTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(bootstrap.rc_eos))
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
-            self.assertTrue(f"sudo cp {destination_path} {destination}" in log)
+            self.assertTrue("sudo cp {} {}".format(destination_path, destination) in log)
             self.assertTrue(
-                f"[ -f {destination} ] && sudo mv {destination} {destination}.backup" in log
+                "[ -f {destination} ] && sudo mv {destination} {destination}.backup".format(
+                    destination=destination
+                )
+                in log
             )
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             remove_file(destination_path)

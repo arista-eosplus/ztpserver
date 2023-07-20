@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015 Arista Networks, Inc.
 # All rights reserved.
@@ -27,8 +27,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=R0904,F0401
+# pylint: disable=C0209
 
+import io
 import os
 import os.path
 import unittest
@@ -39,6 +40,10 @@ from test.client.client_test_lib import (
     random_string,
     startup_config_action,
 )
+
+from six import ensure_text
+
+# pylint: disable=R0904,F0401
 
 
 class BootstrapCleanupTest(unittest.TestCase):
@@ -54,15 +59,17 @@ class BootstrapCleanupTest(unittest.TestCase):
             "test_action", fail_flash_file_action(bootstrap.flash, flash_filename)
         )
 
-        with open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
-            fd.write(random_string())
-        with open(bootstrap.startup_config, "w", encoding="utf8") as fd:
-            fd.write(random_string())
-        with open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
-            fd.write(random_string())
+        with io.open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
+        with io.open(bootstrap.startup_config, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
+        with io.open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
         os.mkdir(bootstrap.boot_extensions_folder)
-        with open(f"{bootstrap.boot_extensions_folder}/my_extension", "w", encoding="utf8") as fd:
-            fd.write(random_string())
+        with io.open(
+            os.path.join(bootstrap.boot_extensions_folder, "my_extension"), "w", encoding="utf8"
+        ) as fd:
+            fd.write(ensure_text(random_string()))
 
         bootstrap.start_test()
 
@@ -70,14 +77,14 @@ class BootstrapCleanupTest(unittest.TestCase):
             self.assertTrue(bootstrap.eapi_node_information_collected())
             self.assertTrue(bootstrap.action_failure())
             self.assertFalse(bootstrap.error)
-            self.assertFalse(os.path.isfile(f"{bootstrap.flash}/{flash_filename}"))
+            self.assertFalse(os.path.isfile(os.path.join(bootstrap.flash, flash_filename)))
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
             self.assertFalse(os.path.isfile(bootstrap.startup_config))
             self.assertFalse(os.path.isfile(bootstrap.boot_extensions))
             self.assertFalse(os.path.isdir(bootstrap.boot_extensions_folder))
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -92,15 +99,17 @@ class BootstrapCleanupTest(unittest.TestCase):
         bootstrap.ztps.set_definition_response(actions=[{"action": "test_action"}])
         bootstrap.ztps.set_action_response("test_action", startup_config_action([startup_config]))
 
-        with open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
-            fd.write(random_string())
-        with open(bootstrap.startup_config, "w", encoding="utf8") as fd:
-            fd.write(startup_config + random_string())
-        with open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
-            fd.write(random_string())
+        with io.open(bootstrap.rc_eos, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
+        with io.open(bootstrap.startup_config, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(startup_config + random_string()))
+        with io.open(bootstrap.boot_extensions, "w", encoding="utf8") as fd:
+            fd.write(ensure_text(random_string()))
         os.mkdir(bootstrap.boot_extensions_folder)
-        with open(f"{bootstrap.boot_extensions_folder}/my_extension", "w", encoding="utf8") as fd:
-            fd.write(random_string())
+        with io.open(
+            os.path.join(bootstrap.boot_extensions_folder, "my_extension"), "w", encoding="utf8"
+        ) as fd:
+            fd.write(ensure_text(random_string()))
 
         bootstrap.start_test()
 
@@ -110,13 +119,13 @@ class BootstrapCleanupTest(unittest.TestCase):
             self.assertFalse(bootstrap.error)
 
             self.assertFalse(os.path.isfile(bootstrap.rc_eos))
-            with open(bootstrap.startup_config, encoding="utf8") as fd:
+            with io.open(bootstrap.startup_config, encoding="utf8") as fd:
                 self.assertTrue(fd.read() == startup_config)
             self.assertFalse(os.path.isfile(bootstrap.boot_extensions))
             self.assertFalse(os.path.isdir(bootstrap.boot_extensions_folder))
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

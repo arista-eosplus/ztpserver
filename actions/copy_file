@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,8 +27,12 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=C0209
+
 import os
 import shutil
+
+from six import raise_from
 
 BACKUP_SUFFIX = ".backup"
 PERSISTENT_DIR = "/mnt/flash/.ztp-files"
@@ -119,52 +123,60 @@ def main(attributes):
 
         if overwrite == "if-missing":
             if os.path.exists(dst_path):
-                node.log_msg(f"copy_file: nothing to do: {dst_path} already exists")
+                node.log_msg("copy_file: nothing to do: {} already exists".format(dst_path))
                 return
         elif overwrite == "backup":
             if os.path.exists(dst_path):
-                backup_path = f"{dst_path}{BACKUP_SUFFIX}"
-                node.log_msg(f"copy_file: backing up {dst_path} to {backup_path}")
+                backup_path = "{}{}".format(dst_path, BACKUP_SUFFIX)
+                node.log_msg("copy_file: backing up {} to {}".format(dst_path, backup_path))
                 shutil.copy(dst_path, backup_path)
         elif overwrite == "replace":
             pass
         else:
             raise RuntimeError("Erroneous 'overwrite' value")
 
-        os.makedirs(dst_url, exist_ok=True)
+        if not os.path.exists(dst_url):
+            os.makedirs(dst_url)
 
         try:
             node.retrieve_url(src_url, dst_path)
-            node.log_msg(f"copy_file: saving {src_url} to {dst_path}")
+            node.log_msg("copy_file: saving {} to {}".format(src_url, dst_path))
             if mode is not None:
                 os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
-            raise RuntimeError("Unable to retrieve file from URL") from exc
+            raise_from(RuntimeError("Unable to retrieve file from URL"), exc)
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
         lines = []
         if overwrite == "if-missing":
-            lines = lines + [f"[ ! -f {dst_url} ] && sudo cp {dst_path} {dst_url}"]
+            lines = lines + [
+                "[ ! -f {dst_url} ] && sudo cp {} {dst_url}".format(dst_path, dst_url=dst_url)
+            ]
         elif overwrite == "backup":
-            lines = lines + [f"[ -f {dst_url} ] && sudo mv {dst_url} {dst_url}{BACKUP_SUFFIX}"]
-            lines = lines + [f"sudo cp {dst_path} {dst_url}"]
+            lines = lines + [
+                "[ -f {dst_url} ] && sudo mv {dst_url} {dst_url}{}".format(
+                    BACKUP_SUFFIX, dst_url=dst_url
+                )
+            ]
+            lines = lines + ["sudo cp {} {}".format(dst_path, dst_url)]
         elif overwrite == "replace":
-            lines = lines + [f"sudo cp {dst_path} {dst_url}"]
+            lines = lines + ["sudo cp {} {}".format(dst_path, dst_url)]
         else:
             raise RuntimeError("Erroneous 'overwrite' value")
 
         if mode:
-            lines = lines + [f"sudo chmod {mode} {dst_url}"]
+            lines = lines + ["sudo chmod {} {}".format(mode, dst_url)]
 
-        os.makedirs(PERSISTENT_DIR, exist_ok=True)
+        if not os.path.exists(PERSISTENT_DIR):
+            os.makedirs(PERSISTENT_DIR)
 
         try:
-            file_path = f"{PERSISTENT_DIR}/{name}"
+            file_path = "{}/{}".format(PERSISTENT_DIR, name)
             node.retrieve_url(src_url, file_path)
-            node.log_msg(f"copy_file: saving {src_url} to {file_path}")
+            node.log_msg("copy_file: saving {} to {}".format(src_url, file_path))
         except Exception as exc:
-            raise RuntimeError("Unable to retrieve file from URL") from exc
+            raise_from(RuntimeError("Unable to retrieve file from URL"), exc)
 
         node.log_msg("copy_file: adding rc.eos lines: \n%s$" % "\n".join(lines))
         node.append_rc_eos_lines(lines)

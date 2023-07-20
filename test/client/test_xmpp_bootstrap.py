@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=R0904,F0401
+# pylint: disable=R0904,F0401,C0209
 
 import unittest
 from test.client.client_test_lib import Bootstrap, raise_exception
@@ -52,8 +52,8 @@ class XmppConfigTest(unittest.TestCase):
             self.assertFalse(bootstrap.error)
             self.assertFalse("XmppClient" not in bootstrap.output)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -124,12 +124,11 @@ class XmppConfigTest(unittest.TestCase):
             self.assertTrue(bootstrap.missing_startup_config_failure())
             self.assertFalse(bootstrap.error)
             self.assertFalse(
-                "XMPP configuration failed because of "
-                "unexpected 'msg_type'" not in bootstrap.output
+                "XMPP configuration failed because of unexpected 'msg_type'" not in bootstrap.output
             )
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -29,16 +29,16 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
+# pylint: disable=C0209
+
+import io
 import os
 import smtplib
-
-from email.mime import multipart as MIMEMultipart
-from email.mime import base as MIMEBase
 from email import encoders as Encoders
+from email.mime import base as MIMEBase
+from email.mime import multipart as MIMEMultipart
 from email.mime.text import MIMEText
-
 from email.utils import COMMASPACE, formatdate
 
 
@@ -52,7 +52,7 @@ def run_command(command, node):
     command = command.strip()
     output = node.api_enable_cmds([command], text_format=True)
     filename = str(command).replace(" ", "_")
-    with open(filename, "w", encoding="utf8") as fd:
+    with io.open(filename, "w", encoding="utf8") as fd:
         fd.write(" ".join(output))
     return filename
 
@@ -133,30 +133,31 @@ def main(attributes):
     attachments = attributes.get("attachments", [])
     commands = attributes.get("commands", [])
 
-    attributes.get("NODE").log_msg(f"Running commands: {str(commands)}")
+    attributes.get("NODE").log_msg("Running commands: {}".format(str(commands)))
     if commands:
         body += "\nThe output from the following commmands have been added as attachments:"
         for command in commands:
             filename = run_command(command, node)
             attachments.append(filename)
-            body += f"\n\t* {command} ({filename})"
+            body += "\n\t* {} ({})".format(command, filename)
 
-    attributes.get("NODE").log_msg(f"Collecting attachments: {str(attachments)}")
+    attributes.get("NODE").log_msg("Collecting attachments: {}".format(str(attachments)))
     if attachments:
         for filename in attachments:
             if os.path.exists(filename):
                 filename = filename.strip()
                 part = MIMEBase.MIMEBase("application", "octet-stream")
-                with open(filename, "rb", encoding="utf8") as fd:
+                with io.open(filename, "rb", encoding="utf8") as fd:
                     part.set_payload(fd.read())
                 Encoders.encode_base64(part)
                 part.add_header(
-                    "Content-Disposition", f"attachment; filename='{os.path.basename(filename)}'"
+                    "Content-Disposition",
+                    "attachment; filename='{}'".format(os.path.basename(filename)),
                 )
-                attributes.get("NODE").log_msg(f"Attaching {filename}")
+                attributes.get("NODE").log_msg("Attaching {}".format(filename))
                 msg.attach(part)
 
     msg.attach(MIMEText(body))
 
-    attributes.get("NODE").log_msg(f"Sending email using smarthost {smarthost}")
+    attributes.get("NODE").log_msg("Sending email using smarthost {}".format(smarthost))
     send_message(smarthost, sender, receivers, msg)

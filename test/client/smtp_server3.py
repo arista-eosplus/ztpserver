@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #
-# Copyright (c) 2015, Arista Networks, Inc.
+# Copyright (c) 2023, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,54 +26,30 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=C0209
+import time
 
-import os
+from aiosmtpd.controller import Controller
 
-from six import raise_from
-
-CLI_PLUGIN_DIR = "/usr/lib/python2.7/site-packages/CliPlugin"
-PERSISTENT_PLUGIN_DIR = "/mnt/flash/.ztp-plugins"
+SMTP_SERVER = "127.0.0.1"
+SMTP_PORT = 2525
 
 
-def main(attributes):
-    """Installs CliPlugin.
+class CustomHandler:
+    async def handle_DATA(self, server, session, envelope):  # pylint: disable=C0103
+        del server, session, envelope
+        return "250 OK"
 
-    This action is NOT dual-supervisor compatible.
 
-    Attributes:
-        url: path to the CliPlugin
+class SmtpServer:
+    def __init__(self, hostname=SMTP_SERVER, port=SMTP_PORT):
+        self.hostname = hostname
+        self.port = port
+        self.smtpd = Controller(CustomHandler(), hostname=hostname, port=port)
 
-    Special_attributes:
-        NODE: API object - see documentation for details
+    def start(self):
+        print(f"{time.asctime()} SMTP: Server starts - {self.smtpd.hostname}:{self.smtpd.port}")
+        self.smtpd.start()
 
-    Example:
-        ::
-
-          -
-            action: install_image
-            always_execute: true
-            attributes:
-              url: files/my_cli_plugin
-            name: "install cli plugin"
-
-    """
-
-    node = attributes.get("NODE")
-    url = attributes.get("url")
-
-    if not url:
-        raise RuntimeError("Missing attribute('url')")
-
-    if not os.path.exists(PERSISTENT_PLUGIN_DIR):
-        os.makedirs(PERSISTENT_PLUGIN_DIR)
-
-    name = url.split("/")[-1]
-    try:
-        node.retrieve_url(url, "{}/{}".format(PERSISTENT_PLUGIN_DIR, name))
-    except Exception as exc:
-        raise_from(RuntimeError("Unable to retrieve CliPlugin from URL"), exc)
-
-    lines = ["sudo cp {}/{} {}".format(PERSISTENT_PLUGIN_DIR, name, CLI_PLUGIN_DIR)]
-
-    node.append_rc_eos_lines(lines)
+    def stop(self):
+        print(f"{time.asctime()} SMTPS: Server stops - {self.smtpd.hostname}:{self.smtpd.port}")
+        self.smtpd.stop()

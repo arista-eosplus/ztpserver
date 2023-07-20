@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -55,7 +57,7 @@ class FailureTest(ActionFailureTest):
     def test_bad_file_status(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = f"http://{bootstrap.server}/{config}"
+        url = "http://{}/{}".format(bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{"action": "test_action", "attributes": {"url": url}}]
         )
@@ -69,8 +71,8 @@ class FailureTest(ActionFailureTest):
             msg = [x for x in bootstrap.output.split("\n") if x][-1]
             self.assertTrue("Unable to retrieve config from URL" in msg)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -94,8 +96,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -103,7 +105,7 @@ class SuccessTest(unittest.TestCase):
     def test_url_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
-        url = f"http://{bootstrap.server}/{config}"
+        url = "http://{}/{}".format(bootstrap.server, config)
         bootstrap.ztps.set_definition_response(
             actions=[{"action": "test_action", "attributes": {"url": url}}]
         )
@@ -117,8 +119,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(contents.split() == file_log(bootstrap.startup_config))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

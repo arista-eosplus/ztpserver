@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -58,7 +60,7 @@ class SuccessTest(unittest.TestCase):
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         plugin = random_string()
-        url = f"http://{bootstrap.server}/{plugin}"
+        url = "http://{}/{}".format(bootstrap.server, plugin)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -84,13 +86,13 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(bootstrap.rc_eos))
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
-            self.assertTrue(f"sudo cp {persistent_dir}/{plugin} {plugin_dir}" in log)
+            self.assertTrue("sudo cp {}/{} {}".format(persistent_dir, plugin, plugin_dir) in log)
 
-            self.assertTrue(contents in file_log(f"{persistent_dir}/{plugin}"))
+            self.assertTrue(contents in file_log("{}/{}".format(persistent_dir, plugin)))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(persistent_dir)
@@ -99,7 +101,7 @@ class SuccessTest(unittest.TestCase):
     def test_ztps_path_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         plugin = url = random_string()
-        ztps_server = f"http://{bootstrap.server}"
+        ztps_server = "http://{}".format(bootstrap.server)
         bootstrap.ztps.set_definition_response(
             actions=[
                 {"action": "startup_config_action"},
@@ -125,13 +127,13 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(os.path.isfile(bootstrap.rc_eos))
             log = file_log(bootstrap.rc_eos)
             self.assertTrue("#!/bin/bash" in log)
-            self.assertTrue(f"sudo cp {persistent_dir}/{plugin} {plugin_dir}" in log)
+            self.assertTrue("sudo cp {}/{} {}".format(persistent_dir, plugin, plugin_dir) in log)
 
-            self.assertTrue(contents in file_log(f"{persistent_dir}/{plugin}"))
+            self.assertTrue(contents in file_log("{}/{}".format(persistent_dir, plugin)))
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(persistent_dir)

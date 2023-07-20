@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,7 +27,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import _thread
+# pylint: disable=C0209
+
+import io
 import json
 import os
 import random
@@ -38,7 +40,10 @@ import subprocess
 import time
 import unittest
 from collections import namedtuple
-from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from six import ensure_binary, ensure_str, ensure_text, raise_from
+from six.moves import _thread
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 # pylint: disable=C0103
 Response = namedtuple("Response", "content_type status contents headers")
@@ -59,7 +64,7 @@ EAPI_PORT = 1080
 BOOTSTRAP_FILE = "client/bootstrap"
 
 CLI_LOG = "/tmp/FastCli-log"
-EAPI_LOG = f"/tmp/eapi-log-{os.getpid()}"
+EAPI_LOG = "/tmp/eapi-log-{}".format(os.getpid())
 
 STATUS_OK = 200
 STATUS_CREATED = 201
@@ -76,8 +81,13 @@ def raise_exception(exception):
     # Uncomment the following line for debugging
     # import pdb; pdb.set_trace()
 
-    raise RuntimeError(
-        f"{exception}\nUncomment line in client_test_lib.py:raise_exception for debugging"
+    raise_from(
+        RuntimeError(
+            "{}\nUncomment line in client_test_lib.py:raise_exception for debugging".format(
+                exception
+            )
+        ),
+        exception,
     )
 
 
@@ -129,7 +139,7 @@ def clear_logs():
 
 def eapi_log():
     try:
-        with open(EAPI_LOG, encoding="utf8") as fd:
+        with io.open(EAPI_LOG, encoding="utf8") as fd:
             return [x.strip() for x in fd.readlines()]
     except OSError:
         return []
@@ -137,7 +147,7 @@ def eapi_log():
 
 def cli_log():
     try:
-        with open(CLI_LOG, encoding="utf8") as fd:
+        with io.open(CLI_LOG, encoding="utf8") as fd:
             return [x.strip().split("-c ")[-1] for x in fd.readlines()]
     except OSError:
         return []
@@ -145,7 +155,7 @@ def cli_log():
 
 def file_log(filename, ignore_string=None):
     try:
-        with open(filename, encoding="utf8") as fd:
+        with io.open(filename, encoding="utf8") as fd:
             lines = [x.strip() for x in fd.readlines()]
         if ignore_string:
             return [y for y in lines if y and ignore_string not in y]
@@ -155,17 +165,17 @@ def file_log(filename, ignore_string=None):
 
 
 def get_action(action):
-    with open(f"actions/{action}", encoding="utf8") as fd:
+    with io.open("actions/{}".format(action), encoding="utf8") as fd:
         return fd.read()
 
 
 def startup_config_action(lines=None):
-    startup_config = f"/tmp/ztps-flash-{os.getpid()}/startup-config"
+    startup_config = "/tmp/ztps-flash-{}/startup-config".format(os.getpid())
     if not lines:
         lines = ["test"]
 
     user = os.getenv("USER")
-    return """#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 import os
 import pwd
 
@@ -189,7 +199,7 @@ def main(attributes):
 def print_action(msg="TEST", use_attribute=False, create_copy=False):
     # pylint: disable=E0602
     if use_attribute and create_copy:
-        return """#!/usr/bin/env python3
+        return """#!/usr/bin/env python
 
 def main(attributes):
    attrs = attributes.copy()
@@ -197,42 +207,46 @@ def main(attributes):
 """
 
     if use_attribute:
-        return """#!/usr/bin/env python3
+        return """#!/usr/bin/env python
 
 def main(attributes):
    print(attributes.get('print_action-attr'))
 """
 
-    return f"""#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 
 def main(attributes):
-   print('{msg}')
-"""
+   print('{}')
+""".format(
+        msg
+    )
 
 
 def print_attributes_action(attributes):
     # pylint: disable=E0602
-    result = """#!/usr/bin/env python3
+    result = """#!/usr/bin/env python
 
 def main(attributes):
 """
-    result += "\n".join(f"    print(attributes.get('{attr}')" for attr in attributes)
+    result += "\n".join("    print(attributes.get('{}')".format(attr) for attr in attributes)
     return result
 
 
 def fail_flash_file_action(flash, filename):
     """Creates file on flash and then fails"""
 
-    return f"""#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 
 def main(attributes):
-   open('{flash}/{filename}', 'w').write('test')
+   open('{}/{}', 'w').write('test')
    raise Exception('Ops! I failed! :(')
-"""
+""".format(
+        flash, filename
+    )
 
 
 def fail_action():
-    return """#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 
 def main(attributes):
    raise Exception('Ops! I failed! :(')
@@ -244,11 +258,11 @@ def erroneous_action():
 
 
 def missing_main_action():
-    return """#!/usr/bin/env python3"""
+    return """#!/usr/bin/env python"""
 
 
 def wrong_signature_action():
-    return """#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 
 def main():
    pass
@@ -256,7 +270,7 @@ def main():
 
 
 def exception_action():
-    return """#!/usr/bin/env python3
+    return """#!/usr/bin/env python
 
 def main(attributes):
    raise Exception
@@ -271,9 +285,9 @@ def random_string():
 
 class Bootstrap:
     def __init__(self, server=None, eapi_port=None, ztps_default_config=False):
-        os.environ["PATH"] += f":{os.getcwd()}/test/client"
+        os.environ["PATH"] += ":{}/test/client".format(os.getcwd())
 
-        self.server = server if server else f"{ZTPS_SERVER}:{ZTPS_PORT}"
+        self.server = server if server else "{}:{}".format(ZTPS_SERVER, ZTPS_PORT)
         self.eapi_port = eapi_port if eapi_port else EAPI_PORT
 
         self.output = None
@@ -285,14 +299,14 @@ class Bootstrap:
         self.eapi = start_eapi_server()
         self.ztps = start_ztp_server()
 
-        self.flash = f"/tmp/ztps-flash-{os.getpid()}"
-        self.temp = f"/tmp/ztps-tmp-{os.getpid()}"
+        self.flash = "/tmp/ztps-flash-{}".format(os.getpid())
+        self.temp = "/tmp/ztps-tmp-{}".format(os.getpid())
 
-        self.rc_eos = f"{self.flash}/{RC_EOS}"
-        self.boot_extensions = f"{self.flash}/{BOOT_EXTENSIONS}"
-        self.boot_extensions_folder = f"{self.flash}/{BOOT_EXTENSIONS_FOLDER}"
+        self.rc_eos = "{}/{}".format(self.flash, RC_EOS)
+        self.boot_extensions = "{}/{}".format(self.flash, BOOT_EXTENSIONS)
+        self.boot_extensions_folder = "{}/{}".format(self.flash, BOOT_EXTENSIONS_FOLDER)
         self.ztp_plugins_folder = os.path.join(self.flash, ZTP_PLUGINS_FOLDER)
-        self.startup_config = f"{self.flash}/{STARTUP_CONFIG}"
+        self.startup_config = "{}/{}".format(self.flash, STARTUP_CONFIG)
 
         self.configure()
 
@@ -305,26 +319,26 @@ class Bootstrap:
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
-        self.filename = f"/tmp/bootstrap-{os.getpid()}"
-        with open(BOOTSTRAP_FILE, encoding="utf8") as infile, open(
+        self.filename = "/tmp/bootstrap-{}".format(os.getpid())
+        with io.open(BOOTSTRAP_FILE, encoding="utf8") as infile, io.open(
             self.filename, "w", encoding="utf8"
         ) as outfile:
             for line in infile:
-                line = line.replace("$SERVER", f"http://{self.server}")
+                line = line.replace("$SERVER", "http://{}".format(self.server))
                 line = line.replace(
                     'COMMAND_API_SERVER = "localhost"',
-                    f'COMMAND_API_SERVER = "localhost:{self.eapi_port}"',
+                    'COMMAND_API_SERVER = "localhost:{}"'.format(self.eapi_port),
                 )
 
-                line = line.replace('FLASH = "/mnt/flash"', f'FLASH = "{self.flash}"')
+                line = line.replace('FLASH = "/mnt/flash"', 'FLASH = "{}"'.format(self.flash))
 
-                line = line.replace('TEMP = "/tmp"', f'TEMP = "{self.temp}"')
+                line = line.replace('TEMP = "/tmp"', 'TEMP = "{}"'.format(self.temp))
 
                 # Reduce HTTP timeout
                 if re.match("^HTTP_TIMEOUT", line):
                     line = "HTTP_TIMEOUT = 0.01"
 
-                outfile.write(line)
+                outfile.write(ensure_text(line))
 
         os.chmod(self.filename, 0o777)
 
@@ -335,8 +349,8 @@ class Bootstrap:
         # Clean up actions
         for url in self.ztps.responses:
             filename = url.split("/")[-1]
-            remove_file(f"/tmp/{filename}")
-            remove_file(f"/tmp/{filename}c")
+            remove_file("/tmp/{}".format(filename))
+            remove_file("/tmp/{}c".format(filename))
 
         # Clean up log files
         for filename in os.listdir("/tmp"):
@@ -345,22 +359,22 @@ class Bootstrap:
 
         # Clean up bootstrap script
         remove_file(self.filename)
-        remove_file(f"{self.filename}c")
+        remove_file("{}c".format(self.filename))
 
         # Clean up logs
         clear_logs()
 
     def start_test(self):
         try:
-            with subprocess.Popen(
+            proc = subprocess.Popen(  # pylint: disable=R1732
                 [self.filename],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-            ) as proc:
-                (self.output, self.error) = proc.communicate()
-                self.return_code = proc.returncode
+            )
+            (output, error) = proc.communicate()
+            self.output, self.error = ensure_str(output), ensure_str(error)
+            self.return_code = proc.returncode
         finally:
             os.remove(self.filename)
 
@@ -447,9 +461,9 @@ class EAPIServer:
                 cmds = [x for x in json.loads(request)["params"][1] if x]
                 if cmds:
                     with open(EAPI_LOG, "a+b") as fd:
-                        fd.write(bytes("%s\n" % "\n".join(cmds), "utf8"))
+                        fd.write(ensure_binary("%s\n" % "\n".join(cmds), "utf8"))
 
-                print(f"EAPIServer: responding to request:{req.path} ({', '.join(cmds)})")
+                print("EAPIServer: responding to request:{} ({})".format(req.path, ", ".join(cmds)))
 
                 if [x for x in cmds if x in self.fail_commands]:
                     print("EAPIServer: failed on-demand")
@@ -463,7 +477,7 @@ class EAPIServer:
                     req.end_headers()
                     if cmds == ["enable", "show version"]:
                         req.wfile.write(
-                            bytes(
+                            ensure_binary(
                                 json.dumps(
                                     {
                                         "result": [
@@ -482,17 +496,19 @@ class EAPIServer:
                         )
                     elif cmds == ["enable", "show lldp neighbors"]:
                         req.wfile.write(
-                            bytes(json.dumps({"result": [{}, {"lldpNeighbors": []}]}), "utf8")
+                            ensure_binary(
+                                json.dumps({"result": [{}, {"lldpNeighbors": []}]}), "utf8"
+                            )
                         )
                     else:
-                        req.wfile.write(bytes(json.dumps({"result": [{}]}), "utf8"))
+                        req.wfile.write(ensure_binary(json.dumps({"result": [{}]}), "utf8"))
                     print("EAPIServer: RESPONSE: [{}]")
                 else:
                     print("EAPIServer: No RESPONSE")
 
         server_class = HTTPServer
         httpd = server_class((EAPI_SERVER, EAPI_PORT), EAPIHandler)
-        print(time.asctime(), f"EAPIServer: Server starts - {EAPI_SERVER}:{EAPI_PORT}")
+        print(time.asctime(), "EAPIServer: Server starts - {}:{}".format(EAPI_SERVER, EAPI_PORT))
 
         try:
             httpd.serve_forever()
@@ -500,7 +516,7 @@ class EAPIServer:
             pass
         finally:
             httpd.server_close()
-            print(time.asctime(), f"EAPIServer: Server stops - {EAPI_SERVER}:{EAPI_PORT}")
+            print(time.asctime(), "EAPIServer: Server stops - {}:{}".format(EAPI_SERVER, EAPI_PORT))
 
 
 class ZTPServer:
@@ -513,15 +529,15 @@ class ZTPServer:
         self.responses = {}
 
     def set_file_response(self, filename, output, content_type="text/plain", status=STATUS_OK):
-        self.responses[f"/{filename}"] = Response(content_type, status, output, {})
+        self.responses["/{}".format(filename)] = Response(content_type, status, output, {})
 
         meta = {"size": len(output)}
-        self.responses[f"/meta/{filename}"] = Response(
+        self.responses["/meta/{}".format(filename)] = Response(
             "application/json", 200, json.dumps(meta), {}
         )
 
     def set_action_response(self, action, output, content_type="text/x-python", status=STATUS_OK):
-        self.responses[f"/actions/{action}"] = Response(content_type, status, output, {})
+        self.responses["/actions/{}".format(action)] = Response(content_type, status, output, {})
 
     def set_config_response(
         self, logging=None, xmpp=None, content_type="application/json", status=STATUS_OK
@@ -548,7 +564,7 @@ class ZTPServer:
         self.responses["/nodes"] = Response(content_type, status, "", headers)
 
     def set_bogus_definition_response(self):
-        self.responses[f"/nodes/{SYSTEM_MAC}"] = Response(
+        self.responses["/nodes/{}".format(SYSTEM_MAC)] = Response(
             "application/json", STATUS_OK, json.dumps({}), {}
         )
 
@@ -567,7 +583,7 @@ class ZTPServer:
         if actions:
             response["actions"] += actions
 
-        self.responses[f"/nodes/{node_id}"] = Response(
+        self.responses["/nodes/{}".format(node_id)] = Response(
             content_type, status, json.dumps(response), {}
         )
 
@@ -588,25 +604,26 @@ class ZTPServer:
                         req.send_header(name, value)
 
                     req.end_headers()
-                    req.wfile.write(bytes(response.contents, "utf8"))
+                    req.wfile.write(ensure_binary(response.contents, "utf8"))
                     print(
-                        f"ZTPS: RESPONSE: (ct={response[0]}, "
-                        f"status={response[1]}, output={response[2][:100]}...)"
+                        "ZTPS: RESPONSE: (ct={}, status={}, output={}...)".format(
+                            response[0], response[1], response[2][:100]
+                        )
                     )
                 else:
                     print("ZTPS: No RESPONSE")
 
             def do_GET(req):
-                print(f"ZTPS: responding to GET request:{req.path}")
+                print("ZTPS: responding to GET request:{}".format(req.path))
                 ZTPSHandler.do_request(req)
 
             def do_POST(req):
-                print(f"ZTPS: responding to POST request:{req.path}")
+                print("ZTPS: responding to POST request:{}".format(req.path))
                 headers = self.responses["/nodes"].headers
                 if "location" not in headers:
                     length = req.headers.get("content-length")
                     node_id = json.loads(req.rfile.read(int(length)))["systemmac"]
-                    location = f"http://{ZTPS_SERVER}:{ZTPS_PORT}/nodes/{node_id}"
+                    location = "http://{}:{}/nodes/{}".format(ZTPS_SERVER, ZTPS_PORT, node_id)
                     self.responses["/nodes"].headers["location"] = location
 
                 ZTPSHandler.do_request(req)
@@ -614,14 +631,14 @@ class ZTPServer:
         server_class = HTTPServer
         httpd = server_class((ZTPS_SERVER, ZTPS_PORT), ZTPSHandler)
 
-        print(time.asctime(), f"ZTPS: Server starts - {ZTPS_SERVER}:{ZTPS_PORT}")
+        print(time.asctime(), "ZTPS: Server starts - {}:{}".format(ZTPS_SERVER, ZTPS_PORT))
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
             pass
         finally:
             httpd.server_close()
-            print(time.asctime(), f"ZTPS: Server stops - {ZTPS_SERVER}:{ZTPS_PORT}")
+            print(time.asctime(), "ZTPS: Server stops - {}:{}".format(ZTPS_SERVER, ZTPS_PORT))
 
 
 class ActionFailureTest(unittest.TestCase):
@@ -659,8 +676,8 @@ class ActionFailureTest(unittest.TestCase):
             self.assertTrue(bootstrap.action_failure())
             self.assertTrue(return_string in bootstrap.output)
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
