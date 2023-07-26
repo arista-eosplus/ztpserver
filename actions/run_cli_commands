@@ -32,11 +32,36 @@
 import io
 import os
 
-import six
-from six import raise_from
+from six import raise_from, PY2, text_type, PY3, binary_type
 
 TEMP_CONFIG = "/tmp/tmp-run-commands"
 
+
+# pylint: disable=C0103,C0123,R1705
+# ensure_str backport from six 1.6 as older EOS packs six 1.11
+def ensure_str(s, encoding='utf-8', errors='strict'):
+    """Coerce *s* to `str`.
+
+    For Python 2:
+      - `unicode` -> encoded to `str`
+      - `str` -> `str`
+
+    For Python 3:
+      - `str` -> `str`
+      - `bytes` -> decoded to `str`
+    """
+    # Optimization: Fast return for the common case.
+    if type(s) is str:
+        return s
+    if PY2 and isinstance(s, text_type):
+        return s.encode(encoding, errors)
+    elif PY3 and isinstance(s, binary_type):
+        return s.decode(encoding, errors)
+    elif not isinstance(s, (text_type, binary_type)):
+        raise TypeError("not expecting type '%s'" % type(s))
+    return s
+
+# pylint: enable=C0103,C0123,R1705
 
 def main(attributes):
     """Runs a set of EOS commands, starting from enable mode.
@@ -85,7 +110,7 @@ def main(attributes):
         node.log_msg("Variables: {}".format(variables))
         raise RuntimeError("Unable to perform variable substitution - invalid variables")
 
-    contents = six.ensure_str(node.substitute(contents, variables))
+    contents = ensure_str(node.substitute(contents, variables))
     commands = [x for x in contents.split("\n") if x]
 
     try:
