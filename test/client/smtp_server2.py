@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #
-# Copyright (c) 2015, Arista Networks, Inc.
+# Copyright (c) 2023, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,54 +26,38 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# pylint: disable=C0209
+# pylint: disable=C0209,W4901,E0401
 
-import os
+import asyncore
+import smtpd
+import threading
+import time
 
-from six import raise_from
-
-CLI_PLUGIN_DIR = "/usr/lib/python2.7/site-packages/CliPlugin"
-PERSISTENT_PLUGIN_DIR = "/mnt/flash/.ztp-plugins"
+SMTP_SERVER = "127.0.0.1"
+SMTP_PORT = 2525
 
 
-def main(attributes):
-    """Installs CliPlugin.
+class CustomSMTPServer(smtpd.SMTPServer):
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+        pass
 
-    This action is NOT dual-supervisor compatible.
 
-    Attributes:
-        url: path to the CliPlugin
+class SmtpServer:
+    def __init__(self, hostname=SMTP_SERVER, port=SMTP_PORT):
+        self.hostname = hostname
+        self.port = port
+        self.smtp = None
+        self.thread = None
 
-    Special_attributes:
-        NODE: API object - see documentation for details
+    def start(self):
+        """Start the listening service"""
+        print("{} SMTP: Server starts - {}:{}".format(time.asctime(), self.hostname, self.port))
+        self.smtp = CustomSMTPServer((self.hostname, self.port), None)
+        self.thread = threading.Thread(target=asyncore.loop, kwargs={"timeout": 1})
+        self.thread.start()
 
-    Example:
-        ::
-
-          -
-            action: install_image
-            always_execute: true
-            attributes:
-              url: files/my_cli_plugin
-            name: "install cli plugin"
-
-    """
-
-    node = attributes.get("NODE")
-    url = attributes.get("url")
-
-    if not url:
-        raise RuntimeError("Missing attribute('url')")
-
-    if not os.path.exists(PERSISTENT_PLUGIN_DIR):
-        os.makedirs(PERSISTENT_PLUGIN_DIR)
-
-    name = url.split("/")[-1]
-    try:
-        node.retrieve_url(url, "{}/{}".format(PERSISTENT_PLUGIN_DIR, name))
-    except Exception as exc:
-        raise_from(RuntimeError("Unable to retrieve CliPlugin from URL"), exc)
-
-    lines = ["sudo cp {}/{} {}".format(PERSISTENT_PLUGIN_DIR, name, CLI_PLUGIN_DIR)]
-
-    node.append_rc_eos_lines(lines)
+    def stop(self):
+        """Stop listening now to port 25"""
+        self.smtp.close()
+        self.thread.join()
+        print("{} SMTPS: Server stops - {}:{}".format(time.asctime(), self.hostname, self.port))

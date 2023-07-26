@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -68,8 +70,10 @@ class FailureTest(ActionFailureTest):
         contents = random_string() + " $missing_var"
         self.basic_test(
             "run_cli_commands",
-            "Unable to perform variable substitution - "
-            "'missing_var' missing from list of substitutions",
+            (
+                "Unable to perform variable substitution - "
+                "'missing_var' missing from list of substitutions"
+            ),
             attributes={"url": url, "variables": {}},
             file_responses={url: contents},
         )
@@ -99,8 +103,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(eapi_log()[-1] == contents)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -123,10 +127,12 @@ class SuccessTest(unittest.TestCase):
         try:
             self.assertTrue(eapi_log()[-1] == contents)
             self.assertTrue(bootstrap.action_failure())
-            self.assertTrue(f"Running CLI commands ['{contents}'] failed" in bootstrap.output)
+            self.assertTrue(
+                "Running CLI commands ['{}'] failed".format(contents) in bootstrap.output
+            )
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -164,8 +170,8 @@ class SuccessTest(unittest.TestCase):
             self.assertTrue(expected_contents == eapi_log()[-1])
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

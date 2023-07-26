@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -67,8 +69,10 @@ class FailureTest(ActionFailureTest):
         contents = random_string() + " $missing_var"
         self.basic_test(
             "run_bash_script",
-            "Unable to perform variable substitution - "
-            "'missing_var' missing from list of substitutions",
+            (
+                "Unable to perform variable substitution - "
+                "'missing_var' missing from list of substitutions"
+            ),
             attributes={"url": url, "variables": {}},
             file_responses={url: contents},
         )
@@ -90,8 +94,10 @@ class SuccessTest(unittest.TestCase):
         bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
         print_string = random_string()
-        contents = f"""#!/usr/bin/env python3
-print("{print_string}")"""
+        contents = """#!/usr/bin/env python
+print("{}")""".format(
+            print_string
+        )
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
@@ -100,8 +106,8 @@ print("{print_string}")"""
             self.assertTrue(print_string in bootstrap.output)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -120,7 +126,7 @@ print("{print_string}")"""
         bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
         bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
-        contents = """#!/usr/bin/env python3
+        contents = """#!/usr/bin/env python
 assert False"""
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
@@ -129,8 +135,8 @@ assert False"""
             self.assertTrue("AssertionError" in bootstrap.output)
             self.assertTrue(bootstrap.action_failure())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -158,8 +164,10 @@ assert False"""
         bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
         print_string = "$a 1234 $b 4 321 $xxx$a"
-        contents = f"""#!/usr/bin/env bash
-echo {print_string}"""
+        contents = """#!/usr/bin/env bash
+echo {}""".format(
+            print_string
+        )
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
@@ -170,8 +178,8 @@ echo {print_string}"""
             self.assertTrue(expected_contents in bootstrap.output)
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()

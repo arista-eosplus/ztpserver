@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -27,6 +27,8 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=C0209
+
 import unittest
 from test.client.client_test_lib import (
     ActionFailureTest,
@@ -36,7 +38,13 @@ from test.client.client_test_lib import (
     random_string,
     startup_config_action,
 )
-from test.client.smtp_server import SmtpServer
+
+import six
+
+if six.PY2:
+    from test.client.smtp_server2 import SmtpServer
+else:
+    from test.client.smtp_server3 import SmtpServer
 
 
 class FailureTest(ActionFailureTest):
@@ -57,11 +65,11 @@ class FailureTest(ActionFailureTest):
 
 
 class SuccessTest(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.smtp_server = SmtpServer()
         self.smtp_server.start()
 
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.smtp_server.stop()
 
     def test_success(self):
@@ -73,7 +81,9 @@ class SuccessTest(unittest.TestCase):
                 {
                     "action": "test_action",
                     "attributes": {
-                        "smarthost": f"{self.smtp_server.hostname}:{self.smtp_server.port}",
+                        "smarthost": "{}:{}".format(
+                            self.smtp_server.hostname, self.smtp_server.port
+                        ),
                         "sender": "ztps@localhost",
                         "receivers": ["ztps@localhost"],
                     },
@@ -90,8 +100,8 @@ class SuccessTest(unittest.TestCase):
         try:
             self.assertTrue(bootstrap.success())
         except Exception as exception:  # pylint: disable=W0703
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(exception)
         finally:
             bootstrap.end_test()

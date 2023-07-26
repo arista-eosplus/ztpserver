@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# pylint: disable=C0209
 
 import os
 import os.path
@@ -63,7 +65,7 @@ class SuccessTest(unittest.TestCase):
         url = extension
 
         extension_force = random_string()
-        url_force = f"http://{bootstrap.server}/{extension_force}"
+        url_force = "http://{}/{}".format(bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
             actions=[
@@ -92,21 +94,21 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            ext_filename = f"{extensions_dir}/{extension}"
+            ext_filename = "{}/{}".format(extensions_dir, extension)
             self.assertTrue(os.path.isfile(ext_filename))
             self.assertTrue([contents] == file_log(ext_filename))
             self.assertTrue(extension in file_log(boot_extensions))
 
-            ext_filename_force = f"{extensions_dir}/{extension_force}"
+            ext_filename_force = "{}/{}".format(extensions_dir, extension_force)
             self.assertTrue(os.path.isfile(ext_filename_force))
 
             self.assertTrue([contents_force] == file_log(ext_filename_force))
-            self.assertTrue(f"{extension_force} force" in file_log(boot_extensions))
+            self.assertTrue("{} force".format(extension_force) in file_log(boot_extensions))
 
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
@@ -117,10 +119,10 @@ class SuccessTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         extension = random_string()
-        url = f"http://{bootstrap.server}/{extension}"
+        url = "http://{}/{}".format(bootstrap.server, extension)
 
         extension_force = random_string()
-        url_force = f"http://{bootstrap.server}/{extension_force}"
+        url_force = "http://{}/{}".format(bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
             actions=[
@@ -149,21 +151,21 @@ class SuccessTest(unittest.TestCase):
         bootstrap.start_test()
 
         try:
-            ext_filename = f"{extensions_dir}/{extension}"
+            ext_filename = "{}/{}".format(extensions_dir, extension)
             self.assertTrue(os.path.isfile(ext_filename))
             self.assertTrue([contents] == file_log(ext_filename))
             self.assertTrue(extension in file_log(boot_extensions))
 
-            ext_filename_force = f"{extensions_dir}/{extension_force}"
+            ext_filename_force = "{}/{}".format(extensions_dir, extension_force)
             self.assertTrue(os.path.isfile(ext_filename_force))
 
             self.assertTrue([contents_force] == file_log(ext_filename_force))
-            self.assertTrue(f"{extension_force} force" in file_log(boot_extensions))
+            self.assertTrue("{} force".format(extension_force) in file_log(boot_extensions))
 
             self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print(f"Output: {bootstrap.output}")
-            print(f"Error: {bootstrap.error}")
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
