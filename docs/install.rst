@@ -8,17 +8,17 @@ Requirements
 
   **Server:**
 
-  * Python 2.7 or later (https://www.python.org/download/releases)
-  * routes 2.0 or later (https://pypi.python.org/pypi/Routes)
-  * webob 1.3 or later (http://webob.org/)
-  * PyYaml 3.0 or later (http://pyyaml.org/)
+  * Python 3.7 or later (https://www.python.org/download/releases)
+  * routes 2.5 or later (https://pypi.python.org/pypi/Routes)
+  * webob 1.8 or later (http://webob.org/)
+  * PyYaml 6.0 or later (http://pyyaml.org/)
 
   **Client:**
 
   * `EOS <http://eos.arista.com>`_ 4.12.0 or later (ZTPServer 1.1+)
   * `EOS <http://eos.arista.com>`_ 4.13.3 or later (ZTPServer 1.0)
 
-.. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20. 
+.. NOTE:: We recommend using a Linux distribution which has Python 2.7 as its standard Python install (e.g. yum in Centos requires Python 2.6 and a dual Python install can be fairly tricky and buggy). This guide was written based ZTPServer v1.1.0 installed on Fedora 20.
 
 Installation Options
 ````````````````````
@@ -29,7 +29,7 @@ Installation Options
 
 .. _packer_install:
 
-Turn-key VM Creation
+Turn-key VM Creation (deprecated)
 ~~~~~~~~~~~~~~~~~~~~
 
 The turn-key VM option leverages `Packer <http://www.packer.io/>`_ to auto generate a VM on your local system. Packer.io automates the creation of the ZTPServer VM. All of the required packages and dependencies are installed and configured. The current Packer configuration allows you to choose between VirtualBox or VMWare as your hypervisor and each can support Fedora 20 or Ubuntu Server 12.04.
@@ -194,7 +194,7 @@ Allow ZTPServer Connections In Through The Firewall
 
 Be sure your host firewall allows incoming connections to ZTPServer.  The standalone server runs on port TCP/8080 by default.
 
-**Firewalld** examples: 
+**Firewalld** examples:
 
   * Open TCP/<port> through firewalld
     ``bash-3.2$ firewall-cmd --zone=public --add-port=<port>/tcp [--permanent]``
@@ -255,4 +255,3 @@ Check that /etc/init/isc-dhcp-server.conf is configured for automatic startup on
 
 
 Edit the global configuration file located at ``/etc/ztpserver/ztpserver.conf`` (if needed). See the :ref:`global_configuration` options for more information.
-
