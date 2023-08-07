@@ -29,7 +29,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-'''
+"""
 Allocates a resource from a key/value YAML file (under
 DATA_ROOT/resources) that contains a set of resources to be
 allocated. Here is an example (DATA_ROOT/resoruces/ip_address):
@@ -63,90 +63,80 @@ Definition example:
           variables:
             ipaddress: allocate('mgmt_subnet')
         name: "configure ma1"
-'''
+"""
 
 import logging
 import os
-
 from collections import OrderedDict
 
-from ztpserver.serializers import load, dump
-from ztpserver.constants import CONTENT_TYPE_YAML
 from ztpserver.config import runtime
+from ztpserver.constants import CONTENT_TYPE_YAML
+from ztpserver.serializers import dump, load
 
+log = logging.getLogger(__name__)  # pylint: disable=C0103
 
-log = logging.getLogger(__name__)   #pylint: disable=C0103
 
 def load_resource(node_id, filename):
     data = OrderedDict()
 
-    contents = load(filename, 
-                    CONTENT_TYPE_YAML, 
-                    node_id,
-                    lock=True)
+    contents = load(filename, CONTENT_TYPE_YAML, node_id, lock=True)
 
     if contents and isinstance(contents, dict):
         for key, value in contents.iteritems():
             data[key] = str(value) if value else None
     else:
         if not contents:
-            contents = 'empty pool'
-        raise Exception(contents)
+            contents = "empty pool"
+        raise RuntimeError(contents)
 
     return data
 
+
 def lookup(node_id, data):
-    ''' Return an existing allocated resource if one exists '''
+    """Return an existing allocated resource if one exists"""
 
     try:
-        key = next(m[0] for m in data.iteritems()
-                   if m[1] == node_id)
+        key = next(m[0] for m in data.iteritems() if m[1] == node_id)
     except StopIteration:
         key = None
 
     return key
 
-def main(node_id, pool, node):
+
+def main(node_id, pool, _):
     try:
-        file_path = os.path.join(runtime.default.data_root, 
-                                 'resources')
+        file_path = os.path.join(runtime.default.data_root, "resources")
         filename = os.path.join(file_path, pool)
 
         data = load_resource(node_id, filename)
-        log.debug('%s: loaded resource pool \'%s\': %s' % 
-                  (node_id, pool, data))
+        log.debug("%s: loaded resource pool '%s': %s", node_id, pool, data)
 
         match = lookup(node_id, data)
 
         if match:
-            log.debug('%s: already allocated resource \'%s\':\'%s\'' % 
-                     (node_id, pool, match))
+            log.debug("%s: already allocated resource '%s':'%s'", node_id, pool, match)
             return match
 
-        entry = next(x[0] for x in data.iteritems() if x[1] is None)
-        log.debug('%s: allocated \'%s\':\'%s\'' % (node_id, pool, entry))
+        entry = next(x[0] for x in data.items() if x[1] is None)
+        log.debug("%s: allocated '%s':'%s'", node_id, pool, entry)
 
         data[entry] = node_id
 
-        log.debug('%s: writing resource pool \'%s\': %s' % 
-                  (node_id, pool, data))
+        log.debug("%s: writing resource pool '%s': %s", node_id, pool, data)
         file_path = os.path.join(file_path, pool)
 
         # serialize data
         for key, value in data.items():
             data[key] = str(value) if value else None
 
-        dump(data, file_path, CONTENT_TYPE_YAML, 
-             node_id, lock=True)
+        dump(data, file_path, CONTENT_TYPE_YAML, node_id, lock=True)
 
-    except StopIteration:
-        log.error('%s: no resource free in \'%s\'' % (node_id, pool))
-        raise Exception('%s: no resource free in \'%s\'' % 
-                                (node_id, pool))
+    except StopIteration as exc:
+        log.error("%s: no resource free in '%s'", node_id, pool)
+        raise RuntimeError(f"{node_id}: no resource free in '{pool}'") from exc
     except Exception as exc:
-        msg = '%s: failed to allocate resource from \'%s\'' % \
-            (node_id, pool)
+        msg = f"{node_id}: failed to allocate resource from '{pool}'"
         log.error(msg)
-        raise Exception('%s : %s' % (msg, exc.message))
+        raise RuntimeError(f"{msg} : {exc}") from exc
 
     return str(entry)

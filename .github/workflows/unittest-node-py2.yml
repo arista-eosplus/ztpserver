@@ -1,0 +1,27 @@
+name: Unittest Node py2
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: python:2.7.18-buster
+      volumes:
+        - /dev/log:/dev/log
+      env:
+        USER: root
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-node-py2.txt
+        pip install -r requirements-dev.txt
+    - name: Run client tests
+      run: |
+        make test_client
+    - name: Run action tests
+      run: |
+        make test_actions

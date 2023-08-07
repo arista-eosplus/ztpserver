@@ -2,9 +2,9 @@
 # docker run -P ztpserver
 # docker run -i -t --rm -p 80:80 nginx
 #
-FROM python:2
+FROM python:3
 
-LABEL version="0.1"
+LABEL version="0.2"
 LABEL maintainer="eosplus-dev@arista.com"
 
 WORKDIR /src/ztpserver

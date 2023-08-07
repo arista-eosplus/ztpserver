@@ -30,86 +30,84 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904,C0103
+# pylint: disable=R0904,C0103
 
+import http.client
 import unittest
-import httplib
-import routes
 
+import routes
 import webob
 
 from ztpserver.wsgiapp import WSGIController, WSGIRouter
 
-class TestWsgiApp(unittest.TestCase):
 
+class TestWsgiApp(unittest.TestCase):
     def setUp(self):
         mapper = routes.Mapper()
-        mapper.collection('tests', 'test', controller=WSGIController)
+        mapper.collection("tests", "test", controller=WSGIController)
 
         self.router = WSGIRouter(mapper)
 
-    def request(self, url, method='GET', **kwargs):
+    def request(self, url, method="GET", **kwargs):
         req = webob.Request.blank(url, method=method, **kwargs)
         return req.get_response(self.router)
 
-    def get_url(self, url, expected_status=httplib.OK, **kwargs):
+    def get_url(self, url, expected_status=http.client.OK, **kwargs):
         resp = self.request(url, **kwargs)
         self.assertEqual(resp.status_code, expected_status)
         return resp
 
-    def post_url(self, url, expected_status=httplib.OK, **kwargs):
-        resp = self.request(url, 'POST', **kwargs)
+    def post_url(self, url, expected_status=http.client.OK, **kwargs):
+        resp = self.request(url, "POST", **kwargs)
         self.assertEqual(resp.status_code, expected_status)
         return resp
 
-    def put_url(self, url, expected_status=httplib.OK, **kwargs):
-        resp = self.request(url, 'PUT', **kwargs)
+    def put_url(self, url, expected_status=http.client.OK, **kwargs):
+        resp = self.request(url, "PUT", **kwargs)
         self.assertEqual(resp.status_code, expected_status)
         return resp
 
-    def delete_url(self, url, expected_status=httplib.OK, **kwargs):
-        resp = self.request(url, 'DELETE', **kwargs)
+    def delete_url(self, url, expected_status=http.client.OK, **kwargs):
+        resp = self.request(url, "DELETE", **kwargs)
         self.assertEqual(resp.status_code, expected_status)
         return resp
 
     def test_get_url_collection(self):
-        self.get_url('/tests', 204)
+        self.get_url("/tests", 204)
 
     def test_get_url_resource(self):
-        self.get_url('/test/resource', 404)
+        self.get_url("/test/resource", 404)
 
     def test_get_url_missing(self):
-        self.get_url('/missing', 404)
+        self.get_url("/missing", 404)
 
     def test_post_url_collection(self):
-        self.post_url('/tests', 204)
+        self.post_url("/tests", 204)
 
     def test_post_url_resource(self):
-        self.post_url('/test/resource', 404)
+        self.post_url("/test/resource", 404)
 
     def test_post_url_missing(self):
-        self.post_url('/missing', 404)
+        self.post_url("/missing", 404)
 
     def test_put_url_collection(self):
-        self.put_url('/tests', 404)
+        self.put_url("/tests", 404)
 
     def test_put_url_resource(self):
-        self.put_url('/test/resource', 404)
+        self.put_url("/test/resource", 404)
 
     def test_put_url_missing(self):
-        self.put_url('/missing', 404)
+        self.put_url("/missing", 404)
 
     def test_delete_url_collection(self):
-        self.delete_url('/tests', 404)
+        self.delete_url("/tests", 404)
 
     def test_delete_url_resource(self):
-        self.delete_url('/test/resource', 404)
+        self.delete_url("/test/resource", 404)
 
     def test_delete_url_missing(self):
-        self.delete_url('/missing', 404)
+        self.delete_url("/missing", 404)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-
-

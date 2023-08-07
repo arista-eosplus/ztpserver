@@ -31,46 +31,51 @@
 #
 
 import unittest
-import yaml
+from test.server.server_test_lib import enable_logging, random_string
+from unittest.mock import Mock, patch
 
-from mock import patch, Mock
+import yaml
 
 import ztpserver.serializers
 import ztpserver.topology
+from ztpserver.topology import (
+    Neighbordb,
+    Pattern,
+    create_node,
+    load_file,
+    load_neighbordb,
+    load_pattern,
+    neighbordb_path,
+    replace_config_action,
+)
 
-from ztpserver.topology import Neighbordb, Pattern
-from ztpserver.topology import create_node, load_file, load_neighbordb
-from ztpserver.topology import neighbordb_path, replace_config_action
-from ztpserver.topology import load_pattern
-from server_test_lib import enable_logging, random_string
 
 class NeighbordbUnitTests(unittest.TestCase):
-
     def test_neighbordb_path(self):
         result = neighbordb_path()
-        self.assertEqual(result, '/usr/share/ztpserver/neighbordb')
+        self.assertEqual(result, "/usr/share/ztpserver/neighbordb")
 
-    @patch('ztpserver.topology.load')
+    @patch("ztpserver.topology.load")
     def test_load_file(self, m_load):
-        result = load_file(random_string(),
-                           random_string(),
-                           random_string())
+        result = load_file(random_string(), random_string(), random_string())
         self.assertEqual(result, m_load.return_value)
 
-    @patch('ztpserver.topology.validate_neighbordb')
-    @patch('ztpserver.topology.load')
+    @patch("ztpserver.topology.validate_neighbordb")
+    @patch("ztpserver.topology.load")
     def test_load_file_failure(self, m_load, _):
         m_load.side_effect = ztpserver.serializers.SerializerError
-        self.assertRaises(ztpserver.serializers.SerializerError,
-                          load_file,
-                          random_string(),
-                          random_string(),
-                          random_string())
+        self.assertRaises(
+            ztpserver.serializers.SerializerError,
+            load_file,
+            random_string(),
+            random_string(),
+            random_string(),
+        )
 
-    @patch('ztpserver.topology.validate_neighbordb')
-    @patch('ztpserver.topology.load')
+    @patch("ztpserver.topology.validate_neighbordb")
+    @patch("ztpserver.topology.load")
     def test_load_neighbordb(self, _, m_load):
-        contents = '''
+        contents = """
             variables:
                 foo: bar
             patterns:
@@ -78,12 +83,12 @@ class NeighbordbUnitTests(unittest.TestCase):
                   definition: dummy_definition
                   interfaces:
                     - any: any
-        '''
-        m_load.return_value = yaml.load(contents)
+        """
+        m_load.return_value = yaml.safe_load(contents)
         result = load_neighbordb(random_string())
         self.assertIsNotNone(result)
 
-    @patch('ztpserver.topology.load')
+    @patch("ztpserver.topology.load")
     def test_load_neighbordb_no_variables(self, m_load):
         # github issue #114
         contents = """
@@ -93,14 +98,14 @@ class NeighbordbUnitTests(unittest.TestCase):
                   interfaces:
                     - any: any
         """
-        m_load.return_value = yaml.load(contents)
+        m_load.return_value = yaml.safe_load(contents)
         result = load_neighbordb(random_string())
         self.assertIsInstance(result, Neighbordb)
 
     def test_load_pattern_minimal(self):
-        pattern = load_pattern({'name': random_string(),
-                                'definition': random_string(),
-                                'interfaces': []})
+        pattern = load_pattern(
+            {"name": random_string(), "definition": random_string(), "interfaces": []}
+        )
         self.assertIsInstance(pattern, Pattern)
 
     def test_load_pattern_with_interfaces(self):
@@ -112,29 +117,28 @@ class NeighbordbUnitTests(unittest.TestCase):
             interfaces:
                 - any: any:any
         """
-        kwargs = yaml.load(contents)
+        kwargs = yaml.safe_load(contents)
         pattern = load_pattern(kwargs)
         self.assertIsInstance(pattern, Pattern)
 
     def test_replace_config_action(self):
         resource = random_string()
         result = replace_config_action(resource)
-        self.assertEqual('install static startup-config file', result['name'])
-        self.assertEqual('replace_config', result['action'])
-        self.assertTrue(result['always_execute'])
+        self.assertEqual("install static startup-config file", result["name"])
+        self.assertEqual("replace_config", result["action"])
+        self.assertTrue(result["always_execute"])
 
     def test_create_node_fixup_systemmac_colon(self):
-        attrs = Mock(systemmac='99:99:99:99:99:99')
-        result = create_node({'systemmac': 
-                              attrs.systemmac})
-        self.assertTrue(':' not in result.systemmac)
+        attrs = Mock(systemmac="99:99:99:99:99:99")
+        result = create_node({"systemmac": attrs.systemmac})
+        self.assertTrue(":" not in result.systemmac)
 
     def test_create_node_fixup_systemmac_period(self):
-        attrs = Mock(systemmac='99.99.99.99.99.99')
-        result = create_node({'systemmac': 
-                              attrs.systemmac})
-        self.assertTrue('.' not in result.systemmac)
+        attrs = Mock(systemmac="99.99.99.99.99.99")
+        result = create_node({"systemmac": attrs.systemmac})
+        self.assertTrue("." not in result.systemmac)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     enable_logging()
     unittest.main()

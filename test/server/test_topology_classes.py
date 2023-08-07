@@ -30,26 +30,29 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
-# pylint: disable=W0142
 #
+
 import unittest
+from test.server.server_test_lib import create_node, enable_logging, random_string
+from unittest.mock import Mock
 
-from mock import Mock
-
-from ztpserver.app import enable_handler_console    # pylint: disable=W0611
-from ztpserver.topology import InterfacePattern, InterfacePatternError
-from ztpserver.topology import Pattern, PatternError
-from ztpserver.topology import Node, NodeError, Neighbor
-
-from ztpserver.topology import ExcludesFunction, IncludesFunction
-from ztpserver.topology import ExactFunction, RegexFunction
-
-from server_test_lib import random_string, enable_logging
-from server_test_lib import create_node
+from ztpserver.app import enable_handler_console  # pylint: disable=W0611
+from ztpserver.topology import (
+    ExactFunction,
+    ExcludesFunction,
+    IncludesFunction,
+    InterfacePattern,
+    InterfacePatternError,
+    Neighbor,
+    Node,
+    NodeError,
+    Pattern,
+    PatternError,
+    RegexFunction,
+)
 
 
 class NodeUnitTests(unittest.TestCase):
-
     def test_create_node_success(self):
         node = create_node()
         systemmac = node.systemmac
@@ -75,30 +78,27 @@ class NodeUnitTests(unittest.TestCase):
         remote_device = random_string()
         remote_interface = random_string()
 
-        neighbors = {'Ethernet1': {'device': remote_device, 
-                                   'port': remote_interface}}
+        neighbors = {"Ethernet1": {"device": remote_device, "port": remote_interface}}
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
         node = Node(**kwargs)
 
-        self.assertIsNotNone(node.neighbors('Ethernet1'))
-        self.assertEqual(node.neighbors('Ethernet1')[0].device, 
-                         remote_device)
-        self.assertEqual(node.neighbors('Ethernet1')[0].interface, 
-                         remote_interface)
+        self.assertIsNotNone(node.neighbors("Ethernet1"))
+        self.assertEqual(node.neighbors("Ethernet1")[0].device, remote_device)
+        self.assertEqual(node.neighbors("Ethernet1")[0].interface, remote_interface)
 
     def test_create_node_neighbors_remote_interface_missing(self):
         nodeattrs = create_node()
 
         remote_device = random_string()
 
-        neighbors = {'Ethernet1': {'remote_device': remote_device}}
+        neighbors = {"Ethernet1": {"remote_device": remote_device}}
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
+        node = None
         try:
-            node = None
             node = Node(**kwargs)
         except NodeError:
             pass
@@ -110,12 +110,12 @@ class NodeUnitTests(unittest.TestCase):
 
         remote_interface = random_string()
 
-        neighbors = {'Ethernet1': {'remote_interface': remote_interface}}
+        neighbors = {"Ethernet1": {"remote_interface": remote_interface}}
         nodeattrs.add_neighbors(neighbors)
 
         kwargs = nodeattrs.as_dict()
+        node = None
         try:
-            node = None
             node = Node(**kwargs)
         except NodeError:
             pass
@@ -128,15 +128,12 @@ class NodeUnitTests(unittest.TestCase):
         intf = random_string()
 
         node = Node(systemmac=systemmac)
-        node.add_neighbor(intf, [dict(device=peer.remote_device, 
-                                      port=peer.remote_interface)])
+        node.add_neighbor(intf, [{"device": peer.remote_device, "port": peer.remote_interface}])
 
         self.assertIsNotNone(node.neighbors(intf))
 
-        self.assertEqual(node.neighbors(intf)[0].device, 
-                         peer.remote_device)
-        self.assertEqual(node.neighbors(intf)[0].interface, 
-                         peer.remote_interface)
+        self.assertEqual(node.neighbors(intf)[0].device, peer.remote_device)
+        self.assertEqual(node.neighbors(intf)[0].interface, peer.remote_interface)
 
     def test_add_neighbor_existing_interface(self):
         systemmac = random_string()
@@ -144,29 +141,28 @@ class NodeUnitTests(unittest.TestCase):
         intf = random_string()
 
         node = Node(systemmac=systemmac)
-        node.add_neighbor(intf, [dict(device=peer.remote_device, 
-                                      port=peer.remote_interface)])
-        self.assertRaises(NodeError, node.add_neighbor,
-                          intf, [dict(device=peer.remote_device, 
-                                      port=peer.remote_interface)])
+        node.add_neighbor(intf, [{"device": peer.remote_device, "port": peer.remote_interface}])
+        self.assertRaises(
+            NodeError,
+            node.add_neighbor,
+            intf,
+            [{"device": peer.remote_device, "port": peer.remote_interface}],
+        )
 
     def test_add_neighbors_success(self):
         nodeattrs = create_node()
 
         remote_device = random_string()
         remote_interface = random_string()
-        neighbors = {'Ethernet1': [{'device': remote_device, 
-                                    'port': remote_interface}]}
+        neighbors = {"Ethernet1": [{"device": remote_device, "port": remote_interface}]}
 
         kwargs = nodeattrs.as_dict()
         node = Node(**kwargs)
         node.add_neighbors(neighbors)
 
-        self.assertIsNotNone(node.neighbors('Ethernet1'))
-        self.assertEqual(node.neighbors('Ethernet1')[0].device, 
-                         remote_device)
-        self.assertEqual(node.neighbors('Ethernet1')[0].interface, 
-                         remote_interface)
+        self.assertIsNotNone(node.neighbors("Ethernet1"))
+        self.assertEqual(node.neighbors("Ethernet1")[0].device, remote_device)
+        self.assertEqual(node.neighbors("Ethernet1")[0].interface, remote_interface)
 
     def test_serialize_success(self):
         nodeattrs = create_node()
@@ -177,7 +173,6 @@ class NodeUnitTests(unittest.TestCase):
 
 
 class FunctionsUnitTests(unittest.TestCase):
-
     def test_exactfunction_true(self):
         value = random_string()
         func = ExactFunction(value)
@@ -209,91 +204,81 @@ class FunctionsUnitTests(unittest.TestCase):
         self.assertFalse(func.match(value))
 
     def test_regexfunction_true(self):
-        value = r'[\w+]'
+        value = r"[\w+]"
         func = RegexFunction(value)
         self.assertTrue(func.match(random_string()))
 
     def test_regexfunction_false(self):
-        value = '[^a-zA-Z0-9]'
+        value = "[^a-zA-Z0-9]"
         func = RegexFunction(value)
         self.assertFalse(func.match(random_string()))
 
 
 class TestPattern(unittest.TestCase):
-
     def test_create_pattern_with_defaults(self):
         obj = Pattern(None, None, None)
         self.assertIsInstance(obj, Pattern)
 
     def test_create_pattern_with_kwargs(self):
-        obj = Pattern(name='test',
-                                         definition='test',
-                                         node='abc123',
-                                         variables={'var': 'test'},
-                                         interfaces=[{'Ethernet1': 'any'}])
-        self.assertEqual(obj.name, 'test')
-        self.assertEqual(obj.definition, 'test')
-        self.assertEqual(obj.node, 'abc123')
-        self.assertDictEqual({'var': 'test'}, obj.variables)
+        obj = Pattern(
+            name="test",
+            definition="test",
+            node="abc123",
+            variables={"var": "test"},
+            interfaces=[{"Ethernet1": "any"}],
+        )
+        self.assertEqual(obj.name, "test")
+        self.assertEqual(obj.definition, "test")
+        self.assertEqual(obj.node, "abc123")
+        self.assertDictEqual({"var": "test"}, obj.variables)
         self.assertEqual(1, len(obj.interfaces))
 
     def test_add_interface(self):
-        obj = Pattern(interfaces=[{'Ethernet1': 'any'}])
+        obj = Pattern(interfaces=[{"Ethernet1": "any"}])
         self.assertEqual(len(obj.interfaces), 1)
 
 
 class PatternUnitTests(unittest.TestCase):
-
     def test_create_pattern(self):
         pattern = Pattern(random_string())
         self.assertIsInstance(pattern, Pattern)
 
     def test_create_pattern_kwargs(self):
-        kwargs = dict(name=random_string(),
-                      definition=random_string(),
-                      interfaces=None)
+        kwargs = {"name": random_string(), "definition": random_string(), "interfaces": None}
 
         pattern = Pattern(**kwargs)
         self.assertIsInstance(pattern, Pattern)
 
     @classmethod
     def test_add_interface_success(cls):
-        kwargs = dict(name=random_string(),
-                      definition=random_string(),
-                      interfaces=None)
+        kwargs = {"name": random_string(), "definition": random_string(), "interfaces": None}
 
         pattern = Pattern(**kwargs)
 
         remote_remote_device = random_string()
         remote_intf = random_string()
-        neighbors = dict(Ethernet1={'device': remote_remote_device,
-                                    'port': remote_intf})
+        neighbors = {"Ethernet1": {"device": remote_remote_device, "port": remote_intf}}
 
         pattern.add_interface(neighbors)
-            
+
     def test_add_interface_failure(self):
-        kwargs = dict(name=random_string(),
-                      definition=random_string(),
-                      interfaces=None)
+        kwargs = {"name": random_string(), "definition": random_string(), "interfaces": None}
 
         pattern = Pattern(**kwargs)
-        self.assertRaises(PatternError, pattern.add_interface, 
-                          random_string())
+        self.assertRaises(PatternError, pattern.add_interface, random_string())
 
 
 class TestInterfacePattern(unittest.TestCase):
-
     def test_create_interface_pattern(self):
-        intf = 'Ethernet1'
+        intf = "Ethernet1"
         remote_device = random_string()
         remote_interface = random_string()
 
-        obj = InterfacePattern(intf, remote_device,
-                               remote_interface,
-                               random_string())
-        reprobj = 'InterfacePattern(interface=%s, remote_device=%s, ' \
-                   'remote_interface=%s)' % \
-                  (intf, remote_device, remote_interface)
+        obj = InterfacePattern(intf, remote_device, remote_interface, random_string())
+        reprobj = (
+            f"InterfacePattern(interface={intf}, "
+            f"remote_device={remote_device}, remote_interface={remote_interface})"
+        )
         self.assertEqual(repr(obj), reprobj)
 
     def test_match_success(self):
@@ -302,12 +287,10 @@ class TestInterfacePattern(unittest.TestCase):
         remote_interface = random_string()
 
         neighbor = Neighbor(remote_device, remote_interface)
-        for intf in ['any', interface]:
-            for remote_d in ['any', remote_device]:
-                for remote_i in ['any', remote_interface]:
-                    
-                    pattern = InterfacePattern(intf, remote_d, remote_i,
-                                               random_string())
+        for intf in ["any", interface]:
+            for remote_d in ["any", remote_device]:
+                for remote_i in ["any", remote_interface]:
+                    pattern = InterfacePattern(intf, remote_d, remote_i, random_string())
                     result = pattern.match(interface, [neighbor])
                     self.assertTrue(result)
 
@@ -316,83 +299,71 @@ class TestInterfacePattern(unittest.TestCase):
         remote_device = random_string()
         remote_interface = random_string()
 
-        for intf in ['none', interface + 'dummy']:
-            pattern = InterfacePattern(intf, remote_device, 
-                                       remote_interface,
-                                       random_string())
+        for intf in ["none", interface + "dummy"]:
+            pattern = InterfacePattern(intf, remote_device, remote_interface, random_string())
             neighbor = Neighbor(remote_device, remote_interface)
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
-        for remote_d in ['none', remote_device + 'dummy']:
-            pattern = InterfacePattern(interface, remote_d, 
-                                       remote_interface,
-                                       random_string())
+        for remote_d in ["none", remote_device + "dummy"]:
+            pattern = InterfacePattern(interface, remote_d, remote_interface, random_string())
             neighbor = Neighbor(remote_device, remote_interface)
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
-        for remote_i in ['none', remote_interface + 'dummy']:
-            pattern = InterfacePattern(interface, remote_device, 
-                                       remote_i, random_string())
+        for remote_i in ["none", remote_interface + "dummy"]:
+            pattern = InterfacePattern(interface, remote_device, remote_i, random_string())
             neighbor = Neighbor(remote_device, remote_interface)
             result = pattern.match(interface, [neighbor])
             self.assertFalse(result)
 
-        for remote_d in ['none', remote_device + 'dummy']:
-            for remote_i in ['none', remote_interface + 'dummy']:
-                pattern = InterfacePattern(interface, remote_d, 
-                                           remote_i, random_string())
+        for remote_d in ["none", remote_device + "dummy"]:
+            for remote_i in ["none", remote_interface + "dummy"]:
+                pattern = InterfacePattern(interface, remote_d, remote_i, random_string())
                 neighbor = Neighbor(remote_device, remote_interface)
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
-        for intf in ['none', interface + 'dummy']:
-            for remote_i in ['none', remote_interface + 'dummy']:
-                pattern = InterfacePattern(intf, remote_device, 
-                                           remote_i, random_string())
+        for intf in ["none", interface + "dummy"]:
+            for remote_i in ["none", remote_interface + "dummy"]:
+                pattern = InterfacePattern(intf, remote_device, remote_i, random_string())
                 neighbor = Neighbor(remote_device, remote_interface)
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
-        for intf in ['none', interface + 'dummy']:
-            for remote_d in ['none', remote_device + 'dummy']:
-                pattern = InterfacePattern(intf, remote_d, 
-                                           remote_interface, random_string())
+        for intf in ["none", interface + "dummy"]:
+            for remote_d in ["none", remote_device + "dummy"]:
+                pattern = InterfacePattern(intf, remote_d, remote_interface, random_string())
                 neighbor = Neighbor(remote_device, remote_interface)
                 result = pattern.match(interface, [neighbor])
                 self.assertFalse(result)
 
-        for intf in ['none', interface + 'dummy']:
-            for remote_d in ['none', remote_device + 'dummy']:
-                for remote_i in ['none', remote_interface + 'dummy']:
-                    pattern = InterfacePattern(intf, remote_d, 
-                                               remote_i, random_string())
+        for intf in ["none", interface + "dummy"]:
+            for remote_d in ["none", remote_device + "dummy"]:
+                for remote_i in ["none", remote_interface + "dummy"]:
+                    pattern = InterfacePattern(intf, remote_d, remote_i, random_string())
                     neighbor = Neighbor(remote_device, remote_interface)
                     result = pattern.match(interface, [neighbor])
                     self.assertFalse(result)
 
     def compile_known_function(self, interface, cls):
-        pattern = InterfacePattern(random_string(),
-                                   interface,
-                                   random_string(),
-                                   random_string())
+        pattern = InterfacePattern(random_string(), interface, random_string(), random_string())
         self.assertIsInstance(pattern.remote_device_re, cls)
 
     def test_compile_exact_function(self):
-        interface = 'exact(\'%s\')' % random_string()
+        interface = f"exact('{random_string()}')"
         self.compile_known_function(interface, ExactFunction)
 
     def test_compile_includes_function(self):
-        interface = 'includes(\'%s\')' % random_string()
+        interface = f"includes('{random_string()}')"
         self.compile_known_function(interface, IncludesFunction)
 
     def test_compile_excludes_function(self):
-        interface = 'excludes(\'%s\')' % random_string()
+        interface = f"excludes('{random_string()}')"
         self.compile_known_function(interface, ExcludesFunction)
 
     def test_compile_regex_function(self):
-        interface = 'regex(\'%s\')' % random_string()
+        interface = f"regex('{random_string()}')"
         self.compile_known_function(interface, RegexFunction)
 
     def test_compile_no_function(self):
@@ -400,12 +371,17 @@ class TestInterfacePattern(unittest.TestCase):
         self.compile_known_function(interface, ExactFunction)
 
     def test_compile_unknown_function(self):
-        interface = '%s(\'%s\')' % (random_string(), random_string())
-        self.assertRaises(InterfacePatternError,
-                          InterfacePattern,
-                          random_string(), interface,
-                          random_string(), random_string())
+        interface = f"{random_string()}('{random_string()}')"
+        self.assertRaises(
+            InterfacePatternError,
+            InterfacePattern,
+            random_string(),
+            interface,
+            random_string(),
+            random_string(),
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     enable_logging()
     unittest.main()

@@ -30,27 +30,35 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import imp
+import importlib.machinery
+import importlib.util
 import os
+import sys
 
 from ztpserver.config import runtime
 
+
 def resource_plugins():
-    path = os.path.join(runtime.default.data_root, 'plugins')
+    path = os.path.join(runtime.default.data_root, "plugins")
 
     plugins = []
-    for (_, _, filenames) in os.walk(path):
+    for _, _, filenames in os.walk(path):
         plugins.extend(filenames)
         break
     return plugins
 
-def run_plugin(plugin, node_id, pool, node):
 
-    filename = os.path.join(runtime.default.data_root, 
-                            'plugins',
-                            plugin)
+def run_plugin(plugin, node_id, pool, node):
+    filename = os.path.join(runtime.default.data_root, "plugins", plugin)
     try:
-        module = imp.load_source(plugin, filename)
+        if plugin not in sys.modules:
+            loader = importlib.machinery.SourceFileLoader(plugin, filename)
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[plugin] = module
+            spec.loader.exec_module(module)
+
+        module = sys.modules[plugin]
         return module.main(node_id, pool, node)
     except Exception as exc:
-        raise Exception('failed to run plugin: %s' % exc)
+        raise RuntimeError(f"failed to run plugin: {exc}") from exc

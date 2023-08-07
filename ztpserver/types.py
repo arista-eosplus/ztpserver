@@ -32,8 +32,7 @@
 #
 
 
-class String(object):
-
+class String:
     def __init__(self, choices=None):
         if choices:
             choices = [str(c) for c in choices]
@@ -43,37 +42,34 @@ class String(object):
         value = str(value)
 
         if self.choices and value not in self.choices:
-            raise ValueError('Invalid string value: %s is not one of %s' %
-                             (value, self.choices))
+            raise ValueError(f"Invalid string value: {value} is not one of {self.choices}")
 
         return value
 
     def __repr__(self):
-        obj = 'String'
+        obj = "String"
         if self.choices:
-            obj += '(choices=%s)' % ','.join(self.choices)
+            obj += f"(choices={','.join(self.choices)})"
         return obj
 
 
-class Boolean(object):
-
-    TRUEVALUES = ['yes', 'true', '1', 'on']
-    FALSEVALUES = ['no', 'false', '0', 'off']
+class Boolean:
+    TRUEVALUES = ["yes", "true", "1", "on"]
+    FALSEVALUES = ["no", "false", "0", "off"]
 
     def __call__(self, value):
         if str(value).lower() in self.TRUEVALUES:
             return True
-        elif str(value).lower() in self.FALSEVALUES:
+        if str(value).lower() in self.FALSEVALUES:
             return False
-        else:
-            raise ValueError('Invalid boolean value: %s' % value)
+
+        raise ValueError(f"Invalid boolean value: %{value}")
 
     def __repr__(self):
-        return 'Boolean'
+        return "Boolean"
 
 
-class Integer(object):
-
+class Integer:
     def __init__(self, min_value=None, max_value=None):
         self.min_value = min_value
         self.max_value = max_value
@@ -81,27 +77,23 @@ class Integer(object):
     def __call__(self, value):
         try:
             value = int(value)
-        except ValueError:
-            raise ValueError('Invalid integer value: %s' % value)
+        except ValueError as exc:
+            raise ValueError(f"Invalid integer value: {value}") from exc
 
         if self.min_value is not None and value < self.min_value:
-            raise ValueError('Invalid integer value: %s (min is %s)' %
-                             (value, self.min_value))
+            raise ValueError(f"Invalid integer value: {value} (min is {self.min_value})")
 
         if self.max_value is not None and value > self.max_value:
-            raise ValueError('Invalid integer value: %s (max is %s)' %
-                             (value, self.max_value))
+            raise ValueError(f"Invalid integer value: {value} (max is {self.max_value})")
 
         return value
 
     def __repr__(self):
-        return 'Integer(min_value=%s, max_value=%s)' % \
-               (self.min_value, self.max_value)
+        return f"Integer(min_value={self.min_value}, max_value={self.max_value})"
 
 
-class List(object):
-
-    def __init__(self, delimiter=','):
+class List:
+    def __init__(self, delimiter=","):
         self.delimiter = delimiter
 
     def __call__(self, value):
@@ -111,4 +103,4 @@ class List(object):
         return str(value).split(self.delimiter)
 
     def __repr__(self):
-        return 'List(delimiter=%s)' % self.delimiter
+        return f"List(delimiter={self.delimiter})"

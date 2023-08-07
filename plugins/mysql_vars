@@ -28,15 +28,18 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import hashlib
+import json
 import logging
 import os
-import MySQLdb
-import json, hashlib
 
-log = logging.getLogger('ztpserver')   #pylint: disable=C0103
+import MySQLdb  # pylint: disable=E0401
+
+log = logging.getLogger("ztpserver")  # pylint: disable=C0103
+
 
 def fetch_tor(node, node_id):
-    '''
+    """
     Query mysql database using the node's neighbors and return the tor record.
     The key for the tor loopkup is the md5 hash of the json serialized
     neighbors.
@@ -47,21 +50,20 @@ def fetch_tor(node, node_id):
            'hostName' : <hostname>,
            ...
          }
-    '''
+    """
 
     # Connect to mysql server
-    user = os.environ.get('MYSQL_USER', 'root')
-    db = os.environ.get('MYSQL_DB', 'db')
-    host = os.environ.get('MYSQL_HOST', 'localhost')
-    log.debug('%s: Connecting to mysql %s:%s:%s' % \
-               (node_id, host, user, db))
+    user = os.environ.get("MYSQL_USER", "root")
+    db = os.environ.get("MYSQL_DB", "db")  # pylint: disable=C0103
+    host = os.environ.get("MYSQL_HOST", "localhost")
+    log.debug("%s: Connecting to mysql %s:%s:%s", node_id, host, user, db)
 
-    assert db and host and user, 'Params to connect to mysql server missing'
+    assert db and host and user, "Params to connect to mysql server missing"
     con = MySQLdb.connect(db=db, host=host, user=user)
     cur = con.cursor()
 
     # Build a dict of neighbors based on node's LLDP neighbors.
-    # 
+    #
     # Format:
     #    { <interface> : { 'device': <neighbor-device>, 'port': <neighbor-port> }
     #      ...
@@ -69,67 +71,69 @@ def fetch_tor(node, node_id):
 
     neighbors = {}
     for intf, nlist in node.neighbors.items():
-        ndevice = nlist[ 0 ]
-        device = ndevice.device.split('.')[ 0 ]
-        neighbors[ intf ] = dict(device=device, port=ndevice.interface)
+        ndevice = nlist[0]
+        device = ndevice.device.split(".")[0]
+        neighbors[intf] = {"device": device, "port": ndevice.interface}
 
     # Serialize the neighbors and get the md5 hash
-    neighborsStr = json.dumps(neighbors, sort_keys=True)
-    hash = hashlib.md5(neighborsStr).hexdigest()
-    log.debug('%s: hash: %s' % (node_id, hash))
+    neighbors_str = json.dumps(neighbors, sort_keys=True)
+    digest = hashlib.md5(neighbors_str).hexdigest()
+    log.debug("%s: hash: %s", node_id, hash)
 
     # Lookup tor by hash
-    stmt = ('select hostName, torData, type from tor where hash=%s')
-    where = (hash,)
+    stmt = "select hostName, torData, type from tor where hash=%s"
+    where = (digest,)
     cur.execute(stmt, where)
-    hostName, torData , torType = cur.fetchone()
-    tor = json.loads(torData)
-    tor[ 'type' ] = torType
+    host_name, tor_data, tor_type = cur.fetchone()
+    tor = json.loads(tor_data)
+    tor["type"] = tor_type
 
     # Check for hash collision
-    if tor['neighbors'] != neighbors:
-        raise Exception('%s: hash collision for TOR %s' % (node_id, hostName))
+    if tor["neighbors"] != neighbors:
+        raise RuntimeError(f"{node_id}: hash collision for TOR {host_name}")
     return tor
 
+
 def assign_url(tor):
-    if tor[ 'type' ] == 'systest':
-        return 'files/templates/dm1-tor-systest.template'
-    elif tor[ 'type' ] == 'software':
-        return 'files/templates/dm1-tor-software.template'
-    elif tor[ 'type' ] == 'server':
-        return 'files/templates/dm1-tor-server.template'
-    else:
-        raise Exception('Unknown TOR type %s' % tor[ 'type' ])
+    if tor["type"] == "systest":
+        return "files/templates/dm1-tor-systest.template"
+    if tor["type"] == "software":
+        return "files/templates/dm1-tor-software.template"
+    if tor["type"] == "server":
+        return "files/templates/dm1-tor-server.template"
+
+    raise RuntimeError(f"Unknown TOR type {tor['type']}")
+
 
 def assign_var(tor):
     # The tor 'type' and 'neighbors' are just for internal usage. They are not
     # variables required by the template.
-    tor.pop('type')
-    tor.pop('neighbors')
+    tor.pop("type")
+    tor.pop("neighbors")
     return tor
 
+
 def main(node_id, pool, node):
-    '''
+    """
     Return the resource requested for the pool type.
 
     node_id - Node identifier, usually the serial number
     pool - Type of resource requested, its either url or variable.
     node - Copy of the Node object
-    '''
+    """
     try:
         # Get a copy of the tor record stored in mysql, based on the node's
         # neighbors.
         tor = fetch_tor(node, node_id)
 
-        if pool == 'url':
+        if pool == "url":
             return assign_url(tor)
-        elif pool == 'variables':
+        if pool == "variables":
             return assign_var(tor)
-        else:
-            assert False, 'Unknown pool %s' % pool
+
+        assert False, f"Unknown pool {pool}"
     except Exception as exc:
-        msg = '%s: failed to allocate resource from \'%s\'' % \
-            (node_id, pool)
+        msg = f"{node_id}: failed to allocate resource from '{pool}'"
         log.error(msg)
-        log.error(exc.message)
-        raise Exception('%s : %s' % (msg, exc.message))
+        log.error(str(exc))
+        raise RuntimeError(f"{msg} : {exc}") from exc

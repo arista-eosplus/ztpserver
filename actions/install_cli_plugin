@@ -27,22 +27,25 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,E1103
-
-CLI_PLUGIN_DIR = '/usr/lib/python2.7/site-packages/CliPlugin'
-PERSISTENT_PLUGIN_DIR = '/mnt/flash/.ztp-plugins'
+# pylint: disable=C0209
 
 import os
 
+from six import raise_from
+
+CLI_PLUGIN_DIR = "/usr/lib/python2.7/site-packages/CliPlugin"
+PERSISTENT_PLUGIN_DIR = "/mnt/flash/.ztp-plugins"
+
+
 def main(attributes):
-    '''Installs CliPlugin.
+    """Installs CliPlugin.
 
     This action is NOT dual-supervisor compatible.
 
     Attributes:
         url: path to the CliPlugin
 
-    Special_attributes: 
+    Special_attributes:
         NODE: API object - see documentation for details
 
     Example:
@@ -55,30 +58,23 @@ def main(attributes):
               url: files/my_cli_plugin
             name: "install cli plugin"
 
-    '''
+    """
 
-    node = attributes.get('NODE')
-    url = attributes.get('url')
+    node = attributes.get("NODE")
+    url = attributes.get("url")
 
     if not url:
-        raise Exception('Missing attribute(\'url\')')
+        raise RuntimeError("Missing attribute('url')")
 
-    try:
+    if not os.path.exists(PERSISTENT_PLUGIN_DIR):
         os.makedirs(PERSISTENT_PLUGIN_DIR)
-    except OSError:
-        # file exists
-        pass
 
-    name = url.split('/')[ -1 ]
+    name = url.split("/")[-1]
     try:
-        node.retrieve_url(url, '%s/%s' %
-                          (PERSISTENT_PLUGIN_DIR, name))
+        node.retrieve_url(url, "{}/{}".format(PERSISTENT_PLUGIN_DIR, name))
     except Exception as exc:
-        raise Exception('Unable to retrieve CliPlugin from URL (%s)' % 
-                        exc)
+        raise_from(RuntimeError("Unable to retrieve CliPlugin from URL"), exc)
 
-    lines = ['sudo cp %s/%s %s'  % (PERSISTENT_PLUGIN_DIR,
-                                    name,
-                                    CLI_PLUGIN_DIR)]
+    lines = ["sudo cp {}/{} {}".format(PERSISTENT_PLUGIN_DIR, name, CLI_PLUGIN_DIR)]
 
     node.append_rc_eos_lines(lines)

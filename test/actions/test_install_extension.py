@@ -27,36 +27,37 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904,F0401,W0232,E1101
+# pylint: disable=C0209
 
 import os
 import os.path
-import unittest
 import shutil
-import sys
+import unittest
+from test.client.client_test_lib import (
+    ActionFailureTest,
+    Bootstrap,
+    file_log,
+    get_action,
+    raise_exception,
+    random_string,
+    remove_file,
+    startup_config_action,
+)
 
-sys.path.append('test/client')
-
-from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import file_log, get_action, random_string
-from client_test_lib import startup_config_action, remove_file
-from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
-
     def test_missing_url(self):
-        self.basic_test('install_extension',
-                        'Missing attribute(\'url\')')
+        self.basic_test("install_extension", "Missing attribute('url')")
 
     def test_url_failure(self):
-        self.basic_test('install_extension',
-                        'Unable to retrieve extension from URL',
-                        attributes={'url' :
-                                    random_string()})
+        self.basic_test(
+            "install_extension",
+            "Unable to retrieve extension from URL",
+            attributes={"url": random_string()},
+        )
 
 
 class SuccessTest(unittest.TestCase):
-
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
 
@@ -64,60 +65,50 @@ class SuccessTest(unittest.TestCase):
         url = extension
 
         extension_force = random_string()
-        url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
+        url_force = "http://{}/{}".format(bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes' : {'url' : url}},
-                     {'action' : 'test_action_force',
-                      'attributes' :
-                      {'url' : url_force,
-                       'force' : True}}
-                     ])
+            actions=[
+                {"action": "startup_config_action"},
+                {"action": "test_action", "attributes": {"url": url}},
+                {"action": "test_action_force", "attributes": {"url": url_force, "force": True}},
+            ]
+        )
 
-        bootstrap.ztps.set_action_response(
-            'startup_config_action', startup_config_action())
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
 
-        extensions_dir = '/tmp/extensions'
-        boot_extensions = '/tmp/boot-extensions'
-        action = get_action('install_extension')
-        action = action.replace('/mnt/flash/.extensions',
-                                extensions_dir)
-        action = action.replace('/mnt/flash/boot-extensions',
-                                boot_extensions)
+        extensions_dir = "/tmp/extensions"
+        boot_extensions = "/tmp/boot-extensions"
+        action = get_action("install_extension")
+        action = action.replace("/mnt/flash/.extensions", extensions_dir)
+        action = action.replace("/mnt/flash/boot-extensions", boot_extensions)
 
-        bootstrap.ztps.set_action_response('test_action',
-                                           action)
+        bootstrap.ztps.set_action_response("test_action", action)
         contents = random_string()
         bootstrap.ztps.set_file_response(extension, contents)
 
-        bootstrap.ztps.set_action_response('test_action_force',
-                                           action)
+        bootstrap.ztps.set_action_response("test_action_force", action)
         contents_force = random_string()
         bootstrap.ztps.set_file_response(extension_force, contents_force)
 
         bootstrap.start_test()
 
         try:
-            ext_filename = '%s/%s' % (extensions_dir, extension)
-            self.failUnless(os.path.isfile(ext_filename))
-            self.failUnless([contents] ==
-                            file_log(ext_filename))
-            self.failUnless(extension in file_log(boot_extensions))
+            ext_filename = "{}/{}".format(extensions_dir, extension)
+            self.assertTrue(os.path.isfile(ext_filename))
+            self.assertTrue([contents] == file_log(ext_filename))
+            self.assertTrue(extension in file_log(boot_extensions))
 
-            ext_filename_force = '%s/%s' % (extensions_dir, extension_force)
-            self.failUnless(os.path.isfile(ext_filename_force))
+            ext_filename_force = "{}/{}".format(extensions_dir, extension_force)
+            self.assertTrue(os.path.isfile(ext_filename_force))
 
-            self.failUnless([contents_force] ==
-                            file_log(ext_filename_force))
-            self.failUnless('%s force' % extension_force in
-                            file_log(boot_extensions))
+            self.assertTrue([contents_force] == file_log(ext_filename_force))
+            self.assertTrue("{} force".format(extension_force) in file_log(boot_extensions))
 
-            self.failUnless(bootstrap.success())
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
@@ -128,68 +119,59 @@ class SuccessTest(unittest.TestCase):
         bootstrap = Bootstrap(ztps_default_config=True)
 
         extension = random_string()
-        url = 'http://%s/%s' % (bootstrap.server, extension)
+        url = "http://{}/{}".format(bootstrap.server, extension)
 
         extension_force = random_string()
-        url_force = 'http://%s/%s' % (bootstrap.server, extension_force)
+        url_force = "http://{}/{}".format(bootstrap.server, extension_force)
 
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes' : {'url' : url}},
-                     {'action' : 'test_action_force',
-                      'attributes' :
-                      {'url' : url_force,
-                       'force' : True}}
-                     ])
+            actions=[
+                {"action": "startup_config_action"},
+                {"action": "test_action", "attributes": {"url": url}},
+                {"action": "test_action_force", "attributes": {"url": url_force, "force": True}},
+            ]
+        )
 
-        bootstrap.ztps.set_action_response(
-            'startup_config_action', startup_config_action())
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
 
-        extensions_dir = '/tmp/extensions'
-        boot_extensions = '/tmp/boot-extensions'
-        action = get_action('install_extension')
-        action = action.replace('/mnt/flash/.extensions',
-                                extensions_dir)
-        action = action.replace('/mnt/flash/boot-extensions',
-                                boot_extensions)
+        extensions_dir = "/tmp/extensions"
+        boot_extensions = "/tmp/boot-extensions"
+        action = get_action("install_extension")
+        action = action.replace("/mnt/flash/.extensions", extensions_dir)
+        action = action.replace("/mnt/flash/boot-extensions", boot_extensions)
 
-        bootstrap.ztps.set_action_response('test_action',
-                                           action)
+        bootstrap.ztps.set_action_response("test_action", action)
         contents = random_string()
         bootstrap.ztps.set_file_response(extension, contents)
 
-        bootstrap.ztps.set_action_response('test_action_force',
-                                           action)
+        bootstrap.ztps.set_action_response("test_action_force", action)
         contents_force = random_string()
         bootstrap.ztps.set_file_response(extension_force, contents_force)
 
         bootstrap.start_test()
 
         try:
-            ext_filename = '%s/%s' % (extensions_dir, extension)
-            self.failUnless(os.path.isfile(ext_filename))
-            self.failUnless([contents] ==
-                            file_log(ext_filename))
-            self.failUnless(extension in file_log(boot_extensions))
+            ext_filename = "{}/{}".format(extensions_dir, extension)
+            self.assertTrue(os.path.isfile(ext_filename))
+            self.assertTrue([contents] == file_log(ext_filename))
+            self.assertTrue(extension in file_log(boot_extensions))
 
-            ext_filename_force = '%s/%s' % (extensions_dir, extension_force)
-            self.failUnless(os.path.isfile(ext_filename_force))
+            ext_filename_force = "{}/{}".format(extensions_dir, extension_force)
+            self.assertTrue(os.path.isfile(ext_filename_force))
 
-            self.failUnless([contents_force] ==
-                            file_log(ext_filename_force))
-            self.failUnless('%s force' % extension_force in
-                            file_log(boot_extensions))
+            self.assertTrue([contents_force] == file_log(ext_filename_force))
+            self.assertTrue("{} force".format(extension_force) in file_log(boot_extensions))
 
-            self.failUnless(bootstrap.success())
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             shutil.rmtree(extensions_dir)
             remove_file(boot_extensions)
             bootstrap.end_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

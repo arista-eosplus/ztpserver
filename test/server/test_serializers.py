@@ -34,23 +34,23 @@ import os
 import random
 import unittest
 
-import ztpserver.serializers as serializers
-
+from ztpserver import serializers
 from ztpserver.constants import CONTENT_TYPE_JSON
 
-TMP_FILE = '/tmp/test_serializers-%s' % os.getpid()
+TMP_FILE = f"/tmp/test_serializers-{os.getpid()}"
+
 
 def get_data():
     result = {}
     for _ in range(random.randint(10, 100)):
-        key = 'x' * random.randint(0, 10)
-        value = 'x' * random.randint(0, 50)
+        key = "x" * random.randint(0, 10)
+        value = "x" * random.randint(0, 50)
         result[key] = value
 
     return result
 
-class SerializersUnitTest(unittest.TestCase):
 
+class SerializersUnitTest(unittest.TestCase):
     def test_dump_success(self):
         pass
 
@@ -72,10 +72,9 @@ class SerializersUnitTest(unittest.TestCase):
         while index < 100:
             index += 1
             data = get_data()
-            serializers.dump(data, TMP_FILE, 
-                             CONTENT_TYPE_JSON)
-            assert serializers.load(TMP_FILE, 
-                                    CONTENT_TYPE_JSON) == data
+            serializers.dump(data, TMP_FILE, CONTENT_TYPE_JSON)
+            assert serializers.load(TMP_FILE, CONTENT_TYPE_JSON) == data
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

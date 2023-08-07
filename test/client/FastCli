@@ -29,14 +29,15 @@
 
 # This is used by the tests in order to simulate FastCli calls
 import sys
+
 from client_test_lib import CLI_LOG
 
-open(CLI_LOG, 'a+b').write('%s\n' % ' '.join(sys.argv))
+open(CLI_LOG, "a+").write("%s\n" % " ".join(sys.argv))
 
-if sys.argv[-1] == 'show version':
+if sys.argv[-1] == "show version":
     # serial number is used for client-side logging
-    print 'Serial number:       DUMMY_SERIAL'
+    print("Serial number:       DUMMY_SERIAL")
 else:
-    # Need to return something, so that the check for 
+    # Need to return something, so that the check for
     # EAPI being enabled succeeds
-    print 'dummy-response'
+    print("dummy-response")

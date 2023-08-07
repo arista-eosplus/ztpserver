@@ -26,7 +26,7 @@ e.g. (action code)
 .. code-block:: python
 
     def main(attributes):
-        print attributes.get(‘software_image’)
+        print(attributes.get(‘software_image’))
 
 Besides the values coming from the server, a couple of **special
 entries**\ \* (always upper case) are also contained in the attributes
@@ -39,7 +39,7 @@ e.g. (action\_code)
 .. code-block:: python
 
     def main(attributes):
-        print attributes.get(‘NODE’).api_enable_cmds([‘show version’])
+        print(attributes.get(‘NODE’).api_enable_cmds([‘show version’]))
 
 Bootstrap URLs
 ~~~~~~~~~~~~~~

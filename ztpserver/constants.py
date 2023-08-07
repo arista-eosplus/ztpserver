@@ -31,11 +31,11 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-CONTENT_TYPE_PYTHON = 'text/x-python'
-CONTENT_TYPE_HTML = 'text/html'
-CONTENT_TYPE_OTHER = 'text/plain'
-CONTENT_TYPE_JSON = 'application/json'
-CONTENT_TYPE_YAML = 'application/yaml'
+CONTENT_TYPE_PYTHON = "text/x-python"
+CONTENT_TYPE_HTML = "text/html"
+CONTENT_TYPE_OTHER = "text/plain"
+CONTENT_TYPE_JSON = "application/json"
+CONTENT_TYPE_YAML = "application/yaml"
 
 HTTP_STATUS_OK = 200
 HTTP_STATUS_CREATED = 201

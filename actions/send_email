@@ -29,16 +29,16 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
+# pylint: disable=C0209
+
+import io
 import os
 import smtplib
-
-from email.mime import multipart as MIMEMultipart
-from email.mime import base as MIMEBase
 from email import encoders as Encoders
+from email.mime import base as MIMEBase
+from email.mime import multipart as MIMEMultipart
 from email.mime.text import MIMEText
-
 from email.utils import COMMASPACE, formatdate
 
 
@@ -47,15 +47,18 @@ def send_message(smarthost, sender, receivers, msg):
     smtp.sendmail(sender, COMMASPACE.join(receivers), msg.as_string())
     smtp.close()
 
+
 def run_command(command, node):
     command = command.strip()
     output = node.api_enable_cmds([command], text_format=True)
-    filename = str(command).replace(' ', '_')
-    open(filename, 'w').write(' '.join(output))
+    filename = str(command).replace(" ", "_")
+    with io.open(filename, "w", encoding="utf8") as fd:
+        fd.write(" ".join(output))
     return filename
 
+
 def main(attributes):
-    '''Sends an email using an SMTP relay host
+    """Sends an email using an SMTP relay host
 
     Generates an email from the bootstrap process and routes it through a
     smarthost.  The parameters value expects a dictionary with the
@@ -78,7 +81,8 @@ def main(attributes):
     This action is dual-supervisor compatible.
 
     Args:
-        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>) to read attribute values
+        attributes (list): list of attributes; use attributes.get(<ATTRIBUTE_NAME>)
+                            to read attribute values
         node (internal): attributes.get('NODE') API: see documentation
         smarthost: hostname of smarthos>,
         sender: from email addres>
@@ -103,58 +107,57 @@ def main(attributes):
                   body: Please see the attached 'show version'
                   commands: show version
 
-    '''
+    """
 
-    node = attributes.get('NODE')
+    node = attributes.get("NODE")
 
-    smarthost = attributes.get('smarthost')
+    smarthost = attributes.get("smarthost")
     if not smarthost:
-        raise Exception('Missing attribute(\'smarthost\')')
+        raise RuntimeError("Missing attribute('smarthost')")
 
-    sender = attributes.get('sender')
+    sender = attributes.get("sender")
     if not sender:
-        raise Exception('Missing attribute(\'sender\')')
+        raise RuntimeError("Missing attribute('sender')")
 
-    receivers = attributes.get('receivers')
+    receivers = attributes.get("receivers")
     if not receivers:
-        raise Exception('Missing attribute(\'receivers\')')
+        raise RuntimeError("Missing attribute('receivers')")
 
     msg = MIMEMultipart.MIMEMultipart()
-    msg['From'] = sender
-    msg['To'] = COMMASPACE.join(receivers)
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = attributes.get('subject') or 'ZTP Bootstrap'
+    msg["From"] = sender
+    msg["To"] = COMMASPACE.join(receivers)
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = attributes.get("subject") or "ZTP Bootstrap"
 
-    body = attributes.get('body')
-    attachments = attributes.get('attachments') or list()
-    commands = attributes.get('commands') or list()
+    body = attributes.get("body", "empty-body")
+    attachments = attributes.get("attachments", [])
+    commands = attributes.get("commands", [])
 
-    attributes.get('NODE').log_msg("Running commands: %s" % str(commands))
+    attributes.get("NODE").log_msg("Running commands: {}".format(str(commands)))
     if commands:
-        body += '\nThe output from the following commmands have '\
-            'been added as attachments:'
+        body += "\nThe output from the following commmands have been added as attachments:"
         for command in commands:
             filename = run_command(command, node)
             attachments.append(filename)
-            body += '\n\t* %s (%s)' % (command, filename)
+            body += "\n\t* {} ({})".format(command, filename)
 
-    attributes.get('NODE').log_msg("Collecting attachments: %s" % \
-        str(attachments))
+    attributes.get("NODE").log_msg("Collecting attachments: {}".format(str(attachments)))
     if attachments:
         for filename in attachments:
             if os.path.exists(filename):
                 filename = filename.strip()
-                part = MIMEBase.MIMEBase('application', 'octet-stream')
-                part.set_payload(open(filename, 'rb').read())
+                part = MIMEBase.MIMEBase("application", "octet-stream")
+                with io.open(filename, "rb", encoding="utf8") as fd:
+                    part.set_payload(fd.read())
                 Encoders.encode_base64(part)
-                part.add_header('Content-Disposition',
-                                'attachment; filename=\'%s\'' %
-                                os.path.basename(filename))
-                attributes.get('NODE').log_msg("Attaching %s" % filename)
+                part.add_header(
+                    "Content-Disposition",
+                    "attachment; filename='{}'".format(os.path.basename(filename)),
+                )
+                attributes.get("NODE").log_msg("Attaching {}".format(filename))
                 msg.attach(part)
 
     msg.attach(MIMEText(body))
 
-    attributes.get('NODE').log_msg("Sending email using smarthost %s" % \
-        smarthost)
+    attributes.get("NODE").log_msg("Sending email using smarthost {}".format(smarthost))
     send_message(smarthost, sender, receivers, msg)

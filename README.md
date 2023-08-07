@@ -37,10 +37,10 @@ Dependencies
 
 Server
 ======
-* [Python 2.7](https://www.python.org/download/releases/2.7/)
-* [routes 2.0 or later](https://pypi.python.org/pypi/Routes)
-* [webob 1.3 or later](http://webob.org/)
-* [PyYaml 3.0 or later](http://pyyaml.org/)
+* Python 3.7 or later (https://www.python.org/downloads)
+* routes 2.5 or later (https://pypi.python.org/pypi/Routes)
+* webob 1.8 or later (http://webob.org/)
+* PyYaml 6.0 or later (http://pyyaml.org/)
 
 Client
 ======

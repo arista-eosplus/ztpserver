@@ -32,24 +32,16 @@
 
 import unittest
 
-
 from ztpserver import utils
 
 
 class UtilsUnitTests(unittest.TestCase):
-
     def test_expand_basic_range(self):
-        """ Issue #358
-        """
-        result = utils.expand_range('Ethernet2-4')
-        self.assertItemsEqual(result,
-                              ['Ethernet2', 'Ethernet3', 'Ethernet4'])
+        """Issue #358"""
+        result = utils.expand_range("Ethernet2-4")
+        self.assertCountEqual(result, ["Ethernet2", "Ethernet3", "Ethernet4"])
 
     def test_expand_linecard_range(self):
-        """ Issue #358
-        """
-        result = utils.expand_range('Ethernet2/2-2/4')
-        self.assertItemsEqual(result,
-                              ['Ethernet2/2',
-                               'Ethernet2/3',
-                               'Ethernet2/4'])
+        """Issue #358"""
+        result = utils.expand_range("Ethernet2/2-2/4")
+        self.assertCountEqual(result, ["Ethernet2/2", "Ethernet2/3", "Ethernet2/4"])

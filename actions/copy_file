@@ -27,18 +27,27 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,E1103
-
-BACKUP_SUFFIX = '.backup'
-PERSISTENT_DIR = '/mnt/flash/.ztp-files'
-PERSISTENT_STORAGE = ['/mnt/flash/', '/mnt/usb1/', '/mnt/drive/',
-                      '/persist/local/', '/persyst/sys/']
+# pylint: disable=C0209
 
 import os
 import shutil
 
+from six import raise_from
+
+BACKUP_SUFFIX = ".backup"
+PERSISTENT_DIR = "/mnt/flash/.ztp-files"
+PERSISTENT_STORAGE = [
+    "/mnt/flash/",
+    "/mnt/usb1/",
+    "/mnt/drive/",
+    "/persist/local/",
+    "/persist/sys/",
+]
+
+
 def is_subdir(path, directory):
     return os.path.realpath(path).startswith(os.path.realpath(directory))
+
 
 def url_persistent(url):
     for directory in PERSISTENT_STORAGE:
@@ -46,8 +55,9 @@ def url_persistent(url):
             return True
     return False
 
+
 def main(attributes):
-    '''Copies file to the switch.
+    """Copies file to the switch.
 
     Copies file based on the values of 'src_url' and 'dst_url'
     attributes ('dst_url' should point to the destination folder).
@@ -71,7 +81,7 @@ def main(attributes):
          already another file at the destination, that file is renamed
          by appending the '.backup' suffix
 
-    Special_attributes: 
+    Special_attributes:
         NODE: API object - see documentation for details
 
 
@@ -88,96 +98,85 @@ def main(attributes):
               src_url: files/automate/bgpautoinf.py
             name: "automate BGP peer interface config"
 
-    '''
+    """
 
-    node = attributes.get('NODE')
-    src_url = attributes.get('src_url')
+    node = attributes.get("NODE")
+    src_url = attributes.get("src_url")
 
     if not src_url:
-        raise Exception('Missing attribute(\'src_url\')')
+        raise RuntimeError("Missing attribute('src_url')")
 
-    dst_url = attributes.get('dst_url')
+    dst_url = attributes.get("dst_url")
     if not dst_url:
-        raise Exception('Missing attribute(\'dst_url\')')
+        raise RuntimeError("Missing attribute('dst_url')")
 
     name = os.path.basename(src_url)
 
-    mode = attributes.get('mode')
+    mode = attributes.get("mode")
 
-    overwrite = attributes.get('overwrite')
+    overwrite = attributes.get("overwrite")
     if not overwrite:
-        overwrite = 'replace'
+        overwrite = "replace"
 
     if url_persistent(dst_url):
         dst_path = os.path.join(dst_url, name)
 
-        if overwrite == 'if-missing':
+        if overwrite == "if-missing":
             if os.path.exists(dst_path):
-                node.log_msg('copy_file: nothing to do: %s '
-                             'already exists' % dst_path)
+                node.log_msg("copy_file: nothing to do: {} already exists".format(dst_path))
                 return
-        elif overwrite == 'backup':
+        elif overwrite == "backup":
             if os.path.exists(dst_path):
-                backup_path = '%s%s' % (dst_path, BACKUP_SUFFIX)
-                node.log_msg('copy_file: backing up %s '
-                             'to %s' % (dst_path, backup_path))
+                backup_path = "{}{}".format(dst_path, BACKUP_SUFFIX)
+                node.log_msg("copy_file: backing up {} to {}".format(dst_path, backup_path))
                 shutil.copy(dst_path, backup_path)
-        elif overwrite == 'replace':
+        elif overwrite == "replace":
             pass
         else:
-            raise Exception('Erroneous \'overwrite\' value')
+            raise RuntimeError("Erroneous 'overwrite' value")
 
-        try:
+        if not os.path.exists(dst_url):
             os.makedirs(dst_url)
-        except OSError:
-            # file exists
-            pass
 
         try:
             node.retrieve_url(src_url, dst_path)
-            node.log_msg('copy_file: saving %s '
-                         'to %s' % (src_url, dst_path))
+            node.log_msg("copy_file: saving {} to {}".format(src_url, dst_path))
             if mode is not None:
                 os.chmod(dst_path, int(str(mode), 8))
         except Exception as exc:
-            raise Exception('Unable to retrieve file from URL (%s)' % 
-                            exc)
+            raise_from(RuntimeError("Unable to retrieve file from URL"), exc)
     else:
         dst_path = os.path.join(PERSISTENT_DIR, name)
 
         lines = []
-        if overwrite == 'if-missing':
-            lines = lines + ['[ ! -f %s ] && '
-                             'sudo cp %s %s'  % (dst_url, dst_path,
-                                                 dst_url)]
-        elif overwrite == 'backup':
-            lines = lines + ['[ -f %s ] && '
-                             'sudo mv %s %s%s' % (dst_url, dst_url,
-                                                  dst_url, BACKUP_SUFFIX)]
-            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
-        elif overwrite == 'replace':
-            lines = lines + ['sudo cp %s %s'  % (dst_path, dst_url)]
+        if overwrite == "if-missing":
+            lines = lines + [
+                "[ ! -f {dst_url} ] && sudo cp {} {dst_url}".format(dst_path, dst_url=dst_url)
+            ]
+        elif overwrite == "backup":
+            lines = lines + [
+                "[ -f {dst_url} ] && sudo mv {dst_url} {dst_url}{}".format(
+                    BACKUP_SUFFIX, dst_url=dst_url
+                )
+            ]
+            lines = lines + ["sudo cp {} {}".format(dst_path, dst_url)]
+        elif overwrite == "replace":
+            lines = lines + ["sudo cp {} {}".format(dst_path, dst_url)]
         else:
-            raise Exception('Erroneous \'overwrite\' value')
+            raise RuntimeError("Erroneous 'overwrite' value")
 
         if mode:
-            lines = lines + ['sudo chmod %s %s'  % (mode, dst_url)]
+            lines = lines + ["sudo chmod {} {}".format(mode, dst_url)]
 
-        try:
+        if not os.path.exists(PERSISTENT_DIR):
             os.makedirs(PERSISTENT_DIR)
-        except OSError:
-            # file exists
-            pass
 
         try:
-            file_path = '%s/%s' % (PERSISTENT_DIR, name)
+            file_path = "{}/{}".format(PERSISTENT_DIR, name)
             node.retrieve_url(src_url, file_path)
-            node.log_msg('copy_file: saving %s '
-                         'to %s' % (src_url, file_path))
+            node.log_msg("copy_file: saving {} to {}".format(src_url, file_path))
         except Exception as exc:
-            raise Exception('Unable to retrieve file from URL (%s)' % 
-                            exc)
+            raise_from(RuntimeError("Unable to retrieve file from URL"), exc)
 
-        node.log_msg('copy_file: adding rc.eos lines: \n%s$' %
-                     '\n'.join(lines))
+        node.log_msg("copy_file: adding rc.eos lines: \n%s$" % "\n".join(lines))
         node.append_rc_eos_lines(lines)

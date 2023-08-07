@@ -27,14 +27,18 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=W0703,W0402,E1103
+# pylint: disable=C0209
 
+import io
 import os
 
-TEMP_CONFIG = '/tmp/tmp-add-config'
+from six import raise_from
+
+TEMP_CONFIG = "/tmp/tmp-add-config"
+
 
 def main(attributes):
-    ''' Appends config section to startup-config.
+    """Appends config section to startup-config.
 
     This action is dual-supervisor compatible.
 
@@ -42,8 +46,8 @@ def main(attributes):
         url: path to source config/template
         substitution_mode: loose|strict (default: loose)
         variables: list of value substitutions
-        
-    Special_attributes: 
+
+    Special_attributes:
         NODE: API object - see documentation for details
 
     Example:
@@ -60,41 +64,37 @@ def main(attributes):
             onsuccess: "SUCCESS: ma1 configure"
             onfailure: "FAIL: IM provisioning@example.com for help"
 
-    '''
+    """
 
-    node = attributes.get('NODE')
-    url = attributes.get('url')
+    node = attributes.get("NODE")
+    url = attributes.get("url")
 
     if not url:
-        raise Exception('Missing attribute(\'url\')')
+        raise RuntimeError("Missing attribute('url')")
 
-
-    substitution_mode = attributes.get('substitution_mode', 'loose')
-    if substitution_mode not in ['loose', 'strict']:
-        raise Exception('Invalid option specified for substitution_mode '
-                        'attribute')
+    substitution_mode = attributes.get("substitution_mode", "loose")
+    if substitution_mode not in ["loose", "strict"]:
+        raise RuntimeError("Invalid option specified for substitution_mode attribute")
 
     try:
         node.retrieve_url(url, TEMP_CONFIG)
     except Exception as exc:
-        raise Exception('Unable to retrieve config from URL (%s)' % 
-                        exc)
+        raise_from(RuntimeError("Unable to retrieve config from URL"), exc)
 
-    contents = open(TEMP_CONFIG, 'r').read()
+    with io.open(TEMP_CONFIG, encoding="utf8") as fd:
+        contents = fd.read()
 
-    variables = attributes.get('variables')
+    variables = attributes.get("variables")
     if not variables:
         variables = {}
 
     if not isinstance(variables, dict):
-        node.log_msg('Variables: %s' % variables)
-        raise Exception('Unable to perform variable substitution - '
-                        'invalid variables')
+        node.log_msg("Variables: {}".format(variables))
+        raise RuntimeError("Unable to perform variable substitution - invalid variables")
 
-    contents = node.substitute(contents, variables,
-                               substitution_mode == 'strict')
-    node.append_startup_config_lines(contents.split('\n'))
-    
+    contents = node.substitute(contents, variables, substitution_mode == "strict")
+    node.append_startup_config_lines(contents.split("\n"))
+
     # Only remove this in case everything else succeeded
     # for debugging purposes
     os.remove(TEMP_CONFIG)

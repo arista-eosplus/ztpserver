@@ -27,82 +27,87 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pylint: disable=R0904,F0401,W0232,E1101,W0402
+# pylint: disable=C0209
 
 import os
 import os.path
 import unittest
-import sys
 from string import Template
+from test.client.client_test_lib import (
+    ActionFailureTest,
+    Bootstrap,
+    get_action,
+    raise_exception,
+    random_string,
+    startup_config_action,
+)
 
-sys.path.append('test/client')
-
-from client_test_lib import Bootstrap, ActionFailureTest
-from client_test_lib import get_action, random_string
-from client_test_lib import startup_config_action
-from client_test_lib import raise_exception
 
 class FailureTest(ActionFailureTest):
-
     def test_missing_url(self):
-        self.basic_test('run_bash_script', 'Missing attribute(\'url\')')
+        self.basic_test("run_bash_script", "Missing attribute('url')")
 
     def test_url_failure(self):
-        self.basic_test('run_bash_script', 
-                        'Unable to retrieve config from URL',
-                        attributes={'url' :
-                                    random_string()})
+        self.basic_test(
+            "run_bash_script",
+            "Unable to retrieve config from URL",
+            attributes={"url": random_string()},
+        )
 
     def test_variables_failure(self):
         url = random_string()
         contents = random_string()
-        self.basic_test('run_bash_script', 
-                        'Unable to perform variable substitution - '
-                        'invalid variables',
-                        attributes={'url' : url,
-                                    'variables' : random_string()},
-                        file_responses={url : contents})
+        self.basic_test(
+            "run_bash_script",
+            "Unable to perform variable substitution - invalid variables",
+            attributes={"url": url, "variables": random_string()},
+            file_responses={url: contents},
+        )
 
     def test_variable_missing_failure(self):
         url = random_string()
-        contents = random_string() + ' $missing_var'
-        self.basic_test('run_bash_script', 
-                        'Unable to perform variable substitution - '
-                        '\'missing_var\' missing from list of substitutions',
-                        attributes={'url' : url,
-                                    'variables' : {}},
-                        file_responses={url : contents})
+        contents = random_string() + " $missing_var"
+        self.basic_test(
+            "run_bash_script",
+            (
+                "Unable to perform variable substitution - "
+                "'missing_var' missing from list of substitutions"
+            ),
+            attributes={"url": url, "variables": {}},
+            file_responses={url: contents},
+        )
 
 
 class SuccessTest(unittest.TestCase):
-
     def test_success(self):
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
         url = config
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes': {'url' : url}}])
+            actions=[
+                {"action": "startup_config_action"},
+                {"action": "test_action", "attributes": {"url": url}},
+            ]
+        )
 
-        bootstrap.ztps.set_action_response(
-            'startup_config_action', startup_config_action())
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('run_bash_script'))
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
+        bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
         print_string = random_string()
-        contents = '''#!/usr/bin/env python
-print "%s"''' % print_string
+        contents = """#!/usr/bin/env python
+print("{}")""".format(
+            print_string
+        )
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         try:
-            self.failUnless(os.path.isfile(bootstrap.startup_config))
-            self.failUnless(print_string in bootstrap.output)
-            self.failUnless(bootstrap.success())
+            self.assertTrue(os.path.isfile(bootstrap.startup_config))
+            self.assertTrue(print_string in bootstrap.output)
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -112,26 +117,26 @@ print "%s"''' % print_string
         config = random_string()
         url = config
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes': {'url' : url}}])
+            actions=[
+                {"action": "startup_config_action"},
+                {"action": "test_action", "attributes": {"url": url}},
+            ]
+        )
 
-        bootstrap.ztps.set_action_response(
-            'startup_config_action', startup_config_action())
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('run_bash_script'))
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
+        bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
-        contents = '''#!/usr/bin/env python
-assert False'''
+        contents = """#!/usr/bin/env python
+assert False"""
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         try:
-            self.failUnless('AssertionError' in bootstrap.output)
-            self.failUnless(bootstrap.action_failure())
+            self.assertTrue("AssertionError" in bootstrap.output)
+            self.assertTrue(bootstrap.action_failure())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
@@ -140,40 +145,45 @@ assert False'''
         bootstrap = Bootstrap(ztps_default_config=True)
         config = random_string()
         url = config
-        var_dict = { 'a' : 'A',
-                     'b' : 'A',
-                     'xxx' : '999',
-                     'dummy': 'DUMMY'}
+        var_dict = {"a": "A", "b": "A", "xxx": "999", "dummy": "DUMMY"}
         bootstrap.ztps.set_definition_response(
-            actions=[{'action' : 'startup_config_action'},
-                     {'action' : 'test_action',
-                      'attributes': {'url' : url,
-                                     'substitution_mode': 'strict',
-                                     'variables': var_dict}}])
+            actions=[
+                {"action": "startup_config_action"},
+                {
+                    "action": "test_action",
+                    "attributes": {
+                        "url": url,
+                        "substitution_mode": "strict",
+                        "variables": var_dict,
+                    },
+                },
+            ]
+        )
 
-        bootstrap.ztps.set_action_response(
-            'startup_config_action', startup_config_action())
-        bootstrap.ztps.set_action_response('test_action',
-                                           get_action('run_bash_script'))
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
+        bootstrap.ztps.set_action_response("test_action", get_action("run_bash_script"))
 
-        print_string = '$a 1234 $b 4 321 $xxx$a'
-        contents = '''#!/usr/bin/env bash
-echo %s''' % print_string
+        print_string = "$a 1234 $b 4 321 $xxx$a"
+        contents = """#!/usr/bin/env bash
+echo {}""".format(
+            print_string
+        )
         bootstrap.ztps.set_file_response(config, contents)
         bootstrap.start_test()
 
         expected_contents = Template(print_string).substitute(var_dict)
 
         try:
-            self.failUnless(os.path.isfile(bootstrap.startup_config))
-            self.failUnless(expected_contents in bootstrap.output)
-            self.failUnless(bootstrap.success())
+            self.assertTrue(os.path.isfile(bootstrap.startup_config))
+            self.assertTrue(expected_contents in bootstrap.output)
+            self.assertTrue(bootstrap.success())
         except AssertionError as assertion:
-            print 'Output: %s' % bootstrap.output
-            print 'Error: %s' % bootstrap.error
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
             raise_exception(assertion)
         finally:
             bootstrap.end_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
