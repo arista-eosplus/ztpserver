@@ -1,0 +1,4 @@
+six
+sleekxmpp
+jsonrpclib
+aiosmtpd
