@@ -8,7 +8,7 @@ Requirements
 
   **Server:**
 
-  * Python 3.7 or later (https://www.python.org/download/releases)
+  * Python 3.6 or later (https://www.python.org/download/releases)
   * routes 2.5 or later (https://pypi.python.org/pypi/Routes)
   * webob 1.8 or later (http://webob.org/)
   * PyYaml 6.0 or later (http://pyyaml.org/)
