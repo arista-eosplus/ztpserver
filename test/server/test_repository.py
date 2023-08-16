@@ -34,7 +34,7 @@
 #
 import unittest
 from test.server.server_test_lib import enable_logging, random_string
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 from ztpserver.repository import (
     FileObject,
@@ -63,7 +63,6 @@ class FileObjectUnitTests(unittest.TestCase):
     @classmethod
     @patch("ztpserver.serializers.dump")
     def test_write_success(cls, _):
-        obj = FileObjectError(random_string())
         obj = FileObject(random_string())
         obj.write(random_string())
 
@@ -72,6 +71,11 @@ class FileObjectUnitTests(unittest.TestCase):
         m_dump.side_effect = SerializerError
         obj = FileObject(random_string())
         self.assertRaises(FileObjectError, obj.write, random_string())
+
+    @patch("builtins.open", new_callable=mock_open, read_data=b"some data")
+    def test_hash_success(self, _):
+        obj = FileObject(random_string())
+        self.assertEqual("baf34551fecb48acc3da868eb85e1b6dac9de356", obj.hash())
 
 
 class RepositoryUnitTests(unittest.TestCase):

@@ -79,7 +79,7 @@ class WSGIController:
             result = method(request, **request.urlvars)
         except Exception as exc:
             log.error("Unrecoverable error detected: %s", exc)
-            raise webob.exc.HTTPInternalServerError()
+            raise webob.exc.HTTPInternalServerError() from exc
 
         if result is None:
             result = webob.exc.HTTPNoContent()

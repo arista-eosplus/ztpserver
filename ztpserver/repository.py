@@ -81,6 +81,7 @@ class FileObjectNotFound(RepositoryError):
 
 
 class FileObject:
+    BUF_SIZE = 65536
     """The :py:class:`FileObject` represents a single file entity in the
     repository.   The instance provides convienent methods to read and write
     contents to the file using a specified serialization
@@ -171,8 +172,12 @@ class FileObject:
         """
 
         sha1 = hashlib.sha1()
-        with open(self.name, encoding="utf8") as fd:
-            sha1.update(fd.read().encode("utf8"))  # pylint: disable=E1101
+        with open(self.name, mode="rb") as fd:
+            while True:
+                data = fd.read(self.BUF_SIZE)
+                if not data:
+                    break
+                sha1.update(data)
         return sha1.hexdigest()
 
 
