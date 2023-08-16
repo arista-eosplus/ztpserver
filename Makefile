@@ -96,7 +96,10 @@ install:
 	$(PYTHON) setup.py install
 
 sdist: clean ztpserver.spec
-	$(PYTHON) setup.py sdist 
+	$(PYTHON) setup.py sdist
+
+sdist-dev: clean ztpserver.spec
+	DEV_VERSION_HASH=$$(git rev-parse --short HEAD) $(PYTHON) setup.py sdist
 
 docker_dev: sdist
 	@docker build -t ${IMG} .
