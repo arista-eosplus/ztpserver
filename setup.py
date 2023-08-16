@@ -99,6 +99,8 @@ install_requirements = [
     x.strip() for x in install_requirements if x.strip() and "dev only" not in x
 ]
 version = open("VERSION").read().split()[0].strip()
+if os.environ.get("DEV_VERSION_HASH"):
+    version = f"{version}+{os.environ.get('DEV_VERSION_HASH')}"
 
 data_files = []
 # configuration folders are not cleared on upgrade/downgrade
