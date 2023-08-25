@@ -29,16 +29,25 @@
 
 # pylint: disable=C0209
 
-from pkg_resources import parse_version
+import re
+
 from six import raise_from
 
 BOOT_CONFIG = "/mnt/flash/boot-config"
 
 
-def remove_eos_release_kind(version):
-    if version[-1] in ("M", "F"):
-        return version[:-1]
-    return version
+EOS_VERSION_REGEXP = r"^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?[a-zA-Z]+$"
+
+
+def parse_eos_version(version):
+    match = re.match(EOS_VERSION_REGEXP, version)
+    if match is None:
+        raise RuntimeError("invalid version {}".format(version))
+
+    major, minor, patch, build = match.groups()
+    version_tuple = (major, minor, patch, build or 0)
+
+    return tuple(map(int, version_tuple))
 
 
 def main(attributes):
@@ -98,10 +107,8 @@ def main(attributes):
         return
 
     # Don't downgrade images if flag is set
-    if downgrade is not True:
-        if parse_version(remove_eos_release_kind(version)) < parse_version(
-            remove_eos_release_kind(current_version)
-        ):
+    if not downgrade:
+        if parse_eos_version(version) < parse_eos_version(current_version):
             node.log_msg("install_image: nothing to do: downgrade disabled")
             return
 
