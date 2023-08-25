@@ -32,7 +32,15 @@
 #    Written by:
 #       EOS+, Arista Networks
 
-# pylint: disable=W0703,C0209,C0415,W4901
+# pylint: disable=W0703,C0209,C0415,W4901,C0413
+
+import os
+import sys
+
+if os.path.exists("/usr/bin/arista-python") and os.path.realpath(
+    sys.executable
+) != os.path.realpath("/usr/bin/arista-python"):
+    os.execl("/usr/bin/python3", "python3", os.path.abspath(__file__))
 
 import argparse
 import crypt
@@ -41,13 +49,10 @@ import grp
 import io
 import json
 import logging
-import os
-import os.path
 import pwd
 import re
 import shutil
 import subprocess
-import sys
 import time
 import traceback
 from collections import namedtuple
