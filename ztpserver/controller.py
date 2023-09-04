@@ -876,7 +876,7 @@ class MetaController(BaseController):
                 self.BODY["size"] = file_resource.size()
                 self.BODY["sha1"] = file_resource.hash()
                 resp = {"body": self.BODY, "content_type": CONTENT_TYPE_JSON}
-        except OSError as exc:
+        except Exception as exc:
             log.error("Failed to collect meta information for %s: %s", file_path, exc)
             resp = self.http_internal_server_error()
         return resp

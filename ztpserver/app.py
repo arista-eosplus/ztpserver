@@ -77,7 +77,7 @@ def enable_handler_console(level=None):
 
 def python_supported():
     """Returns True if the current version of the python runtime is valid"""
-    return sys.version_info >= (3, 7)
+    return sys.version_info >= (3, 6)
 
 
 logging_started = False  # pylint: disable=C0103
@@ -131,7 +131,7 @@ def start_wsgiapp(config_file=None, debug=False):
     log.info("Using repository %s", config.runtime.default.data_root)
 
     if not python_supported():
-        raise SystemExit("ERROR: ZTPServer requires Python >= 3.8")
+        raise SystemExit("ERROR: ZTPServer requires Python >= 3.6")
 
     return controller.Router()
 

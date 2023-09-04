@@ -8,7 +8,7 @@ Requirements
 
   **Server:**
 
-  * Python 3.7 or later (https://www.python.org/download/releases)
+  * Python 3.6 or later (https://www.python.org/download/releases)
   * routes 2.5 or later (https://pypi.python.org/pypi/Routes)
   * webob 1.8 or later (http://webob.org/)
   * PyYaml 6.0 or later (http://pyyaml.org/)
@@ -30,7 +30,7 @@ Installation Options
 .. _packer_install:
 
 Turn-key VM Creation (deprecated)
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The turn-key VM option leverages `Packer <http://www.packer.io/>`_ to auto generate a VM on your local system. Packer.io automates the creation of the ZTPServer VM. All of the required packages and dependencies are installed and configured. The current Packer configuration allows you to choose between VirtualBox or VMWare as your hypervisor and each can support Fedora 20 or Ubuntu Server 12.04.
 

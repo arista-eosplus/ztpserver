@@ -42,6 +42,7 @@ The authoritative state for any known issue can be found in `GitHub issues <http
     :maxdepth: 2
     :titlesonly:
 
+    ReleaseNotes2.0.1
     ReleaseNotes2.0.0
     ReleaseNotes1.6.0
     ReleaseNotes1.5.0
