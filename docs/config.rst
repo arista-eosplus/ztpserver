@@ -476,7 +476,8 @@ unique_id of the node) and global patterns.
 Rules:
 
  - if multiple node-specific entries reference the same unique_id, only the first will be in effect - all others will be ignored
- - if both the **node** and **interfaces** attributes are specified and a node's unique_id is a match, but the topology information is not, then the overall match will fail and the global patterns will not be considered
+ - if the **node** and **interfaces** or **model** attributes are specified and a node's unique_id is a match, but the topology information or model information are not, then the overall match will fail and the global patterns will not be considered
+ - **model** can't be the only matching attributes, **node** or **interfaces** are mandatory to have a valid match
  - if there is no matching node-specific pattern for a node's unique_id, then the server will attempt to match the node against the global patterns (in the order they are specified in ``neighbordb``)
  - if a node-specific pattern matches, the server will automatically generate an open pattern in the node's folder. This pattern will match any device with at least one LLDP-capable neighbor.  Example: ``any: any:any``
 
@@ -488,8 +489,9 @@ Rules:
     ...
     patterns:
         - name: <single line description of pattern>
-          definition: <defintion_url>
+          definition: <definition_url>
           node: <unique_id>
+          model: <model_regexp>
           config-handler: <config-handler>
           variables:
             <variable_name>: <function>
@@ -504,7 +506,7 @@ Rules:
 
     Mandatory attributes: **name**, **definition**, and either **node**, **interfaces** or both.
 
-    Optional attributes: **variables**, **config-handler**.
+    Optional attributes: **variables**, **config-handler**, **model**.
 
 variables
 '''''''''
@@ -527,6 +529,11 @@ node: unique_id
 '''''''''''''''
 
 Serial number or MAC address, depending on the global 'identifier' attribute in **ztpserver.conf**.
+
+model: model_regexp
+'''''''''''''''''''
+
+Defines a regex pattern to match the node model against.
 
 interfaces: port\_name
 ''''''''''''''''''''''

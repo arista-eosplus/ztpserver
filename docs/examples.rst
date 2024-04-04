@@ -367,6 +367,27 @@ Example #5
 In this case, the pattern matches if `any` local interface is connected to a
 device with `spine` in the hostname and to the 4th or 5th slot in the chassis.
 
+Example #6
+''''''''''
+
+.. code-block:: yaml
+
+    ---
+    - name: old switch
+      definition: old-switch
+      model: "DCS-7010T-48"
+      interfaces:
+        - Ethernet49: $uplink:any
+    - name: new switch
+      definition: new-switch
+      model: "DCS-7010TX-48-F"
+      interfaces:
+        - Ethernet49: $uplink:any
+
+In this case, the two patterns match the same uplink switch on the same
+local interface, but with a different model. This will allow to use a
+different definition to upload a version of EOS compatible with the device.
+
 
 More examples
 `````````````

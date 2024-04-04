@@ -496,6 +496,7 @@ class Pattern:
         node=None,
         variables=None,
         node_id=None,
+        model=None,
     ):
         self.name = name
         self.definition = definition
@@ -504,6 +505,8 @@ class Pattern:
         self.node = node
         self.node_id = node_id
         self.variables = variables or {}
+
+        self.model=model
 
         self.interfaces = []
         if interfaces:
@@ -551,6 +554,7 @@ class Pattern:
             "definition": self.definition,
             "variables": self.variables,
             "node": self.node,
+            "model": self.model,
             "config-handler": self.config_handler,
         }
 
@@ -639,6 +643,10 @@ class Pattern:
         # No need to match system ID - that it already taken care of
         # while selecting the set of nodes which are eligible for a
         # match.
+
+        # Match the model first
+        if self.model and not re.match(self.model, node.model):
+            return False
 
         patterns = []
         for entry in self.interfaces:
