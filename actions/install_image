@@ -112,11 +112,19 @@ def main(attributes):
             node.log_msg("install_image: nothing to do: downgrade disabled")
             return
 
-    # In all other cases, copy the image
-    image = "EOS-{}.swi".format(version)
-    try:
-        node.retrieve_url(url, "{}/{}".format(node.flash(), image))
-    except Exception as exc:
-        raise_from(RuntimeError("Unable to retrieve image file from URL"), exc)
+    # Determine architecture from URL
+    architecture = 'EOS64' if '64' in url else 'EOS32' if '32' in url else 'EOS'
 
-    node.api_enable_cmds(["install source flash:{}".format(image)])
+    # Use the full version string, assuming it ends with either 'F' or 'M'
+    filename = "{}-{}.swi".format(architecture, version)
+
+    # Remove any existing filename from the URL to avoid duplication
+    base_url = re.sub(r'EOS(32|64)-.*\.swi', '', url, flags=re.IGNORECASE)
+    final_url = "{}/{}".format(base_url.strip('/'), filename)
+
+    try:
+        node.retrieve_url(final_url, "/mnt/flash/{}".format(filename))
+    except Exception as exc:
+        raise RuntimeError("Unable to retrieve image file from URL: {}".format(exc))
+
+    node.api_enable_cmds(["install source flash:{}".format(filename)])
