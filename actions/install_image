@@ -113,7 +113,7 @@ def main(attributes):
             return
 
     # In all other cases, copy the image
-    image = "EOS-{}.swi".format(version)
+    image = url.split("/")[-1]
     try:
         node.retrieve_url(url, "{}/{}".format(node.flash(), image))
     except Exception as exc:
