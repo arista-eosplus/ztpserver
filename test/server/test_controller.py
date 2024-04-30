@@ -42,6 +42,7 @@ from test.server.server_test_lib import (
     create_node,
     enable_logging,
     mock_match,
+    random_bytes,
     random_string,
     remove_all,
     write_file,
@@ -1006,18 +1007,23 @@ class NodesControllerUnitTests(unittest.TestCase):
         foo = resp["definition"]["actions"][0]["attributes"]["foo"]
         self.assertEqual(foo, var_foo)
 
+    @patch("ztpserver.controller.create_repository")
     @patch("os.path.isfile")
-    def test_put_config_success(self, m_is_file):
+    def test_put_config_success(self, m_is_file, m_create_repository):
         m_is_file.return_value = False
+        file_mock = MagicMock()
+        m_create_repository.return_value.get_file.return_value = file_mock
 
         resource = random_string()
-        body = random_string()
+        body = random_bytes()
         request = Mock(content_type=constants.CONTENT_TYPE_OTHER, body=body)
 
         controller = ztpserver.controller.NodesController()
+
         resp = controller.put_config(request, resource=resource)
 
         self.assertEqual(resp, {})
+        file_mock.write.assert_called_with(body.decode("utf-8"), constants.CONTENT_TYPE_OTHER)
 
 
 class NodesControllerPostFsmIntegrationTests(unittest.TestCase):

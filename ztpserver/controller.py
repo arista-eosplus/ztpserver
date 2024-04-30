@@ -218,7 +218,7 @@ class NodesController(BaseController):
 
         fobj = None
         filename = self.expand(node_id, STARTUP_CONFIG_FN)
-        body = str(request.body)
+        body = request.body.decode("utf-8")
         content_type = str(request.content_type)
         try:
             fobj = self.repository.get_file(filename)
