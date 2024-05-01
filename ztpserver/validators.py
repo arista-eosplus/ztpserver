@@ -40,7 +40,7 @@ from ztpserver.config import runtime
 from ztpserver.utils import expand_range, parse_interface
 
 REQUIRED_PATTERN_ATTRIBUTES = ["name", "definition"]
-OPTIONAL_PATTERN_ATTRIBUTES = ["node", "variables", "interfaces"]
+OPTIONAL_PATTERN_ATTRIBUTES = ["node", "variables", "interfaces", "model"]
 INTERFACE_PATTERN_KEYWORDS = ["any", "none"]
 ANTINODE_PATTERN = rf"[^{string.hexdigits}]"
 KW_ANY_RE = re.compile(r" *any *")
@@ -170,17 +170,15 @@ class PatternValidator(Validator):
             if attr not in self.data:
                 raise ValidationError(f"missing attribute: {attr}")
 
-        if "node" not in self.data and "interfaces" not in self.data:
-            raise ValidationError("missing attribute: 'node' OR 'interfaces'")
+        if "node" not in self.data and "model" not in self.data and "interfaces" not in self.data:
+            raise ValidationError("missing attribute: 'node' OR 'model' OR 'interfaces'")
 
-        for attr in OPTIONAL_PATTERN_ATTRIBUTES:
-            if attr not in self.data:
-                log.warning(
-                    "%s: PatternValidator warning: '%s' is missing optional attribute (%s)",
-                    self.node_id,
-                    self.data["name"],
-                    attr,
-                )
+        if "node" in self.data and "model" in self.data:
+            raise ValidationError("'node' AND 'model' are mutually exclusive")
+
+        for attr in self.data:
+            if attr not in REQUIRED_PATTERN_ATTRIBUTES + OPTIONAL_PATTERN_ATTRIBUTES:
+                raise ValidationError(f"{attr} not allowed")
 
     def validate_name(self):
         if not self.data or "name" not in self.data:
