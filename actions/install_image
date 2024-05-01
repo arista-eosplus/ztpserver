@@ -90,6 +90,7 @@ def main(attributes):
 
     node = attributes.get("NODE")
     url = attributes.get("url")
+    image_name_from_url = attributes.get("image_name_from_url", False)
 
     if not url:
         raise RuntimeError("Missing attribute('url')")
@@ -113,7 +114,11 @@ def main(attributes):
             return
 
     # In all other cases, copy the image
-    image = url.split("/")[-1]
+    if image_name_from_url:
+        image = url.split("/")[-1]
+    else:
+        image = "EOS-{}.swi".format(version)
+
     try:
         node.retrieve_url(url, "{}/{}".format(node.flash(), image))
     except Exception as exc:
