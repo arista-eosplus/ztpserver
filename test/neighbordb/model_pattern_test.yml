@@ -1,0 +1,30 @@
+tag: model_pattern_test
+tests:
+  - pattern
+valid_patterns:
+  nodes:
+    - node pattern
+  globals:
+    - pattern with model
+    - pattern with model and interfaces
+
+neighbordb:
+  patterns:
+    - name: node pattern
+      definition: test
+      node: 2b3c
+
+    - name: invalid pattern with node and model
+      definition: test
+      model: modelA
+      node: 2b3caa
+
+    - name: pattern with model
+      definition: test
+      model: modelA
+
+    - name: pattern with model and interfaces
+      definition: test
+      model: modelA
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
