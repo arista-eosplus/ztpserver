@@ -506,7 +506,7 @@ class Pattern:
         self.node_id = node_id
         self.variables = variables or {}
 
-        self.model=model
+        self.model = model
 
         self.interfaces = []
         if interfaces:
