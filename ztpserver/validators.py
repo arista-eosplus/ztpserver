@@ -40,7 +40,7 @@ from ztpserver.config import runtime
 from ztpserver.utils import expand_range, parse_interface
 
 REQUIRED_PATTERN_ATTRIBUTES = ["name", "definition"]
-OPTIONAL_PATTERN_ATTRIBUTES = ["node", "variables", "interfaces", "model"]
+OPTIONAL_PATTERN_ATTRIBUTES = ["node", "variables", "interfaces", "model", "config_handler"]
 INTERFACE_PATTERN_KEYWORDS = ["any", "none"]
 ANTINODE_PATTERN = rf"[^{string.hexdigits}]"
 KW_ANY_RE = re.compile(r" *any *")
