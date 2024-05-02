@@ -150,6 +150,42 @@ class SuccessTest(unittest.TestCase):
             remove_file(image_file)
             bootstrap.end_test()
 
+    def test_image_name_from_url(self):
+        bootstrap = Bootstrap(ztps_default_config=True)
+        version = random_string()
+        image = random_string()
+        url = "http://{}/{}".format(bootstrap.server, image)
+        bootstrap.ztps.set_definition_response(
+            actions=[
+                {
+                    "action": "test_action",
+                    "attributes": {"url": url, "version": version, "image_name_from_url": True},
+                },
+                {"action": "startup_config_action"},
+            ]
+        )
+
+        action = get_action("install_image")
+        bootstrap.ztps.set_action_response("test_action", action)
+        bootstrap.ztps.set_action_response("startup_config_action", startup_config_action())
+        bootstrap.ztps.set_file_response(image, print_action())
+        bootstrap.start_test()
+
+        image_file = "{}/{}".format(bootstrap.flash, url.rsplit("/", 1)[-1])
+        try:
+            self.assertTrue(os.path.isfile(image_file))
+            self.assertTrue(bootstrap.success())
+            self.assertEqual(
+                eapi_log()[-1], "install source flash:{}".format(url.rsplit("/", 1)[-1])
+            )
+        except AssertionError as assertion:
+            print("Output: {}".format(bootstrap.output))
+            print("Error: {}".format(bootstrap.error))
+            raise_exception(assertion)
+        finally:
+            remove_file(image_file)
+            bootstrap.end_test()
+
 
 if __name__ == "__main__":
     unittest.main()

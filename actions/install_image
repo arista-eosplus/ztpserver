@@ -117,7 +117,7 @@ def main(attributes):
 
     # In all other cases, copy the image
     if image_name_from_url:
-        image = url.split("/")[-1]
+        image = url.rsplit("/", 1)[-1]
     else:
         image = "EOS-{}.swi".format(version)
 
