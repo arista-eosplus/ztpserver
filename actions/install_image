@@ -67,6 +67,8 @@ def main(attributes):
         version: EOS version of new image file
         downgrade: Boolean - Should EOS images be downgraded to match?
                    (Default: True)
+        image_name_from_url: Boolean - Should EOS images be named from URL?
+                   (Default: False)
 
     Special_attributes:
         NODE: API object - see documentation for details
