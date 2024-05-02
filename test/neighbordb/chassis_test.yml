@@ -57,4 +57,3 @@ neighbordb:
       definition: spine2
       interfaces:
         - any: regex('TK5-WAN-CA0\d-A7504R-DIST\d'):regex('Ethernet[56]/\d+/1')
-

@@ -225,12 +225,12 @@ class NodesController(BaseController):
         except FileObjectNotFound:
             log.debug("%s: file not found: %s (adding it)", node_id, filename)
             fobj = self.repository.add_file(filename)
-        finally:
-            if fobj:
-                fobj.write(body, content_type)
-            else:
-                log.error("%s: unable to write %s", node_id, filename)
-                return self.http_bad_request()
+
+        try:
+            fobj.write(body, content_type)
+        except OSError:
+            log.error("%s: unable to write %s", node_id, filename)
+            return self.http_bad_request()
 
         # Execute event-handler
         script = self.repository.expand(self.expand(node_id, CONFIG_HANDLER_FN))
@@ -520,10 +520,11 @@ class NodesController(BaseController):
             fobj = self.repository.get_file(filename)
         except FileObjectNotFound:
             fobj = self.repository.add_file(filename)
-        finally:
-            if fobj and contents:
+
+        if contents:
+            try:
                 fobj.write(contents, CONTENT_TYPE_JSON)
-            else:
+            except OSError:
                 log.error("%s: unable to write %s", node_id, filename)
                 return self.http_bad_request()
 

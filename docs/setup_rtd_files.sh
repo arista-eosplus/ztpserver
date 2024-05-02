@@ -15,4 +15,3 @@ for dir in client actions; do
     touch ${dir}/__init__.py
     #ln -s ${dir} docs/${dir}
 done
-

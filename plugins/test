@@ -30,7 +30,7 @@
 #
 
 """
-Simply returns a string made of the node ID and the name of 
+Simply returns a string made of the node ID and the name of
 the resource pool.
 
 Definition example:
