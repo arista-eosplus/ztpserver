@@ -11,7 +11,7 @@ Enhancements
 * V1.1.0 docs (`181 <https://github.com/arista-eosplus/ztpserver/pull/181>`_)
     Documentation has been completely restructured and is now hosted at http://ztpserver.readthedocs.org/.
 * refresh_ztps - util script to refresh ZTP Server installation (`177 <https://github.com/arista-eosplus/ztpserver/issues/177>`_)
-    /utils/refresh_ztps can be used in order to automatically refresh the installation of ZTP Server to the latest code on GitHub.  This can be useful in order to pull bug fixes or run the latest version of various development branches.                                      
+    /utils/refresh_ztps can be used in order to automatically refresh the installation of ZTP Server to the latest code on GitHub.  This can be useful in order to pull bug fixes or run the latest version of various development branches.
 * Et49 does not match Ethernet49 in neighbordb/pattern files (`172 <https://github.com/arista-eosplus/ztpserver/issues/172>`_)
     The local interface in an interface pattern does not have to use the long interface name. For example, all of the following will be treated similarly: Et1, e1, et1, eth1, Eth1, ethernet1, Ethernet1.
 
@@ -100,8 +100,8 @@ Enhancements
                     “domain”*:          <DOMAIN>,
                     “password”*:        <PASSWORD>,
                     “nickname”:         <NICKNAME>,             // REMOVED
-                    “rooms”*:           [ <ROOM>, … ]   
-                    “msg_type”:         [ “info” | “debug” ]    // Optional, default “debug”     
+                    “rooms”*:           [ <ROOM>, … ]
+                    “msg_type”:         [ “info” | “debug” ]    // Optional, default “debug”
 
                 }
             }
@@ -224,4 +224,3 @@ Resolved issues
     .. comment
 * fix issue with Pattern creation from neighbordb (`44 <https://github.com/arista-eosplus/ztpserver/issues/44>`_)
     .. comment
-

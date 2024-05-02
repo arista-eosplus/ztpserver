@@ -19,4 +19,3 @@ Documenting REST APIs
 ---------------------
 
 REST APIs are documented via the [httpdomain](https://pythonhosted.org/sphinxcontrib-httpdomain/) plugin for sphinx.
-

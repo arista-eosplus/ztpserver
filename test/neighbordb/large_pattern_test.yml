@@ -126,5 +126,3 @@ neighbordb:
       definition: test
       interfaces:
         - Ethernet1: none
-
-

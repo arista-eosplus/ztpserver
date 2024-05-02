@@ -130,16 +130,16 @@ provisioned.
 
         Content-Type: application/json
         {
-            “model”*:             <MODEL_NAME>, 
-            “serialnumber”*:      <SERIAL_NUMBER>, 
+            “model”*:             <MODEL_NAME>,
+            “serialnumber”*:      <SERIAL_NUMBER>,
             “systemmac”*:         <SYSTEM_MAC>,
-            “version”*:           <INTERNAL_VERSION>, 
+            “version”*:           <INTERNAL_VERSION>,
             “neighbors”*: {
                 <INTERFACE_NAME(LOCAL)>: [ {
-                    'device':             <DEVICE_NAME>, 
+                    'device':             <DEVICE_NAME>,
                     'remote_interface':   <INTERFACE_NAME(REMOTE)>
                 } ]
-            }, 
+            },
         }
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)
@@ -148,7 +148,7 @@ provisioned.
 
     Status: 201 Created OR 409 Conflict will both return:
 
-    .. sourcecode:: http 
+    .. sourcecode:: http
 
         Content-Type: text/html
         Location: <url>
@@ -233,7 +233,7 @@ This is used to retrieve the startup-config that was backed-up from a node to th
 
     Status: 201 Created OR 409 Conflict will both return:
 
-    .. sourcecode:: http 
+    .. sourcecode:: http
 
         Content-Type: text/plain
         <startup-config contents>

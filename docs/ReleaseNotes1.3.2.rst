@@ -31,4 +31,3 @@ Bug fixes
         .. comment
     - ZTP Server benchmarking results
         .. comment
-

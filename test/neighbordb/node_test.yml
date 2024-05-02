@@ -33,4 +33,3 @@ neighbordb:
     - name: wrong node pattern
       definition: test
       node:  001c731a2b00
-
