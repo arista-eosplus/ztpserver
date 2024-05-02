@@ -3,7 +3,7 @@ Overview
 
 ZTPServer provides a robust server which enables comprehensive bootstrap solutions for Arista network elements.  ZTPserver takes advantage of the the ZeroTouch Provisioning (ZTP) feature in Arista's EOS (Extensible Operating System) which enables a node to connect to a provisioning server whenever a valid configuration file is missing from the internal flash storage.
 
-ZTPServer provides a number of features that extend beyond simply loading a configuration file and a boot image on a node, including: 
+ZTPServer provides a number of features that extend beyond simply loading a configuration file and a boot image on a node, including:
 
 * sending an advanced bootstrap client to the node
 * mapping each node to an individual definition which describes the bootstrap steps specific to that node
@@ -12,7 +12,7 @@ ZTPServer provides a number of features that extend beyond simply loading a conf
 * validation topology using a simple syntax for expressing LLDP neighbor adjacencies
 * enabling Zero Touch Replacement, as well as configuration backup and management
 
-ZTPServer is written in Python and leverages standard protocols like DHCP (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML-based. 
+ZTPServer is written in Python and leverages standard protocols like DHCP (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML-based.
 
 **Highlights:**
 
@@ -51,7 +51,7 @@ See the `ZTP Tech Bulletin <https://www.arista.com/assets/data/pdf/TechBulletins
 Architecture
 ````````````
 
-There are 2 primary components of the ZTPServer implementation: 
+There are 2 primary components of the ZTPServer implementation:
 
 * the **server** or ZTPServer instance **AND**
 * the **client** or bootstrap (a process running on each node, which connects back to the server in order to provision the node)
@@ -71,7 +71,7 @@ The primary methods of provisioning a node are:
 * **statically** via mappings between node IDs (serial number or system MAC address) and configuration definitions OR
 * **dynamically**  via mapping between topology information (LLDP neighbors) and configuration definitions
 
-The definitions associated with the nodes contain a set of actions that can perform a variety of functions that ultimately lead to a final device configuration. Actions can use statically configured attributes or leverage configuration templates and dynamically allocated resources (via resource pools) in order to generate the system configuration. Definitions, actions, attributes, templates, and resources are all defined in YAML files. 
+The definitions associated with the nodes contain a set of actions that can perform a variety of functions that ultimately lead to a final device configuration. Actions can use statically configured attributes or leverage configuration templates and dynamically allocated resources (via resource pools) in order to generate the system configuration. Definitions, actions, attributes, templates, and resources are all defined in YAML files.
 
 Client
 ``````
@@ -97,14 +97,14 @@ The following diagram show the flow of information during the bootstrap process.
    :alt: Message Flow Diagram
 
 
-Topology Validation 
+Topology Validation
 ```````````````````
 
 .. image:: _static/LeafDefn.png
    :width: 353px
    :align: right
 
-ZTPServer provides a powerful topology validation engine via either ``neighbordb`` or ``pattern`` files.  As part of the bootstrap process for each node, the LLDP information received on all ports is sent to the ZTPServer and matched against either ``neighbordb`` or a node-specific ``pattern`` file (if a node is already configured on the server). Both are YAML files that are use a simple format to express strongly and loosely typed topology patterns. Pattern entries are processed top down and can include local or globally-defined variables (including regular expressions). 
+ZTPServer provides a powerful topology validation engine via either ``neighbordb`` or ``pattern`` files.  As part of the bootstrap process for each node, the LLDP information received on all ports is sent to the ZTPServer and matched against either ``neighbordb`` or a node-specific ``pattern`` file (if a node is already configured on the server). Both are YAML files that are use a simple format to express strongly and loosely typed topology patterns. Pattern entries are processed top down and can include local or globally-defined variables (including regular expressions).
 
 Patterns in ``neighbordb`` match nodes to definitions (dynamic mode), while node-specific pattern files are used for cabling and connectivity validation (static mode).
 
@@ -124,7 +124,7 @@ System ID-based provisioning with no topology validation
 **Via node-specific folder:**
 
 * a folder corresponding to the node's system ID is created on the server before bootstrap
-* a definition file, startup-config file or both is/are placed in the folder 
+* a definition file, startup-config file or both is/are placed in the folder
 * topology validation is disabled globally (in the global configuration file) or via an open pattern in the pattern file located in the node-specific folder
 
 **Via neighbordb:**
@@ -140,7 +140,7 @@ System ID-based provisioning with topology validation
 **Via node-specific folder:**
 
 * a folder corresponding to the node's system ID is created on the server before bootstrap
-* a definition file, startup-config file or both is/are placed in the folder 
+* a definition file, startup-config file or both is/are placed in the folder
 * topology validation is enabled globally (in the global configuration file) and the topology information is configured in the pattern file located in the node-specific folder
 
 **Via neighbordb:**

@@ -36,4 +36,3 @@ neighbordb:
       definition: test
       interfaces:
         - any: any:any
-

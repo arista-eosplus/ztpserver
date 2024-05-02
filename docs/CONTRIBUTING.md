@@ -56,4 +56,3 @@ Building / Publishing Docs locally
 * `make` \(default make target is now `make html`\)
 * Open file://_build/html/index.html in your browser to view.
 * Publish by copying `docs/_build/html/*` to the `gh-pages` branch
-

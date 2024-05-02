@@ -30,7 +30,7 @@ Enhancements
   Validating definitions...
   Validating /usr/share/ztpserver/definitions/leaf.definition... Ok!
   Validating /usr/share/ztpserver/definitions/leaf-no_vars.definition... Ok!
-  
+
   Validating resources...
   Validating /usr/share/ztpserver/resources/leaf_man_ip... Ok!
   Validating /usr/share/ztpserver/resources/leaf_spine_ip...
@@ -40,11 +40,11 @@ Enhancements
   10.0.0.53/24: null
   dfdsf dsfsd
   10.0.0.54/24: JPE14140273
-  
+
   Error:
   while scanning a simple key
   in "<string>", line 3, column 1:
-  dfdsf dsfsd 
+  dfdsf dsfsd
   could not found expected ':'
   in "<string>", line 5, column 1:
   10.0.0.54/24: JPE14140273
@@ -97,4 +97,3 @@ Bug fixes
   logging:
   xmpp:
     ...
-

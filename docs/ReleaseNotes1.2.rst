@@ -72,7 +72,7 @@ Enhancements
         s7056.lab.local - - [03/Nov/2014 21:05:33] "POST /nodes HTTP/1.1" 400 0
 
 * Deal more gracefully with DNS/connectivity errors while trying to access remote syslog servers (`215 <https://github.com/arista-eosplus/ztpserver/issues/215>`_)
-    Logging errors (e.g. bogus destination) will not be automatically logged by the bootstrap script. In order to debug logging issues, simply uncomment the following lines in the bootstrap script: 
+    Logging errors (e.g. bogus destination) will not be automatically logged by the bootstrap script. In order to debug logging issues, simply uncomment the following lines in the bootstrap script:
     ::
 
         #---------------------------------SYSLOG----------------------
@@ -179,4 +179,3 @@ Fixed
 
 * ZTPS server fails to write .node because lack of permissions (`126 <https://github.com/arista-eosplus/ztpserver/issues/126>`_)
     .. comment
-
