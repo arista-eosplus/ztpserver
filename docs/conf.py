@@ -17,14 +17,7 @@ import os
 import re
 import sys
 
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "sphinx_rtd_theme"
 
 # sys.path.insert(0, os.path.join('ztpserver', 'lib'))
 # sys.path.insert(0, os.path.join('ztpserver'))
@@ -33,7 +26,6 @@ sys.path.insert(0, os.path.join("..", "client"))
 sys.path.insert(0, os.path.join("actions"))
 sys.path.insert(0, os.path.join("client"))
 sys.path.insert(0, os.path.abspath(".."))
-
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -69,7 +61,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "ZTPServer"
-copyright = "2015, Arista Networks"  # pylint: disable=W0622
+copyright = "2024, Arista Networks"  # pylint: disable=W0622
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -82,7 +74,7 @@ copyright = "2015, Arista Networks"  # pylint: disable=W0622
 
 release = open("../VERSION").read().split()[0].strip()
 # Assume PEP 440 version strings
-p = re.compile("(\d+!)?((\d+)(.\d+)*(.\d+)*)(.?[a|b|rc]\d*)?(.post\d*)?(.dev\d*)?", re.IGNORECASE)
+p = re.compile(r"(\d+!)?((\d+)(.\d+)*(.\d+)*)(.?(a|b|rc)\d*)?(.post\d*)?(.dev\d*)?", re.IGNORECASE)
 vers = p.search(release)
 version = vers.group(2)
 
@@ -206,7 +198,6 @@ html_last_updated_fmt = "%b %d, %Y"
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = "ZTPServerdoc"
-
 
 # -- Options for LaTeX output --------------------------------------------------
 
