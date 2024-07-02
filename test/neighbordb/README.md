@@ -26,18 +26,16 @@ Example:
 
    nodes:
      - node: 2b3d.json
-       details: 
+       details:
          model: vEOS
          serialnumber: 1234567890
          systemmac: 00:1c:73:1a:2b:3d
          version: 4.12.0
          neighbors:
            Ethernet1:
-               - 
+               -
                  device: pod1-spine1
                  port: Ethernet1
        matches: 0
        match_includes:
          - sample node template 1
-
-

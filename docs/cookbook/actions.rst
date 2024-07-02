@@ -154,7 +154,7 @@ The ZTPServer will then write the SYSTEM_ID as the value, overwriting ``null``.
 If you wanted to use the assigned value elsewhere in the definition, simply call
 ``allocate(mgmt_subnet)`` and the plugin will not assign a new value, rather it
 will return the key already assigned. Note that this is an implementation-detail
-specific to this particular plugin - other plugins might vary (please read the 
+specific to this particular plugin - other plugins might vary (please read the
 associated documentation for each).
 
 The result would look like:

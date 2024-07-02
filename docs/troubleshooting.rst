@@ -28,7 +28,7 @@ Check whether ZTP has been disabled on the switch::
 Validate the ZTP Server configuration syntax
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Many errors are simply due to typos or other syntax issues in config files. 
+Many errors are simply due to typos or other syntax issues in config files.
 It is good practice to use the --validate option to ztps and to paste configs
 in to `http://yamllint.com/` to ensure they are well-formed YAML::
 
@@ -37,7 +37,7 @@ in to `http://yamllint.com/` to ensure they are well-formed YAML::
 Other troubleshooting steps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A number of other troubleshooting steps including how to specify the separate 
+A number of other troubleshooting steps including how to specify the separate
 apache log files just for ZTP Server, and how to do a test run of ztpserver
 without reloading a switch are located on the :doc:`tips` page.
 
@@ -61,7 +61,7 @@ Server-side logs
 
 The location of server-side logs may vary depending on your specific environment.
 
-* If running ZTP Server via Apache, check the VirtualHost definition for 
+* If running ZTP Server via Apache, check the VirtualHost definition for
   CustomLog and ErrorLog entries, otherwise, look in the default Apache logs.
   On Fedora, those will be in /var/log/httpd/
 * If running the standalone ``ztps`` binary, a good choice for debugging, please
@@ -81,4 +81,3 @@ Configuration Files
 
 Please, also, include the files in /etc/ztpserver/ and /usr/share/ztpserver/
 directories.   ``tar czvf my_ztpserver_config.tgz /etc/ztpserver/ /usr/share/ztpserver/``
-

@@ -61,6 +61,10 @@ def random_string():
     )
 
 
+def random_bytes() -> bytes:
+    return random_string().encode("utf-8")
+
+
 def random_json(keys=None):
     data = {}
     if keys:

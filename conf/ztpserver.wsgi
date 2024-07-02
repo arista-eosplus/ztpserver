@@ -35,7 +35,7 @@ import sys
 
 from ztpserver.app import start_wsgiapp
 
-sys.stdout.write('Starting ZTPServer...')
+sys.stdout.write("Starting ZTPServer...")
 
 application = start_wsgiapp()
 # To enable debug output, use:

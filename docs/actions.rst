@@ -69,4 +69,3 @@ Actions
    #
    #.. automodule:: template
    #    :members:
-

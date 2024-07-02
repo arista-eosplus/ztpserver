@@ -8,4 +8,3 @@ Bootstrap Client
 
 .. autoclass:: Node
     :members:
-

@@ -25,5 +25,3 @@ Fixed
 
 Known Caveats
 ^^^^^^^^^^^^^
-
-

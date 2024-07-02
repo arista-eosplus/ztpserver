@@ -173,4 +173,3 @@ As of vEOS 4.14.0, the serial number and system mac address can be configured wi
 
     SERIALNUMBER=ABC12345678
     SYSTEMMACADDR=1122.3344.5566
-

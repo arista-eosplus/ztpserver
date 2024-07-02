@@ -86,6 +86,6 @@ Explanation
 
 Clearing all resource pools can be done via the command line on the ZTPServer.
 The command will analyze ``data_root/resources`` and any file that exists in
-that directory that resembles a ZTPServer resource pool will be cleared. 
+that directory that resembles a ZTPServer resource pool will be cleared.
 
 .. End of Clearing a Resource Pool

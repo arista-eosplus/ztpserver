@@ -1,0 +1,108 @@
+tag: model_pattern_test
+tests:
+  - pattern
+  - topology
+valid_patterns:
+  nodes:
+    - node pattern
+  globals:
+    - pattern with modelA
+    - pattern with modelB and neighbour localhost:Ethernet1
+    - pattern with modelB and neighbour localhost:Ethernet2
+    - pattern with modelB and no neighbours
+    - pattern with modelC and neighbour localhost:Ethernet1
+
+nodes:
+  pass:
+    - name: node_2b3c
+      match: node pattern
+    - name: node_3b3c
+      match: pattern with modelA
+    - name: node_4b3c
+      match: pattern with modelB and neighbour localhost:Ethernet1
+    - name: node_5b3c
+      match: pattern with modelB and neighbour localhost:Ethernet2
+    - name: node_6b3c
+      match: pattern with modelB and no neighbours
+  fail:
+    - name: node_7b3c
+
+node_2b3c:
+  serialnumber: 2b3c
+  model: modelA
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+
+node_3b3c:
+  serialnumber: 3b3c
+  model: modelA
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+
+node_4b3c:
+  serialnumber: 4b3c
+  model: modelB
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet1
+
+node_5b3c:
+  serialnumber: 5b3c
+  model: modelB
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet2
+
+node_6b3c:
+  serialnumber: 6b3c
+  model: modelB
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet3
+
+node_7b3c:
+  serialnumber: 7b3c
+  model: modelC
+  neighbors:
+    Ethernet1:
+      - device: localhost
+        port: Ethernet3
+
+neighbordb:
+  patterns:
+    - name: node pattern
+      definition: test
+      node: 2b3c
+
+    - name: pattern with modelA
+      definition: test
+      model: modelA
+
+    - name: pattern with modelB and neighbour localhost:Ethernet1
+      definition: test
+      model: modelB
+      interfaces:
+        - Ethernet1: localhost:Ethernet1
+
+    - name: pattern with modelB and neighbour localhost:Ethernet2
+      definition: test
+      model: modelB
+      interfaces:
+        - Ethernet1: localhost:Ethernet2
+
+    - name: pattern with modelB and no neighbours
+      definition: test
+      model: modelB
+
+    - name: pattern with modelC and neighbour localhost:Ethernet1
+      definition: test
+      model: modelC
+      interfaces:
+        - Ethernet1: localhost:Ethernet1

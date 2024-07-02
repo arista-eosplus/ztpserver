@@ -9,4 +9,3 @@ Bug fixes
 ^^^^^^^^^
 
 * fixes *pip* install/uninstall issues
-

@@ -13,41 +13,41 @@ Global configuration file
     [default]
     # Location of all ztps boostrap process data files
     data_root = /usr/share/ztpserver
-    
+
     # UID used in the /nodes structure (serialnumber or systemmac)
     identifier = serialnumber
-    
+
     # Server URL to-be-advertised to clients (via POST replies) during the bootstrap process
     server_url = http://172.16.130.10:8080
-    
+
     # Enable local logging
     logging = True
-    
+
     # Enable console logging
     console_logging = True
-    
+
     # Console logging format
     console_logging_format = %(asctime)s:%(levelname)s:[%(module)s:%(lineno)d] %(message)s
 
 
     # Globally disable topology validation in the bootstrap process
     disable_topology_validation = False
-    
+
     [server]
     # Note: this section only applies to using the standalone server.  If
     # running under a WSGI server, these values are ignored
-    
+
     # Interface to which the server will bind to (0:0:0:0 will bind to
     # all available IPv4 addresses on the local machine)
     interface = 172.16.130.10
-    
+
     # TCP listening port
     port = 8080
-    
+
     [bootstrap]
     # Bootstrap filename (file located in <data_root>/bootstrap)
     filename = bootstrap
-    
+
     [neighbordb]
     # Neighbordb filename (file located in <data_root>)
     filename = neighbordb
@@ -181,7 +181,7 @@ Sample templates
 
 .. _resources_example:
 
-Sample resources 
+Sample resources
 ````````````````
 ::
 
@@ -219,11 +219,11 @@ Example #1
       node: ABC12345678
       interfaces:
         - Ethernet49: pod1-spine1:Ethernet1/1
-        - Ethernet50: 
+        - Ethernet50:
             device: pod1-spine2
             port: Ethernet1/1
 
-In example #1, the topology map would only apply to a node with system ID 
+In example #1, the topology map would only apply to a node with system ID
 equal to **ABC12345678**. The following interface map rules apply:
 
 -  Interface Ethernet49 must be connected to node pod1-spine1 on port
@@ -242,7 +242,7 @@ Example #2
       node: 001c73aabbcc
       interfaces:
         - any: regex('pod\d+-spine\d+'):Ethernet1/$
-        - any: 
+        - any:
             device: regex('pod\d+-spine1')
             port: Ethernet2/3
 
@@ -273,7 +273,7 @@ Example #3
         - Ethernet2: $pod1-spine2:any
         - any: excludes('spine1'):Ethernet49
         - any: excludes('spine2'):Ethernet49
-        - Ethernet49: 
+        - Ethernet49:
             device: $not_spine
             port: Ethernet49
         - Ethernet50:
@@ -367,9 +367,29 @@ Example #5
 In this case, the pattern matches if `any` local interface is connected to a
 device with `spine` in the hostname and to the 4th or 5th slot in the chassis.
 
+Example #6
+''''''''''
+
+.. code-block:: yaml
+
+    ---
+    - name: old switch
+      definition: old-switch
+      model: "DCS-7010T-48"
+      interfaces:
+        - Ethernet49: $uplink:any
+    - name: new switch
+      definition: new-switch
+      model: "DCS-7010TX-48-F"
+      interfaces:
+        - Ethernet49: $uplink:any
+
+In this case, the two patterns match the same uplink switch on the same
+local interface, but with a different model. This will allow to use a
+different definition to upload a version of EOS compatible with the device.
+
 
 More examples
 `````````````
 
 Additional ZTPServer file examples are available on GitHub at the `ZTPServer Demo <https://github.com/arista-eosplus/ztpserver-demo>`_.
-
