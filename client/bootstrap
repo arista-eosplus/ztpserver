@@ -44,7 +44,6 @@ if os.path.exists("/usr/bin/arista-python") and os.path.realpath(
 
 import argparse
 import crypt
-import datetime
 import grp
 import io
 import json
@@ -1223,7 +1222,7 @@ class Server:
         self._save_file_contents(response, path, url)
 
 
-def apply_config(config, node):
+def apply_config(config):
     log("Applying server config")
 
     log_config = config.get("logging", [])
@@ -1309,7 +1308,7 @@ def main():
     node = Node(server)
 
     log("Config retrieved from server")
-    apply_config(config.json(), node)
+    apply_config(config.json())
 
     # Checking node on server
     log("Collecting node information")
