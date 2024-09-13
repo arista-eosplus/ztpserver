@@ -61,7 +61,6 @@ from string import Template  # pylint: disable=W0402
 from subprocess import PIPE
 
 import jsonrpclib
-import sleekxmpp
 from six import PY2, PY3, binary_type, raise_from, text_type
 from six.moves import urllib
 
@@ -107,27 +106,12 @@ RESTORE_FACTORY_FLASH = True
 
 # pylint: disable=C0103
 syslog_manager = None
-xmpp_client = None
 # pylint: enable=C0103
-
-# --------------------------------XMPP------------------------
-# Uncomment this section in order to enable XMPP debug logging
-# logging.basicConfig(level=logging.DEBUG,
-#                     format='%(levelname)-8s %(message)s')
-
-# You will also have to comment out the following lines:
-for logger in ["sleekxmpp.xmlstream.xmlstream", "sleekxmpp.basexmpp"]:
-    xmpp_log = logging.getLogger(logger)
-    xmpp_log.addHandler(logging.NullHandler())
-# --------------------------------XMPP------------------------
 
 # --------------------------------SYSLOG----------------------
 # Comment out this section in order to enable syslog debug
 # logging
 logging.raiseExceptions = False
-
-
-# --------------------------------XMPP------------------------
 
 
 # ------------------Utilities---------------------------------
@@ -182,15 +166,6 @@ def ensure_text(s, encoding="utf-8", errors="strict"):
 def _exit(code):
     # pylint: disable=W0702
 
-    # Wait for XMPP messages to drain
-    time.sleep(3)
-
-    if xmpp_client:
-        try:
-            xmpp_client.abort()
-        except:
-            pass
-
     if not RESTORE_FACTORY_FLASH:
         for path in [STARTUP_CONFIG, RC_EOS, BOOT_EXTENSIONS]:
             filename = os.path.basename(path)
@@ -239,30 +214,13 @@ def _exit(code):
     sys.stderr.flush()
 
     # pylint: disable=W0212
-    # Need to close background sleekxmpp threads as well
     sys.exit(code)
 
 
 SYSTEM_ID = None
-XMPP_MSG_TYPE = None
 
 
-def log_xmpp():
-    return XMPP_MSG_TYPE == "debug"
-
-
-def log(msg, error=False, xmpp=None):
-    if xmpp is None:
-        xmpp = log_xmpp()
-
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    xmpp_msg = "{}: {} - {}{}".format(
-        SYSTEM_ID if SYSTEM_ID else "N/A", timestamp, "ERROR: " if error else "", msg
-    )
-
-    if xmpp and xmpp_client and xmpp_client.connected:
-        xmpp_client.message(xmpp_msg)
-
+def log(msg, error=False):
     if SYSTEM_ID:
         syslog_msg = "{}: {}".format(SYSTEM_ID, msg)
     else:
@@ -746,7 +704,7 @@ class Node:
         self._append_lines(RC_EOS, lines)
 
     def log_msg(self, msg, error=False):
-        """Log message via configured syslog/XMPP.
+        """Log message via configured syslog.
 
         Args:
             msg (string): Message
@@ -1265,129 +1223,13 @@ class Server:
         self._save_file_contents(response, path, url)
 
 
-class XmppClient(sleekxmpp.ClientXMPP):
-    def __init__(self, user, domain, password, rooms, nick, xmpp_server, xmpp_port):
-        self.xmpp_jid = "{}@{}".format(user, domain)
-        self.connected = False
-
-        try:
-            sleekxmpp.ClientXMPP.__init__(self, self.xmpp_jid, password)
-        except sleekxmpp.jid.InvalidJID:
-            log(
-                "Unable to connect XMPP client because of invalid jid: {}".format(self.xmpp_jid),
-                xmpp=False,
-            )
-            return
-
-        self.xmpp_nick = nick
-        self.xmpp_rooms = rooms
-
-        self.xmpp_rooms = []
-        for room in rooms:
-            self.xmpp_rooms.append("{}@conference.{}".format(room, domain))
-
-        self.add_event_handler("session_start", self._session_connected)
-        self.add_event_handler("connect", self._session_connected)
-        self.add_event_handler("disconnected", self._session_disconnected)
-
-        # Multi-User Chat
-        self.register_plugin("xep_0045")
-        # XMPP Ping
-        self.register_plugin("xep_0199")
-        # Service Discovery
-        self.register_plugin("xep_0030")
-
-        log("XmppClient connecting to server...", xmpp=False)
-        if xmpp_server is not None:
-            self.connect((xmpp_server, xmpp_port), reattempt=False)
-        else:
-            self.connect(reattempt=False)
-
-        self.process(block=False)
-
-        retries = 3
-        while not self.connected and retries:
-            # Wait to connect
-            time.sleep(1)
-            retries -= 1
-
-    def _session_connected(self, _):
-        log("XmppClient: Session connected ({})".format(self.xmpp_jid), xmpp=False)
-        self.send_presence()
-        self.get_roster()
-
-        self.connected = True
-
-        # Joining rooms
-        for room in self.xmpp_rooms:
-            self.plugin["xep_0045"].joinMUC(room, self.xmpp_nick, wait=True)
-            log("XmppClient: Joined room {} as {}".format(room, self.xmpp_nick), xmpp=False)
-
-    def _session_disconnected(self, _):
-        log("XmppClient: Session disconnected ({})".format(self.xmpp_jid), xmpp=False)
-        self.connected = False
-
-    def message(self, message):
-        for room in self.xmpp_rooms:
-            self.send_message(mto=room, mbody=message, mtype="groupchat")
-
-
 def apply_config(config, node):
-    global xmpp_client  # pylint: disable=W0603
-
     log("Applying server config")
-
-    # XMPP not configured yet
-    xmpp_config = config.get("xmpp", {})
-
-    global XMPP_MSG_TYPE  # pylint: disable=W0603
-    XMPP_MSG_TYPE = xmpp_config.get("msg_type", "debug")
-    if XMPP_MSG_TYPE not in ["debug", "info"]:
-        log(
-            "XMPP configuration failed because of unexpected 'msg_type': "
-            "{} not in ['debug', 'info']".format(XMPP_MSG_TYPE),
-            error=True,
-            xmpp=False,
-        )
-    else:
-        if xmpp_config:
-            log("Configuring XMPP", xmpp=False)
-            if (
-                "username" in xmpp_config
-                and "domain" in xmpp_config
-                and "password" in xmpp_config
-                and "rooms" in xmpp_config
-                and xmpp_config["rooms"]
-            ):
-                nick = node.system()["serialnumber"]
-                if not nick:
-                    # vEOS might not have a serial number configured
-                    nick = node.system()["systemmac"]
-                xmpp_client = XmppClient(
-                    xmpp_config["username"],
-                    xmpp_config["domain"],
-                    xmpp_config["password"],
-                    xmpp_config["rooms"],
-                    nick,
-                    xmpp_config.get("server", None),
-                    xmpp_config.get("port", 5222),
-                )
-            else:
-                # XMPP not configured yet
-                log(
-                    "XMPP configuration failed because server response is missing config details",
-                    error=True,
-                    xmpp=False,
-                )
-        else:
-            log("No XMPP configuration received from server", xmpp=False)
 
     log_config = config.get("logging", [])
     if log_config:
         log("Configuring syslog")
         syslog_manager.add_handlers(log_config)
-    else:
-        log("No XMPP configuration received from server")
 
 
 def load_module(module_name, source_path):
@@ -1416,7 +1258,7 @@ def execute_action(server, action_details, special_attr):
 
     log("Executing action {}".format(action))
     if "onstart" in action_details:
-        log("Action {}: {}".format(action, action_details["onstart"]), xmpp=True)
+        log("Action {}: {}".format(action, action_details["onstart"]))
 
     try:
         if action not in sys.modules:
@@ -1432,10 +1274,10 @@ def execute_action(server, action_details, special_attr):
 
         log("Action executed succesfully ({})".format(action))
         if "onsuccess" in action_details:
-            log("Action {}: {}".format(action, action_details["onsuccess"]), xmpp=True)
+            log("Action {}: {}".format(action, action_details["onsuccess"]))
     except Exception as err:  # pylint: disable=W0703
         if "onfailure" in action_details:
-            log("Action {}: {}".format(action, action_details["onfailure"]), xmpp=True)
+            log("Action {}: {}".format(action, action_details["onfailure"]))
         raise_from(ZtpActionError("executing action failed ({}): {}".format(action, err)), err)
 
 
@@ -1459,21 +1301,18 @@ def main():
     syslog_manager = SyslogManager()
     server = Server()
 
-    # Retrieve and apply logging/XMPP configuration from server
-    # XMPP not configured yet
-    log("Retrieving config from server", xmpp=False)
+    # Retrieve and apply logging configuration from server
+    log("Retrieving config from server")
     _, _, config = server.get_config()
 
     # Creating node
     node = Node(server)
 
-    # XMPP not configured yet
-    log("Config retrieved from server", xmpp=False)
+    log("Config retrieved from server")
     apply_config(config.json(), node)
 
     # Checking node on server
-    # XMPP not configured yet
-    log("Collecting node information", xmpp=False)
+    log("Collecting node information")
     _, _, location = server.post_nodes(node.details())
 
     # Get definition

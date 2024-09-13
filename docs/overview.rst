@@ -12,7 +12,7 @@ ZTPServer provides a number of features that extend beyond simply loading a conf
 * validation topology using a simple syntax for expressing LLDP neighbor adjacencies
 * enabling Zero Touch Replacement, as well as configuration backup and management
 
-ZTPServer is written in Python and leverages standard protocols like DHCP (DHCP options for boot functions), HTTP(S) (for bi-directional transport), XMPP and syslog (for logging). Most of the configuration files are YAML-based.
+ZTPServer is written in Python and leverages standard protocols like DHCP (DHCP options for boot functions), HTTP(S) (for bi-directional transport), and syslog (for logging). Most of the configuration files are YAML-based.
 
 **Highlights:**
 
@@ -30,7 +30,7 @@ ZTPServer is written in Python and leverages standard protocols like DHCP (DHCP 
 * configuration templating with resource allocation (for dynamic deployments)
 * Zero Touch Replacement and software upgrade capabilities
 * user extensible actions
-* XMPP and syslog-based logging and accounting
+* Syslog-based logging and accounting
 
 ZTP Intro
 `````````
@@ -82,7 +82,7 @@ Client
 
 The client or **bootstrap file** is retrieved by the node via an HTTP GET request made to the ZTPServer (the URL of the file is retrieved via DHCP option 67). This file executes locally and gathers system and LLDP information from the node and sends it back to the ZTPServer. Once the ZTPServer processes the information and confirms that it can provision the node, the client makes a request to the server for a definition file - this file will contain the list of all actions which need to be executed by the node in order to provision itself.
 
-Throughout the provisioning process the bootstrap client can log all steps via both local and remote syslogs, as well as XMPP.
+Throughout the provisioning process the bootstrap client can log all steps via both local and remote syslogs.
 
 .. _message_flows:
 

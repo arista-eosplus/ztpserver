@@ -98,17 +98,6 @@ GET bootstrap logging configuration
                                                                             //by default
                 “level”*:        <DEBUG | CRITICAL | ...>,
             } ]
-        },
-            “xmpp”*:{
-                “server”:           <IP or HOSTNAME>,
-                “port”:             <PORT>,                 // Optional, default 5222
-                “username”*:        <USERNAME>,
-                “domain”*:          <DOMAIN>,
-                “password”*:        <PASSWORD>,
-                “nickname”:         <NICKNAME>,             // Optional, default ‘username’
-                “rooms”*:           [ <ROOM>, … ]
-                }
-            }
         }
 
     **Note**: \* Items are mandatory (even if value is empty list/dict)

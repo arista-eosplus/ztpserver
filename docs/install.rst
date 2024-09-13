@@ -55,9 +55,6 @@ VM Specification:
   * wildcard forwarding rule passing all other queries to 8.8.8.8
   * SRV RR for im.ztps-test.com
 * rsyslog-ng installed; Listening on UDP and TCP (port 514)
-* ejabberd (XMPP server) configured for im.ztps-test.com
-
-  * XMPP admin user: ztpsadmin/eosplus
 * httpd installed and configured for ZTPServer (mod_wsgi)
 * ZTPServer installed
 * ztpserver-demo repo files pre-loaded

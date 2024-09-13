@@ -231,13 +231,12 @@ def mock_match(
 class BootstrapConf(SerializerMixin):
     def __init__(self, **kwargs):
         self.logging = kwargs.get("logging", [])
-        self.xmpp = kwargs.get("xmpp", {})
 
     def add_logging(self, entry):
         self.logging.append(entry)
 
     def as_dict(self):
-        return {"logging": self.logging, "xmpp": self.xmpp}
+        return {"logging": self.logging}
 
 
 def create_bootstrap_conf():

@@ -282,64 +282,8 @@ class BootstrapConfigUnitTests(unittest.TestCase):
         self.assertEqual(resp["content_type"], constants.CONTENT_TYPE_JSON)
 
     @patch("ztpserver.controller.create_repository")
-    def test_no_xmpp(self, m_repository):
-        cfg = {"return_value.read.return_value": {"logging": []}}
-        m_repository.return_value.get_file.configure_mock(**cfg)
-
-        controller = ztpserver.controller.BootstrapController()
-
-        request = Request.blank("")
-        request.remote_addr = ""
-        resp = controller.config(request)
-
-        self.assertEqual(resp["body"], controller.DEFAULT_CONFIG)
-        self.assertEqual(resp["content_type"], constants.CONTENT_TYPE_JSON)
-
-    @patch("ztpserver.controller.create_repository")
-    def test_no_logging(self, m_repository):
-        cfg = {"return_value.read.return_value": {"xmpp": {}}}
-        m_repository.return_value.get_file.configure_mock(**cfg)
-
-        controller = ztpserver.controller.BootstrapController()
-
-        request = Request.blank("")
-        request.remote_addr = ""
-        resp = controller.config(request)
-
-        self.assertEqual(resp["body"], controller.DEFAULT_CONFIG)
-        self.assertEqual(resp["content_type"], constants.CONTENT_TYPE_JSON)
-
-    @patch("ztpserver.controller.create_repository")
-    def test_empty_xmpp(self, m_repository):
-        cfg = {"return_value.read.return_value": {"logging": [], "xmpp": None}}
-        m_repository.return_value.get_file.configure_mock(**cfg)
-
-        controller = ztpserver.controller.BootstrapController()
-
-        request = Request.blank("")
-        request.remote_addr = ""
-        resp = controller.config(request)
-
-        self.assertEqual(resp["body"], controller.DEFAULT_CONFIG)
-        self.assertEqual(resp["content_type"], constants.CONTENT_TYPE_JSON)
-
-    @patch("ztpserver.controller.create_repository")
     def test_empty_logging(self, m_repository):
-        cfg = {"return_value.read.return_value": {"logging": None, "xmpp": {}}}
-        m_repository.return_value.get_file.configure_mock(**cfg)
-
-        controller = ztpserver.controller.BootstrapController()
-
-        request = Request.blank("")
-        request.remote_addr = ""
-        resp = controller.config(request)
-
-        self.assertEqual(resp["body"], controller.DEFAULT_CONFIG)
-        self.assertEqual(resp["content_type"], constants.CONTENT_TYPE_JSON)
-
-    @patch("ztpserver.controller.create_repository")
-    def test_empty_xmpp_logging(self, m_repository):
-        cfg = {"return_value.read.return_value": {"logging": None, "xmpp": None}}
+        cfg = {"return_value.read.return_value": {"logging": None}}
         m_repository.return_value.get_file.configure_mock(**cfg)
 
         controller = ztpserver.controller.BootstrapController()
@@ -420,7 +364,7 @@ class BootstrapUnitTests(unittest.TestCase):
         request = Request.blank("/bootstrap/config")
         resp = request.get_response(ztpserver.controller.Router())
 
-        defaultconfig = {"logging": [], "xmpp": {}}
+        defaultconfig = {"logging": []}
 
         self.assertEqual(resp.status_code, constants.HTTP_STATUS_OK)
         self.assertEqual(resp.content_type, constants.CONTENT_TYPE_JSON)

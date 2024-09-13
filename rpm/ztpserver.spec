@@ -82,7 +82,7 @@ custom functionality that are specific to a given implementation. ZTPServer also
 provides a topology validation engine with a simple syntax to express LLDP
 neighbor adjacencies. It is written mostly in Python and leverages standard
 protocols like DHCP and DHCP options for boot functions, HTTP for
-bi-directional transport, and XMPP and syslog for logging. Most of the files
+bi-directional transport, and syslog for logging. Most of the files
 that the user interacts with are YAML based.
 
 %prep
