@@ -40,7 +40,7 @@ import sys
 if os.path.exists("/usr/bin/arista-python") and os.path.realpath(
     sys.executable
 ) != os.path.realpath("/usr/bin/arista-python"):
-    os.execl("/usr/bin/python3", "python3", os.path.abspath(__file__))
+    os.execl("/usr/bin/arista-python", "arista-python", os.path.abspath(__file__))
 
 import argparse
 import crypt
