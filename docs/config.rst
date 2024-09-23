@@ -170,17 +170,6 @@ Bootstrap configuration
           level: CRITICAL
         - destination: 10.0.1.1:9000
           level: CRITICAL
-      xmpp:
-        domain: im.ztps-test.com
-        username: bootstrap
-        password: eosplus
-        rooms:
-          - ztps
-          - ztps-room2
-
-.. note::
-
-    In order for XMPP logging to work, a non-EOS user need to be connected to the room specified in bootstrap.conf, before the ZTP process starts. The room has to be created (by the non-EOS user) before the bootstrap client starts logging the ZTP process via XMPP.
 
 
 .. _static_provisioning:

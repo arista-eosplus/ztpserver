@@ -20,7 +20,7 @@ using the ZTPServer. There are some assumptions:
 .. note:: If you would like to test this in a virtual environment, please see the
           `packer-ztpserver <https://github.com/arista-eosplus/packer-ztpserver>`_
           Github repo to learn how to automatically install a ZTPServer with all
-          of the complementary services (DHCP, DNS, NTP, XMPP, and SYSLOG). Both
+          of the complementary services (DHCP, DNS, NTP, and SYSLOG). Both
           Virtual Box and VMware are supported.
 
 
@@ -351,7 +351,7 @@ in the DHCP response, which lets the node know where to grab the bootstrap scrip
 **A Quick Overview of the Provisioning Process for this Node**
 
  #. **GET /bootstrap**: The node gets the bootstrap script and begins executing it. The following requests are made while the bootstrap script is being executed.
- #. **GET /bootstrap/config**: The node gets the bootstrap config which contains XMPP and Syslog information for the node to send logs to.
+ #. **GET /bootstrap/config**: The node gets the bootstrap config which contains Syslog information for the node to send logs to.
  #. **POST /nodes**: The node sends information about itself in JSON format to the ZTPServer. The ZTPServer parses this info and finds the System MAC. It looks in the ``nodes/`` directory and finds a match.
  #. **GET /nodes/001122334455**: The node requests its definition and learns what resources it has to retrieve.
  #. **GET /actions/install_image**: The node retrieves the install_image script.

@@ -779,7 +779,7 @@ class NodesController(BaseController):
 
 
 class BootstrapController(BaseController):
-    DEFAULT_CONFIG = {"logging": [], "xmpp": {}}
+    DEFAULT_CONFIG = {"logging": []}
 
     FOLDER = "bootstrap"
 
@@ -803,20 +803,6 @@ class BootstrapController(BaseController):
                         request.remote_addr,
                     )
 
-                if "xmpp" in config and config["xmpp"]:
-                    body["xmpp"] = config["xmpp"]
-                    for key in ["username", "password", "domain"]:
-                        if key not in body["xmpp"]:
-                            log.warning(
-                                "Bootstrap config: '%s' missing from XMPP config",
-                                key,
-                            )
-                    if "rooms" not in body["xmpp"] or not body["xmpp"]["rooms"]:
-                        log.warning("Bootstrap config: no XMPP rooms configured")
-                    log.info(
-                        "%s: xmpp info included in bootstrap config",
-                        request.remote_addr,
-                    )
             resp = {"body": body, "content_type": CONTENT_TYPE_JSON}
         except FileObjectNotFound:
             log.warning("Bootstrap config file not found")

@@ -539,15 +539,10 @@ class ZTPServer:
     def set_action_response(self, action, output, content_type="text/x-python", status=STATUS_OK):
         self.responses["/actions/{}".format(action)] = Response(content_type, status, output, {})
 
-    def set_config_response(
-        self, logging=None, xmpp=None, content_type="application/json", status=STATUS_OK
-    ):
-        response = {"logging": [], "xmpp": {}}
+    def set_config_response(self, logging=None, content_type="application/json", status=STATUS_OK):
+        response = {"logging": []}
         if logging:
             response["logging"] = logging
-
-        if xmpp:
-            response["xmpp"] = xmpp
 
         self.responses["/bootstrap/config"] = Response(
             content_type, status, json.dumps(response), {}

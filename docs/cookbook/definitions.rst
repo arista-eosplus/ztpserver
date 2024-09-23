@@ -100,22 +100,11 @@ and ``$dst`` variables.
         variables:
           ipaddress: $ip
       name: "configure ma1"
-    -
-      action: add_config
-      attributes:
-        url: files/templates/xmpp.template
-        variables: $variables
-      name: "configure ma1"
 
   attributes:
     dst: /mnt/flash
     mode: 777
     ip: 192.168.0.50
-    variables:
-      domain: im.example.com
-      user: myXmmpUser
-      passwd: secret
-      room: myAwesomeRoom
 
 
 Explanation
@@ -125,8 +114,7 @@ This example shows how to use global variables within the definition. It's
 important to see the difference between using variables to define attributes
 of the action versus variables that get used within the template in an
 ``add_config`` action.  See how the ``ipaddress`` variable is nested within
-a ``variables`` key?  Also, you can create a list in the ``attributes`` section
-and pass the entire list into the action as shown in the XMPP config action.
+a ``variables`` key?.
 
 .. note:: For more Action recipes see the Actions section.
 
@@ -143,7 +131,7 @@ Add Custom Log Statements as Action Executes
 Objective
 ^^^^^^^^^
 
-I want to send specific messages to my syslog and/or XMPP servers while an action
+I want to send specific messages to my syslog servers while an action
 is executing. Especially, if something goes wrong, I'd like to add a helpful message
 so the engineer knows who to contact.
 
@@ -187,6 +175,6 @@ Here we make use of three specific keywords: ``onstart``, ``onsuccess`` and
 this message while it is being provisioned. As mentioned above, this message will
 be sent to all of the logging destinations defined in ``[data_root]/bootstrap/bootstrap.conf``.
 
-.. note:: For help defining an XMPP or syslog endpoint, see :ref:`client-logging-label`
+.. note:: For help defining a syslog endpoint, see :ref:`client-logging-label`
 
 .. End of Add an Action to a Definition

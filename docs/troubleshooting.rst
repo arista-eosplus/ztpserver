@@ -71,7 +71,7 @@ The location of server-side logs may vary depending on your specific environment
 Client-side logs
 ^^^^^^^^^^^^^^^^
 
-Ensure the bootstrap client is configured to log to syslog or XMPP via
+Ensure the bootstrap client is configured to log to syslog via
 /usr/share/ztpserver/bootstrap/bootstrap.conf and include that output.  Attempting to
 collect client side logs from the console frequently results in missing information
 due to scroll buffers or line length.

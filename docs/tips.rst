@@ -109,8 +109,6 @@ How do I debug the ZTP Server provisioning process?
     switch# bash chmod +x bootstrap
     switch# bash sudo ./bootstrap
 
-* On the client side, make sure you use XMPP (best) or remove syslog (second best) logging - you can configure that in *bootstrap.conf*.
-
 * When requesting support, please include the output from the server (running in debug mode) and the console/log output from the switch.
 
 How do I disable / enable ZTP mode on a switch
@@ -148,12 +146,7 @@ If you setup your own environment, the following recommendations should assist g
 * During testing, only - run the standalone server in debug mode: ``ztps --debug`` in a buffered shell.   NOTE: do NOT use this standalone server in production, however, except in the smallest environments ( Approx 10 nodes or less, consecutively).
 * Do not attempt any detailed debugging from a virtual or serial console.  Due to the quantity of information and frequent lack of copy/paste access, this if often painful.  Both suggested logging methods, below, can be configured in the :ref:`bootstrap_config`.
 
-  * (BEST) Setup XMPP logging. There are many XMPP services available, including `ejabberd <https://www.ejabberd.im/>`_, and even more clients, such as `Adium <https://adium.im/>`_.  This will give you a single pane view of what is happening on all of your test switches.  Our demo includes ejabberd with the following configuration:
-
-       * Server: im.ztps-test.com (or your ZTPServer IP)
-       * XMPP admin user: ztpsadmin@im.ztps-test.com, passwd eosplus
-
-  * (Second) In place of XMPP, splecify a central syslog server in the bootstrap config.
+  * Specify a central syslog server in the bootstrap config.
 
 How do I override the default system-mac in vEOS?
 ``````````````````````````````````````````````````
