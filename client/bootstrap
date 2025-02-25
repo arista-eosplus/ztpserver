@@ -348,6 +348,19 @@ sudo python setup.py install
 # pylint: enable=C0103
 # ------------------4.12.x support----------------------------
 
+# ------------------4.20.x support----------------------------
+
+import requests.models
+
+# patch Response to include __enter__/__exit__ for using within a context
+if not hasattr(requests.models.Response, '__enter__'):
+    requests.models.Response.__enter__ = lambda self: self
+
+if not hasattr(requests.models.Response, '__exit__'):
+    requests.models.Response.__exit__ = lambda self, *args: self.close()
+
+# ------------------4.20.x support----------------------------
+
 
 class ZtpError(Exception):
     pass
