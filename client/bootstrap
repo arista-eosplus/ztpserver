@@ -35,7 +35,9 @@
 # pylint: disable=W0703,C0209,C0415,W4901,C0413
 
 import os
+import string
 import sys
+from random import choice
 
 if os.path.exists("/usr/bin/arista-python") and os.path.realpath(
     sys.executable
@@ -80,7 +82,6 @@ TEMP = "/tmp"
 
 COMMAND_API_SERVER = "localhost"
 COMMAND_API_USERNAME = "ztps"
-COMMAND_API_PASSWORD = "ztps-password"
 COMMAND_API_PROTOCOL = "unix-socket"
 
 HTTP_STATUS_OK = 200
@@ -305,6 +306,10 @@ def all_files_and_dirs(path):
     return result
 
 
+def random_password():
+    return "".join(choice(string.ascii_letters) for _ in range(10))
+
+
 # ------------------Utilities---------------------------------
 
 
@@ -436,14 +441,15 @@ class Node:
     def _enable_api(cls):
         create_user = ""
         api_protocol = COMMAND_API_PROTOCOL
+        command_api_password = os.environ.get("COMMAND_API_PASSWORD", random_password())
         # Don't use unix sockets in CI environment
         if os.environ.get("EAPI_TEST") is not None:
             api_protocol = "http"
             create_user = "username {} secret {} privilege 15".format(
-                COMMAND_API_USERNAME, COMMAND_API_PASSWORD
+                COMMAND_API_USERNAME, command_api_password
             )
             url = "{}://{}:{}@{}/command-api".format(
-                api_protocol, COMMAND_API_USERNAME, COMMAND_API_PASSWORD, COMMAND_API_SERVER
+                api_protocol, COMMAND_API_USERNAME, command_api_password, COMMAND_API_SERVER
             )
         else:
             url = "unix:/var/run/command-api.sock"
@@ -454,10 +460,10 @@ class Node:
             if int(major) <= 4 and int(minor) <= 14 and patch <= 5:
                 api_protocol = "http"
                 create_user = "username {} secret {} privilege 15".format(
-                    COMMAND_API_USERNAME, COMMAND_API_PASSWORD
+                    COMMAND_API_USERNAME, command_api_password
                 )
                 url = "{}://{}:{}@{}/command-api".format(
-                    api_protocol, COMMAND_API_USERNAME, COMMAND_API_PASSWORD, COMMAND_API_SERVER
+                    api_protocol, COMMAND_API_USERNAME, command_api_password, COMMAND_API_SERVER
                 )
 
         cls._cli_config_cmds(

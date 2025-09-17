@@ -68,9 +68,9 @@ test_neighbordb: clean
 
 test_client: clean
 ifeq ($(TESTNAME),discover)
-	EAPI_TEST=1 $(PYTHON)  -m unittest discover test/client -v
+	EAPI_TEST=1 COMMAND_API_PASSWORD=ztps-password $(PYTHON)  -m unittest discover test/client -v
 else
-	EAPI_TEST=1 $(PYTHON)  test/client/$(TESTNAME) -v
+	EAPI_TEST=1 COMMAND_API_PASSWORD=ztps-password $(PYTHON)  test/client/$(TESTNAME) -v
 endif
 
 test_actions: clean
